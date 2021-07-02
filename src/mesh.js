@@ -7,26 +7,31 @@ const twgl = require('twgl.js');
 const wavefrontObjParser = require('wavefront-obj-parser');
 const expandVertexData = require('expand-vertex-data');
 
+const shaderManager = require('./shaders.js');
+
 
 class Mesh {
 
-    constructor(obj_path, gl) {
+    constructor(obj_path, voxelSize, scale) {
         var wavefrontString = fs.readFileSync(obj_path).toString('utf8');
         var parsedJSON = wavefrontObjParser(wavefrontString);
         var expanded = expandVertexData(parsedJSON, {facesToTriangles: true});
     
+        this.voxelSize = voxelSize;
+
         this.model = {
-            position: expanded.positions,
+            position: expanded.positions.map(x => x * scale),
             normal: expanded.normals,
             indices: expanded.positionIndices
         };
 
-        this.buffers = [twgl.createBufferInfoFromArrays(gl, this.model)];
+        this._triangulate();
+
+        this._bufferInfoReady = false;
     }
 
-    voxelise(voxel_size, gl) {
-        // Extract triangles from mesh
-        let triangles = [];
+    _triangulate() {
+        this.triangles = [];
         for (let i = 0; i < this.model.indices.length; i += 3) {
             let i0 = this.model.indices[i];
             let i1 = this.model.indices[i + 1];
@@ -34,68 +39,49 @@ class Mesh {
             let v0 = this.model.position.slice(3 * i0, 3 * i0 + 3);
             let v1 = this.model.position.slice(3 * i1, 3 * i1 + 3);
             let v2 = this.model.position.slice(3 * i2, 3 * i2 + 3);
-            triangles.push(new Triangle(v0, v1, v2));
+            this.triangles.push(new Triangle(v0, v1, v2, this.voxelSize));
         }
 
-        // Voxelise triangles
-        let voxel_positions = [];
-        for (let triangle of triangles) {
-            let v = triangle.voxelise(voxel_size);
-            voxel_positions.push(...v);
+        console.log(`Mesh has ${this.triangles.length} triangle(s)`);
+    }
+
+    _updateInfoBuffer(gl) {
+        this._bufferInfo = twgl.createBufferInfoFromArrays(gl, this.model);
+        this._bufferInfoReady = true;
+    }
+
+    voxelise() {
+        let voxels = [];
+        for (const t of this.triangles) {
+            voxels.push(...t.voxelise());
         }
-        console.log(triangles);
+        return voxels;
+    }
 
-        const cube = twgl.primitives.createCubeVertices(voxel_size);
-        const num_buffers = Math.ceil(voxel_positions.length / 1024);
-
-        // Create buffers
-        let buffers = new Array(num_buffers);
-        for (let i = 0; i < num_buffers; ++i) {
-            buffers[i]= {
-                position: { numComponents: 3, data: []},
-                normal:   { numComponents: 3, data: []},
-                indices:  { numComponents: 3, data: []}
-            };
-        }
-
-        // Fill buffers with voxels
-        for (let i = 0; i < voxel_positions.length; ++i) {
-            let voxel = voxel_positions[i];
-
-            let position_ = [];
-            for (let j = 0; j < 72; j += 3) {
-                position_.push(
-                    cube.position[j + 0] + voxel[0],
-                    cube.position[j + 1] + voxel[1],
-                    cube.position[j + 2] + voxel[2]
-                    );
-                }
-                
-            const buffer_index = Math.floor(i / 1024);
-            let index_offset = buffers[buffer_index].indices.data.length;
-            index_offset /= 1.5;
-
-            let indices_ = [];
-            for (let j = 0; j < 36; j += 3) {
-                indices_.push(
-                    cube.indices[j + 0] + index_offset,
-                    cube.indices[j + 1] + index_offset,
-                    cube.indices[j + 2] + index_offset
-                );
-            }
-            
-            buffers[buffer_index].indices.data.push(...indices_);
-            buffers[buffer_index].position.data.push(...position_);
-            buffers[buffer_index].normal.data.push(...cube.normal);
+    drawMesh(gl, camera) {
+        if (!this._bufferInfoReady) {
+            this._updateInfoBuffer(gl);
         }
 
+        const uniforms = {
+            u_fillColour: Vector3.create(1.0, 1.0, 1.0),
+            u_opacity: 1.0,
+            u_lightWorldPos: camera.getCameraPosition(0.785398, 0),
+            u_worldInverseTranspose: camera.getWorldInverseTranspose(),
+            u_worldViewProjection: camera.getWorldViewProjection()
+        };
 
-        let buffer_infos = new Array(num_buffers);
-        for (let i = 0; i < num_buffers; ++i) {
-            buffer_infos[i] = twgl.createBufferInfoFromArrays(gl, buffers[i]);
+        const shader = shaderManager.shadedProgram;
+        gl.useProgram(shader.program);
+        twgl.setBuffersAndAttributes(gl, shader, this._bufferInfo);
+        twgl.setUniforms(shader, uniforms);
+        gl.drawElements(gl.TRIANGLES, this._bufferInfo.numElements, gl.UNSIGNED_SHORT, 0); 
+    }
+
+    drawBounds(gl, camera) {
+        for (const t of this.triangles) {
+            t.drawBounds(gl, camera);
         }
-
-        this.buffers = buffer_infos;
     }
 
 }

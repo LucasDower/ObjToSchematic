@@ -1,86 +1,39 @@
 const twgl = require('twgl.js');
-const fs = require('fs');
+const { v3: Vector3 } = require('twgl.js');
 
-const mouseHandler = require('./src/mouse.js');
-const cameraHandler = require('./src/camera.js');
-const shaderManager = require('./src/shaders.js');
-const gridManager = require('./src/grid.js');
-
+const { ArcballCamera } = require('./src/camera.js');
+const { VoxelRenderer } = require('./src/voxel_renderer.js');
 const { Triangle } = require('./src/triangle.js');
-
-const wavefrontObjParser = require('wavefront-obj-parser');
-const expandVertexData = require('expand-vertex-data');
-
 const { Mesh } = require('./src/mesh.js');
 
-const v3 = twgl.v3;
+const eventManager = require('./src/events.js');
+const { AABB } = require('./src/aabb.js');
+
 const gl = document.querySelector("#c").getContext("webgl");
+const camera = new ArcballCamera(30, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.5, 30.0);
 
+const voxelSize = Math.pow(2, 2);
+const voxelRenderer = new VoxelRenderer(gl, voxelSize * 2);
 
-let suzanne_left = new Mesh('./resources/suzanne_left.obj', gl);
-let suzanne_right = new Mesh('./resources/suzanne_right.obj', gl);
+eventManager.registerCanvasEvents(gl, camera);
 
+const v0 = Vector3.create(3.9292, -7.96029, 9.93253);
+const v1 = Vector3.create(28.6307, 27.95673, 15.75666);
+const v2 = Vector3.create(2.53923, 0, -20.05832);
+const triangle = new Triangle(v0, v1, v2, voxelSize);
 
-suzanne_left.voxelise(0.025, gl);
-const suzanne_left_buffers = suzanne_left.buffers;
-const suzanne_right_buffers = suzanne_right.buffers;
-
-
-
-var camera = new cameraHandler.ArcballCamera(30, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.5, 30.0);
-
-const gridMesh = gridManager.generateGridMesh();
-const gridBuffer = twgl.createBufferInfoFromArrays(gl, gridMesh);
-
-
-gl.canvas.addEventListener('mousedown', (e) => {
-    camera.isRotating = true;
-});
-
-gl.canvas.addEventListener('mouseup', (e) => {
-    camera.isRotating = false;
-});
-
-gl.canvas.addEventListener('mousemove', (e) => {
-    mouseHandler.handleInput(e);
-    camera.updateCamera();
-});
-
-gl.canvas.addEventListener('wheel', (e) => {
-    camera.handleScroll(e);
-});
-
-
-function drawModel(model, translation) {
-    const uniforms = {
-        u_lightWorldPos: camera.getCameraPosition(0.785398, 0),
-        u_diffuse: model.textureUnit,
-        u_viewInverse: camera.getCameraMatrix(),
-        u_world: camera.getWorldMatrix(),
-        u_worldInverseTranspose: camera.getWorldInverseTranspose(),
-        u_worldViewProjection: camera.getWorldViewProjection(),
-        u_translate: translation
-    };
-
-    drawBufferWithShader(gl.TRIANGLES, model, uniforms, shaderManager.shadedProgram);
+/*
+const voxels = triangle.voxelise();
+for (const v of voxels) {
+    voxelRenderer.addVoxel(v[0], v[1], v[2]);
 }
+*/
 
-function drawGrid() {
-    const uniforms = {
-        u_worldViewProjection: camera.getWorldViewProjection(),
-        u_scale: v3.create(2.0/16.0, 2.0, 2.0/16.0)
-    };
-
-    drawBufferWithShader(gl.LINES, gridBuffer, uniforms, shaderManager.unshadedProgram);
-}
+//console.log(voxels);
+//console.log(`There are ${voxels.length} voxels`);
 
 
-function drawBufferWithShader(drawMode, buffer, uniforms, shader) {
-    gl.useProgram(shader.program);
-    twgl.setBuffersAndAttributes(gl, shader, buffer);
-    twgl.setUniforms(shader, uniforms);
-    gl.drawElements(drawMode, buffer.numElements, gl.UNSIGNED_SHORT, 0);
-}
+const aabb = new AABB(Vector3.create(0, 0, 0), 16.0);
 
 
 function render(time) {
@@ -90,28 +43,17 @@ function render(time) {
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     
     gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
+    //gl.enable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
     gl.clearColor(0.1, 0.1, 0.1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     camera.updateCameraPosition();
-    drawGrid();
-    
-    for (const buffer_info of suzanne_right_buffers) {
-        drawModel(buffer_info, v3.create(0.0, 0.0, 0.0));
-    }
 
-    for (const buffer_info of suzanne_left_buffers) {
-        drawModel(buffer_info, v3.create(0.0, 0.0, 0.0));
-    }
-
-    //drawModel(buffer_infos[0], v3.create(0.0, 0.0, 0.0));
-    
-    //for (const buffer_info of buffer_infos) {
-    //    drawModel(buffer_info, v3.create(0.0, 0.0, 0.0));
-    //}
-    
+    //triangle.drawTriangle(gl, camera);
+    //triangle.drawBounds(gl, camera);
+    //triangle.drawSubdivisions(gl, camera);
+    aabb.drawAABB(gl, camera);
 
     requestAnimationFrame(render);
 }

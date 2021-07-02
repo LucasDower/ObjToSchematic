@@ -10,7 +10,7 @@ class ArcballCamera {
         this.zNear = zNear;
         this.zFar = zFar;
 
-        this.actualDistance = 8.0;
+        this.actualDistance = 10.0;
         this.actualAzimuth = 0.6;
         this.actualElevation = 1.3;
 
@@ -29,7 +29,7 @@ class ArcballCamera {
         this.scrollSensitivity = 0.005;
 
         this.zoomDistMin = 2.0;
-        this.zoomDistMax = 15.0;
+        this.zoomDistMax = 30.0;
 
         this.isRotating = false;
     }

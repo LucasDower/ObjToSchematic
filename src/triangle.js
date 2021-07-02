@@ -1,95 +1,144 @@
 const { v3: Vector3 } = require('twgl.js');
-const mathUtil = require('./math.js');
+const twgl = require('twgl.js');
+const shaderManager = require('./shaders.js');
+const { AABB } = require('./aabb.js');
+const { xAxis, yAxis, zAxis } = require('./math.js'); 
 
 class Triangle {
 
-    constructor(v0, v1, v2) {
+    constructor(v0, v1, v2, voxelSize) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
+
+        const u = Vector3.subtract(v1, v0);
+        const v = Vector3.subtract(v1, v2);
+        this.normal = Vector3.normalize(Vector3.cross(u, v));
+
+        this.voxelSize = voxelSize;
+
+        this._bufferInfoReady = false;
+        this._aabb = new AABB(this, voxelSize);
     }
 
-    getBoundingBox(voxelSize) {
-        return { 
-            minX: mathUtil.floorTo(Math.min(this.v0[0], this.v1[0], this.v2[0]), voxelSize),
-            minY: mathUtil.floorTo(Math.min(this.v0[1], this.v1[1], this.v2[1]), voxelSize),
-            minZ: mathUtil.floorTo(Math.min(this.v0[2], this.v1[2], this.v2[2]), voxelSize),
-
-            maxX: mathUtil.ceilTo(Math.max(this.v0[0], this.v1[0], this.v2[0]), voxelSize),
-            maxY: mathUtil.ceilTo(Math.max(this.v0[1], this.v1[1], this.v2[1]), voxelSize),
-            maxZ: mathUtil.ceilTo(Math.max(this.v0[2], this.v1[2], this.v2[2]), voxelSize),
+    
+    _createBuffer(gl) {
+        this._buffer = {
+            position: [...this.v0, ...this.v1, ...this.v2],
+            normal: [...this.normal, ...this.normal, ...this.normal],
+            indices: [1, 0, 2]
         };
+        this._bufferInfo = twgl.createBufferInfoFromArrays(gl, this._buffer);
+
+        this._bufferInfoReady = true;
     }
+    
 
-    voxelise(voxelSize) {
-        let voxels = [];
+    _intersectsAABB(aabb) {
+        const v0 = Vector3.subtract(this.v0, aabb.centre);
+        const v1 = Vector3.subtract(this.v1, aabb.centre);
+        const v2 = Vector3.subtract(this.v2, aabb.centre);
 
-        let bb = this.getBoundingBox(voxelSize);
-        for (let x = bb.minX; x < bb.maxX; x += voxelSize) {
-            for (let y = bb.minY; y < bb.maxY; y += voxelSize) {
-                for (let z = bb.minZ; z < bb.maxZ; z += voxelSize) {
-                    if (this.voxelIntersect(x, y, z, voxelSize)) {
-                        voxels.push([x, y, z]);
-                    }
-                }
-            }
-        }
+        const f0 = Vector3.subtract(v1, v0);
+        const f1 = Vector3.subtract(v2, v1);
+        const f2 = Vector3.subtract(v0, v2);
 
-        return voxels;
-    }
+        let axis = [
+            Vector3.cross(xAxis, f0),
+            Vector3.cross(xAxis, f1),
+            Vector3.cross(xAxis, f2),
+            Vector3.cross(yAxis, f0),
+            Vector3.cross(yAxis, f1),
+            Vector3.cross(yAxis, f2),
+            Vector3.cross(zAxis, f0),
+            Vector3.cross(zAxis, f1),
+            Vector3.cross(zAxis, f2),
+            xAxis,
+            yAxis,
+            zAxis,
+            Vector3.cross(f0, f2)
+        ];
 
-    voxelIntersect(x, y, z, voxelSize) {
-        let c = Vector3.create(x, y, z);
-        let e = Vector3.create(voxelSize/2, voxelSize/2, voxelSize/2);
-
-        let v0_ = Vector3.subtract(this.v0, c);
-        let v1_ = Vector3.subtract(this.v1, c);
-        let v2_ = Vector3.subtract(this.v2, c);
-
-        let f0 = Vector3.subtract(v1_, v0_);
-        let f1 = Vector3.subtract(v2_, v1_);
-        let f2 = Vector3.subtract(v0_, v2_);
-
-        let a0 = Vector3.cross(f0, f2);
-        if (this.testAxis(v0_, v1_, v2_, a0, e)) {
-            return false;
-        }
-
-        let a1 = [mathUtil.xAxis, mathUtil.yAxis, mathUtil.zAxis];
-        for (let ax of a1) {
-            if (this.testAxis(v0_, v1_, v2_, ax, e)) {
+        for (const ax of axis) {
+            if (this._testAxis(v0, v1, v2, ax, aabb.size)) {
                 return false;
             }
         }
 
-        let axis = new Array(9);
-        axis[0] = Vector3.cross(mathUtil.xAxis, f0);
-        axis[1] = Vector3.cross(mathUtil.xAxis, f1);
-        axis[2] = Vector3.cross(mathUtil.xAxis, f2);
-        axis[3] = Vector3.cross(mathUtil.yAxis, f0);
-        axis[4] = Vector3.cross(mathUtil.yAxis, f1);
-        axis[5] = Vector3.cross(mathUtil.yAxis, f2);
-        axis[6] = Vector3.cross(mathUtil.zAxis, f0);
-        axis[7] = Vector3.cross(mathUtil.zAxis, f1);
-        axis[8] = Vector3.cross(mathUtil.zAxis, f2);
-        for (let ax of axis) {
-            if (this.testAxis(v0_, v1_, v2_, ax, e)) {
-                return false;
-            }
-        }
         return true;
     }
 
-    testAxis(v0_, v1_, v2_, axis, e) {
-        let p0 = Vector3.dot(v0_, axis);
-        let p1 = Vector3.dot(v1_, axis);
-        let p2 = Vector3.dot(v2_, axis);
+    _testAxis(v0, v1, v2, axis, e) {
+        const p0 = Vector3.dot(v0, axis);
+        const p1 = Vector3.dot(v1, axis);
+        const p2 = Vector3.dot(v2, axis);
 
-        let r = e[0] * Math.abs(Vector3.dot(mathUtil.xAxis, axis)) +
-                e[1] * Math.abs(Vector3.dot(mathUtil.yAxis, axis)) +
-                e[2] * Math.abs(Vector3.dot(mathUtil.zAxis, axis));
+        const r = e * (Math.abs(Vector3.dot(xAxis, axis)) + 
+                       Math.abs(Vector3.dot(yAxis, axis)) + 
+                       Math.abs(Vector3.dot(zAxis, axis)));
 
-        return (Math.min(p0, p1, p2) > r || Math.max(p0, p1, p2) < -r);
+        return Math.min(p0, p1, 2) > r || Math.max(p0, p1, p2) < -r;
+    }
+
+    
+    drawTriangle(gl, camera) {
+        if (!this._bufferInfoReady) {
+            this._createBuffer(gl);
+        }
+
+        const uniforms = {
+            u_fillColour: Vector3.create(0.0, 1.0, 0.0),
+            u_opacity: 1.0,
+            u_lightWorldPos: camera.getCameraPosition(0.785398, 0),
+            u_worldInverseTranspose: camera.getWorldInverseTranspose(),
+            u_worldViewProjection: camera.getWorldViewProjection()
+        };
+
+        const shader = shaderManager.unshadedProgram;
+        gl.useProgram(shader.program);
+        twgl.setBuffersAndAttributes(gl, shader, this._bufferInfo);
+        twgl.setUniforms(shader, uniforms);
+        gl.drawElements(gl.TRIANGLES, this._bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+    }
+
+    drawBounds(gl, camera) {
+        this._aabb.drawAABB(gl, camera);
+    }
+
+    drawSubdivisions(gl, camera) {
+        let queue = [this._aabb];
+        while (queue.length > 0) {
+            const aabb = queue.shift();
+            if (this._intersectsAABB(aabb)) {
+                const subdivisions = aabb.subdivide(this.voxelSize);
+                if (subdivisions) {
+                    queue.push(...subdivisions);
+                } else {
+                    aabb.drawAABB(gl, camera, Vector3.create(0.0, 1.0, 0.0));
+                } 
+            } else {
+                aabb.drawAABB(gl, camera, Vector3.create(1.0, 0.0, 0.0));
+            }
+        }
+    }
+    
+
+    voxelise() {
+        let voxels = [];
+
+        let queue = [this._aabb];
+        while (queue.length > 0) {
+            const aabb = queue.shift();
+            if (this._intersectsAABB(aabb)) {
+                const subdivisions = aabb.subdivide(this.voxelSize);
+                if (subdivisions) {
+                    queue.push(...subdivisions);
+                } else {
+                    voxels.push(aabb.centre);
+                } 
+            }
+        }
+        return voxels;
     }
 
 }
