@@ -9,5 +9,7 @@ A tool to convert .obj files into Minecraft Schematics
 1.0
 * ✔️ .json model loading
 * ✔️ Model voxelisation
-* ⌛ Greedy voxel meshing
+* ⌛ **Optimised voxelisation & rendering overhaul** (see [rewrite](https://github.com/LucasDower/ObjToSchematic/tree/rewrite))
+* Greedy voxel meshing
 * Export to schematic
+* Building guides
