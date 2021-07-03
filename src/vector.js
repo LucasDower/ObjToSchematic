@@ -1,5 +1,3 @@
-const { isVoidExpression, textChangeRangeIsUnchanged } = require("typescript");
-
 class Vector3 {
 
     constructor(x, y, z) {
