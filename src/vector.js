@@ -104,6 +104,8 @@ class Vector3 {
         this.x /= mag;
         this.y /= mag;
         this.z /= mag;
+
+        return this;
     }
 
 }

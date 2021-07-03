@@ -11,7 +11,7 @@ class Renderer {
         this._gl = document.querySelector("#c").getContext("webgl");
 
         this._fov = 30;
-        this._backgroundColour = new Vector3(0.1, 0.15, 0.2);
+        this._backgroundColour = new Vector3(0.1, 0.1, 0.1);
         this._strokeColour = new Vector3(1.0, 1.0, 1.0);
 
         this._camera = new ArcballCamera(this._fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 100.0);
@@ -127,7 +127,8 @@ class Renderer {
 
     _drawRegisters() {
         const uniforms = {
-            u_lightWorldPos: this._camera.getCameraPosition(0.5, 0.0),
+            //u_lightWorldPos: this._camera.getCameraPosition(0.5, 0.0),
+            u_lightWorldPos: new Vector3(4, 2, 1).normalise().toArray(),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
         };
@@ -278,7 +279,7 @@ class Renderer {
         this._filledRegisters.push(this._register);
         this._register = this._getEmptyRegister();
         //this._maxIndex = 0;
-        console.log("Cycling Registers");
+        //console.log("Cycling Registers");
     }
 
     _addDataToRegister(data, debug) {

@@ -49,6 +49,12 @@ class VoxelManager {
         //return voxels;
     }
 
+    voxeliseMesh(mesh) {
+        for (const triangle of mesh.triangles) {
+            this.voxeliseTriangle(triangle);
+        }
+    }
+
 }
 
 module.exports.VoxelManager = VoxelManager;
