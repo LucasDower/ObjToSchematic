@@ -95,6 +95,17 @@ class Vector3 {
         return this.x == vec.x && this.y == vec.y && this.z == vec.z;
     }
 
+    _magnitude() {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
+    }
+
+    normalise() {
+        const mag = this._magnitude();
+        this.x /= mag;
+        this.y /= mag;
+        this.z /= mag;
+    }
+
 }
 
 module.exports.Vector3 = Vector3;

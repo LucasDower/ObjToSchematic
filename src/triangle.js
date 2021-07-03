@@ -9,6 +9,11 @@ class Triangle {
         this.v1 = v1;
         this.v2 = v2;
 
+        const f0 = Vector3.sub(v1, v0);
+        const f1 = Vector3.sub(v0, v2);
+        this.normal = Vector3.cross(f0, f1);
+        this.normal.normalise();
+
         this._calculateBoundingBox();
     }
 
