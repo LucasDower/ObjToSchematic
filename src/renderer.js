@@ -14,7 +14,7 @@ class Renderer {
         this._backgroundColour = new Vector3(0.1, 0.15, 0.2);
         this._strokeColour = new Vector3(1.0, 1.0, 1.0);
 
-        this._camera = new ArcballCamera(this._fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 30.0);
+        this._camera = new ArcballCamera(this._fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 100.0);
 
         this._registerEvents();
 
@@ -50,7 +50,7 @@ class Renderer {
     begin() {
         twgl.resizeCanvasToDisplaySize(this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-        //this._camera.aspect = this._gl.canvas.width / this._gl.canvas.height;
+        this._camera.aspect = this._gl.canvas.width / this._gl.canvas.height;
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
