@@ -1,1 +1,0 @@
-const voxelSize = 1.0;
