@@ -1,4 +1,4 @@
-const { AABB } = require("./aabb.js");
+const { AABB, CubeAABB } = require("./aabb.js");
 const { Vector3 } = require("./vector.js");
 
 class VoxelManager {
@@ -32,11 +32,13 @@ class VoxelManager {
         gridSnappedCentre = Vector3.round(gridSnappedCentre);
         gridSnappedCentre = Vector3.mulScalar(gridSnappedCentre, this._voxelSize);
 
-        let size = this._voxelSize;
-        let cubeAABB = new AABB(gridSnappedCentre, new Vector3(size, size, size));
+        let width = this._voxelSize;
+        //let cubeAABB = new AABB(gridSnappedCentre, new Vector3(size, size, size));
+        let cubeAABB = new CubeAABB(gridSnappedCentre, width);
 
         while (!triangle.insideAABB(cubeAABB)) {
-            cubeAABB = new AABB(cubeAABB.centre, Vector3.mulScalar(cubeAABB.size, 2.0));
+            //cubeAABB = new AABB(cubeAABB.centre, Vector3.mulScalar(cubeAABB.size, 2.0));
+            cubeAABB = new CubeAABB(cubeAABB.centre, cubeAABB.width * 2.0);
         }
 
         return cubeAABB;
@@ -51,8 +53,8 @@ class VoxelManager {
         while (queue.length > 0) {
             const aabb = queue.shift();
             if (triangle.intersectAABB(aabb)) {
-                if (aabb.size.x > this._voxelSize) {
-                    // Continue to subdivicde
+                if (aabb.width > this._voxelSize) {
+                    // Continue to subdivide
                     queue.push(...aabb.subdivide());
                 } else {
                     // We've reached the voxel level, stop
@@ -60,24 +62,6 @@ class VoxelManager {
                 }
             }
         }
-
-        //console.log("Main AABB: ", cubeAABB);
-
-        /*
-        const subAABBs = cubeAABB.subdivide();
-        renderer.setStroke(new Vector3(1.0, 1.0, 0.0));
-        
-        for (const subAABB of subAABBs) {
-            if (triangle.intersectAABB(subAABB)) {
-                renderer.registerBox(subAABB.centre, subAABB.size);
-            }
-        }
-        */
-        
-        //const subAABB = subAABBs[0];
-        //console.log("Sub AABB: ", subAABB);
-        //console.log(triangle.intersectAABB(subAABB));
-        //renderer.registerBox(subAABB.centre, subAABB.size);
     }
 
 }

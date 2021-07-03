@@ -10,6 +10,7 @@ class AABB {
         this.b = Vector3.add(centre, Vector3.mulScalar(size, 0.5));
     }
 
+    /*
     subdivide() {
         const newSize = Vector3.divScalar(this.size, 2);
         const offset = Vector3.divScalar(this.size, 4);
@@ -25,7 +26,39 @@ class AABB {
             new AABB(Vector3.add(this.centre, new Vector3( offset.x,  offset.y,  offset.z)), newSize),
         ];
     }
+    */
 
 }
 
+class CubeAABB extends AABB {
+
+    constructor(centre, width) {
+        const sizeVector = new Vector3(width, width, width);
+        super(centre, sizeVector);
+        
+        this.width = width;
+
+    }
+
+    subdivide() {
+        const newWidth = this.width / 2;
+        const offset = this.width / 4;
+
+        return [
+            new CubeAABB(Vector3.add(this.centre, new Vector3(-offset, -offset, -offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3( offset, -offset, -offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3(-offset,  offset, -offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3( offset,  offset, -offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3(-offset, -offset,  offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3( offset, -offset,  offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3(-offset,  offset,  offset)), newWidth),
+            new CubeAABB(Vector3.add(this.centre, new Vector3( offset,  offset,  offset)), newWidth),
+        ];
+    }
+
+}
+
+
+
 module.exports.AABB = AABB;
+module.exports.CubeAABB = CubeAABB;
