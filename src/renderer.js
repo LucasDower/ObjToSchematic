@@ -18,16 +18,14 @@ class Renderer {
 
         this._registerEvents();
 
-        this._debugRegister = {
-            position: {numComponents: 3, data: []},
-            indices: {numComponents: 3, data: []},
-            colour: {numComponents: 3, data: []}
-        };
-        this._register = {
-            position: {numComponents: 3, data: []},
-            normal: {numComponents: 3, data: []},
-            indices: {numComponents: 3, data: []},
-        };
+        this._debugRegister = this._getEmptyRegister();
+        this._register = this._getEmptyRegister();
+
+        this._filledDebugRegisters = [];
+        this._filledRegisters = [];
+
+        this._registerBuffers = [];
+        this._debugRegisterBuffers = [];
 
         this._debugMaxIndex = 0;
         this._maxIndex = 0;
@@ -36,6 +34,22 @@ class Renderer {
         this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
 
         this._registersOpen = true;
+    }
+
+    _getEmptyDebugRegister() {
+        return {
+            position: {numComponents: 3, data: []},
+            indices: {numComponents: 3, data: []},
+            colour: {numComponents: 3, data: []}
+        };
+    }
+
+    _getEmptyRegister() {
+        return {
+            position: {numComponents: 3, data: []},
+            normal: {numComponents: 3, data: []},
+            indices: {numComponents: 3, data: []},
+        };
     }
 
     _registerEvents() {
@@ -73,8 +87,17 @@ class Renderer {
     }
 
     compileRegister() {
-        this._debugRegisterBuffer = twgl.createBufferInfoFromArrays(this._gl, this._debugRegister);
-        this._registerBuffer = twgl.createBufferInfoFromArrays(this._gl, this._register);
+        this._cycleRegister();
+        this._cycleDebugRegister();
+
+        for (const register of this._filledRegisters) {
+            this._registerBuffers.push(twgl.createBufferInfoFromArrays(this._gl, register));
+        }
+        for (const debugRegister of this._filledDebugRegisters) {
+            this._debugRegisterBuffers.push(twgl.createBufferInfoFromArrays(this._gl, debugRegister));
+        }
+        //this._debugRegisterBuffer = twgl.createBufferInfoFromArrays(this._gl, this._debugRegister);
+        //this._registerBuffer = twgl.createBufferInfoFromArrays(this._gl, this._register);
         this._registersOpen = false;
     }
 
@@ -88,27 +111,30 @@ class Renderer {
             return;
         }
 
-        this._drawDebugRegister();
-        this._drawRegister();
+        this._drawDebugRegisters();
+        this._drawRegisters();
     }
 
-    _drawDebugRegister() {
+    _drawDebugRegisters() {
         const uniforms = {
             u_worldViewProjection: this._camera.getWorldViewProjection()
         };
         
-        this._drawBuffer(this._gl.LINES, this._debugRegisterBuffer, shaderManager.debugProgram, uniforms);
+        for (const debugBuffer of this._debugRegisterBuffers) {
+            this._drawBuffer(this._gl.LINES, debugBuffer, shaderManager.debugProgram, uniforms);
+        }
     }
 
-    _drawRegister() {
+    _drawRegisters() {
         const uniforms = {
-            //u_lightWorldPos: new Vector3(1, 2, 0.5).toArray(),
             u_lightWorldPos: this._camera.getCameraPosition(0.5, 0.0),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
         };
 
-        this._drawBuffer(this._gl.TRIANGLES, this._registerBuffer, shaderManager.shadedProgram, uniforms);
+        for (const buffer of this._registerBuffers) {
+            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderManager.shadedProgram, uniforms);
+        }
     }
 
     _drawBuffer(drawMode, buffer, shader, uniforms) {
@@ -118,7 +144,6 @@ class Renderer {
         this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_SHORT, 0);
     }
 
-    // TODO 
     _getBoxData(centre, size, debug) {
         const a = Vector3.sub(centre, Vector3.mulScalar(size, 0.5));
         const b = Vector3.add(centre, Vector3.mulScalar(size, 0.5));
@@ -237,8 +262,17 @@ class Renderer {
         }
     }
 
-    _cycleBuffers() {
-
+    _cycleDebugRegister() {
+        this._filledDebugRegisters.push(this._register);
+        this._debugRegister = this._getEmptyDebugRegister();
+        //this._debugMaxIndex = 0;
+    }
+    
+    _cycleRegister() {
+        this._filledRegisters.push(this._register);
+        this._register = this._getEmptyRegister();
+        //this._maxIndex = 0;
+        console.log("Cycling Registers");
     }
 
     _addDataToRegister(data, debug) {
@@ -248,6 +282,12 @@ class Renderer {
         }
 
         if (debug) {
+            let newMaxIndex = this._debugMaxIndex + 1 + Math.max(...data.indices);
+            if (newMaxIndex >= 65535) {
+                this._cycleDebugRegister();
+                newMaxIndex = 0;
+            }
+
             this._debugRegister.position.data.push(...data.position);
             this._debugRegister.indices.data.push(...data.indices.map(x => x + this._debugMaxIndex));
 
@@ -255,12 +295,12 @@ class Renderer {
             const vertexColours = [].concat(...new Array(numVertices).fill(this._strokeColour.toArray()));
             this._debugRegister.colour.data.push(...vertexColours);
 
-            this._debugMaxIndex += 1 + Math.max(...data.indices);
+            this._debugMaxIndex = newMaxIndex;
         } else {
-            const newMaxIndex = this._maxIndex + 1 + Math.max(...data.indices);
+            let newMaxIndex = this._maxIndex + 1 + Math.max(...data.indices);
             if (newMaxIndex >= 65535) {
-                console.warn("Overloaded buffer");
-                return;
+                this._cycleRegister();
+                newMaxIndex = 0;
             }
 
             this._register.position.data.push(...data.position);
