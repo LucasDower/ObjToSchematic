@@ -10,7 +10,7 @@ class ArcballCamera {
         this.zNear = zNear;
         this.zFar = zFar;
 
-        this.actualDistance = 10.0;
+        this.actualDistance = 15.0;
         this.actualAzimuth = 0.6;
         this.actualElevation = 1.3;
 

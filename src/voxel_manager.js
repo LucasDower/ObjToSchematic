@@ -5,26 +5,7 @@ class VoxelManager {
 
     constructor(voxelSize) {
         this._voxelSize = voxelSize;
-    }
-
-    cubeifyAABB(aabb, gridSnap) {
-        const size = aabb.size;
-        const maxDimension = Math.max(size.x, size.y, size.z);
-        let newSize = new Vector3(maxDimension, maxDimension, maxDimension);
-
-        if (gridSnap) {
-            let newCentre = Vector3.divScalar(aabb.centre, this._voxelSize);
-            newCentre = Vector3.round(newCentre);
-            newCentre = Vector3.mulScalar(newCentre, this._voxelSize);
-
-            const offset = Vector3.sub(aabb.centre, newCentre);
-            console.log(offset);
-
-            //let newSize
-
-            return new AABB(newCentre, newSize);
-        }
-        return new AABB(aabb.centre, newSize);
+        this.voxels = [];
     }
 
     _getTriangleCubeAABB(triangle) {
@@ -44,10 +25,11 @@ class VoxelManager {
         return cubeAABB;
     }
 
-    voxeliseTriangle(triangle, renderer) {
+    voxeliseTriangle(triangle) {
         const cubeAABB = this._getTriangleCubeAABB(triangle);
 
-        renderer.setStroke(new Vector3(1.0, 1.0, 1.0));
+        //renderer.setStroke(new Vector3(1.0, 1.0, 1.0));
+        //let voxels = [];
 
         let queue = [cubeAABB];
         while (queue.length > 0) {
@@ -58,10 +40,13 @@ class VoxelManager {
                     queue.push(...aabb.subdivide());
                 } else {
                     // We've reached the voxel level, stop
-                    renderer.registerBox(aabb.centre, aabb.size);
+                    //renderer.registerBox(aabb.centre, aabb.size);
+                    this.voxels.push(aabb.centre);
                 }
             }
         }
+
+        //return voxels;
     }
 
 }

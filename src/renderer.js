@@ -7,7 +7,7 @@ const shaderManager = require('./shaders.js');
 
 class Renderer {
 
-    constructor() {
+    constructor(voxelSize) {
         this._gl = document.querySelector("#c").getContext("webgl");
 
         this._fov = 30;
@@ -24,6 +24,9 @@ class Renderer {
             colour: {numComponents: 3, data: []}
         };
         this._maxIndex = 0;
+
+        //this._voxelSize = voxelSize;
+        this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
 
         this._registerOpen = true;
     }
@@ -129,6 +132,7 @@ class Renderer {
         };
     }
 
+    /*
     // Use when immediate drawing
     drawBox(centre, size) {
         const data = this._getBoxData(centre, size);
@@ -140,18 +144,43 @@ class Renderer {
         const data = this._getTriangleData(a, b, c);
         this._drawData(data);
     }
+    */
 
     
     // Use when drawing the same thing each frame
-    registerBox(centre, size) {
-        const data = this._getBoxData(centre, size);
-        this._addDataToRegister(data);
+    registerBox(centre, size, debug) {
+        if (debug) {
+            const data = this._getBoxData(centre, size);
+            this._addDataToRegister(data);
+        } else {
+            // TODO
+        }
     }
 
     // Use when drawing the same triangle each frame
+    /*
     registerTriangle(a, b, c) {
         const data = this._getTriangleData(a, b, c);
         this._addDataToRegister(data);
+    }*/
+    registerTriangle(triangle, debug) {
+        if (debug) {
+            const data = this._getTriangleData(triangle.v0, triangle.v1, triangle.v2);
+            this._addDataToRegister(data);
+        } else {
+            // TODO
+        }
+    }
+
+    registerVoxel(centre) {
+        const data = this._getBoxData(centre, this._voxelSizeVector);
+        this._addDataToRegister(data);
+    }
+
+    registerVoxels(voxelCentres) {
+        for (const voxelCentre of voxelCentres) {
+            this.registerVoxel(voxelCentre);
+        }
     }
 
     _addDataToRegister(data) {

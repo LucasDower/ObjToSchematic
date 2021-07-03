@@ -84,6 +84,17 @@ class Vector3 {
         );
     }
 
+    hash() {
+        const p0 = 73856093;
+        const p1 = 19349663;
+        const p2 = 83492791;
+        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2); 
+    }
+
+    equals(vec) {
+        return this.x == vec.x && this.y == vec.y && this.z == vec.z;
+    }
+
 }
 
 module.exports.Vector3 = Vector3;
