@@ -25,4 +25,5 @@ Since no build has been released yet, you'll need to:
 * Download and install [Node.js](https://nodejs.org/en/).
 * Execute `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
 * Navigate to `/ObjToSchematic-main`.
+* Run `npm install`.
 * Run `npm start`.
