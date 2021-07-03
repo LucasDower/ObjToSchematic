@@ -246,6 +246,12 @@ class Renderer {
         this._addDataToRegister(data);
     }*/
 
+    registerMesh(mesh) {
+        for (const triangle of mesh.triangles) {
+            this.registerTriangle(triangle, false);
+        }
+    }
+
     registerTriangle(triangle, debug) {
         const data = this._getTriangleData(triangle, debug);
         this._addDataToRegister(data, debug);
