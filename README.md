@@ -10,7 +10,7 @@ A tool to convert .obj files into Minecraft Schematics
 * ✔️ **.json model loading**
 * ✔️ **Model voxelisation**
 * ✔️ **Optimised voxelisation & rendering overhaul**
-* ✔️ *Basic .obj file loader UI*
+* ✔️ **Basic .obj file loader UI**
 
 0.2
 * Greedy voxel meshing
