@@ -18,7 +18,7 @@ class Renderer {
 
         this._registerEvents();
 
-        this._debugRegister = this._getEmptyRegister();
+        this._debugRegister = this._getEmptyDebugRegister();
         this._register = this._getEmptyRegister();
 
         this._filledDebugRegisters = [];
@@ -39,8 +39,8 @@ class Renderer {
     _getEmptyDebugRegister() {
         return {
             position: {numComponents: 3, data: []},
-            indices: {numComponents: 3, data: []},
-            colour: {numComponents: 3, data: []}
+            colour: {numComponents: 3, data: []},
+            indices: {numComponents: 3, data: []}
         };
     }
 
@@ -90,6 +90,8 @@ class Renderer {
         this._cycleRegister();
         this._cycleDebugRegister();
 
+        //console.log(this._debug);
+
         for (const register of this._filledRegisters) {
             this._registerBuffers.push(twgl.createBufferInfoFromArrays(this._gl, register));
         }
@@ -107,12 +109,30 @@ class Renderer {
 
     end() {
         if (this._registersOpen) {
-            console.error("Trying to draw register objects before register is closed. Call compileRegister() first.");
+            //console.error("Trying to draw register objects before register is closed. Call compileRegister() first.");
             return;
         }
 
         this._drawDebugRegisters();
         this._drawRegisters();
+    }
+
+    clear() {
+        console.log("clearing");
+        
+        this._debugRegister = this._getEmptyDebugRegister();
+        this._register = this._getEmptyRegister();
+
+        this._filledDebugRegisters = [];
+        this._filledRegisters = [];
+
+        this._registerBuffers = [];
+        this._debugRegisterBuffers = [];
+
+        this._debugMaxIndex = 0;
+        this._maxIndex = 0;
+
+        this._registersOpen = true;
     }
 
     _drawDebugRegisters() {
@@ -258,19 +278,19 @@ class Renderer {
         this._addDataToRegister(data, debug);
     }
 
-    registerVoxel(centre) {
-        const data = this._getBoxData(centre, this._voxelSizeVector, false);
-        this._addDataToRegister(data, false);
+    registerVoxel(centre, debug) {
+        const data = this._getBoxData(centre, this._voxelSizeVector, debug);
+        this._addDataToRegister(data, debug);
     }
 
-    registerVoxels(voxelCentres) {
+    registerVoxels(voxelCentres, debug) {
         for (const voxelCentre of voxelCentres) {
-            this.registerVoxel(voxelCentre);
+            this.registerVoxel(voxelCentre, debug);
         }
     }
 
     _cycleDebugRegister() {
-        this._filledDebugRegisters.push(this._register);
+        this._filledDebugRegisters.push(this._debugRegister);
         this._debugRegister = this._getEmptyDebugRegister();
         //this._debugMaxIndex = 0;
     }
