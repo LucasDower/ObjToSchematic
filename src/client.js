@@ -18,16 +18,6 @@ function resizeCanvas() {
 }
 
 resizeCanvas();
-
-/*
-const suzanneLeft = new Mesh('./resources/suzanne_left.obj');
-voxelManager.voxeliseMesh(suzanneLeft);
-renderer.registerVoxels(voxelManager.voxels);
-
-const suzanneRight = new Mesh('./resources/suzanne_right.obj');
-renderer.registerMesh(suzanneRight);
-*/
-
 let loadedMesh = null;
 
 document.querySelector("#objBtn").addEventListener('click', () => {
@@ -61,30 +51,14 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
 
     renderer.clear();
     const mesh = voxelManager.buildMesh();
+    
     for (const box of mesh) {
         renderer.registerBox(box.centre, box.size, false);
         //renderer.registerBox(box.centre, box.size, true);
     }
-    
-    //renderer.registerVoxels(voxelManager.voxels, false);
+
     renderer.compileRegister();
 });
-
-
-
-//voxelManager.addVoxel(new Vector3(0, 0, 0));
-//voxelManager.addVoxel(new Vector3(voxelSize, 0, 0));
-
-loadedMesh = new Mesh("./resources/suzanne.obj");
-voxelManager.voxeliseMesh(loadedMesh);
-
-const mesh = voxelManager.buildMesh();
-for (const box of mesh) {
-    renderer.registerBox(box.centre, box.size, false);
-    renderer.registerBox(box.centre, box.size, true);
-}
-renderer.compileRegister();
-
 
 function render(time) {
     resizeCanvas();
