@@ -32,6 +32,7 @@ class Renderer {
 
         this._voxelSize = voxelSize;
         this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        this._cube = twgl.primitives.createCubeVertices(this._voxelSize);
 
         this._registersOpen = true;
     }
@@ -138,6 +139,7 @@ class Renderer {
     setVoxelSize(voxelSize) {
         this._voxelSize = voxelSize;
         this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        this._cube = twgl.primitives.createCubeVertices(this._voxelSize);
     }
 
     _drawDebugRegisters() {
@@ -193,7 +195,15 @@ class Renderer {
                 ]
             };
         } else {
-            let cube = twgl.primitives.createCubeVertices(this._voxelSize);
+            let cube = {
+                position: new Float32Array(72),
+                normal: new Float32Array(72),
+                indices: new Float32Array(72)
+            };
+            
+            cube.position.set(this._cube.position);
+            cube.normal.set(this._cube.normal);
+            cube.indices.set(this._cube.indices);
             
             for (let i = 0; i < 72; i += 3) {
                 cube.position[i + 0] += centre.x;
