@@ -4,7 +4,7 @@ const { VoxelManager } = require('./src/voxel_manager.js');
 const { Vector3 } = require('./src/vector.js');
 
 //const voxelSize = document.querySelector("#voxelInput").value;
-const voxelSize = 0.05;
+const voxelSize = 0.025;
 let renderer = new Renderer(voxelSize);
 const voxelManager = new VoxelManager(voxelSize);
 
@@ -58,33 +58,31 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
     voxelManager.setVoxelSize(voxelSize);
     
     voxelManager.voxeliseMesh(loadedMesh);
-    
+
     renderer.clear();
-    renderer.registerVoxels(voxelManager.voxels, false);
+    const mesh = voxelManager.buildMesh();
+    for (const box of mesh) {
+        renderer.registerBox(box.centre, box.size, false);
+        //renderer.registerBox(box.centre, box.size, true);
+    }
+    
+    //renderer.registerVoxels(voxelManager.voxels, false);
     renderer.compileRegister();
 });
+
+
+
+//voxelManager.addVoxel(new Vector3(0, 0, 0));
+//voxelManager.addVoxel(new Vector3(voxelSize, 0, 0));
 
 loadedMesh = new Mesh("./resources/suzanne.obj");
 voxelManager.voxeliseMesh(loadedMesh);
 
-const useNew = true;
-const useDebug = true;
-
-if (useNew) {
-    const mesh = voxelManager.buildMesh();
-    for (const box of mesh) {
-        renderer.registerBox(box.centre, box.size, useDebug);
-    }
-} else {
-    renderer.registerVoxels(voxelManager.voxels, useDebug);
+const mesh = voxelManager.buildMesh();
+for (const box of mesh) {
+    renderer.registerBox(box.centre, box.size, false);
+    renderer.registerBox(box.centre, box.size, true);
 }
-
-//console.log(voxelManager.voxels.length, "->", k.length, voxelManager.voxels.length/k.length);
-
-
-
-//renderer.setStroke(new Vector3(1.0, 0.0, 0.0));
-//renderer.registerVoxels(voxelManager.voxels, true);
 renderer.compileRegister();
 
 

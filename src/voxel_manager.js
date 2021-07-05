@@ -15,7 +15,7 @@ class VoxelManager {
         this.maxX = -Infinity;
         this.maxY = -Infinity;
         this.maxZ = -Infinity;
-        this.voxelsHash = new HashSet(512);
+        this.voxelsHash = new HashSet(2048);
     }
 
     setVoxelSize(voxelSize) {
@@ -47,16 +47,30 @@ class VoxelManager {
     _voxelCentreToPosition(vec) {
         //Vector3.round(Vector3.subScalar(Vector3.divScalar(vec, this._voxelSize), 0.5));
         return new Vector3(
-            Math.round((vec.x / this._voxelSize) - 0.5),
-            Math.round((vec.y / this._voxelSize) - 0.5),
-            Math.round((vec.z / this._voxelSize) - 0.5)
+            Math.round(vec.x / this._voxelSize),
+            Math.round(vec.y / this._voxelSize),
+            Math.round(vec.z / this._voxelSize)
+        );
+    }
+
+    _voxelPositionToCentre(vec) {
+        return new Vector3(
+            vec.x * this._voxelSize,
+            vec.y * this._voxelSize,
+            vec.z * this._voxelSize
         );
     }
 
     addVoxel(vec) {
-        this.voxels.push(vec);
+        // (0.5, 0.5, 0.5) -> (0, 0, 0);
+        vec = Vector3.subScalar(vec, this._voxelSize / 2);
 
         const pos = this._voxelCentreToPosition(vec);
+        if (this.voxelsHash.contains(pos)) {
+            return;
+        }
+
+        this.voxels.push(vec);
         this.voxelsHash.add(pos, true);
 
         this.minX = Math.min(this.minX, vec.x);
@@ -67,41 +81,112 @@ class VoxelManager {
         this.maxZ = Math.max(this.maxZ, vec.z);
     }
 
+    _findXExtent(pos) {
+        let xEnd = pos.x + 1;
+
+        while (this.voxelsHash.contains(new Vector3(xEnd, pos.y, pos.z)) && !this.seen.contains(new Vector3(xEnd, pos.y, pos.z))) {
+            //console.log("Marking:", new Vector3(xEnd, y, z));
+            this.seen.add(new Vector3(xEnd, pos.y, pos.z));
+            ++xEnd;
+        }
+
+        return xEnd - 1;
+    }
+
+    _findZExtent(pos, xEnd) {
+        let canMerge = true;
+        let zEnd = pos.z + 1;
+
+        do {
+            //console.log("zEnd:", z, zEnd);
+            for (let i = pos.x; i <= xEnd; ++i) {
+                const here = new Vector3(i, pos.y, zEnd);
+                if (!this.voxelsHash.contains(here) || this.seen.contains(here)) {
+                    canMerge = false;
+                    break;
+                }
+            }
+            if (canMerge) {
+                // Mark all as seen
+                for (let i = pos.x; i <= xEnd; ++i) {
+                    const here = new Vector3(i, pos.y, zEnd);
+                    //console.log("Marking:", new Vector3(xEnd, y, z));
+                    this.seen.add(here);
+                }
+                ++zEnd;
+            }
+        } while (canMerge);
+
+        return zEnd - 1;
+    }
+
+    _findYExtent(pos, xEnd, zEnd) {
+        let canMerge = true;
+        let yEnd = pos.y + 1;
+
+        do {
+            for (let i = pos.x; i <= xEnd; ++i) {
+                for (let j = pos.z; j <= zEnd; ++j) {
+                    const here = new Vector3(i, yEnd, j);
+                    if (!this.voxelsHash.contains(here) || this.seen.contains(here)) {
+                        canMerge = false;
+                        break;
+                    }
+                }
+            }
+
+            if (canMerge) {
+                // Mark all as seen
+                for (let i = pos.x; i <= xEnd; ++i) {
+                    for (let j = pos.z; j <= zEnd; ++j) {
+                        const here = new Vector3(i, yEnd, j);
+                        this.seen.add(here);
+                    }
+                }
+                ++yEnd;
+            }
+        } while (canMerge);
+
+        return yEnd - 1;
+    }
+
     buildMesh() {
 
-        let mesh = [];
+        this.mesh = [];
+        this.seen = new HashSet(2048);
+        console.log(this.voxelsHash);
 
-        //const minPos = this._voxelCentreToPosition(new Vector3(this.minX, this.minY, this.minZ));
-        //const maxPos = this._voxelCentreToPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
+        const minPos = this._voxelCentreToPosition(new Vector3(this.minX, this.minY, this.minZ));
+        const maxPos = this._voxelCentreToPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
 
-        for (let y = this.minY; y <= this.maxY; y += this._voxelSize) {
-            for (let z = this.minZ; z <= this.maxZ; z += this._voxelSize) {
-                let penDown = false;
-                let begin = null;
+        for (let y = minPos.y; y <= maxPos.y; ++y) {
+            for (let z = minPos.z; z <= maxPos.z; ++z) {
+                for (let x = minPos.x; x <= maxPos.x; ++x) {
+                    
+                    const pos = new Vector3(x, y, z);
 
-                for (let x = this.minX; x < this.maxX + 2 * this._voxelSize; x += this._voxelSize) {
-                    const vec = new Vector3(x, y, z);
-                    const pos = this._voxelCentreToPosition(vec);
-                    const voxelHere = this.voxelsHash.contains(pos);
-
-                    if (!penDown && voxelHere) {
-                        penDown = true;
-                        begin = vec;
+                    if (this.seen.contains(pos) || !this.voxelsHash.contains(pos)) {
+                        continue;
                     }
-                    else if (penDown && !voxelHere) {
-                        penDown = false;
-                        let end = new Vector3(x - this._voxelSize, y, z);
 
-                        let centre = Vector3.divScalar(Vector3.add(begin, end), 2);
-                        let size = new Vector3(end.x - begin.x + this._voxelSize, this._voxelSize, this._voxelSize);
+                    let xEnd = this._findXExtent(pos);
+                    let zEnd = this._findZExtent(pos, xEnd);
+                    let yEnd = this._findYExtent(pos, xEnd, zEnd);
 
-                        mesh.push({centre: centre, size: size});
-                    }
+                    let centre = new Vector3((xEnd + x)/2, (yEnd + y)/2, (zEnd + z)/2);
+                    let size = new Vector3(xEnd - x + 1, yEnd - y + 1, zEnd - z + 1);
+
+                    this.mesh.push({
+                        centre: this._voxelPositionToCentre(centre),
+                        size: this._voxelPositionToCentre(size)
+                    });
                 }
             }
         }
 
-        return mesh;
+        console.log("Mesh:", this.mesh);
+
+        return this.mesh;
     }
 
     voxeliseTriangle(triangle) {
