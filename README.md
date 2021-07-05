@@ -5,6 +5,8 @@ A tool to convert .obj files into Minecraft Schematics
 
 ![Preview](/resources/preview.png)
 
+![DebugPreview](/resources/debug_preview.png)
+
 # Progress
 0.1
 * ✔️ **.json model loading**
