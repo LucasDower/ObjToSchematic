@@ -26,6 +26,14 @@ class Vector3 {
         );
     }
 
+    static subScalar(vec, scalar) {
+        return new Vector3(
+            vec.x - scalar,
+            vec.y - scalar,
+            vec.z - scalar
+        );
+    }
+
     static dot(vecA, vecB) {
         return vecA.x * vecB.x + vecA.y * vecB.y + vecA.z * vecB.z;
     }

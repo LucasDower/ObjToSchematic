@@ -3,7 +3,8 @@ const { Mesh } = require('./src/mesh.js');
 const { VoxelManager } = require('./src/voxel_manager.js');
 const { Vector3 } = require('./src/vector.js');
 
-const voxelSize = 0.5;
+//const voxelSize = document.querySelector("#voxelInput").value;
+const voxelSize = 0.05;
 let renderer = new Renderer(voxelSize);
 const voxelManager = new VoxelManager(voxelSize);
 
@@ -62,6 +63,29 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
     renderer.registerVoxels(voxelManager.voxels, false);
     renderer.compileRegister();
 });
+
+loadedMesh = new Mesh("./resources/suzanne.obj");
+voxelManager.voxeliseMesh(loadedMesh);
+
+const useNew = true;
+const useDebug = true;
+
+if (useNew) {
+    const mesh = voxelManager.buildMesh();
+    for (const box of mesh) {
+        renderer.registerBox(box.centre, box.size, useDebug);
+    }
+} else {
+    renderer.registerVoxels(voxelManager.voxels, useDebug);
+}
+
+//console.log(voxelManager.voxels.length, "->", k.length, voxelManager.voxels.length/k.length);
+
+
+
+//renderer.setStroke(new Vector3(1.0, 0.0, 0.0));
+//renderer.registerVoxels(voxelManager.voxels, true);
+renderer.compileRegister();
 
 
 function render(time) {
