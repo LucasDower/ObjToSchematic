@@ -14,7 +14,12 @@
     <nav id="nav" class="navbar navbar-dark bg-dark">
       <div class="input-group w-25 mx-auto">
         <input type="file" class="form-control" id="objFile" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-        <button id="objBtn" class="btn btn-outline-secondary" type="button" id="inputGroupFileAddon04">Load</button>
+        <button id="objBtn" class="btn btn-primary" type="button" id="inputGroupFileAddon04">Load</button>
+      </div>
+      <div class="input-group w-25 mx-auto">
+        <label class="input-group-text" for="inputGroupFileAddon03">Options</label>
+        <input type="number" min="0.1" step="0.1" value="1.0" class="form-control" id="voxelInput" aria-describedby="inputGroupFileAddon03" aria-label="Voxel size" disabled>
+        <button id="voxelBtn" class="btn btn-primary" type="button" id="inputGroupFileAddon03" disabled>Voxelise</button>
       </div>
     </nav>
 

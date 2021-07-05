@@ -6,6 +6,16 @@ class VoxelManager {
     constructor(voxelSize) {
         this._voxelSize = voxelSize;
         this.voxels = [];
+        this.failedAABBs = [];
+    }
+
+    setVoxelSize(voxelSize) {
+        this._voxelSize = voxelSize;
+    }
+
+    clear() {
+        this.voxels = [];
+        this.failedAABBs = [];
     }
 
     _getTriangleCubeAABB(triangle) {
@@ -43,6 +53,8 @@ class VoxelManager {
                     //renderer.registerBox(aabb.centre, aabb.size);
                     this.voxels.push(aabb.centre);
                 }
+            } else {
+                this.failedAABBs.push(aabb);
             }
         }
 

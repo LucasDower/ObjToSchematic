@@ -29,7 +29,7 @@ class ArcballCamera {
         this.scrollSensitivity = 0.005;
 
         this.zoomDistMin = 2.0;
-        this.zoomDistMax = 30.0;
+        this.zoomDistMax = 100.0;
 
         this.isRotating = false;
     }

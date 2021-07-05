@@ -135,6 +135,11 @@ class Renderer {
         this._registersOpen = true;
     }
 
+    setVoxelSize(voxelSize) {
+        this._voxelSize = voxelSize;
+        this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+    }
+
     _drawDebugRegisters() {
         const uniforms = {
             u_worldViewProjection: this._camera.getWorldViewProjection()
