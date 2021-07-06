@@ -3,13 +3,16 @@ const { Mesh } = require('./src/mesh.js');
 const { VoxelManager } = require('./src/voxel_manager.js');
 const { Vector3 } = require('./src/vector.js');
 
-const voxelSize = 0.5;
+//const voxelSize = document.querySelector("#voxelInput").value;
+const voxelSize = 0.025;
 let renderer = new Renderer(voxelSize);
 const voxelManager = new VoxelManager(voxelSize);
 
 const nav = document.querySelector("#nav");
 let canvas = document.querySelector("#c");
 
+const showMeshing = false;
+const showFailedAABBs = true;
 
 function resizeCanvas() {
     canvas.height = window.innerHeight - 54;
@@ -17,16 +20,6 @@ function resizeCanvas() {
 }
 
 resizeCanvas();
-
-/*
-const suzanneLeft = new Mesh('./resources/suzanne_left.obj');
-voxelManager.voxeliseMesh(suzanneLeft);
-renderer.registerVoxels(voxelManager.voxels);
-
-const suzanneRight = new Mesh('./resources/suzanne_right.obj');
-renderer.registerMesh(suzanneRight);
-*/
-
 let loadedMesh = null;
 
 document.querySelector("#objBtn").addEventListener('click', () => {
@@ -47,6 +40,7 @@ document.querySelector("#objBtn").addEventListener('click', () => {
     renderer.compileRegister();
 });
 
+
 document.querySelector("#voxelBtn").addEventListener('click', () => {
     const voxelSize = document.querySelector("#voxelInput").value;
     
@@ -55,14 +49,32 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
 
     renderer.setVoxelSize(voxelSize);
     voxelManager.setVoxelSize(voxelSize);
-    
+
     voxelManager.voxeliseMesh(loadedMesh);
-    
+
     renderer.clear();
-    renderer.registerVoxels(voxelManager.voxels, false);
+    
+    const mesh = voxelManager.buildMesh();
+    for (const box of mesh) {
+        renderer.registerBox(box.centre, box.size, false);
+    }
+
+    if (showMeshing) {
+        renderer.setStroke(new Vector3(1.0, 0.0, 0.0));
+        for (const box of mesh) {
+            renderer.registerBox(box.centre, box.size, true);
+        }
+    }
+
+    if (showFailedAABBs) {
+        renderer.setStroke(new Vector3(0.0, 0.0, 1.0));
+        for (const box of voxelManager.failedAABBs) {
+            renderer.registerBox(box.centre, box.size, true);
+        }
+    }
+    
     renderer.compileRegister();
 });
-
 
 function render(time) {
     resizeCanvas();

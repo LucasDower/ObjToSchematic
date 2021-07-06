@@ -32,6 +32,7 @@ class Renderer {
 
         this._voxelSize = voxelSize;
         this._voxelSizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        this._cube = twgl.primitives.createCubeVertices(1.0);
 
         this._registersOpen = true;
     }
@@ -118,7 +119,7 @@ class Renderer {
     }
 
     clear() {
-        console.log("clearing");
+        //console.log("clearing");
         
         this._debugRegister = this._getEmptyDebugRegister();
         this._register = this._getEmptyRegister();
@@ -193,12 +194,21 @@ class Renderer {
                 ]
             };
         } else {
-            let cube = twgl.primitives.createCubeVertices(this._voxelSize);
+            
+            let cube = {
+                position: new Float32Array(72),
+                normal: new Float32Array(72),
+                indices: new Float32Array(72)
+            };
+            
+            cube.position.set(this._cube.position);
+            cube.normal.set(this._cube.normal);
+            cube.indices.set(this._cube.indices);
             
             for (let i = 0; i < 72; i += 3) {
-                cube.position[i + 0] += centre.x;
-                cube.position[i + 1] += centre.y;
-                cube.position[i + 2] += centre.z;
+                cube.position[i + 0] = (cube.position[i + 0] * size.x) + centre.x;
+                cube.position[i + 1] = (cube.position[i + 1] * size.y) + centre.y;
+                cube.position[i + 2] = (cube.position[i + 2] * size.z) + centre.z;
             }
 
             return cube;
@@ -262,6 +272,7 @@ class Renderer {
     // Use when drawing the same thing each frame
     registerBox(centre, size, debug) {
         const data = this._getBoxData(centre, size, debug);
+        //console.log(data);
         this._addDataToRegister(data, debug);
     }
 
@@ -289,9 +300,16 @@ class Renderer {
     }
 
     registerVoxels(voxelCentres, debug) {
+        /*
+        for (let i = 0; i < voxelCentres.length; ++i) {
+            console.log(i / voxelCentres.length);
+            this.registerVoxel(voxelCentres[i], debug);
+        }
+        */
         for (const voxelCentre of voxelCentres) {
             this.registerVoxel(voxelCentre, debug);
         }
+        
     }
 
     _cycleDebugRegister() {
@@ -305,6 +323,10 @@ class Renderer {
         this._register = this._getEmptyRegister();
         //this._maxIndex = 0;
         //console.log("Cycling Registers");
+    }
+
+    _willDataOverflowBuffer(data) {
+
     }
 
     _addDataToRegister(data, debug) {

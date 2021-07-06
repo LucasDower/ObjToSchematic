@@ -18,11 +18,27 @@ class Vector3 {
         );
     }
 
+    static addScalar(vec, scalar) {
+        return new Vector3(
+            vec.x + scalar,
+            vec.y + scalar,
+            vec.z + scalar
+        );
+    }
+
     static sub(vecA, vecB) {
         return new Vector3(
             vecA.x - vecB.x,
             vecA.y - vecB.y,
             vecA.z - vecB.z
+        );
+    }
+
+    static subScalar(vec, scalar) {
+        return new Vector3(
+            vec.x - scalar,
+            vec.y - scalar,
+            vec.z - scalar
         );
     }
 

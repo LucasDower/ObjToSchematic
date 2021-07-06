@@ -7,6 +7,8 @@ A tool to convert .obj files into Minecraft Schematics
 
 ![DebugPreview](/resources/debug_preview.png)
 
+![MeshingPreview](/resources/greedy_meshing.png)
+
 # Progress
 0.1
 * ✔️ **.json model loading**
@@ -15,15 +17,15 @@ A tool to convert .obj files into Minecraft Schematics
 * ✔️ **Basic .obj file loader UI**
 
 0.2
-* Greedy voxel meshing
+* ✔️ **Greedy voxel meshing**
 * Export to schematic
 
 0.3
 * Building guides
 * Slice viewer
 
+
 # Usage
-Since no build has been released yet, you'll need to:
 * Download and install [Node.js](https://nodejs.org/en/).
 * Execute `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
 * Navigate to `/ObjToSchematic-main`.
