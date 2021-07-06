@@ -9,6 +9,8 @@ A tool to convert .obj files into Minecraft Schematics
 
 ![MeshingPreview](/resources/greedy_meshing.png)
 
+![MinecraftPreview](/resources/minecraft.png)
+
 # Progress
 0.1
 * ✔️ **.json model loading**
@@ -18,7 +20,7 @@ A tool to convert .obj files into Minecraft Schematics
 
 0.2
 * ✔️ **Greedy voxel meshing**
-* Export to schematic
+* ✔️ **Export to schematic**
 
 0.3
 * Building guides
