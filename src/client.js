@@ -2,26 +2,22 @@ const { Renderer } = require('./src/renderer.js');
 const { Mesh } = require('./src/mesh.js');
 const { VoxelManager } = require('./src/voxel_manager.js');
 const { Vector3 } = require('./src/vector.js');
+const { Schematic } = require('./src/schematic.js');
 
-//const voxelSize = document.querySelector("#voxelInput").value;
-const voxelSize = 0.025;
+const dialog = require('electron').remote.dialog;
+
+const voxelSize = document.querySelector("#voxelInput").value;
 let renderer = new Renderer(voxelSize);
 const voxelManager = new VoxelManager(voxelSize);
 
-const nav = document.querySelector("#nav");
-let canvas = document.querySelector("#c");
+const canvas = document.querySelector("#c");
 
 const showMeshing = false;
-const showFailedAABBs = true;
+const showFailedAABBs = false;
 
-function resizeCanvas() {
-    canvas.height = window.innerHeight - 54;
-    canvas.width = window.innerWidth;
-}
-
-resizeCanvas();
 let loadedMesh = null;
 
+// CHOOSE FILE
 document.querySelector("#objBtn").addEventListener('click', () => {
     const files = document.querySelector("#objFile").files;
 
@@ -41,6 +37,7 @@ document.querySelector("#objBtn").addEventListener('click', () => {
 });
 
 
+// VOXELISE BUTTON
 document.querySelector("#voxelBtn").addEventListener('click', () => {
     const voxelSize = document.querySelector("#voxelInput").value;
     
@@ -72,12 +69,36 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
             renderer.registerBox(box.centre, box.size, true);
         }
     }
+
+    document.querySelector("#exportBtn").disabled = false;
     
     renderer.compileRegister();
 });
 
+
+// EXPORT SCHEMATIC
+document.querySelector("#exportBtn").addEventListener('click', async function() {
+
+    const {filePath} = await dialog.showSaveDialog({
+        title: "Save schematic",
+        buttonLabel: "Save",
+        filters: [{
+            name: 'Schematic',
+            extensions: ['schematic']
+        }]
+    });
+
+    const schematic = new Schematic(voxelManager);
+    schematic.exportSchematic(filePath);    
+});
+
+//const suzanne = new Mesh('./resources/suzanne.obj');
+//voxelManager.voxeliseMesh(suzanne);
+//const schematic = new Schematic(voxelManager);
+
 function render(time) {
-    resizeCanvas();
+    canvas.height = window.innerHeight - 54;
+    canvas.width = window.innerWidth;
 
     renderer.begin();
     renderer.end();

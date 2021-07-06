@@ -1,8 +1,8 @@
 body {
     margin: 0;
     font-family: monospace;
+    background-color: red;
 }
-
 
 canvas {
     display: block;
@@ -29,4 +29,8 @@ div.hidden {
 .rounded-pill-right {
   border-top-right-radius: 50rem !important;
   border-bottom-right-radius: 50rem !important;
+}
+
+#bootstrap-overrides {
+  background-color: #212529;
 }
