@@ -25,6 +25,14 @@ class VoxelManager {
     clear() {
         this.voxels = [];
         this.failedAABBs = [];
+
+        this.minX = Infinity; // JavaScript crack
+        this.minY = Infinity;
+        this.minZ = Infinity;
+        this.maxX = -Infinity;
+        this.maxY = -Infinity;
+        this.maxZ = -Infinity;
+        this.voxelsHash = new HashSet(2048);
     }
 
     _getTriangleCubeAABB(triangle) {
@@ -154,7 +162,7 @@ class VoxelManager {
 
         this.mesh = [];
         this.seen = new HashSet(2048);
-        console.log(this.voxelsHash);
+        //console.log(this.voxelsHash);
 
         const minPos = this._voxelCentreToPosition(new Vector3(this.minX, this.minY, this.minZ));
         const maxPos = this._voxelCentreToPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
@@ -184,7 +192,7 @@ class VoxelManager {
             }
         }
 
-        console.log("Mesh:", this.mesh);
+        //console.log("Mesh:", this.mesh);
 
         return this.mesh;
     }

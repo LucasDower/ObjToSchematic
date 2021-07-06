@@ -11,6 +11,8 @@ const voxelManager = new VoxelManager(voxelSize);
 const nav = document.querySelector("#nav");
 let canvas = document.querySelector("#c");
 
+const showMeshing = false;
+const showFailedAABBs = true;
 
 function resizeCanvas() {
     canvas.height = window.innerHeight - 54;
@@ -38,6 +40,7 @@ document.querySelector("#objBtn").addEventListener('click', () => {
     renderer.compileRegister();
 });
 
+
 document.querySelector("#voxelBtn").addEventListener('click', () => {
     const voxelSize = document.querySelector("#voxelInput").value;
     
@@ -46,17 +49,30 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
 
     renderer.setVoxelSize(voxelSize);
     voxelManager.setVoxelSize(voxelSize);
-    
+
     voxelManager.voxeliseMesh(loadedMesh);
 
     renderer.clear();
-    const mesh = voxelManager.buildMesh();
     
+    const mesh = voxelManager.buildMesh();
     for (const box of mesh) {
         renderer.registerBox(box.centre, box.size, false);
-        //renderer.registerBox(box.centre, box.size, true);
     }
 
+    if (showMeshing) {
+        renderer.setStroke(new Vector3(1.0, 0.0, 0.0));
+        for (const box of mesh) {
+            renderer.registerBox(box.centre, box.size, true);
+        }
+    }
+
+    if (showFailedAABBs) {
+        renderer.setStroke(new Vector3(0.0, 0.0, 1.0));
+        for (const box of voxelManager.failedAABBs) {
+            renderer.registerBox(box.centre, box.size, true);
+        }
+    }
+    
     renderer.compileRegister();
 });
 

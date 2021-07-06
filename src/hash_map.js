@@ -6,6 +6,9 @@ class HashSet {
     constructor(numBins) {
         this.numBins = numBins;
         this.bins = new Array(numBins);
+        for (let i = 0; i < numBins; ++i) {
+            this.bins[i] = [];
+        }
     }
 
     _getBin(key) {
@@ -15,20 +18,11 @@ class HashSet {
 
     add(key) {
         const binIndex = this._getBin(key);
-
-        if (!this.bins[binIndex]) {
-            this.bins[binIndex] = [ key ];
-        } else {
-            this.bins[binIndex].push(key);
-        }
+        this.bins[binIndex].push(key);
     }
 
     contains(key) {
         const binIndex = this._getBin(key);
-
-        if (!this.bins[binIndex]) {
-            return false;
-        }
 
         const list = this.bins[binIndex];
         for (const item of list) {

@@ -119,7 +119,7 @@ class Renderer {
     }
 
     clear() {
-        console.log("clearing");
+        //console.log("clearing");
         
         this._debugRegister = this._getEmptyDebugRegister();
         this._register = this._getEmptyRegister();
