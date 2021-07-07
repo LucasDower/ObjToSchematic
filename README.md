@@ -24,9 +24,10 @@ A tool to convert .obj files into Minecraft Schematics
 * ✔️ **Export to schematic**
 
 0.3
+* Export to litematic
 * Multithreading
 * Quality of life
-  * Model centreing, scaling, and voxel size preview, progress bar
+  * Model centreing, scaling, voxel size preview, progress bar, limit warnings
 
 0.4
 * .mtl support for block choice 
