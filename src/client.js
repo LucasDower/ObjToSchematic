@@ -12,7 +12,7 @@ const voxelManager = new VoxelManager(voxelSize);
 
 const canvas = document.querySelector("#c");
 
-const showMeshing = false;
+const showMeshing = true;
 const showFailedAABBs = false;
 
 let loadedMesh = null;
@@ -24,8 +24,18 @@ document.querySelector("#objBtn").addEventListener('click', () => {
     if (files.length != 1) {
         return;
     }
-    
-    loadedMesh = new Mesh(files[0].path);
+
+    const file = files[0];
+    if (!file.name.endsWith(".obj")) {
+        console.error("Could not load");
+        return;
+    }
+
+    try {
+        loadedMesh = new Mesh(files[0].path);
+    } catch (err) {
+        console.error("Could not load");
+    }
     
     renderer.clear();
     renderer.registerMesh(loadedMesh);
@@ -57,14 +67,14 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
     }
 
     if (showMeshing) {
-        renderer.setStroke(new Vector3(1.0, 0.0, 0.0));
+        renderer.setStroke(new Vector3(0.0, 0.0, 0.0));
         for (const box of mesh) {
             renderer.registerBox(box.centre, box.size, true);
         }
     }
 
     if (showFailedAABBs) {
-        renderer.setStroke(new Vector3(0.0, 0.0, 1.0));
+        renderer.setStroke(new Vector3(0.0, 0.0, 0.0));
         for (const box of voxelManager.failedAABBs) {
             renderer.registerBox(box.centre, box.size, true);
         }

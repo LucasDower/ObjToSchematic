@@ -21,16 +21,16 @@
   "devDependencies": {
     "electron": "^13.1.4",
     "electron-packager": "^15.2.0",
-    "expand-vertex-data": "^1.1.2",
-    "load-wavefront-obj": "^0.8.0",
-    "prismarine-nbt": "^1.6.0",
+
     "twgl.js": "^4.19.1",
-    "wavefront-obj-parser": "^2.0.1"
+    "wavefront-obj-parser": "^2.0.1",
+    "expand-vertex-data": "^1.1.2",
+    "prismarine-nbt": "^1.6.0"
   },
   "dependencies": {
     "twgl.js": "^4.19.1",
-    "load-wavefront-obj": "^0.8.0",
     "wavefront-obj-parser": "^2.0.1",
-    "expand-vertex-data": "^1.1.2"
+    "expand-vertex-data": "^1.1.2",
+    "prismarine-nbt": "^1.6.0"
   }
 }

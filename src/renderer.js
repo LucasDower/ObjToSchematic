@@ -79,7 +79,7 @@ class Renderer {
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
-        //this._gl.enable(this._gl.CULL_FACE);
+        this._gl.enable(this._gl.CULL_FACE);
         //this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.x, this._backgroundColour.y, this._backgroundColour.z, 1);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
@@ -153,8 +153,8 @@ class Renderer {
 
     _drawRegisters() {
         const uniforms = {
-            //u_lightWorldPos: this._camera.getCameraPosition(0.5, 0.0),
-            u_lightWorldPos: new Vector3(4, 2, 1).normalise().toArray(),
+            u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+            //u_lightWorldPos: new Vector3(4, 2, 1).normalise().toArray(),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
         };

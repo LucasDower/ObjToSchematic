@@ -16,7 +16,20 @@ void main() {
   float lighting = abs(dot(v_normal, v_lightDir));
   
   //v_colour = vec4(abs(normal) * lighting, 1.0);
-  v_colour = vec4(vec3(lighting), 1.0);
+  //v_colour = vec4(vec3(lighting), 1.0);
+  /*
+  vec3 normal_ = vec3(0.0, 0.0, 0.0);
+  normal_.x = (normal.x + 1.0) / 2.0;
+  normal_.y = (normal.y + 1.0) / 2.0;
+  normal_.z = (normal.z + 1.0) / 2.0;
+  */
+
+  lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
+
+  vec3 normal_ = (normal + 1.0) / 2.0;
+
+  v_colour = vec4(normal_ * lighting, 1.0);
+  //v_colour = vec4(normal_, 1.0);
 
   gl_Position = a_position;
 }
