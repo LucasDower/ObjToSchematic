@@ -289,10 +289,16 @@ class Renderer {
         }
     }
 
-    registerVoxelMesh(voxelManager) {
-        const mesh = voxelManager.buildMesh();
-        for (const box of mesh) {
-            this.registerBox(box.centre, box.size, false);
+    registerVoxelMesh(voxelManager, useMeshing) {
+        if (useMeshing) {
+            const mesh = voxelManager.buildMesh();
+            for (const box of mesh) {
+                this.registerBox(box.centre, box.size, false);
+            }
+        } else {
+            for (const voxel of voxelManager.voxels) {
+                this.registerVoxel(voxel, false);
+            }
         }
     }
 

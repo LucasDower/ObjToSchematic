@@ -53,6 +53,8 @@ $("#loadBtn").on("click", () => {
 
     $('#voxelInput').prop('disabled', false);
     $('#voxelBtn').prop('disabled', false);
+    $('#splitBtn').prop('disabled', true);
+    $('#exportBtn').prop('disabled', true);
 
     showToastWithText(`Successfully load ${file.name}`, 'success');
 });
@@ -76,7 +78,7 @@ $("#voxelBtn").on("click", () => {
     voxelManager.voxeliseMesh(loadedMesh);
 
     renderer.clear();
-    renderer.registerVoxelMesh(voxelManager);
+    renderer.registerVoxelMesh(voxelManager, true);
     
     /*
     const mesh = voxelManager.buildMesh();
@@ -101,9 +103,10 @@ $("#voxelBtn").on("click", () => {
     }
     */
     $('#exportBtn').prop('disabled', false);
+    $('#splitBtn').prop('disabled', false);
 
     const height = (voxelManager.maxY - voxelManager.minY) / voxelSize;
-    console.log(height);
+    //console.log(height);
     if (height >= 256) {
         showToastWithText("Schematic won't fit in world", 'warning');
     } else if (height >= 193) {
@@ -116,8 +119,28 @@ $("#voxelBtn").on("click", () => {
 });
 
 
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
+
+$("#splitBtn").on("click", () => {
+    const voxelSize = $("#voxelInput").prop('value');
+    $("#voxelInput").prop('value', voxelSize / 2);
+
+    voxelManager.splitVoxels();
+
+    renderer.clear();
+    renderer.setVoxelSize(voxelSize / 2);
+    renderer.registerVoxelMesh(voxelManager, true);
+    renderer.compileRegister();
+});
+
+
+
 // EXPORT SCHEMATIC
-document.querySelector("#exportBtn").addEventListener('click', async function() {
+$("#exportBtn").on("click", async () => {
 
     const {filePath} = await dialog.showSaveDialog({
         title: "Save schematic",

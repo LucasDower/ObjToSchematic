@@ -1,12 +1,13 @@
 const { AABB, CubeAABB } = require("./aabb.js");
 const { Vector3 } = require("./vector.js");
-const { HashSet } = require('./hash_map.js');
+const { HashSet, HashMap } = require('./hash_map.js');
 
 class VoxelManager {
 
     constructor(voxelSize) {
         this._voxelSize = voxelSize;
         this.voxels = [];
+        this.triangleAABBs = [];
         this.failedAABBs = [];
 
         this.minX = Infinity; // JavaScript crack
@@ -22,17 +23,23 @@ class VoxelManager {
         this._voxelSize = voxelSize;
     }
 
-    clear() {
+    _clearVoxels() {
         this.voxels = [];
         this.failedAABBs = [];
-
+        
         this.minX = Infinity; // JavaScript crack
         this.minY = Infinity;
         this.minZ = Infinity;
         this.maxX = -Infinity;
         this.maxY = -Infinity;
         this.maxZ = -Infinity;
+
         this.voxelsHash = new HashSet(2048);
+    }
+
+    clear() {
+        this.triangleAABBs = [];
+        this._clearVoxels();
     }
 
     _getTriangleCubeAABB(triangle) {
@@ -197,11 +204,32 @@ class VoxelManager {
         return this.mesh;
     }
 
+    splitVoxels() {
+        this._voxelSize /= 2;
+        this._clearVoxels();
+        
+        const newTriangleAABBs = [];
+
+        for (const {triangle, AABBs} of this.triangleAABBs) {
+            const triangleAABBs = [];
+            for (const AABB of AABBs) {
+                for (const sub of AABB.subdivide()) {
+                    if (triangle.intersectAABB(sub)) {
+                        this.addVoxel(sub.centre);
+                        triangleAABBs.push(sub);
+                    }
+                }
+            }
+            newTriangleAABBs.push({triangle: triangle, AABBs: triangleAABBs});
+        }
+
+        this.triangleAABBs = newTriangleAABBs;
+    }
+
     voxeliseTriangle(triangle) {
         const cubeAABB = this._getTriangleCubeAABB(triangle);
 
-        //renderer.setStroke(new Vector3(1.0, 1.0, 1.0));
-        //let voxels = [];
+        const triangleAABBs = [];
 
         let queue = [cubeAABB];
         while (queue.length > 0) {
@@ -212,16 +240,15 @@ class VoxelManager {
                     queue.push(...aabb.subdivide());
                 } else {
                     // We've reached the voxel level, stop
-                    //renderer.registerBox(aabb.centre, aabb.size);
-                    //this.voxels.push(aabb.centre);
                     this.addVoxel(aabb.centre);
+                    triangleAABBs.push(aabb);
                 }
             } else {
                 this.failedAABBs.push(aabb);
             }
         }
 
-        //return voxels;
+        this.triangleAABBs.push({triangle: triangle, AABBs: triangleAABBs});
     }
 
     voxeliseMesh(mesh) {
