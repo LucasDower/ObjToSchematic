@@ -289,6 +289,13 @@ class Renderer {
         }
     }
 
+    registerVoxelMesh(voxelManager) {
+        const mesh = voxelManager.buildMesh();
+        for (const box of mesh) {
+            this.registerBox(box.centre, box.size, false);
+        }
+    }
+
     registerTriangle(triangle, debug) {
         const data = this._getTriangleData(triangle, debug);
         this._addDataToRegister(data, debug);

@@ -12,44 +12,60 @@ const voxelManager = new VoxelManager(voxelSize);
 
 const canvas = document.querySelector("#c");
 
-const showMeshing = true;
-const showFailedAABBs = false;
-
 let loadedMesh = null;
 
+
+
+function showToastWithText(text, style) {
+    $("#toast").removeClass("bg-success");
+    $("#toast").removeClass("bg-warning");
+    $("#toast").removeClass("bg-danger");
+    $("#toast").addClass(`bg-${style}`);
+
+    $("#toastText").html(text);
+    $("#toast").toast('show');
+}
+
 // CHOOSE FILE
-document.querySelector("#objBtn").addEventListener('click', () => {
-    const files = document.querySelector("#objFile").files;
+$("#loadBtn").on("click", () => {
+    const files = $("#fileInput").prop("files");
 
     if (files.length != 1) {
         return;
     }
 
     const file = files[0];
-    if (!file.name.endsWith(".obj")) {
-        console.error("Could not load");
+    if (!file.name.endsWith(".obj") && !file.name.endsWith(".OBJ")) {
+        showToastWithText(`Could not load ${file.name}`, 'danger');
         return;
     }
 
     try {
         loadedMesh = new Mesh(files[0].path);
     } catch (err) {
-        console.error("Could not load");
+        showToastWithText(`Could not load ${file.name}`, 'danger');
+        return;
     }
     
     renderer.clear();
     renderer.registerMesh(loadedMesh);
-
-    document.querySelector("#voxelInput").disabled = false;
-    document.querySelector("#voxelBtn").disabled = false;
-
     renderer.compileRegister();
+
+    $('#voxelInput').prop('disabled', false);
+    $('#voxelBtn').prop('disabled', false);
+
+    showToastWithText(`Successfully load ${file.name}`, 'success');
 });
 
 
 // VOXELISE BUTTON
-document.querySelector("#voxelBtn").addEventListener('click', () => {
-    const voxelSize = document.querySelector("#voxelInput").value;
+$("#voxelBtn").on("click", () => {
+    const voxelSize = $("#voxelInput").prop('value');
+
+    if (voxelSize < 0.001) {
+        showToastWithText("Voxel size must be at least 0.001", 'danger');
+        return;
+    }
     
     renderer.clear();
     voxelManager.clear();
@@ -60,12 +76,16 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
     voxelManager.voxeliseMesh(loadedMesh);
 
     renderer.clear();
+    renderer.registerVoxelMesh(voxelManager);
     
+    /*
     const mesh = voxelManager.buildMesh();
     for (const box of mesh) {
         renderer.registerBox(box.centre, box.size, false);
     }
+    */
 
+    /*
     if (showMeshing) {
         renderer.setStroke(new Vector3(0.0, 0.0, 0.0));
         for (const box of mesh) {
@@ -79,9 +99,19 @@ document.querySelector("#voxelBtn").addEventListener('click', () => {
             renderer.registerBox(box.centre, box.size, true);
         }
     }
+    */
+    $('#exportBtn').prop('disabled', false);
 
-    document.querySelector("#exportBtn").disabled = false;
-    
+    const height = (voxelManager.maxY - voxelManager.minY) / voxelSize;
+    console.log(height);
+    if (height >= 256) {
+        showToastWithText("Schematic won't fit in world", 'warning');
+    } else if (height >= 193) {
+        showToastWithText("Schematic won't fit above sea-level", 'warning');
+    } else {
+        showToastWithText("Model successfully voxelised", 'success');
+    }
+
     renderer.compileRegister();
 });
 
@@ -98,18 +128,27 @@ document.querySelector("#exportBtn").addEventListener('click', async function() 
         }]
     });
 
-    const schematic = new Schematic(voxelManager);
-    schematic.exportSchematic(filePath);    
+    if (filePath === undefined) {
+        return;
+    }
+
+    try {
+        const schematic = new Schematic(voxelManager);
+        schematic.exportSchematic(filePath);
+    } catch (err) {
+        showToastWithText("Failed to export schematic", false);
+    }
+    
+    showToastWithText("Successfully saved schematic", true);
 });
 
-//const suzanne = new Mesh('./resources/suzanne.obj');
-//voxelManager.voxeliseMesh(suzanne);
-//const schematic = new Schematic(voxelManager);
+
+$(document).resize(function() {
+    canvas.height = window.innerHeight - 55;
+    canvas.width = window.innerWidth;
+});
 
 function render(time) {
-    canvas.height = window.innerHeight - 54;
-    canvas.width = window.innerWidth;
-
     renderer.begin();
     renderer.end();
 
