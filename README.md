@@ -24,7 +24,7 @@ A tool to convert .obj files into Minecraft Schematics
 * ✔️ **Export to schematic**
 
 0.3
-* ✔️ ** Faster voxel splitting **
+* ✔️ **Faster voxel splitting**
 * Multithreading
 * Quality of life
   * Model centreing, scaling, voxel size preview, progress bar, limit warnings
