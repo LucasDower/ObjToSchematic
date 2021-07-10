@@ -1,56 +1,62 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <meta charset="utf8">
-    <title>ObjToSchematic</title>
+    <title>TEST</title>
     <link rel="stylesheet" href="./styles.css">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="./src/vendor/bootstrap.css">
   </head>
 
-  <body id="bootstrap-overrides">
-  
-      <div class="container bg-dark">
-        <div class="row mb-2 mt-2">
-          <!-- LEFT -->
+  <body>
+    <canvas id="c"></canvas>
+    <div class="toolbar">
+      <div class="container">
+        <div class="row">
           <div class="col">
             <div class="input-group">
-              <input type="file" accept=".obj" class="form-control" id="objFile" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-              <button id="objBtn" class="btn btn-primary" type="button" id="inputGroupFileAddon04">Load</button>
+              <input type="file" accept=".obj" class="form-control" id="fileInput">
+              <button id="loadBtn" class="btn btn-primary border-0" type="button">
+                <img src="./resources/svg/load.svg" alt="">
+                Load
+              </button>
             </div>
           </div>
-
-          <!-- MIDDLE -->
           <div class="col">
             <div class="input-group">
-              <label class="input-group-text" for="inputGroupFileAddon03">Voxel size</label>
-              <input type="number" min="0.1" step="0.1" value="0.1" class="form-control" id="voxelInput" aria-describedby="inputGroupFileAddon03" aria-label="Voxel size" disabled>
-              <button id="voxelBtn" class="btn btn-primary" type="button" disabled>Voxelise</button>
+              <label class="input-group-text ">Voxel size</label>
+              <input id="voxelInput" type="number" min="0.1" step="0.1" value="0.1" class="form-control border-0" disabled>
+              <button id="voxelBtn" class="btn btn-primary border-0" type="button" disabled>
+                <img src="./resources/svg/voxel.svg" alt="">
+                Voxelise
+              </button>
             </div>
           </div>
-
-          <!-- RIGHT -->
           <div class="col">
-            <div class="d-grid gap-2">
-              <button id="exportBtn" class="btn btn-danger" type="button" disabled>Export schematic</button>
+            <div class="d-grid">
+              <button id="exportBtn" class="btn btn-danger border-0" type="button" disabled>
+                <img src="./resources/svg/save.svg" alt="">
+                Export schematic
+              </button>
             </div>
           </div>
         </div>
+      </div>
     </div>
-    <!-- CANVAS -->
-    <canvas id="c"></canvas>
+
+    <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div id="toastText" class="toast-body ms-2">
+          toastText
+        </div>
+      </div>
+    </div>
+
   </body>
 
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="./src/vendor/jquery-3.6.0.min.js"></script>
+  <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
+  <script src="./src/vendor/popper.min.js"></script>
+  <script src="./src/vendor/bootstrap.min.js"></script>
   <script type="module" src="./src/client.js"></script>
-  <script>
-    $(document).ready(function() {
-        $(".toast").toast('show');
-    });
-</script>
 </html>
