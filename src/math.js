@@ -14,10 +14,6 @@ function ceilTo(value, base) {
     return Math.ceil(value / base) * base;
 }
 
-function fastCrossXAxis(vec) {
-    return Vector3.create(0.0, -vec[2], vec[1]);
-}
-
 function fastDotXAxis(vec) {
     return vec[0];
 }
@@ -29,15 +25,21 @@ function fastDotYAxis(vec) {
 function fastDotZAxis(vec) {
     return vec[2];
 }
+*/
+
+function fastCrossXAxis(vec) {
+    return new Vector3(0.0, -vec.z, vec.y);
+}
 
 function fastCrossYAxis(vec) {
-    return Vector3.create(vec[2], 0.0, -vec[0]);
+    return new Vector3(vec.z, 0.0, -vec.x);
 }
 
 function fastCrossZAxis(vec) {
-    return Vector3.create(-vec[1], vec[0], 0.0);
+    return new Vector3(-vec.y, vec.x, 0.0);
 }
 
+/*
 function roundVector3To(vec, round) {
     vec[0] = roundTo(vec[0], round);
     vec[1] = roundTo(vec[1], round);
@@ -47,11 +49,13 @@ function roundVector3To(vec, round) {
 
 module.exports.floorTo = floorTo;
 module.exports.ceilTo = ceilTo;
+*/
 
 module.exports.fastCrossXAxis = fastCrossXAxis;
 module.exports.fastCrossYAxis = fastCrossYAxis;
 module.exports.fastCrossZAxis = fastCrossZAxis;
 
+/*
 module.exports.fastDotXAxis = fastDotXAxis;
 module.exports.fastDotYAxis = fastDotYAxis;
 module.exports.fastDotZAxis = fastDotZAxis;

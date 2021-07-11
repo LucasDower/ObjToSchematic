@@ -1,6 +1,6 @@
 const { Vector3 } = require('./vector.js');
 const { AABB } = require('./aabb.js');
-const { xAxis, yAxis, zAxis } = require('./math.js');
+const { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } = require('./math.js');
 
 class Triangle {
 
@@ -52,15 +52,15 @@ class Triangle {
         const f2 = Vector3.sub(v0, v2);
 
         const axis = [
-            Vector3.cross(xAxis, f0),
-            Vector3.cross(xAxis, f1),
-            Vector3.cross(xAxis, f2),
-            Vector3.cross(yAxis, f0),
-            Vector3.cross(yAxis, f1),
-            Vector3.cross(yAxis, f2),
-            Vector3.cross(zAxis, f0),
-            Vector3.cross(zAxis, f1),
-            Vector3.cross(zAxis, f2),
+            fastCrossXAxis(f0),
+            fastCrossXAxis(f1),
+            fastCrossXAxis(f2),
+            fastCrossYAxis(f0),
+            fastCrossYAxis(f1),
+            fastCrossYAxis(f2),
+            fastCrossZAxis(f0),
+            fastCrossZAxis(f1),
+            fastCrossZAxis(f2),
             xAxis,
             yAxis,
             zAxis,
