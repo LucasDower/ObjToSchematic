@@ -7,9 +7,16 @@ const { Schematic } = require('./src/schematic.js');
 const dialog = require('electron').remote.dialog;
 
 const voxelSize = document.querySelector("#voxelInput").value;
-let renderer = new Renderer(voxelSize);
-const voxelManager = new VoxelManager(voxelSize);
+let renderer = new Renderer(30, new Vector3(0.1, 0.1, 0.1));
 
+const mesh = new Mesh('./resources/suzanne.obj');
+
+renderer.setDebug(true);
+renderer.registerMesh(mesh);
+renderer.compile();
+
+
+const voxelManager = new VoxelManager(voxelSize);
 const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
@@ -172,8 +179,7 @@ $(document).resize(function() {
 });
 
 function render(time) {
-    renderer.begin();
-    renderer.end();
+    renderer.draw();
 
     requestAnimationFrame(render);
 }
