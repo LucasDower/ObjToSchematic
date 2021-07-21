@@ -1,31 +1,15 @@
 // Not apart of rendering, SIMD optimisation not necessary
 const { Vector3 } = require('./vector.js');
 
-/*
-function roundTo(value, base) {
-    return Math.round(value / base) * base;
+/**
+ * Retrieve the array key corresponding to the largest element in the array.
+ *
+ * @param {Array.<number>} array Input array
+ * @return {number} Index of array element with largest value
+ */
+function argMax(array) {
+    return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
 }
-
-function floorTo(value, base) {
-    return Math.floor(value / base) * base;
-}
-
-function ceilTo(value, base) {
-    return Math.ceil(value / base) * base;
-}
-
-function fastDotXAxis(vec) {
-    return vec[0];
-}
-
-function fastDotYAxis(vec) {
-    return vec[1];
-}
-
-function fastDotZAxis(vec) {
-    return vec[2];
-}
-*/
 
 function fastCrossXAxis(vec) {
     return new Vector3(0.0, -vec.z, vec.y);
@@ -64,5 +48,7 @@ module.exports.fastDotZAxis = fastDotZAxis;
 module.exports.xAxis = new Vector3(1.0, 0.0, 0.0);
 module.exports.yAxis = new Vector3(0.0, 1.0, 0.0);
 module.exports.zAxis = new Vector3(0.0, 0.0, 1.0);
+
+module.exports.argMax = argMax;
 
 //module.exports.roundVector3To = roundVector3To;

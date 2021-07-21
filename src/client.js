@@ -7,9 +7,9 @@ const { Schematic } = require('./src/schematic.js');
 const dialog = require('electron').remote.dialog;
 
 const voxelSize = document.querySelector("#voxelInput").value;
-let renderer = new Renderer(voxelSize);
-const voxelManager = new VoxelManager(voxelSize);
+let renderer = new Renderer(30, new Vector3(0.1, 0.1, 0.1));
 
+const voxelManager = new VoxelManager(voxelSize);
 const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
@@ -49,7 +49,7 @@ $("#loadBtn").on("click", () => {
     
     renderer.clear();
     renderer.registerMesh(loadedMesh);
-    renderer.compileRegister();
+    renderer.compile();
 
     $('#voxelInput').prop('disabled', false);
     $('#voxelBtn').prop('disabled', false);
@@ -69,12 +69,8 @@ $("#voxelBtn").on("click", () => {
         return;
     }
     
-    renderer.clear();
     voxelManager.clear();
-
-    renderer.setVoxelSize(voxelSize);
     voxelManager.setVoxelSize(voxelSize);
-
     voxelManager.voxeliseMesh(loadedMesh);
 
     renderer.clear();
@@ -115,13 +111,7 @@ $("#voxelBtn").on("click", () => {
         showToastWithText("Model successfully voxelised", 'success');
     }
 
-    renderer.compileRegister();
-});
-
-
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new bootstrap.Tooltip(tooltipTriggerEl);
+    renderer.compile();
 });
 
 
@@ -132,9 +122,8 @@ $("#splitBtn").on("click", () => {
     voxelManager.splitVoxels();
 
     renderer.clear();
-    renderer.setVoxelSize(voxelSize / 2);
     renderer.registerVoxelMesh(voxelManager, true);
-    renderer.compileRegister();
+    renderer.compile();
 });
 
 
@@ -159,10 +148,10 @@ $("#exportBtn").on("click", async () => {
         const schematic = new Schematic(voxelManager);
         schematic.exportSchematic(filePath);
     } catch (err) {
-        showToastWithText("Failed to export schematic", false);
+        showToastWithText("Failed to export schematic", 'danger');
     }
     
-    showToastWithText("Successfully saved schematic", true);
+    showToastWithText("Successfully saved schematic", 'success');
 });
 
 
@@ -172,8 +161,7 @@ $(document).resize(function() {
 });
 
 function render(time) {
-    renderer.begin();
-    renderer.end();
+    renderer.draw();
 
     requestAnimationFrame(render);
 }
