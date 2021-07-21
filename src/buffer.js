@@ -1,5 +1,10 @@
 const twgl = require('twgl.js');
 
+/*
+    WebGL buffers store vertex index data as Uint16 and will lead to frequent overflows.
+    SegmentedBuffer automatically partitions buffers to avoid overflows and removes the 
+    overhead of .push/.concat when adding data
+*/
 class SegmentedBuffer {
 
     constructor(bufferSize, attributes) {
@@ -7,16 +12,17 @@ class SegmentedBuffer {
         this._completeBuffers = [];
 
         this._compiled = false;
-        this.compiledBuffers = [];
+        this.WebGLBuffers = [];
 
         this._attributes = {};
         for (const attr of attributes) {
             this._attributes[attr.name] = {
-                numComponents: attr.numComponents
+                numComponents: attr.numComponents,
+                insertIndex: 0
             };
         }
 
-        this._insertIndex = 0;
+        this._indicesInsertIndex = 0;
         this._maxIndex = 0;
 
         this._getNewBuffer();
@@ -32,41 +38,41 @@ class SegmentedBuffer {
         for (const attr in this._attributes) {
             this._buffer[attr] = {
                 numComponents: this._attributes[attr].numComponents,
-                data: new Float32Array(this._bufferSize * this._attributes[attr].numComponents)
+                data: new Float32Array(this._bufferSize)
             };
+            this._attributes[attr].insertIndex = 0;
         }
     }
 
     _cycle() {
-
         this._completeBuffers.push({
             buffer: this._buffer,
-            numElements: this._insertIndex,
+            numElements: this._indicesInsertIndex,
         });
         this._getNewBuffer();
+
+        this._indicesInsertIndex = 0;
         this._maxIndex = 0;
-        this._insertIndex = 0;
     }
 
     _willOverflow(data) {
         // Check for indices Uint16 overflow
         const dataMaxIndex = Math.max(...data.indices);
-        let willOverflow = (this._maxIndex + dataMaxIndex) > 65535;
         if ((this._maxIndex + dataMaxIndex) > 65535) {
-            console.log("index overflow");
+            return true;
         }
 
-        const sizeAdding = data.indices.length;
-        willOverflow |= (this._insertIndex + sizeAdding > this._bufferSize);
-        if (this._insertIndex + sizeAdding > this._bufferSize) {
-            console.log("length overflow");
+        for (const attr in this._attributes) {
+            if (data[attr].length > this._bufferSize) {
+                // TODO: Automatically partition into smaller segments
+                throw Error(`Data for ${attr} does not fit within the buffer.`);
+            }
+            if (data[attr].length + this._attributes[attr].insertIndex > this._bufferSize) {
+                return true;
+            }
         }
 
-        if (sizeAdding > this._bufferSize) {
-            throw "Data length too large, add in chunks smaller than buffer size";
-        }
-
-        return willOverflow;
+        return false;
     }
 
     _checkDataMatchesAttributes(data) {
@@ -76,48 +82,50 @@ class SegmentedBuffer {
         const setsRequired = Math.max(...data.indices) + 1;
         for (const attr in this._attributes) {
             if (!(attr in data)) {
-                throw `Given data does not have ${attr} data`;
+                throw Error(`Given data does not have ${attr} data`);
             }
             if (data[attr].length % this._attributes[attr].numComponents != 0) {
-                throw `Not enough/too much ${attr} data given`;
+                throw Error(`Not enough/too much ${attr} data given`);
             }
             const numSets = data[attr].length / this._attributes[attr].numComponents;
             if (numSets != setsRequired) {
                 //throw `Number of indices does not match number of ${attr} components given`;
-                throw `Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data[attr].length}`;
+                throw Error(`Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data[attr].length}`);
             }
         }
     }
 
     _addDataToAttribute(attr, attr_data) {
-        const indexOffset = this._insertIndex * this._attributes[attr].numComponents;
-        for (let i = 0; i < attr_data.length; ++i) {
-            this._buffer[attr].data[i + indexOffset] = attr_data[i];
-        }
+        const indexOffset = this._attributes[attr].insertIndex;
+        attr_data.forEach((value, i) => {
+            this._buffer[attr].data[i + indexOffset] = value;
+        });
+        this._attributes[attr].insertIndex += attr_data.length;
     }
 
     add(data) {
+        if (this._compiled) {
+            throw Error("Buffer already compiled, cannot add more data");
+        }
+
         this._checkDataMatchesAttributes(data);
 
         if (this._willOverflow(data)) {
             this._cycle();
         }
 
-        if (this._compiled) {
-            throw "Buffer already compiled, cannot add more data";
-        }
+        // Add the new indices data
+        data.indices.forEach((indexData, i) => {
+            this._buffer.indices.data[i + this._indicesInsertIndex] = indexData + this._maxIndex;
+        });
 
-        for (let i = 0; i < data.indices.length; ++i) {
-            this._buffer.indices.data[i + this._insertIndex] = data.indices[i] + this._maxIndex;
-        }
-        //this._insertIndex += data.indices.length;
-        const dataMaxIndex = Math.max(...data.indices);
-        this._maxIndex += 1 + dataMaxIndex;
+        this._indicesInsertIndex += data.indices.length;
+        this._maxIndex += 1 + Math.max(...data.indices);
         
         for (const attr in this._attributes) {
             this._addDataToAttribute(attr, data[attr]);
         }
-        this._insertIndex += data.indices.length;
+
     }
 
     compile(gl) {
@@ -127,17 +135,19 @@ class SegmentedBuffer {
 
         this._cycle();
 
-        this.compiledBuffers = new Array(this._completeBuffers.length);
-        for (let i = 0; i < this._completeBuffers.length; ++i) {
-            this.compiledBuffers[i] = {
-                buffer: twgl.createBufferInfoFromArrays(gl, this._completeBuffers[i].buffer),
-                numElements: this._completeBuffers[i].numElements
+        this.WebGLBuffers = new Array(this._completeBuffers.length);
+
+        this._completeBuffers.forEach((buffer, i) => {
+            this.WebGLBuffers[i] = {
+                buffer: twgl.createBufferInfoFromArrays(gl, buffer.buffer),
+                numElements: buffer.numElements
             };
-        }
+        });
 
         this._compiled = true;
     }
 
 }
+
 
 module.exports.SegmentedBuffer = SegmentedBuffer;
