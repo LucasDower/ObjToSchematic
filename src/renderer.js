@@ -18,19 +18,15 @@ class Renderer {
 
         this._registerEvents();
 
-        this._debugRegister = new SegmentedBuffer(2048, [{name: 'position', numComponents: 3}, {name: 'colour', numComponents: 3}]);
-        this._register      = new SegmentedBuffer(2048, [{name: 'position', numComponents: 3}, {name: 'normal', numComponents: 3}]);
+        this._registerDebug = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'colour', numComponents: 3}]);
+        this._register      = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'normal', numComponents: 3}]);
 
         this._debug = false;
         this._compiled = false;
     }
 
     
-    compile() {
-        this._debugRegister.compile(this._gl);
-        this._register.compile(this._gl);
-        this._compiled = true;
-    }
+
 
     setStroke(colour) {
         this._strokeColour = colour;
@@ -39,48 +35,6 @@ class Renderer {
     setDebug(debug) {
         this._debug = debug;
     }
-
-    draw() {
-        if (!this._compiled) {
-            this.compile();
-            return;
-        }
-
-        this._setupScene();
-
-        this._drawDebugRegisters();
-        this._drawRegisters();
-    }
-
-
-
-
-    _drawDebugRegisters() {
-        const debugUniforms = {
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
-        };
-        
-        for (const buffer of this._debugRegister.compiledBuffers) {
-            this._drawBuffer(this._gl.LINES, buffer, shaderManager.debugProgram, debugUniforms);
-        }
-    }
-
-    _drawRegisters() {
-        const uniforms = {
-            u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
-        };
-
-        for (const buffer of this._register.compiledBuffers) {
-            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderManager.shadedProgram, uniforms);
-        }
-    }
-
-    
-
-
-
 
     registerBox(centre, size) {
         const data = GeometryTemplates.getBoxBufferData(centre, size, this._debug);
@@ -105,14 +59,54 @@ class Renderer {
         }
     }
 
+    compile() {
+        this._registerDebug.compile(this._gl);
+        this._register.compile(this._gl);
+        this._compiled = true;
+    }
+
+    draw() {
+        if (!this._compiled) {
+            this.compile();
+            return;
+        }
+
+        this._setupScene();
+
+        this._drawDebugRegisters();
+        this._drawRegisters();
+    }
 
 
+
+
+    _drawDebugRegisters() {
+        const debugUniforms = {
+            u_worldViewProjection: this._camera.getWorldViewProjection(),
+        };
+        
+        for (const buffer of this._registerDebug.WebGLBuffers) {
+            this._drawBuffer(this._gl.LINES, buffer, shaderManager.debugProgram, debugUniforms);
+        }
+    }
+
+    _drawRegisters() {
+        const uniforms = {
+            u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+            u_worldViewProjection: this._camera.getWorldViewProjection(),
+            u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
+        };
+
+        for (const buffer of this._register.WebGLBuffers) {
+            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderManager.shadedProgram, uniforms);
+        }
+    }
 
     _registerData(data) {
         if (this._debug) {
             const numVertices = data.position.length / 3;
             data.colour = [].concat(...new Array(numVertices).fill(this._strokeColour.toArray()));
-            this._debugRegister.add(data);
+            this._registerDebug.add(data);
         } else {
             this._register.add(data);
         }       
