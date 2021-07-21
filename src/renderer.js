@@ -17,9 +17,7 @@ class Renderer {
         this._camera = new ArcballCamera(fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 100.0);
 
         this._registerEvents();
-
-        this._registerDebug = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'colour', numComponents: 3}]);
-        this._register      = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'normal', numComponents: 3}]);
+        this._getNewBuffers();
 
         this._debug = false;
         this._compiled = false;
@@ -57,6 +55,10 @@ class Renderer {
         for (const box of mesh) {
             this.registerBox(box.centre, box.size, false);
         }
+    }
+
+    clear() {
+        this._getNewBuffers();
     }
 
     compile() {
@@ -151,6 +153,11 @@ class Renderer {
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
         this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_SHORT, 0);
+    }
+
+    _getNewBuffers() {
+        this._registerDebug = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'colour', numComponents: 3}]);
+        this._register      = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'normal', numComponents: 3}]);
     }
 
 }
