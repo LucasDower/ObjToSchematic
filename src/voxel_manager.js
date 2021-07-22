@@ -56,6 +56,7 @@ class VoxelManager {
             cubeAABB = new CubeAABB(cubeAABB.centre, cubeAABB.width * 2.0);
         }
 
+        //console.log(cubeAABB.centre);
         return cubeAABB;
     }
 
@@ -85,6 +86,15 @@ class VoxelManager {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
+
+        const test = Vector3.divScalar(vec, this._voxelSize);
+
+        // [HACK] FIXME: Fix misaligned voxels
+        // Some vec data is not not grid-snapped to voxelSize-spacing
+        if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1)) {
+            console.warn("Misaligned voxel, skipping...");
+            return;
+        }
 
         const pos = this._voxelCentreToPosition(vec);
         if (this.voxelsHash.contains(pos)) {

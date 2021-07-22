@@ -85,8 +85,8 @@ class Renderer {
 
     registerVoxelMesh(voxelManager) {
         const voxelSize = voxelManager._voxelSize;
-        const sizeVector = new Vector3(voxelSize/2, voxelSize/2, voxelSize/2);
-        if (this.debug) {
+        const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
                 this.registerBox(voxel, sizeVector);
             });

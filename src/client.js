@@ -12,10 +12,6 @@ let renderer = new Renderer(30, new Vector3(0.1, 0.1, 0.1));
 const voxelManager = new VoxelManager(voxelSize);
 const canvas = document.querySelector("#c");
 
-//const mesh = new Mesh('./resources/suzanne.obj');
-//renderer.registerMesh(mesh);
-//renderer.compile();
-
 let loadedMesh = null;
 
 
@@ -77,9 +73,9 @@ $("#voxelBtn").on("click", () => {
     voxelManager.clear();
     voxelManager.setVoxelSize(voxelSize);
     voxelManager.voxeliseMesh(loadedMesh);
-    //console.log(voxelManager.voxels.length);
 
     renderer.clear();
+    //renderer.setDebug(true);
     renderer.registerVoxelMesh(voxelManager);
     
     /*
