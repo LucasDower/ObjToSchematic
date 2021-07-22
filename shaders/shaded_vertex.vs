@@ -26,9 +26,9 @@ void main() {
 
   lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
 
-  vec3 normal_ = (normal + 1.0) / 2.0;
-
-  v_colour = vec4(normal_ * lighting, 1.0);
+  //vec3 normal_ = (normal + 1.0) / 2.0;
+  v_colour = vec4(vec3(lighting), 1.0);
+  //v_colour = vec4(normal_ * lighting, 1.0);
   //v_colour = vec4(normal_, 1.0);
 
   gl_Position = a_position;

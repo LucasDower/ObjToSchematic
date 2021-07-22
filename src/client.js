@@ -7,13 +7,12 @@ const { Schematic } = require('./src/schematic.js');
 const dialog = require('electron').remote.dialog;
 
 const voxelSize = document.querySelector("#voxelInput").value;
-let renderer = new Renderer(30, new Vector3(0.1, 0.1, 0.1));
 
+let renderer = new Renderer(30, new Vector3(0.1, 0.1, 0.1));
 const voxelManager = new VoxelManager(voxelSize);
 const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
-
 
 
 function showToastWithText(text, style) {
@@ -48,6 +47,8 @@ $("#loadBtn").on("click", () => {
     }
     
     renderer.clear();
+    //renderer.setDebug(true);
+    
     renderer.registerMesh(loadedMesh);
     renderer.compile();
 
@@ -74,7 +75,8 @@ $("#voxelBtn").on("click", () => {
     voxelManager.voxeliseMesh(loadedMesh);
 
     renderer.clear();
-    renderer.registerVoxelMesh(voxelManager, true);
+    //renderer.setDebug(true);
+    renderer.registerVoxelMesh(voxelManager);
     
     /*
     const mesh = voxelManager.buildMesh();
@@ -115,6 +117,7 @@ $("#voxelBtn").on("click", () => {
 });
 
 
+// SPLIT BUTTON
 $("#splitBtn").on("click", () => {
     const voxelSize = $("#voxelInput").prop('value');
     $("#voxelInput").prop('value', voxelSize / 2);
@@ -125,7 +128,6 @@ $("#splitBtn").on("click", () => {
     renderer.registerVoxelMesh(voxelManager, true);
     renderer.compile();
 });
-
 
 
 // EXPORT SCHEMATIC
