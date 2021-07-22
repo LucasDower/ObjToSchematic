@@ -91,7 +91,7 @@ class VoxelManager {
 
         // [HACK] FIXME: Fix misaligned voxels
         // Some vec data is not not grid-snapped to voxelSize-spacing
-        if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1)) {
+        if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.z % 1 < 0.9 && test.z % 1 > 0.1)) {
             console.warn("Misaligned voxel, skipping...");
             return;
         }
