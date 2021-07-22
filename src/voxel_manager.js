@@ -77,12 +77,12 @@ class VoxelManager {
     }
 
     isVoxelAt(vec) {
-        vec = Vector3.subScalar(vec, this._voxelSize / 2);
         const pos = this._voxelCentreToPosition(vec);
-        return (this.voxelsHash.contains(pos));
+        return this.voxelsHash.contains(pos);
     } 
 
     addVoxel(vec) {
+
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
 
@@ -90,9 +90,10 @@ class VoxelManager {
         if (this.voxelsHash.contains(pos)) {
             return;
         }
-
+        //console.log(pos);
         this.voxels.push(vec);
-        this.voxelsHash.add(pos, true);
+        //console.log("pos:", pos);
+        this.voxelsHash.add(pos);
 
         this.minX = Math.min(this.minX, vec.x);
         this.minY = Math.min(this.minY, vec.y);

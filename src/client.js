@@ -52,9 +52,9 @@ $("#loadBtn").on("click", () => {
     
     renderer.clear();
     //renderer.setDebug(true);
+    
     renderer.registerMesh(loadedMesh);
     renderer.compile();
-    console.log(renderer);
 
     $('#voxelInput').prop('disabled', false);
     $('#voxelBtn').prop('disabled', false);
@@ -77,9 +77,10 @@ $("#voxelBtn").on("click", () => {
     voxelManager.clear();
     voxelManager.setVoxelSize(voxelSize);
     voxelManager.voxeliseMesh(loadedMesh);
+    //console.log(voxelManager.voxels.length);
 
     renderer.clear();
-    renderer.registerVoxelMesh(voxelManager, true);
+    renderer.registerVoxelMesh(voxelManager);
     
     /*
     const mesh = voxelManager.buildMesh();
