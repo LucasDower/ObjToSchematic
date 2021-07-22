@@ -70,12 +70,14 @@ class GeometryTemplates {
             let cube = {
                 position: new Float32Array(72),
                 normal: new Float32Array(72),
-                indices: new Float32Array(72)
+                indices: new Float32Array(72),
+                texcoord: new Float32Array(48)
             };
             
             cube.position.set(default_cube.position);
             cube.normal.set(default_cube.normal);
             cube.indices.set(default_cube.indices);
+            cube.texcoord.set(default_cube.texcoord);
             
             for (let i = 0; i < 72; i += 3) {
                 cube.position[i + 0] = (cube.position[i + 0] * size.x) + centre.x;

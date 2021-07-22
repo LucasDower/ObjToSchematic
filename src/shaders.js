@@ -14,16 +14,13 @@ const shadedFragmentShader = getShader('shaded_fragment.fs');
 const debugVertexShader = getShader('debug_vertex.vs');
 const debugFragmentShader = getShader('debug_fragment.fs');
 
-/*
-const shaded_vertex_shader = fs.readFileSync('./shaders/shaded_vertex.vs', 'utf8');
-const shaded_fragment_shader = fs.readFileSync('./shaders/shaded_fragment.fs', 'utf8');
-
-const debug_vertex_shader = fs.readFileSync('./shaders/debug_vertex.vs', 'utf8');
-const debug_fragment_shader = fs.readFileSync('./shaders/debug_fragment.fs', 'utf8');
-*/
+const aoVertexShader = getShader('ao_vertex.vs');
+const aoFragmentShader = getShader('ao_fragment.fs');
 
 const shadedProgram = twgl.createProgramInfo(gl, [shadedVertexShader, shadedFragmentShader]);
 const debugProgram = twgl.createProgramInfo(gl, [debugVertexShader, debugFragmentShader]);
+const aoProgram = twgl.createProgramInfo(gl, [aoVertexShader, aoFragmentShader]);
 
 module.exports.shadedProgram = shadedProgram;
 module.exports.debugProgram = debugProgram;
+module.exports.aoProgram = aoProgram;

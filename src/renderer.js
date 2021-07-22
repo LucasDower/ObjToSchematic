@@ -16,8 +16,8 @@ class Renderer {
         this._gl = document.querySelector("#c").getContext("webgl");
         this._camera = new ArcballCamera(fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 100.0);
 
-        this._registerEvents();
-        this._getNewBuffers();
+        this._registerEvents();  // Register mouse events for interacting with canvas
+        this._getNewBuffers();   // Setup WebGL Buffers
 
         this._debug = false;
         this._compiled = false;
@@ -39,6 +39,39 @@ class Renderer {
         this._registerData(data);
     }
 
+    _registerVoxel(centre, voxelSize, voxelManager) {
+        const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        
+        let occlusions = new Array(6);   
+        // For each face
+        for (let f = 0; f < 6; ++f) {
+            // For each vertex
+            occlusions[f] = [0, 0, 0, 0];
+            for (let v = 0; v < 4; ++v) {
+                // For each occlusion vertex
+                for (let o = 0; o < 3; ++o) {
+                    occlusions[f][v] += voxelManager.isVoxelAt(Vector3.add(centre, this.occlusions[f][v][o]));
+                }
+            }
+        }
+        
+        // Each vertex of a face needs the occlusion data for the other 3 vertices
+        // in it's face, not just itself, pack this into a vec4.
+        for (let i = 0; i < 6; ++i) {
+            occlusions[i] = [].concat(...new Array(4).fill(occlusions[i]));
+        }    
+        
+        let data = GeometryTemplates.getBoxBufferData(centre, sizeVector, false);
+        data.occlusion = [].concat(...occlusions);
+
+        // Convert from occlusion denoting the occlusion factor to the 
+        // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
+        data.occlusion = data.occlusion.map(x => 1.0 - 0.2 * x);        
+
+        //this._registerData(data);
+        this._registerVoxels.add(data);
+    }
+
     registerTriangle(triangle) {
         const data = GeometryTemplates.getTriangleBufferData(triangle, this._debug);
         this._registerData(data);
@@ -51,10 +84,26 @@ class Renderer {
     }
 
     registerVoxelMesh(voxelManager) {
+        const voxelSize = voxelManager._voxelSize;
+        const sizeVector = new Vector3(voxelSize/2, voxelSize/2, voxelSize/2);
+        if (this.debug) {
+            voxelManager.voxels.forEach((voxel) => {
+                this.registerBox(voxel, sizeVector);
+            });
+        } else {
+            this._setupOcclusions(voxelSize); // Setup arrays for calculating voxel ambient occlusion
+    
+            voxelManager.voxels.forEach((voxel) => {
+                this._registerVoxel(voxel, voxelSize, voxelManager);
+            });
+        }
+        
+        /*
         const mesh = voxelManager.buildMesh();
         for (const box of mesh) {
             this.registerBox(box.centre, box.size, false);
         }
+        */
     }
 
     clear() {
@@ -63,7 +112,8 @@ class Renderer {
 
     compile() {
         this._registerDebug.compile(this._gl);
-        this._register.compile(this._gl);
+        this._registerVoxels.compile(this._gl);
+        this._registerDefault.compile(this._gl);
         this._compiled = true;
     }
 
@@ -75,32 +125,70 @@ class Renderer {
 
         this._setupScene();
 
-        this._drawDebugRegisters();
-        this._drawRegisters();
-    }
-
-
-
-
-    _drawDebugRegisters() {
-        const debugUniforms = {
+        // Draw debug register
+        this._drawRegister(this._registerDebug, this._gl.LINES, shaderManager.debugProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
-        };
-        
-        for (const buffer of this._registerDebug.WebGLBuffers) {
-            this._drawBuffer(this._gl.LINES, buffer, shaderManager.debugProgram, debugUniforms);
-        }
-    }
+        });
 
-    _drawRegisters() {
-        const uniforms = {
+        // Draw voxel register
+        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
+            u_worldViewProjection: this._camera.getWorldViewProjection()
+        });
+        
+        // Draw default register
+        this._drawRegister(this._registerDefault, this._gl.TRIANGLES, shaderManager.shadedProgram, {
             u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
-        };
+        });
+    }
 
-        for (const buffer of this._register.WebGLBuffers) {
-            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderManager.shadedProgram, uniforms);
+    _drawRegister(register, drawMode, shaderProgram, uniforms) {
+        for (const buffer of register.WebGLBuffers) {
+            this._drawBuffer(drawMode, buffer, shaderProgram, uniforms);
+        }
+    }
+
+    _setupOcclusions(voxelSize) {
+        this.occlusions = new Array(6).fill(null).map(function() { return new Array(4).fill(0); });
+
+        this.occlusions[0][0] = [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)];
+        this.occlusions[0][1] = [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)];
+        this.occlusions[0][2] = [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)];
+        this.occlusions[0][3] = [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)];
+
+        this.occlusions[1][0] = [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)];
+        this.occlusions[1][1] = [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)];
+        this.occlusions[1][2] = [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)];
+        this.occlusions[1][3] = [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)];
+
+        this.occlusions[2][0] = [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3( 0,  1,  1)];
+        this.occlusions[2][1] = [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3( 0,  1, -1)];
+        this.occlusions[2][2] = [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 0,  1,  1)];
+        this.occlusions[2][3] = [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 0,  1, -1)];
+
+        this.occlusions[3][0] = [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3( 0, -1, -1)];
+        this.occlusions[3][1] = [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3( 0, -1,  1)];
+        this.occlusions[3][2] = [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 0, -1, -1)];
+        this.occlusions[3][3] = [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 0, -1,  1)];
+
+        this.occlusions[4][0] = [new Vector3( 0,  1,  1), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)];
+        this.occlusions[4][1] = [new Vector3( 0, -1,  1), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)];
+        this.occlusions[4][2] = [new Vector3( 0,  1,  1), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)];
+        this.occlusions[4][3] = [new Vector3( 0, -1,  1), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)];
+
+        this.occlusions[5][0] = [new Vector3( 0,  1, -1), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)];
+        this.occlusions[5][1] = [new Vector3( 0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)];
+        this.occlusions[5][2] = [new Vector3( 0,  1, -1), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)];
+        this.occlusions[5][3] = [new Vector3( 0, -1, -1), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)];
+
+        // Scale each Vector3 by voxelSize
+        for (let i = 0; i < 6; ++i) {
+            for (let j = 0; j < 4; ++j) {
+                for (let k = 0; k < 3; ++k) {
+                    this.occlusions[i][j][k] = Vector3.mulScalar(this.occlusions[i][j][k], voxelSize);
+                }
+            }
         }
     }
 
@@ -110,7 +198,7 @@ class Renderer {
             data.colour = [].concat(...new Array(numVertices).fill(this._strokeColour.toArray()));
             this._registerDebug.add(data);
         } else {
-            this._register.add(data);
+            this._registerDefault.add(data);
         }       
     }
 
@@ -149,6 +237,7 @@ class Renderer {
     }
 
     _drawBuffer(drawMode, buffer, shader, uniforms) {
+        //console.log(shader);
         this._gl.useProgram(shader.program);
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
@@ -156,8 +245,20 @@ class Renderer {
     }
 
     _getNewBuffers() {
-        this._registerDebug = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'colour', numComponents: 3}]);
-        this._register      = new SegmentedBuffer(16384, [{name: 'position', numComponents: 3}, {name: 'normal', numComponents: 3}]);
+        this._registerDebug = new SegmentedBuffer(16384, [
+            {name: 'position', numComponents: 3},
+            {name: 'colour', numComponents: 3}
+        ]);
+        this._registerVoxels = new SegmentedBuffer(16384, [
+            {name: 'position', numComponents: 3},
+            {name: 'normal', numComponents: 3},
+            {name: 'occlusion', numComponents: 4},
+            {name: 'texcoord', numComponents: 2}
+        ]);
+        this._registerDefault = new SegmentedBuffer(16384, [
+            {name: 'position', numComponents: 3},
+            {name: 'normal', numComponents: 3}
+        ]);
     }
 
 }

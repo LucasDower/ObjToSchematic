@@ -76,6 +76,12 @@ class VoxelManager {
         );
     }
 
+    isVoxelAt(vec) {
+        vec = Vector3.subScalar(vec, this._voxelSize / 2);
+        const pos = this._voxelCentreToPosition(vec);
+        return (this.voxelsHash.contains(pos));
+    } 
+
     addVoxel(vec) {
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
