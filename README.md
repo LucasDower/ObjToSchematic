@@ -27,6 +27,7 @@ A tool to convert .obj files into Minecraft Schematics
 * ✔️ **Faster voxel splitting**
 * ✔️ **Ambient occlusion**
 * ⌛ *Multithreading* (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
+* Data-oriented programming for rendering & voxelisation
 * Quality of life
   * Model PSR, voxel size preview, progress bar, limit warnings
 
