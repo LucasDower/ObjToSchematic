@@ -49,3 +49,5 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Run `npm install`.
 * Run `npm start`.
 
+# Disclaimer
+This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).

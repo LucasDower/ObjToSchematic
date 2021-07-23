@@ -1,6 +1,8 @@
 precision mediump float;
 
-varying vec4 v_colour;
+uniform sampler2D u_texture;
+
+varying float v_lighting;
 varying vec4 v_occlusion;
 varying vec2 v_texcoord;
 
@@ -16,7 +18,10 @@ void main() {
 
   float g = v*(u*b + (1.0-u)*d) + (1.0-v)*(u*a + (1.0-u)*c);
 
-  gl_FragColor = vec4(v_colour.xyz * g, 1.0);
+  vec3 diffuse = texture2D(u_texture, v_texcoord).rgb;
+  gl_FragColor = vec4(diffuse * (v_lighting * g), 1.0);
+  //gl_FragColor = vec4(vec3(v_lighting * g), 1.0);
+  //gl_FragColor = vec4(v_colour.xyz * g, 1.0);
   //gl_FragColor = vec4(v_colour.xyz, 1.0);
   //gl_FragColor = vec4(vec3(g), 1.0);
 }

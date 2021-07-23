@@ -21,6 +21,8 @@ class Renderer {
 
         this._debug = false;
         this._compiled = false;
+
+        this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
     }
 
     
@@ -132,7 +134,8 @@ class Renderer {
 
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
-            u_worldViewProjection: this._camera.getWorldViewProjection()
+            u_worldViewProjection: this._camera.getWorldViewProjection(),
+            u_texture: this._blockTexture
         });
         
         // Draw default register
