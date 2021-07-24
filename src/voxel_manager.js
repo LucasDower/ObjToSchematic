@@ -60,7 +60,7 @@ class VoxelManager {
         return cubeAABB;
     }
 
-    _voxelCentreToPosition(vec) {
+    _toGridPosition(vec) {
         //Vector3.round(Vector3.subScalar(Vector3.divScalar(vec, this._voxelSize), 0.5));
         return new Vector3(
             Math.round(vec.x / this._voxelSize),
@@ -69,7 +69,7 @@ class VoxelManager {
         );
     }
 
-    _voxelPositionToCentre(vec) {
+    _toModelPosition(vec) {
         return new Vector3(
             vec.x * this._voxelSize,
             vec.y * this._voxelSize,
@@ -77,8 +77,7 @@ class VoxelManager {
         );
     }
 
-    isVoxelAt(vec) {
-        const pos = this._voxelCentreToPosition(vec);
+    isVoxelAt(pos) {
         return this.voxelsHash.contains(pos);
     } 
 
@@ -87,22 +86,20 @@ class VoxelManager {
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
 
-        const test = Vector3.divScalar(vec, this._voxelSize);
-
         // [HACK] FIXME: Fix misaligned voxels
         // Some vec data is not not grid-snapped to voxelSize-spacing
+        const test = Vector3.divScalar(vec, this._voxelSize);
         if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.z % 1 < 0.9 && test.z % 1 > 0.1)) {
             console.warn("Misaligned voxel, skipping...");
             return;
         }
 
-        const pos = this._voxelCentreToPosition(vec);
+        // Convert to 
+        const pos = this._toGridPosition(vec);
         if (this.voxelsHash.contains(pos)) {
             return;
         }
-        //console.log(pos);
-        this.voxels.push(vec);
-        //console.log("pos:", pos);
+        this.voxels.push(pos);
         this.voxelsHash.add(pos);
 
         this.minX = Math.min(this.minX, vec.x);
@@ -113,6 +110,8 @@ class VoxelManager {
         this.maxZ = Math.max(this.maxZ, vec.z);
     }
 
+    // TODO: Fix voxel meshing
+    /*
     _findXExtent(pos) {
         let xEnd = pos.x + 1;
 
@@ -188,8 +187,8 @@ class VoxelManager {
         this.seen = new HashSet(2048);
         //console.log(this.voxelsHash);
 
-        const minPos = this._voxelCentreToPosition(new Vector3(this.minX, this.minY, this.minZ));
-        const maxPos = this._voxelCentreToPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
+        const minPos = this._toGridPosition(new Vector3(this.minX, this.minY, this.minZ));
+        const maxPos = this._toGridPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
 
         for (let y = minPos.y; y <= maxPos.y; ++y) {
             for (let z = minPos.z; z <= maxPos.z; ++z) {
@@ -209,8 +208,8 @@ class VoxelManager {
                     let size = new Vector3(xEnd - x + 1, yEnd - y + 1, zEnd - z + 1);
 
                     this.mesh.push({
-                        centre: this._voxelPositionToCentre(centre),
-                        size: this._voxelPositionToCentre(size)
+                        centre: this._toModelPosition(centre),
+                        size: this._toModelPosition(size)
                     });
                 }
             }
@@ -220,6 +219,7 @@ class VoxelManager {
 
         return this.mesh;
     }
+    */
 
     splitVoxels() {
         this._voxelSize /= 2;

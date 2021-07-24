@@ -4,8 +4,9 @@ const { Vector3 } = require('./vector.js');
 const { ArcballCamera } = require('./camera.js');
 const mouseManager = require('./mouse.js');
 const shaderManager = require('./shaders.js');
-const { SegmentedBuffer } = require('./buffer.js');
+const { SegmentedBuffer, BottomlessBuffer } = require('./buffer.js');
 const { GeometryTemplates } = require('./geometry.js');
+
 
 class Renderer {
 
@@ -41,36 +42,36 @@ class Renderer {
         this._registerData(data);
     }
 
-    _registerVoxel(centre, voxelSize, voxelManager) {
-        const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
-        
+    _registerVoxel(centre, voxelManager) {       
         let occlusions = new Array(6);   
         // For each face
         for (let f = 0; f < 6; ++f) {
             // For each vertex
             occlusions[f] = [0, 0, 0, 0];
+            
             for (let v = 0; v < 4; ++v) {
                 // For each occlusion vertex
                 for (let o = 0; o < 3; ++o) {
                     occlusions[f][v] += voxelManager.isVoxelAt(Vector3.add(centre, this.occlusions[f][v][o]));
                 }
             }
+
+            // Convert from occlusion denoting the occlusion factor to the 
+            // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
+            occlusions[f] = occlusions[f].map(x => 1.0 - 0.2 * x);  
         }
         
+        let data = GeometryTemplates.getBoxBufferData(centre, false);
+
         // Each vertex of a face needs the occlusion data for the other 3 vertices
-        // in it's face, not just itself, pack this into a vec4.
-        for (let i = 0; i < 6; ++i) {
-            occlusions[i] = [].concat(...new Array(4).fill(occlusions[i]));
-        }    
-        
-        let data = GeometryTemplates.getBoxBufferData(centre, sizeVector, false);
-        data.occlusion = [].concat(...occlusions);
+        // in it's face, not just itself. Also flatten occlusion data.
+        data.occlusion = new Array(96);
+        for (let j = 0; j < 6; ++j) {
+            for (let k = 0; k < 16; ++k) {
+                data.occlusion[j * 16 + k] = occlusions[j][k % 4];
+            }
+        }     
 
-        // Convert from occlusion denoting the occlusion factor to the 
-        // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-        data.occlusion = data.occlusion.map(x => 1.0 - 0.2 * x);        
-
-        //this._registerData(data);
         this._registerVoxels.add(data);
     }
 
@@ -87,7 +88,9 @@ class Renderer {
 
     registerVoxelMesh(voxelManager) {
         const voxelSize = voxelManager._voxelSize;
-        const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        //const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
+        const sizeVector = new Vector3(1.0, 1.0, 1.0);
+
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
                 this.registerBox(voxel, sizeVector);
@@ -96,7 +99,7 @@ class Renderer {
             this._setupOcclusions(voxelSize); // Setup arrays for calculating voxel ambient occlusion
     
             voxelManager.voxels.forEach((voxel) => {
-                this._registerVoxel(voxel, voxelSize, voxelManager);
+                this._registerVoxel(voxel, voxelManager);
             });
         }
         
@@ -119,7 +122,7 @@ class Renderer {
         this._compiled = true;
     }
 
-    draw() {
+    draw(voxelSize) {
         if (!this._compiled) {
             this.compile();
             return;
@@ -135,7 +138,8 @@ class Renderer {
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_texture: this._blockTexture
+            u_texture: this._blockTexture,
+            u_voxelSize: voxelSize
         });
         
         // Draw default register
@@ -152,7 +156,7 @@ class Renderer {
         }
     }
 
-    _setupOcclusions(voxelSize) {
+    _setupOcclusions() {
         this.occlusions = new Array(6).fill(null).map(function() { return new Array(4).fill(0); });
 
         this.occlusions[0][0] = [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)];
@@ -186,6 +190,7 @@ class Renderer {
         this.occlusions[5][3] = [new Vector3( 0, -1, -1), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)];
 
         // Scale each Vector3 by voxelSize
+        /*
         for (let i = 0; i < 6; ++i) {
             for (let j = 0; j < 4; ++j) {
                 for (let k = 0; k < 3; ++k) {
@@ -193,6 +198,7 @@ class Renderer {
                 }
             }
         }
+        */
     }
 
     _registerData(data) {
@@ -248,17 +254,18 @@ class Renderer {
     }
 
     _getNewBuffers() {
-        this._registerDebug = new SegmentedBuffer(16384, [
+        const bufferSize = 16384 * 16;
+        this._registerDebug = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},
             {name: 'colour', numComponents: 3}
         ]);
-        this._registerVoxels = new SegmentedBuffer(16384, [
+        this._registerVoxels = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},
             {name: 'normal', numComponents: 3},
             {name: 'occlusion', numComponents: 4},
             {name: 'texcoord', numComponents: 2}
         ]);
-        this._registerDefault = new SegmentedBuffer(16384, [
+        this._registerDefault = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},
             {name: 'normal', numComponents: 3}
         ]);

@@ -1,5 +1,6 @@
 uniform mat4 u_worldViewProjection;
 uniform sampler2D u_texture;
+uniform float u_voxelSize;
 
 attribute vec4 position;
 attribute vec3 normal;
@@ -20,5 +21,5 @@ void main() {
     //float lighting = 0.2 * occlusion;
     //v_colour = vec4(abs(normal), 1.0);
     v_lighting = dot(light, abs(normal));
-    gl_Position = u_worldViewProjection * vec4(position.xyz, 1.0);
+    gl_Position = u_worldViewProjection * vec4(position.xyz * u_voxelSize, 1.0);
 }
