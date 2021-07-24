@@ -32,6 +32,7 @@ A tool to convert .obj files into Minecraft Schematics
   * Model PSR, voxel size preview, progress bar, limit warnings
 
 0.4
+* Convert to TypeScript
 * Export to litematic
 * .mtl support for block choice 
 
