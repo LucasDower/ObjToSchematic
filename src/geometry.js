@@ -31,6 +31,11 @@ class GeometryTemplates {
                     b.x, b.y, b.z,
                     c.x, c.y, c.z,
                 ],
+                texcoord: [].concat(
+                    triangle.uv0,
+                    triangle.uv1,
+                    triangle.uv2
+                ),
                 normal: [
                     n.x, n.y, n.z,
                     n.x, n.y, n.z,

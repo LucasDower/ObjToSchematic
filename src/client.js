@@ -14,8 +14,9 @@ const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
 
-const mesh = new Mesh("./resources/mix.obj");
+const mesh = new Mesh(renderer._gl, "./resources/mix.obj");
 renderer.registerMesh(mesh);
+//console.log(renderer._materialBuffers);
 
 function showToastWithText(text, style) {
     $("#toast").removeClass("bg-success");

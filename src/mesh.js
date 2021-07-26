@@ -1,5 +1,7 @@
+const twgl = require('twgl.js');
 const fs = require('fs');
-const wavefrontObjParser = require('wavefront-obj-parser');
+
+//const wavefrontObjParser = require('wavefront-obj-parser');
 const expandVertexData = require('expand-vertex-data');
 
 const { Triangle } = require('./triangle.js');
@@ -10,7 +12,9 @@ var vertexInfoNameMap = {v: 'vertexPositions', vt: 'vertexUVs', vn: 'vertexNorma
 
 class Mesh {
 
-    constructor(obj_path) {
+    constructor(gl, obj_path) {
+        this._gl = gl;
+
         const mtl_path = obj_path.substring(0, obj_path.length - 3) + "mtl";
 
         // Parse .obj
@@ -24,7 +28,7 @@ class Mesh {
         const expanded = expandVertexData(parsedJSON, {facesToTriangles: true});
         this._data = {
             position: expanded.positions,
-            normal: expanded.normals,
+            //normal: expanded.normals,
             texcoord: expanded.uvs,
             indices: expanded.positionIndices,
             materials: parsedJSON.vertexMaterial
@@ -42,7 +46,7 @@ class Mesh {
         }
 
         this._getTriangles();
-        console.log(this.triangles);
+        this._loadTextures();
     }
 
     _parseMaterial(materialString) {
@@ -160,14 +164,30 @@ class Mesh {
                 const v1 = this._data.position.slice(3 * i1, 3 * i1 + 3);
                 const v2 = this._data.position.slice(3 * i2, 3 * i2 + 3);
 
+                const uv0 = this._data.texcoord.slice(2 * i0, 2 * i0 + 2);
+                const uv1 = this._data.texcoord.slice(2 * i1, 2 * i1 + 2);
+                const uv2 = this._data.texcoord.slice(2 * i2, 2 * i2 + 2);
+
                 const v0_ = new Vector3(v0[0], v0[1], v0[2]);
                 const v1_ = new Vector3(v1[0], v1[1], v1[2]);
                 const v2_ = new Vector3(v2[0], v2[1], v2[2]);
 
-                triangles.push(new Triangle(v0_, v1_, v2_));
+                triangles.push(new Triangle(v0_, v1_, v2_, uv0, uv1, uv2));
             }
 
             this.materialTriangles[material] = triangles;
+        }
+    }
+
+    _loadTextures() {
+        for (const material in this._materials) {
+            const texturePath = this._materials[material].diffuseTexturePath;
+            if (texturePath) {
+                this._materials[material].texture = twgl.createTexture(this._gl, {
+                    src: texturePath,
+                    mag: this._gl.NEAREST
+                });
+            }
         }
     }
 

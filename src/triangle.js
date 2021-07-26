@@ -4,10 +4,14 @@ const { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } = 
 
 class Triangle {
 
-    constructor(v0, v1, v2) {
+    constructor(v0, v1, v2, uv0, uv1, uv2) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
+
+        this.uv0 = uv0;
+        this.uv1 = uv1;
+        this.uv2 = uv2;
 
         const f0 = Vector3.sub(v1, v0);
         const f1 = Vector3.sub(v0, v2);

@@ -24,6 +24,7 @@ class Renderer {
         this._compiled = false;
 
         this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
+        this._materialBuffers = [];
     }
 
     
@@ -77,20 +78,28 @@ class Renderer {
 
     registerTriangle(triangle) {
         const data = GeometryTemplates.getTriangleBufferData(triangle, this._debug);
-
-        //const colour = triangle.colour;
-        //data.colour = [].concat(colour, colour, colour);
-        //console.log(data.colour);
-
         this._registerData(data);
     }
 
-    registerMesh(mesh) {
+    registerMesh(mesh) { 
         for (const material in mesh.materialTriangles) {
+            const materialBuffer = new BottomlessBuffer([
+                {name: 'position', numComponents: 3},
+                {name: 'texcoord', numComponents: 2},
+                {name: 'normal', numComponents: 3}
+            ]);
             mesh.materialTriangles[material].forEach((triangle) => {
-                this.registerTriangle(triangle);
+                const data = GeometryTemplates.getTriangleBufferData(triangle, false);
+
+                console.log(data);
+                materialBuffer.add(data);
+            });
+            this._materialBuffers.push({
+                buffer: materialBuffer,
+                texture: mesh._materials[material].texture
             });
         }
+        console.log("MATERIAL BUFFERS:", this._materialBuffers);
     }
 
     registerVoxelMesh(voxelManager) {
@@ -125,7 +134,13 @@ class Renderer {
     compile() {
         this._registerDebug.compile(this._gl);
         this._registerVoxels.compile(this._gl);
-        this._registerDefault.compile(this._gl);
+        //this._registerDefault.compile(this._gl);
+
+        this._materialBuffers.forEach((materialBuffer) => {
+            materialBuffer.buffer.compile(this._gl);
+        });
+
+
         this._compiled = true;
     }
 
@@ -149,11 +164,23 @@ class Renderer {
             u_voxelSize: voxelSize
         });
         
+        /*
         // Draw default register
         this._drawRegister(this._registerDefault, this._gl.TRIANGLES, shaderManager.shadedProgram, {
             u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
+        });
+        */
+
+        // Draw material registers
+        this._materialBuffers.forEach((materialBuffer) => {
+            this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgram, {
+                u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+                u_worldViewProjection: this._camera.getWorldViewProjection(),
+                u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                u_texture: materialBuffer.texture
+            });
         });
     }
 
