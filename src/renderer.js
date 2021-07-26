@@ -77,12 +77,19 @@ class Renderer {
 
     registerTriangle(triangle) {
         const data = GeometryTemplates.getTriangleBufferData(triangle, this._debug);
+
+        //const colour = triangle.colour;
+        //data.colour = [].concat(colour, colour, colour);
+        //console.log(data.colour);
+
         this._registerData(data);
     }
 
     registerMesh(mesh) {
-        for (const triangle of mesh.triangles) {
-            this.registerTriangle(triangle);
+        for (const material in mesh.materialTriangles) {
+            mesh.materialTriangles[material].forEach((triangle) => {
+                this.registerTriangle(triangle);
+            });
         }
     }
 
@@ -267,6 +274,7 @@ class Renderer {
         ]);
         this._registerDefault = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},
+            //{name: 'colour', numComponents: 3},
             {name: 'normal', numComponents: 3}
         ]);
     }

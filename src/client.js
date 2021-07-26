@@ -14,6 +14,8 @@ const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
 
+const mesh = new Mesh("./resources/mix.obj");
+renderer.registerMesh(mesh);
 
 function showToastWithText(text, style) {
     $("#toast").removeClass("bg-success");
@@ -43,6 +45,7 @@ $("#loadBtn").on("click", () => {
         loadedMesh = new Mesh(files[0].path);
     } catch (err) {
         showToastWithText(`Could not load ${file.name}`, 'danger');
+        console.log(err);
         return;
     }
     
@@ -51,7 +54,7 @@ $("#loadBtn").on("click", () => {
     
     renderer.registerMesh(loadedMesh);
     renderer.compile();
-    console.log(renderer);
+    //console.log(renderer);
 
     $('#voxelInput').prop('disabled', false);
     $('#voxelBtn').prop('disabled', false);

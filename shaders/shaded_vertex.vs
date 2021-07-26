@@ -3,6 +3,7 @@ uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
 
 attribute vec4 position;
+//attribute vec3 colour;
 attribute vec3 normal;
 
 varying vec4 v_colour;
