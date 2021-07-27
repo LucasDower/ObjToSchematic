@@ -14,7 +14,7 @@ const canvas = document.querySelector("#c");
 
 let loadedMesh = null;
 
-const mesh = new Mesh(renderer._gl, "./resources/mix.obj");
+const mesh = new Mesh(renderer._gl, "./resources/grad.obj");
 //renderer.registerMesh(mesh);
 voxelManager.voxeliseMesh(mesh);
 renderer.registerVoxelMesh(voxelManager);

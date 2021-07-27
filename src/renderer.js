@@ -23,8 +23,14 @@ class Renderer {
         this._debug = false;
         this._compiled = false;
 
-        this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
+        //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
         this._materialBuffers = [];
+
+        this._atlasTexture = twgl.createTexture(this._gl, {
+            src: "./resources/blocks.png",
+            mag: this._gl.NEAREST
+        });
+         
     }
 
     
@@ -43,7 +49,7 @@ class Renderer {
         this._registerData(data);
     }
 
-    _registerVoxel(centre, voxelManager, colour) {       
+    _registerVoxel(centre, voxelManager, blockTexcoord) {       
         let occlusions = new Array(6);   
         // For each face
         for (let f = 0; f < 6; ++f) {
@@ -67,15 +73,16 @@ class Renderer {
         // Each vertex of a face needs the occlusion data for the other 3 vertices
         // in it's face, not just itself. Also flatten occlusion data.
         data.occlusion = new Array(96);
-        data.colour = [];
+        data.blockTexcoord = [];
         for (let j = 0; j < 6; ++j) {
             for (let k = 0; k < 16; ++k) {
                 data.occlusion[j * 16 + k] = occlusions[j][k % 4];
             }
         }
         const l = data.position.length / 3;
-        for (let i = 0; i < l; ++i)
-        data.colour.push(colour[0], colour[1], colour[2]); 
+        for (let i = 0; i < l; ++i) {
+            data.blockTexcoord.push(blockTexcoord[0], blockTexcoord[1]);
+        }
 
         this._registerVoxels.add(data);
     }
@@ -120,8 +127,9 @@ class Renderer {
     
             for (let i = 0; i < voxelManager.voxels.length; ++i) {
                 const voxel = voxelManager.voxels[i];
-                const colour = voxelManager.voxelColours[i];
-                this._registerVoxel(voxel, voxelManager, colour);
+                //const colour = voxelManager.voxelColours[i];
+                const texcoord = voxelManager.voxelTexcoords[i];
+                this._registerVoxel(voxel, voxelManager, texcoord);
             }
             /*
             voxelManager.voxels.forEach((voxel) => {
@@ -171,7 +179,7 @@ class Renderer {
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_texture: this._blockTexture,
+            u_texture: this._atlasTexture,
             u_voxelSize: voxelSize
         });
         
@@ -260,11 +268,11 @@ class Renderer {
         twgl.resizeCanvasToDisplaySize(this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
         this._camera.aspect = this._gl.canvas.width / this._gl.canvas.height;
-        //this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
+        this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
         this._gl.enable(this._gl.CULL_FACE);
-        //this._gl.enable(this._gl.BLEND);
+        this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.x, this._backgroundColour.y, this._backgroundColour.z, 1);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
@@ -309,7 +317,7 @@ class Renderer {
             {name: 'normal', numComponents: 3},
             {name: 'occlusion', numComponents: 4},
             {name: 'texcoord', numComponents: 2},
-            {name: 'colour', numComponents: 3},
+            {name: 'blockTexcoord', numComponents: 2},
         ]);
         this._registerDefault = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},

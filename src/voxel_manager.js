@@ -2,13 +2,14 @@ const { AABB, CubeAABB } = require("./aabb.js");
 const { Vector3 } = require("./vector.js");
 const { HashSet, HashMap } = require('./hash_map.js');
 const { Texture } = require("./texture.js");
+const { BlockAtlas } = require("./block_atlas.js");
 
 class VoxelManager {
 
     constructor(voxelSize) {
         this._voxelSize = voxelSize;
         this.voxels = [];
-        this.voxelColours = [];
+        this.voxelTexcoords = [];
         this.triangleAABBs = [];
         this.failedAABBs = [];
 
@@ -19,6 +20,8 @@ class VoxelManager {
         this.maxY = -Infinity;
         this.maxZ = -Infinity;
         this.voxelsHash = new HashSet(2048);
+
+        this.blockAtlas = new BlockAtlas();
     }
 
     setVoxelSize(voxelSize) {
@@ -27,7 +30,7 @@ class VoxelManager {
 
     _clearVoxels() {
         this.voxels = [];
-        this.voxelColours = [];
+        this.voxelTexcoords = [];
         this.failedAABBs = [];
         
         this.minX = Infinity; // JavaScript crack
@@ -84,7 +87,7 @@ class VoxelManager {
         return this.voxelsHash.contains(pos);
     } 
 
-    addVoxel(vec, colour) {
+    addVoxel(vec, blockTexcoord) {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
@@ -103,7 +106,7 @@ class VoxelManager {
             return;
         }
         this.voxels.push(pos);
-        this.voxelColours.push(colour);
+        this.voxelTexcoords.push(blockTexcoord);
         this.voxelsHash.add(pos);
 
         this.minX = Math.min(this.minX, vec.x);
@@ -248,37 +251,6 @@ class VoxelManager {
     }
 
     _getVoxelColour(triangle, centre) {
-        const a = triangle.v0;
-        const b = triangle.v1;
-        const c = triangle.v2;
-        const p = centre;
-
-        const uv0 = triangle.uv0;
-        const uv1 = triangle.uv1;
-        const uv2 = triangle.uv2;
-
-        const delta = 0.5 * Vector3.sub(a, b).magnitude() * Vector3.sub(a, c).magnitude();
-        const da    = 0.5 * Vector3.sub(p, b).magnitude() * Vector3.sub(p, c).magnitude();
-        const db    = 0.5 * Vector3.sub(p, a).magnitude() * Vector3.sub(p, c).magnitude();
-        const dc    = 0.5 * Vector3.sub(p, a).magnitude() * Vector3.sub(p, b).magnitude();
-
-        const ka = da / delta;
-        const kb = db / delta;
-        const kc = dc / delta;
-
-        const u = uv0[0] * ka + uv1[0] * kb + uv2[0] * kc;
-        const v = uv0[1] * ka + uv1[1] * kb + uv2[1] * kc;
-
-        //const rgba = triangle.material.texture.getRGBA(u, v);
-        const rgba = this._currentTexture.getRGBA(u, v);
-        if (rgba.length == 0) {
-            return [1.0, 0.0, 0.0];
-        }
-        //return [0.0, 0.0, 0.0];
-        return [rgba[0]/255, rgba[1]/255, rgba[2]/255];
-    }
-
-    _getVoxelColour2(triangle, centre) {
         const p1 = triangle.v0;
         const p2 = triangle.v1;
         const p3 = triangle.v2;
@@ -322,7 +294,10 @@ class VoxelManager {
                     queue.push(...aabb.subdivide());
                 } else {
                     // We've reached the voxel level, stop
-                    this.addVoxel(aabb.centre, this._getVoxelColour2(triangle, aabb.centre));
+                    const voxelColour = this._getVoxelColour(triangle, aabb.centre);
+                    const blockTexcoord = this.blockAtlas.getTexcoord(voxelColour);
+
+                    this.addVoxel(aabb.centre, blockTexcoord);
                     triangleAABBs.push(aabb);
                 }
             } else {
