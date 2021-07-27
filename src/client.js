@@ -15,7 +15,9 @@ const canvas = document.querySelector("#c");
 let loadedMesh = null;
 
 const mesh = new Mesh(renderer._gl, "./resources/mix.obj");
-renderer.registerMesh(mesh);
+//renderer.registerMesh(mesh);
+voxelManager.voxeliseMesh(mesh);
+renderer.registerVoxelMesh(voxelManager);
 //console.log(renderer._materialBuffers);
 
 function showToastWithText(text, style) {
