@@ -1,5 +1,6 @@
 const twgl = require('twgl.js');
 const fs = require('fs');
+const path = require('path');
 
 //const wavefrontObjParser = require('wavefront-obj-parser');
 const expandVertexData = require('expand-vertex-data');
@@ -12,17 +13,28 @@ var vertexInfoNameMap = {v: 'vertexPositions', vt: 'vertexUVs', vn: 'vertexNorma
 
 class Mesh {
 
-    constructor(gl, obj_path) {
-        this._gl = gl;
+    constructor(objPathString) {
+        this._gl = document.querySelector("#c").getContext("webgl");
 
-        const mtl_path = obj_path.substring(0, obj_path.length - 3) + "mtl";
+        this.objPath = path.parse(objPathString);
+
+        //const mtl_path = obj_path.substring(0, obj_path.length - 3) + "mtl";
 
         // Parse .obj
-        const wavefrontString = fs.readFileSync(obj_path).toString('utf8');
+        console.log(objPathString);
+        const wavefrontString = fs.readFileSync(objPathString).toString('utf8');
         const parsedJSON = this._parseWavefrontObj(wavefrontString);
         
+        if ('mtlPath' in this) {
+            if (!path.isAbsolute(this.mtlPath)) {
+                //objPath = path.parse(objPathString);
+                this.mtlPath = path.join(this.objPath.dir, this.mtlPath);
+            }
+        }
+
         // Parse .mtl
-        const materialString = fs.readFileSync(mtl_path).toString('utf8');
+        console.log(this.mtlPath);
+        const materialString = fs.readFileSync(this.mtlPath).toString('utf8');
         this._materials = this._parseMaterial(materialString);
 
         const expanded = expandVertexData(parsedJSON, {facesToTriangles: true});
@@ -71,9 +83,15 @@ class Mesh {
                     currentMaterialData.diffuseColour = lineTokens.slice(1).map(x => parseFloat(x));
                     break;
                 case "map_Kd":
-                    const texturePath = lineTokens[1];
-                    if (!fs.lstatSync(texturePath).isFile()) {
-                        throw Error(`Cannot load texture: ${texturePath}`);
+                    let texturePath = lineTokens[1];
+                    if (!path.isAbsolute(texturePath)) {
+                        texturePath = path.join(this.objPath.dir, texturePath);
+                    } else {
+                        texturePath = path.parse(texturePath);
+                    }
+                    if (!fs.existsSync(texturePath)) {
+                        console.error(texturePath);
+                        throw Error(`Cannot load texture`);
                     }
                     currentMaterialData.diffuseTexturePath = texturePath;
                     break;
@@ -118,6 +136,10 @@ class Mesh {
                 continue;
             }
 
+            if (currentLineTokens[0] === 'mtllib') {
+                this.mtlPath = currentLineTokens[1];
+            }
+            
             if (currentLineTokens[0] === 'usemtl') {
                 currentMaterial = currentLineTokens[1];
             }
@@ -185,7 +207,7 @@ class Mesh {
             if (texturePath) {
                 this._materials[material].texture = twgl.createTexture(this._gl, {
                     src: texturePath,
-                    mag: this._gl.NEAREST
+                    mag: this._gl.LINEAR
                 });
             }
         }

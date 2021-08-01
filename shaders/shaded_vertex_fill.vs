@@ -1,6 +1,7 @@
 uniform vec3 u_lightWorldPos;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
+uniform vec3 u_fillColour;
 
 
 attribute vec4 position;
@@ -9,7 +10,7 @@ attribute vec2 texcoord;
 attribute vec3 normal;
 
 varying float v_lighting;
-varying vec2 v_texcoord;
+//varying vec3 v_colour;
 
 void main() {
   vec4 a_position = u_worldViewProjection * vec4(position.xyz, 1.0);
@@ -20,6 +21,7 @@ void main() {
   float lighting = abs(dot(normal, normalize(u_lightWorldPos)));
   lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
   v_lighting = lighting;
+  //v_colour = u_fillColour;
   //v_colour = vec4(abs(normal) * lighting, 1.0);
   //v_colour = vec4(vec3(lighting), 1.0);
   /*
@@ -29,7 +31,7 @@ void main() {
   normal_.z = (normal.z + 1.0) / 2.0;
   */
 
-  v_texcoord = texcoord;
+  //v_texcoord = texcoord;
 
   //lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
   //v_lighting = lighting;

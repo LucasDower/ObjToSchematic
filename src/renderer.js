@@ -105,9 +105,11 @@ class Renderer {
                 //console.log(data);
                 materialBuffer.add(data);
             });
+            console.log(mesh._materials[material]);
             this._materialBuffers.push({
                 buffer: materialBuffer,
-                texture: mesh._materials[material].texture
+                texture: mesh._materials[material].texture,
+                diffuseColour: mesh._materials[material].diffuseColour
             });
         }
         console.log("MATERIAL BUFFERS:", this._materialBuffers);
@@ -148,6 +150,7 @@ class Renderer {
 
     clear() {
         this._getNewBuffers();
+        this._materialBuffers = [];
     }
 
     compile() {
@@ -194,12 +197,21 @@ class Renderer {
 
         // Draw material registers
         this._materialBuffers.forEach((materialBuffer) => {
-            this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgram, {
-                u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-                u_worldViewProjection: this._camera.getWorldViewProjection(),
-                u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
-                u_texture: materialBuffer.texture
-            });
+            if (materialBuffer.texture) {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramTexture, {
+                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: this._camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_texture: materialBuffer.texture
+                });
+            } else {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramFill, {
+                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: this._camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_fillColour: materialBuffer.diffuseColour 
+                });
+            }
         });
     }
 
@@ -271,7 +283,7 @@ class Renderer {
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
-        this._gl.enable(this._gl.CULL_FACE);
+        //this._gl.enable(this._gl.CULL_FACE);
         this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.x, this._backgroundColour.y, this._backgroundColour.z, 1);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
@@ -307,6 +319,7 @@ class Renderer {
     }
 
     _getNewBuffers() {
+        console.log("Getting new buffer");
         const bufferSize = 16384 * 16;
         this._registerDebug = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},

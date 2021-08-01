@@ -272,12 +272,12 @@ class VoxelManager {
         const v = uv1[1] * a1 + uv2[1] * a2 + uv3[1] * a3;
 
         //const rgba = triangle.material.texture.getRGBA(u, v);
-        const rgba = this._currentTexture.getRGBA(u, v);
-        if (rgba.length == 0) {
-            return [1.0, 0.0, 0.0];
+        if (this._blockMode === "TEXTURE") {
+            const rgba = this._currentTexture.getRGBA(u, v);
+            return [rgba[0]/255, rgba[1]/255, rgba[2]/255];
+        } else {
+            return this._currentColour;
         }
-        //return [0.0, 0.0, 0.0];
-        return [rgba[0]/255, rgba[1]/255, rgba[2]/255];
     }
 
     voxeliseTriangle(triangle) {
@@ -310,8 +310,13 @@ class VoxelManager {
 
     voxeliseMesh(mesh) {
         for (const material in mesh.materialTriangles) {
-            this._currentTexture = new Texture(mesh._materials[material].diffuseTexturePath);
-            console.log(this._currentTexture);
+            if ("diffuseTexturePath" in mesh._materials[material]) {
+                this._currentTexture = new Texture(mesh._materials[material].diffuseTexturePath);
+                this._blockMode = "TEXTURE";
+            } else {
+                this._currentColour = mesh._materials[material].diffuseColour;
+                this._blockMode = "FILL";
+            }
             for (const triangle of mesh.materialTriangles[material]) {
                 this.voxeliseTriangle(triangle);
             }
