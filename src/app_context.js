@@ -54,6 +54,19 @@ class AppContext {
         this._showToast(`Successfully load ${file.name}`, 'success');
     }
 
+    /*
+    split() {
+        this.voxelSize /= 2;
+        $("#voxelInput").prop('value', this.voxelSize);
+
+        this.voxelManager.splitVoxels();
+
+        this.renderer.clear();
+        this.renderer.registerVoxelMesh(this.voxelManager);
+        this.renderer.compile();
+    }
+    */
+
     voxelise() {
         const newVoxelSize = $("#voxelInput").prop('value');
         if (newVoxelSize < 0.001) {
@@ -75,6 +88,7 @@ class AppContext {
         $('#exportBtn').prop('disabled', false);
         $('#splitBtn').prop('disabled', false);
     
+        this._showToast("Note, currently, all blocks are exported as Stone", 'warning');
     }
 
     async export() {

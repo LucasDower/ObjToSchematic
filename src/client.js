@@ -14,9 +14,11 @@ $("#voxelBtn").on("click", () => {
 });
 
 
+/*
 $("#splitBtn").on("click", () => {
-    context.handleExport();
+    context.split();
 });
+*/
 
 
 $("#exportBtn").on("click", async () => {

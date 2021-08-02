@@ -239,7 +239,11 @@ class VoxelManager {
             for (const AABB of AABBs) {
                 for (const sub of AABB.subdivide()) {
                     if (triangle.intersectAABB(sub)) {
-                        this.addVoxel(sub.centre);
+                        const voxelColour = this._getVoxelColour(triangle, sub.centre);
+                        console.log(voxelColour);
+                        const blockTexcoord = this.blockAtlas.getTexcoord(voxelColour);
+
+                        this.addVoxel(sub.centre, blockTexcoord);
                         triangleAABBs.push(sub);
                     }
                 }
@@ -274,6 +278,7 @@ class VoxelManager {
         //const rgba = triangle.material.texture.getRGBA(u, v);
         if (this._blockMode === "TEXTURE") {
             const rgba = this._currentTexture.getRGBA(u, v);
+            console.log(rgba);
             return [rgba[0]/255, rgba[1]/255, rgba[2]/255];
         } else {
             return this._currentColour;
