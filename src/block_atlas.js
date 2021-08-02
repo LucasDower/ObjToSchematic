@@ -1,6 +1,6 @@
 const twgl = require('twgl.js');
 const fs = require('fs');
-const { Vector3 } = require('./vector');
+const { Vector3 } = require('./vector.js');
 const { HashMap } = require('./hash_map.js');
 
 class BlockAtlas {

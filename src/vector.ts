@@ -1,6 +1,10 @@
-class Vector3 {
+export class Vector3 {
 
-    constructor(x, y, z) {
+    x: number;
+    y: number;
+    z: number;
+
+    constructor(x: number, y: number, z: number) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -10,7 +14,7 @@ class Vector3 {
         return [this.x, this.y, this.z];
     }
 
-    static add(vecA, vecB) {
+    static add(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             vecA.x + vecB.x,
             vecA.y + vecB.y,
@@ -18,7 +22,7 @@ class Vector3 {
         );
     }
 
-    static addScalar(vec, scalar) {
+    static addScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             vec.x + scalar,
             vec.y + scalar,
@@ -26,7 +30,7 @@ class Vector3 {
         );
     }
 
-    static sub(vecA, vecB) {
+    static sub(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             vecA.x - vecB.x,
             vecA.y - vecB.y,
@@ -34,7 +38,7 @@ class Vector3 {
         );
     }
 
-    static subScalar(vec, scalar) {
+    static subScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             vec.x - scalar,
             vec.y - scalar,
@@ -42,11 +46,11 @@ class Vector3 {
         );
     }
 
-    static dot(vecA, vecB) {
+    static dot(vecA: Vector3, vecB: Vector3) {
         return vecA.x * vecB.x + vecA.y * vecB.y + vecA.z * vecB.z;
     }
 
-    static copy(vec) {
+    static copy(vec: Vector3) {
         return new Vector3(
             vec.x,
             vec.y,
@@ -54,7 +58,7 @@ class Vector3 {
         );
     }
 
-    static mulScalar(vec, scalar) {
+    static mulScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             scalar * vec.x,
             scalar * vec.y,
@@ -62,7 +66,7 @@ class Vector3 {
         );
     }
 
-    static divScalar(vec, scalar) {
+    static divScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             vec.x / scalar,
             vec.y / scalar,
@@ -70,11 +74,11 @@ class Vector3 {
         );
     }
 
-    static lessThanEqualTo(vecA, vecB) {
+    static lessThanEqualTo(vecA: Vector3, vecB: Vector3) {
         return vecA.x <= vecB.x && vecA.y <= vecB.y && vecA.z <= vecB.z;
     }
 
-    static round(vec) {
+    static round(vec: Vector3) {
         return new Vector3(
             Math.round(vec.x),
             Math.round(vec.y),
@@ -82,7 +86,7 @@ class Vector3 {
         );
     }
 
-    static abs(vec) {
+    static abs(vec: Vector3) {
         return new Vector3(
             Math.abs(vec.x),
             Math.abs(vec.y),
@@ -90,7 +94,7 @@ class Vector3 {
         );
     }
 
-    static cross(vecA, vecB) {
+    static cross(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             vecA.y * vecB.z - vecA.z * vecB.y,
             vecA.z * vecB.x - vecA.x * vecB.z,
@@ -105,7 +109,7 @@ class Vector3 {
         return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2); 
     }
 
-    equals(vec) {
+    equals(vec: Vector3) {
         return this.x == vec.x && this.y == vec.y && this.z == vec.z;
     }
 
@@ -121,7 +125,5 @@ class Vector3 {
 
         return this;
     }
-
+    
 }
-
-module.exports.Vector3 = Vector3;

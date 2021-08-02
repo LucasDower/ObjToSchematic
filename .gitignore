@@ -3,3 +3,4 @@ package-lock.json
 ObjToSchematic-win32-x64
 /resources/*.obj
 /resources/*.mtl
+/dist
