@@ -26,21 +26,23 @@ A tool to convert .obj files into Minecraft Schematics
 0.3
 * ✔️ **Faster voxel splitting**
 * ✔️ **Ambient occlusion**
-* ⌛ *Multithreading* (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
-* Data-oriented programming for rendering & voxelisation
-* Quality of life
+* ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
+* ⌛ Quality of life (see [framebuffer-outlining](https://github.com/LucasDower/ObjToSchematic/tree/framebuffer-outlining))
   * Model PSR, voxel size preview, progress bar, limit warnings
 
 0.4
 * Convert to TypeScript
+* Block painting
 * Export to litematic
 * ✔️ .mtl support for block choice 
 
 0.5
+* Node.js C++ addons
+
+0.6
 * Building guides
 * Slice viewer
 * .fbx support
-* Block painting
 
 # Usage
 You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
