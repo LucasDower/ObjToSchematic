@@ -1,10 +1,13 @@
-export class Vector3 {
+import { Hashable } from "./hash_map";
+
+export class Vector3 extends Hashable {
 
     x: number;
     y: number;
     z: number;
 
     constructor(x: number, y: number, z: number) {
+        super();
         this.x = x;
         this.y = y;
         this.z = z;
@@ -102,7 +105,7 @@ export class Vector3 {
         );
     }
 
-    hash() {
+    override hash() {
         const p0 = 73856093;
         const p1 = 19349663;
         const p2 = 83492791;
