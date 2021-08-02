@@ -49,7 +49,7 @@ class Renderer {
         this._registerData(data);
     }
 
-    _registerVoxel(centre, voxelManager, blockTexcoord) {       
+    _registerVoxel(centre, voxelManager, blockTexcoord) {   
         let occlusions = new Array(6);   
         // For each face
         for (let f = 0; f < 6; ++f) {
@@ -105,7 +105,7 @@ class Renderer {
                 //console.log(data);
                 materialBuffer.add(data);
             });
-            console.log(mesh._materials[material]);
+            //console.log(mesh._materials[material]);
             this._materialBuffers.push({
                 buffer: materialBuffer,
                 texture: mesh._materials[material].texture,
@@ -319,7 +319,6 @@ class Renderer {
     }
 
     _getNewBuffers() {
-        console.log("Getting new buffer");
         const bufferSize = 16384 * 16;
         this._registerDebug = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},

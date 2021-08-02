@@ -21,7 +21,6 @@ class Mesh {
         //const mtl_path = obj_path.substring(0, obj_path.length - 3) + "mtl";
 
         // Parse .obj
-        console.log(objPathString);
         const wavefrontString = fs.readFileSync(objPathString).toString('utf8');
         const parsedJSON = this._parseWavefrontObj(wavefrontString);
         
@@ -33,7 +32,6 @@ class Mesh {
         }
 
         // Parse .mtl
-        console.log(this.mtlPath);
         const materialString = fs.readFileSync(this.mtlPath).toString('utf8');
         this._materials = this._parseMaterial(materialString);
 
@@ -69,34 +67,57 @@ class Mesh {
         let currentMaterialName = null;
         let currentMaterialData = {};
 
-        lines.forEach((line) => {
+        for (let i = 0; i < lines.length; ++i) {
+            const line = lines[i];
             const lineTokens = line.trim().split(/\s+/);
+
             switch (lineTokens[0]) {
                 case "newmtl":
                     if (currentMaterialName) {
+                        if (!("diffuseTexturePath" in currentMaterialData) && !("diffuseColour" in currentMaterialData)) {
+                            currentMaterialData.diffuseColour = [1.0, 1.0, 1.0];
+                        }
                         materialJSON[currentMaterialName] = currentMaterialData;
                     }
                     currentMaterialName = lineTokens[1];
                     currentMaterialData = {};
                     break;
+
                 case "Kd":
                     currentMaterialData.diffuseColour = lineTokens.slice(1).map(x => parseFloat(x));
+                    if (!currentMaterialData.diffuseColour || currentMaterialData.diffuseColour.length != 3) {
+                        throw Error(`Could not parse .mtl file. (Line ${i+1})`);
+                    }
+                    if (currentMaterialData.diffuseColour.some(x => Number.isNaN(x))) {
+                        throw Error(`Could not parse .mtl file. (Line ${i+1})`);
+                    }
                     break;
+
                 case "map_Kd":
+                    if (!lineTokens[1]) {
+                        throw Error(`No valid path to texture in .mtl file. (Line ${i+1})`);
+                    }
                     let texturePath = lineTokens[1];
                     if (!path.isAbsolute(texturePath)) {
                         texturePath = path.join(this.objPath.dir, texturePath);
-                    } else {
-                        texturePath = path.parse(texturePath);
                     }
                     if (!fs.existsSync(texturePath)) {
                         console.error(texturePath);
-                        throw Error(`Cannot load texture`);
+                        throw Error(`Cannot load texture ${texturePath}`);
                     }
+                    const _path = path.parse(texturePath);
+                    if (_path.ext.toLowerCase() != ".png") {
+                        throw Error(`Can only load .png textures`);
+                    }
+
                     currentMaterialData.diffuseTexturePath = texturePath;
                     break;
             }
-        });
+        }
+
+        if (!("diffuseTexturePath" in currentMaterialData) && !("diffuseColour" in currentMaterialData)) {
+            currentMaterialData.diffuseColour = [1.0, 1.0, 1.0];
+        }
         materialJSON[currentMaterialName] = currentMaterialData;
 
         return materialJSON;
@@ -136,34 +157,33 @@ class Mesh {
                 continue;
             }
 
-            if (currentLineTokens[0] === 'mtllib') {
-                this.mtlPath = currentLineTokens[1];
-            }
-            
-            if (currentLineTokens[0] === 'usemtl') {
-                currentMaterial = currentLineTokens[1];
-            }
-
-            if (currentLineTokens[0] === 'f') {
-                // Get our 4 sets of vertex, uv, and normal indices for this face
-                for (let k = 1; k < 5; k++) {
-                    // If there is no fourth face entry then this is specifying a triangle
-                    // in this case we push `-1`
-                    // Consumers of this module should check for `-1` before expanding face data
-                    if (k === 4 && !currentLineTokens[4]) {
-                        parsedJSON.vertexPositionIndices.push(-1);
-                        parsedJSON.vertexUVIndices.push(-1);
-                        parsedJSON.vertexNormalIndices.push(-1);
-                        //parsedJSON.vertexMaterial.push(currentMaterial);
-                    } else {
-                        var indices = currentLineTokens[k].split('/');
-                        parsedJSON.vertexPositionIndices.push(parseInt(indices[0], 10) - 1); // We zero index
-                        parsedJSON.vertexUVIndices.push(parseInt(indices[1], 10) - 1); // our face indices
-                        parsedJSON.vertexNormalIndices.push(parseInt(indices[2], 10) - 1); // by subtracting 1
-                        parsedJSON.vertexMaterial.push(currentMaterial);
+            switch (currentLineTokens[0]) {
+                case "mtllib":
+                    this.mtlPath = currentLineTokens[1];
+                    break;
+                case "usemtl":
+                    currentMaterial = currentLineTokens[1];
+                    break;
+                case "f":
+                    // Get our 4 sets of vertex, uv, and normal indices for this face
+                    for (let k = 1; k < 5; k++) {
+                        // If there is no fourth face entry then this is specifying a triangle
+                        // in this case we push `-1`
+                        // Consumers of this module should check for `-1` before expanding face data
+                        if (k === 4 && !currentLineTokens[4]) {
+                            parsedJSON.vertexPositionIndices.push(-1);
+                            parsedJSON.vertexUVIndices.push(-1);
+                            parsedJSON.vertexNormalIndices.push(-1);
+                            //parsedJSON.vertexMaterial.push(currentMaterial);
+                        } else {
+                            var indices = currentLineTokens[k].split('/');
+                            parsedJSON.vertexPositionIndices.push(parseInt(indices[0], 10) - 1); // We zero index
+                            parsedJSON.vertexUVIndices.push(parseInt(indices[1], 10) - 1); // our face indices
+                            parsedJSON.vertexNormalIndices.push(parseInt(indices[2], 10) - 1); // by subtracting 1
+                            parsedJSON.vertexMaterial.push(currentMaterial);
+                        }
                     }
-                }
-            }
+            } 
         }
 
         return parsedJSON;

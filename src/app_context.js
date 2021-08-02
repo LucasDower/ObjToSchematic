@@ -29,14 +29,15 @@ class AppContext {
     
         const file = files[0];
         if (!file.name.endsWith(".obj") && !file.name.endsWith(".OBJ")) {
-            this._showToast(`Could not load ${file.name}`, 'danger');
+            this._showToast("Files must be .obj format", 'danger');
             return;
         }
     
         try {
             this.loadedMesh = new Mesh(files[0].path);
         } catch (err) {
-            this._showToast(`Could not load ${file.name}`, 'danger');
+            //this._showToast(`Could not load ${file.name}`, 'danger');
+            this._showToast(err.message, 'danger');
             console.log(err);
             return;
         }
@@ -112,6 +113,7 @@ class AppContext {
         $("#toast").addClass(`bg-${style}`);
     
         $("#toastText").html(text);
+        $("#toast").toast({ delay: 3000 });
         $("#toast").toast('show');
     }
 
