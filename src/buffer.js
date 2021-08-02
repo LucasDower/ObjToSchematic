@@ -25,7 +25,7 @@ class SegmentedBuffer {
         this._indicesInsertIndex = 0;
         this._maxIndex = 0;
 
-        this._sanityCheck = false;
+        this._sanityCheck = true;
 
         this._getNewBuffer();
     }
@@ -171,7 +171,7 @@ class BottomlessBuffer {
         }
 
         this._maxIndex = 0;
-        this._sanityCheck = false;
+        this._sanityCheck = true;
 
         this._getNewBuffer();
     }

@@ -11,16 +11,21 @@ function getShader(filename) {
 const shadedVertexShader = getShader('shaded_vertex.vs');
 const shadedFragmentShader = getShader('shaded_fragment.fs');
 
+const shadedVertexFillShader = getShader('shaded_vertex_fill.vs');
+const shadedFragmentFillShader = getShader('shaded_fragment_fill.fs');
+
 const debugVertexShader = getShader('debug_vertex.vs');
 const debugFragmentShader = getShader('debug_fragment.fs');
 
 const aoVertexShader = getShader('ao_vertex.vs');
 const aoFragmentShader = getShader('ao_fragment.fs');
 
-const shadedProgram = twgl.createProgramInfo(gl, [shadedVertexShader, shadedFragmentShader]);
+const shadedProgramTexture = twgl.createProgramInfo(gl, [shadedVertexShader, shadedFragmentShader]);
+const shadedProgramFill = twgl.createProgramInfo(gl, [shadedVertexFillShader, shadedFragmentFillShader]);
 const debugProgram = twgl.createProgramInfo(gl, [debugVertexShader, debugFragmentShader]);
 const aoProgram = twgl.createProgramInfo(gl, [aoVertexShader, aoFragmentShader]);
 
-module.exports.shadedProgram = shadedProgram;
+module.exports.shadedProgramTexture = shadedProgramTexture;
+module.exports.shadedProgramFill = shadedProgramFill;
 module.exports.debugProgram = debugProgram;
 module.exports.aoProgram = aoProgram;

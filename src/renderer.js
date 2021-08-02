@@ -23,7 +23,14 @@ class Renderer {
         this._debug = false;
         this._compiled = false;
 
-        this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
+        //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
+        this._materialBuffers = [];
+
+        this._atlasTexture = twgl.createTexture(this._gl, {
+            src: "./resources/blocks.png",
+            mag: this._gl.NEAREST
+        });
+         
     }
 
     
@@ -42,7 +49,7 @@ class Renderer {
         this._registerData(data);
     }
 
-    _registerVoxel(centre, voxelManager) {       
+    _registerVoxel(centre, voxelManager, blockTexcoord) {   
         let occlusions = new Array(6);   
         // For each face
         for (let f = 0; f < 6; ++f) {
@@ -66,11 +73,16 @@ class Renderer {
         // Each vertex of a face needs the occlusion data for the other 3 vertices
         // in it's face, not just itself. Also flatten occlusion data.
         data.occlusion = new Array(96);
+        data.blockTexcoord = [];
         for (let j = 0; j < 6; ++j) {
             for (let k = 0; k < 16; ++k) {
                 data.occlusion[j * 16 + k] = occlusions[j][k % 4];
             }
-        }     
+        }
+        const l = data.position.length / 3;
+        for (let i = 0; i < l; ++i) {
+            data.blockTexcoord.push(blockTexcoord[0], blockTexcoord[1]);
+        }
 
         this._registerVoxels.add(data);
     }
@@ -80,10 +92,27 @@ class Renderer {
         this._registerData(data);
     }
 
-    registerMesh(mesh) {
-        for (const triangle of mesh.triangles) {
-            this.registerTriangle(triangle);
+    registerMesh(mesh) { 
+        for (const material in mesh.materialTriangles) {
+            const materialBuffer = new BottomlessBuffer([
+                {name: 'position', numComponents: 3},
+                {name: 'texcoord', numComponents: 2},
+                {name: 'normal', numComponents: 3}
+            ]);
+            mesh.materialTriangles[material].forEach((triangle) => {
+                const data = GeometryTemplates.getTriangleBufferData(triangle, false);
+
+                //console.log(data);
+                materialBuffer.add(data);
+            });
+            //console.log(mesh._materials[material]);
+            this._materialBuffers.push({
+                buffer: materialBuffer,
+                texture: mesh._materials[material].texture,
+                diffuseColour: mesh._materials[material].diffuseColour
+            });
         }
+        console.log("MATERIAL BUFFERS:", this._materialBuffers);
     }
 
     registerVoxelMesh(voxelManager) {
@@ -98,9 +127,17 @@ class Renderer {
         } else {
             this._setupOcclusions(voxelSize); // Setup arrays for calculating voxel ambient occlusion
     
+            for (let i = 0; i < voxelManager.voxels.length; ++i) {
+                const voxel = voxelManager.voxels[i];
+                //const colour = voxelManager.voxelColours[i];
+                const texcoord = voxelManager.voxelTexcoords[i];
+                this._registerVoxel(voxel, voxelManager, texcoord);
+            }
+            /*
             voxelManager.voxels.forEach((voxel) => {
                 this._registerVoxel(voxel, voxelManager);
             });
+            */
         }
         
         /*
@@ -113,12 +150,19 @@ class Renderer {
 
     clear() {
         this._getNewBuffers();
+        this._materialBuffers = [];
     }
 
     compile() {
         this._registerDebug.compile(this._gl);
         this._registerVoxels.compile(this._gl);
-        this._registerDefault.compile(this._gl);
+        //this._registerDefault.compile(this._gl);
+
+        this._materialBuffers.forEach((materialBuffer) => {
+            materialBuffer.buffer.compile(this._gl);
+        });
+
+
         this._compiled = true;
     }
 
@@ -138,15 +182,36 @@ class Renderer {
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_texture: this._blockTexture,
+            u_texture: this._atlasTexture,
             u_voxelSize: voxelSize
         });
         
+        /*
         // Draw default register
         this._drawRegister(this._registerDefault, this._gl.TRIANGLES, shaderManager.shadedProgram, {
             u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
+        });
+        */
+
+        // Draw material registers
+        this._materialBuffers.forEach((materialBuffer) => {
+            if (materialBuffer.texture) {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramTexture, {
+                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: this._camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_texture: materialBuffer.texture
+                });
+            } else {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramFill, {
+                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: this._camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_fillColour: materialBuffer.diffuseColour 
+                });
+            }
         });
     }
 
@@ -215,11 +280,11 @@ class Renderer {
         twgl.resizeCanvasToDisplaySize(this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
         this._camera.aspect = this._gl.canvas.width / this._gl.canvas.height;
-        //this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
+        this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
-        this._gl.enable(this._gl.CULL_FACE);
-        //this._gl.enable(this._gl.BLEND);
+        //this._gl.enable(this._gl.CULL_FACE);
+        this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.x, this._backgroundColour.y, this._backgroundColour.z, 1);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
@@ -263,10 +328,12 @@ class Renderer {
             {name: 'position', numComponents: 3},
             {name: 'normal', numComponents: 3},
             {name: 'occlusion', numComponents: 4},
-            {name: 'texcoord', numComponents: 2}
+            {name: 'texcoord', numComponents: 2},
+            {name: 'blockTexcoord', numComponents: 2},
         ]);
         this._registerDefault = new SegmentedBuffer(bufferSize, [
             {name: 'position', numComponents: 3},
+            //{name: 'colour', numComponents: 3},
             {name: 'normal', numComponents: 3}
         ]);
     }

@@ -3,7 +3,7 @@ A tool to convert .obj files into Minecraft Schematics
 
 :warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
 
-![Preview](/resources/preview.png)
+![Preview](/resources/preview2.jpg)
 
 ![MinecraftPreview](/resources/minecraft.png)
 
@@ -34,7 +34,7 @@ A tool to convert .obj files into Minecraft Schematics
 * Convert to TypeScript
 * Block painting
 * Export to litematic
-* ⌛ .mtl support for block choice (see [mtl-support](https://github.com/LucasDower/ObjToSchematic/tree/mtl-support))
+* ✔️ .mtl support for block choice 
 
 0.5
 * Node.js C++ addons
