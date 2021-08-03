@@ -1,10 +1,23 @@
-const { Vector3 } = require('./vector.js');
-const { AABB } = require('./aabb.js');
-const { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } = require('./math.js');
+import { Vector3 } from "./vector";
+import { AABB } from "./aabb";
+import { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } from "./math";
+import { UV } from "./util";
 
-class Triangle {
 
-    constructor(v0, v1, v2, uv0, uv1, uv2) {
+export class Triangle {
+
+    public readonly v0: Vector3;
+    public readonly v1: Vector3;
+    public readonly v2: Vector3;
+    public readonly normal: Vector3;
+    
+    public readonly uv0: UV;
+    public readonly uv1: UV;
+    public readonly uv2: UV;
+
+    private readonly aabb!: AABB;
+
+    constructor(v0: Vector3, v1: Vector3, v2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
@@ -16,35 +29,37 @@ class Triangle {
         const f0 = Vector3.sub(v1, v0);
         const f1 = Vector3.sub(v0, v2);
         this.normal = Vector3.cross(f0, f1).normalise();
-        //this.normal.normalise();
 
-        this._calculateBoundingBox();
+        // Calculate bounding box
+        {
+            const a = new Vector3(
+                Math.min(this.v0.x, this.v1.x, this.v2.x),
+                Math.min(this.v0.y, this.v1.y, this.v2.y),
+                Math.min(this.v0.z, this.v1.z, this.v2.z)
+            );
+    
+            const b = new Vector3(
+                Math.max(this.v0.x, this.v1.x, this.v2.x),
+                Math.max(this.v0.y, this.v1.y, this.v2.y),
+                Math.max(this.v0.z, this.v1.z, this.v2.z)
+            );
+    
+            const centre = Vector3.mulScalar(Vector3.add(a, b), 0.5);
+            const size = Vector3.abs(Vector3.sub(a, b));
+    
+            this.aabb = new AABB(centre, size);
+        }
     }
 
-    _calculateBoundingBox() {
-        const a = new Vector3(
-            Math.min(this.v0.x, this.v1.x, this.v2.x),
-            Math.min(this.v0.y, this.v1.y, this.v2.y),
-            Math.min(this.v0.z, this.v1.z, this.v2.z)
-        );
-
-        const b = new Vector3(
-            Math.max(this.v0.x, this.v1.x, this.v2.x),
-            Math.max(this.v0.y, this.v1.y, this.v2.y),
-            Math.max(this.v0.z, this.v1.z, this.v2.z)
-        );
-
-        const centre = Vector3.mulScalar(Vector3.add(a, b), 0.5);
-        const size = Vector3.abs(Vector3.sub(a, b));
-
-        this.aabb = new AABB(centre, size);
+    public getAABB() {
+        return this.aabb;
     }
 
-    insideAABB(aabb) {
+    public insideAABB(aabb: AABB) {
         return Vector3.lessThanEqualTo(aabb.a, this.aabb.a) && Vector3.lessThanEqualTo(this.aabb.b, aabb.b);
     }
 
-    intersectAABB(aabb) {
+    public intersectAABB(aabb: AABB) {
         const extents = Vector3.mulScalar(aabb.size, 0.5);
 
         const v0 = Vector3.sub(this.v0, aabb.centre);
@@ -80,7 +95,7 @@ class Triangle {
         return true;
     }
 
-    _testAxis(v0, v1, v2, axis, extents) {
+    private _testAxis(v0: Vector3, v1: Vector3, v2: Vector3, axis: Vector3, extents: Vector3) {
         let p0 = Vector3.dot(v0, axis);
         let p1 = Vector3.dot(v1, axis);
         let p2 = Vector3.dot(v2, axis);
@@ -93,5 +108,3 @@ class Triangle {
     }
 
 }
-
-module.exports.Triangle = Triangle;

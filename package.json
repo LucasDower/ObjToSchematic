@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/LucasDower/ObjToSchematic#readme",
   "devDependencies": {
+    "@types/pngjs": "^6.0.1",
     "electron": "^13.1.4",
     "electron-packager": "^15.2.0",
     "expand-vertex-data": "^1.1.2",

@@ -3,7 +3,7 @@ const twgl = require('twgl.js');
 const { Vector3 } = require('./vector.js');
 const { ArcballCamera } = require('./camera.js');
 const mouseManager = require('./mouse.js');
-const shaderManager = require('./shaders.js');
+const { ShaderManager } = require('./shaders.js');
 const { SegmentedBuffer, BottomlessBuffer } = require('./buffer.js');
 const { GeometryTemplates } = require('./geometry.js');
 
@@ -11,17 +11,24 @@ const { GeometryTemplates } = require('./geometry.js');
 class Renderer {
 
     constructor(fov, backgroundColour) {
+        console.log("Renderer constructor");
+
         this._backgroundColour = backgroundColour;
         this._strokeColour = new Vector3(1.0, 1.0, 1.0);
         
         this._gl = document.querySelector("#c").getContext("webgl");
         this._camera = new ArcballCamera(fov, this._gl.canvas.clientWidth / this._gl.canvas.clientHeight, 0.5, 100.0);
 
+        this._shaderManager = new ShaderManager(this._gl);
+        console.log(this._shaderManager);
+
         this._registerEvents();  // Register mouse events for interacting with canvas
         this._getNewBuffers();   // Setup WebGL Buffers
 
         this._debug = false;
         this._compiled = false;
+
+        
 
         //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
         this._materialBuffers = [];
@@ -168,19 +175,18 @@ class Renderer {
 
     draw(voxelSize) {
         if (!this._compiled) {
-            this.compile();
             return;
         }
 
         this._setupScene();
 
         // Draw debug register
-        this._drawRegister(this._registerDebug, this._gl.LINES, shaderManager.debugProgram, {
+        this._drawRegister(this._registerDebug, this._gl.LINES, this._shaderManager.debugProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
         });
 
         // Draw voxel register
-        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, shaderManager.aoProgram, {
+        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, this._shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: voxelSize
@@ -198,14 +204,14 @@ class Renderer {
         // Draw material registers
         this._materialBuffers.forEach((materialBuffer) => {
             if (materialBuffer.texture) {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramTexture, {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedTextureProgram, {
                     u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: this._camera.getWorldViewProjection(),
                     u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
                     u_texture: materialBuffer.texture
                 });
             } else {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, shaderManager.shadedProgramFill, {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedFillProgram, {
                     u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: this._camera.getWorldViewProjection(),
                     u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
@@ -311,7 +317,6 @@ class Renderer {
     }
 
     _drawBuffer(drawMode, buffer, shader, uniforms) {
-        //console.log(shader);
         this._gl.useProgram(shader.program);
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);

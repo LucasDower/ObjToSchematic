@@ -17,6 +17,10 @@ export const fastCrossZAxis = (vec: Vector3) => {
     return new Vector3(-vec.y, vec.x, 0.0);
 }
 
+export const clamp = (value: number, min: number, max: number) => {
+    return Math.max(Math.min(max, value), min);
+}
+
 export const xAxis = new Vector3(1.0, 0.0, 0.0);
 export const yAxis = new Vector3(0.0, 1.0, 0.0);
 export const zAxis = new Vector3(0.0, 0.0, 1.0);

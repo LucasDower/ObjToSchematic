@@ -2,9 +2,9 @@ import { Hashable } from "./hash_map";
 
 export class Vector3 extends Hashable {
 
-    x: number;
-    y: number;
-    z: number;
+    public x: number;
+    public y: number;
+    public z: number;
 
     constructor(x: number, y: number, z: number) {
         super();
@@ -61,6 +61,14 @@ export class Vector3 extends Hashable {
         );
     }
 
+    copy() {
+        return new Vector3(
+            this.x,
+            this.y,
+            this.z
+        );
+    }
+
     static mulScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             scalar * vec.x,
@@ -69,12 +77,26 @@ export class Vector3 extends Hashable {
         );
     }
 
+    mulScalar(scalar: number) {
+        this.x *= scalar;
+        this.y *= scalar;
+        this.z *= scalar;
+        return this;
+    }
+
     static divScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             vec.x / scalar,
             vec.y / scalar,
             vec.z / scalar
         );
+    }
+
+    divScalar(scalar: number) {
+        this.x /= scalar;
+        this.y /= scalar;
+        this.z /= scalar;
+        return this;
     }
 
     static lessThanEqualTo(vecA: Vector3, vecB: Vector3) {
@@ -87,6 +109,13 @@ export class Vector3 extends Hashable {
             Math.round(vec.y),
             Math.round(vec.z)
         );
+    }
+
+    round() {
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+        this.z = Math.round(this.z);
+        return this;
     }
 
     static abs(vec: Vector3) {

@@ -9,6 +9,7 @@ const dialog = require('electron').remote.dialog;
 class AppContext {
 
     constructor() {     
+        console.log("AppContext constructor");
         this.voxelSize = $("#voxelInput").prop("value");
         this.canvas = $("#c");
 

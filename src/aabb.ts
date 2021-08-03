@@ -1,8 +1,14 @@
-const { Vector3 } = require('./vector.js');
+import { Vector3 } from "./vector";
 
-class AABB {
 
-    constructor(centre, size) {
+export class AABB {
+
+    public readonly centre: Vector3;
+    public readonly size: Vector3;
+    public readonly a: Vector3;
+    public readonly b: Vector3
+
+    constructor(centre: Vector3, size: Vector3) {
         this.centre = centre;
         this.size = size;
 
@@ -10,37 +16,21 @@ class AABB {
         this.b = Vector3.add(centre, Vector3.mulScalar(size, 0.5));
     }
 
-    /*
-    subdivide() {
-        const newSize = Vector3.divScalar(this.size, 2);
-        const offset = Vector3.divScalar(this.size, 4);
-
-        return [
-            new AABB(Vector3.add(this.centre, new Vector3(-offset.x, -offset.y, -offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3( offset.x, -offset.y, -offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3(-offset.x,  offset.y, -offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3( offset.x,  offset.y, -offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3(-offset.x, -offset.y,  offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3( offset.x, -offset.y,  offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3(-offset.x,  offset.y,  offset.z)), newSize),
-            new AABB(Vector3.add(this.centre, new Vector3( offset.x,  offset.y,  offset.z)), newSize),
-        ];
-    }
-    */
-
 }
 
-class CubeAABB extends AABB {
 
-    constructor(centre, width) {
+export class CubeAABB extends AABB {
+
+    readonly width: number;
+
+    constructor(centre: Vector3, width: number) {
         const sizeVector = new Vector3(width, width, width);
         super(centre, sizeVector);
         
         this.width = width;
-
     }
 
-    subdivide() {
+    public subdivide() {
         const newWidth = this.width / 2;
         const offset = this.width / 4;
 
@@ -57,8 +47,3 @@ class CubeAABB extends AABB {
     }
 
 }
-
-
-
-module.exports.AABB = AABB;
-module.exports.CubeAABB = CubeAABB;
