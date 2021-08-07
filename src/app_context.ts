@@ -1,9 +1,9 @@
-const { Renderer } = require('./renderer.js');
-const { Mesh } = require('./mesh.js');
-const { VoxelManager } = require('./voxel_manager.js');
-const { Vector3 } = require('./vector.js');
-const { Schematic } = require('./schematic.js');
-const dialog = require('electron').remote.dialog;
+import { Renderer } from "./renderer";
+import { Mesh } from "./mesh.js";
+import { VoxelManager } from "./voxel_manager.js";
+import { Vector3 } from "./vector.js";
+import { Schematic } from "./schematic.js";
+//const dialog = from 'electron').remote.dialog;
 
 
 class AppContext {

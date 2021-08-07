@@ -8,11 +8,9 @@ const { SegmentedBuffer, BottomlessBuffer } = require('./buffer.js');
 const { GeometryTemplates } = require('./geometry.js');
 
 
-class Renderer {
+export class Renderer {
 
     constructor(fov, backgroundColour) {
-        console.log("Renderer constructor");
-
         this._backgroundColour = backgroundColour;
         this._strokeColour = new Vector3(1.0, 1.0, 1.0);
         
