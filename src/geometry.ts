@@ -2,22 +2,34 @@ import * as twgl from "twgl.js";
 import { Triangle } from "./triangle";
 import { Vector3 } from "./vector";
 import { UV } from "./util";
+import { VoxelData } from "./buffer";
 
-interface PositionIndexData {
+enum DataType {
+    PositionIndexData,
+    PositionTexcoordNormalIndexData
+}
+
+/*
+export interface PositionIndexData {
+    type: DataType.PositionIndexData,
     position: Float32Array,
     indices: Uint16Array
 }
 
-interface PositionTexcoordNormalIndexData extends PositionIndexData {
+export interface PositionTexcoordNormalIndexData extends PositionIndexData {
+    type: DataType.PositionTexcoordNormalIndexData,
+    
     texcoord: Float32Array,
     normal: Float32Array
 }
+*/
+
 
 export class GeometryTemplates {
 
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
     
-    static getTriangleBufferData(triangle: Triangle, debug: boolean): (PositionIndexData | PositionTexcoordNormalIndexData) {
+    static getTriangleBufferData(triangle: Triangle, debug: boolean): VoxelData {
         const a = triangle.v0;
         const b = triangle.v1;
         const c = triangle.v2;
@@ -60,7 +72,7 @@ export class GeometryTemplates {
         }
     }
 
-    static getBoxBufferData(centre: Vector3, debug: boolean): (PositionIndexData | PositionTexcoordNormalIndexData) {
+    static getBoxBufferData(centre: Vector3, debug: boolean): VoxelData {
         const a = Vector3.subScalar(centre, 0.5);
         const b = Vector3.addScalar(centre, 0.5);
         

@@ -16,17 +16,19 @@ function createWindow () {
         contextIsolation: false,
         enableRemoteModule: true
     }});
-
+    mainWindow.setMenuBarVisibility(false);
+    
+    
     // Load index.html
     mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, '../index.html'),
         protocol: 'file:',
         slashes: true
     }));    
-
+    
     // Open the DevTools.
     //mainWindow.webContents.openDevTools();
-
+    
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
         app.quit();

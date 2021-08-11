@@ -1,9 +1,6 @@
-import { AppContext } from "./dist/app_context.js";
-
-const { AppContext } = require('./dist/app_context.js');
+import { AppContext } from "./app_context";
 
 const context = new AppContext();
-
 
 
 $("#loadBtn").on("click", () => {
@@ -24,11 +21,11 @@ $("#splitBtn").on("click", () => {
 
 
 $("#exportBtn").on("click", async () => {
-    context.handleExport();
+    context.export();
 });
 
 
-function render(time) {
+function render(time: number) {
     context.draw();
     requestAnimationFrame(render);
 }

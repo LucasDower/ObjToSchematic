@@ -8,11 +8,11 @@ export class ArcballCamera {
     public isRotating = false;
 
     private readonly fov: number;
-    private readonly aspect: number;
     private readonly zNear: number;
     private readonly zFar: number;
     private readonly cameraSmoothing = 0.025;
-
+    
+    public aspect: number;
     private actualDistance = 18.0;
     private actualAzimuth = -1.0;
     private actualElevation = 1.3;
@@ -33,11 +33,14 @@ export class ArcballCamera {
     private zoomDistMin = 1.0;
     private zoomDistMax = 100.0;
 
-    constructor(fov: number, aspect: number, zNear: number, zFar: number, gl: WebGLRenderingContext) {
+    private gl: WebGLRenderingContext;
+
+    constructor(fov: number, zNear: number, zFar: number, gl: WebGLRenderingContext) {
         this.fov = fov * Math.PI / 180;
-        this.aspect = aspect;
         this.zNear = zNear;
         this.zFar = zFar;
+        this.gl = gl;
+        this.aspect = gl.canvas.width / gl.canvas.height;
 
         this.mouseManager = new MouseManager(gl);
 
@@ -52,6 +55,8 @@ export class ArcballCamera {
         if (!this.isRotating) {
             return;
         }
+
+        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
         const mouseDelta = this.mouseManager.getMouseDelta();
         this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;

@@ -22,12 +22,12 @@ interface Materials {
     [materialName: string]: (FillMaterial | TextureMaterial)
 }
 
-interface FillMaterial {
+export interface FillMaterial {
     readonly type: MaterialType.Fill
-    diffuseColour: RGB
+    diffuseColour: RGB    
 }
 
-interface TextureMaterial {
+export interface TextureMaterial {
     readonly type: MaterialType.Texture
     texturePath: string,
     texture?: WebGLTexture
@@ -38,14 +38,15 @@ export enum MaterialType {
     Fill
 }
 
-interface MaterialTriangles {
+export interface MaterialTriangles {
     material: (FillMaterial | TextureMaterial);
     triangles: Array<Triangle>
 }
 
 export class Mesh {
 
-    public materialTriangles: {[materialName: string]: Array<MaterialTriangles>};
+    //public materialTriangles: {[materialName: string]: Array<MaterialTriangles>};
+    public materialTriangles: Array<MaterialTriangles> = [];
 
     private _gl: WebGLRenderingContext;
     private objPath: path.ParsedPath;
@@ -62,7 +63,7 @@ export class Mesh {
     constructor(objPathString: string, gl: WebGLRenderingContext) {
 
         this.objPath = path.parse(objPathString);
-        this.materialTriangles = {};
+        //this.materialTriangles: Array<MaterialTriangles>;
         this._gl = gl;
 
         // Parse .obj
@@ -259,7 +260,7 @@ export class Mesh {
 
 
     _parseTriangles(materials: Materials) {
-        this.materialTriangles = {};
+        this.materialTriangles = [];
 
         for (const materialName in this._materialIndices) {
             let triangles = [];
@@ -285,10 +286,10 @@ export class Mesh {
                 triangles.push(new Triangle(v0_, v1_, v2_, {u: uv0[0], v: uv0[1]}, {u: uv1[0], v: uv1[1]}, {u: uv2[0], v: uv2[1]}));
             }
 
-            return {
+            this.materialTriangles.push({
                 material: materials[materialName],
                 triangles: triangles
-            }
+            });
         }
     }
 
