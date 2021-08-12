@@ -1,4 +1,4 @@
-import twgl from "twgl.js";
+import * as twgl from "twgl.js";
 
 import { Vector3 } from "./vector";
 import { ArcballCamera } from "./camera";
@@ -38,7 +38,7 @@ export class Renderer {
     constructor(gl: WebGLRenderingContext) {
         this._gl = gl;
         this._camera = new ArcballCamera(this._fov, 0.5, 100.0, gl);
-
+        this._mouseManager = new MouseManager(gl);
         this._shaderManager = new ShaderManager(this._gl);
 
         this._registerEvents();  // Register mouse events for interacting with canvas
@@ -48,7 +48,6 @@ export class Renderer {
         this._debug = false;
         this._compiled = false;
 
-        this._mouseManager = new MouseManager(gl);
 
         
 
@@ -129,6 +128,7 @@ export class Renderer {
                 {name: 'normal', numComponents: 3}
             ]);
             const materialTriangles = mesh.materialTriangles[material];
+            console.log(materialTriangles);
             materialTriangles.triangles.forEach(triangle => {
                 const data = GeometryTemplates.getTriangleBufferData(triangle, false);
                 materialBuffer.add(data);
@@ -253,35 +253,49 @@ export class Renderer {
     _setupOcclusions() {
         // TODO: Find some for-loop to clean this up        
 
-        this._occlusionNeighbours[0][0] = [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)];
-        this._occlusionNeighbours[0][1] = [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)];
-        this._occlusionNeighbours[0][2] = [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)];
-        this._occlusionNeighbours[0][3] = [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)];
+        this._occlusionNeighbours = [
+            [
+                [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)],
+                [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)],
+                [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)],
+                [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)]
+            ],
 
-        this._occlusionNeighbours[1][0] = [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)];
-        this._occlusionNeighbours[1][1] = [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)];
-        this._occlusionNeighbours[1][2] = [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)];
-        this._occlusionNeighbours[1][3] = [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)];
+            [
+                [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)],
+                [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)],
+                [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)],
+                [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)]
+            ],
 
-        this._occlusionNeighbours[2][0] = [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3( 0,  1,  1)];
-        this._occlusionNeighbours[2][1] = [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3( 0,  1, -1)];
-        this._occlusionNeighbours[2][2] = [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 0,  1,  1)];
-        this._occlusionNeighbours[2][3] = [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 0,  1, -1)];
+            [
+                [new Vector3(-1,  1,  0), new Vector3(-1,  1,  1), new Vector3( 0,  1,  1)],
+                [new Vector3(-1,  1,  0), new Vector3(-1,  1, -1), new Vector3( 0,  1, -1)],
+                [new Vector3( 1,  1,  0), new Vector3( 1,  1,  1), new Vector3( 0,  1,  1)],
+                [new Vector3( 1,  1,  0), new Vector3( 1,  1, -1), new Vector3( 0,  1, -1)]
+            ],
 
-        this._occlusionNeighbours[3][0] = [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3( 0, -1, -1)];
-        this._occlusionNeighbours[3][1] = [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3( 0, -1,  1)];
-        this._occlusionNeighbours[3][2] = [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 0, -1, -1)];
-        this._occlusionNeighbours[3][3] = [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 0, -1,  1)];
+            [
+                [new Vector3(-1, -1,  0), new Vector3(-1, -1, -1), new Vector3( 0, -1, -1)],
+                [new Vector3(-1, -1,  0), new Vector3(-1, -1,  1), new Vector3( 0, -1,  1)],
+                [new Vector3( 1, -1,  0), new Vector3( 1, -1, -1), new Vector3( 0, -1, -1)],
+                [new Vector3( 1, -1,  0), new Vector3( 1, -1,  1), new Vector3( 0, -1,  1)]
+            ],
 
-        this._occlusionNeighbours[4][0] = [new Vector3( 0,  1,  1), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)];
-        this._occlusionNeighbours[4][1] = [new Vector3( 0, -1,  1), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)];
-        this._occlusionNeighbours[4][2] = [new Vector3( 0,  1,  1), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)];
-        this._occlusionNeighbours[4][3] = [new Vector3( 0, -1,  1), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)];
+            [
+                [new Vector3( 0,  1,  1), new Vector3( 1,  1,  1), new Vector3( 1,  0,  1)],
+                [new Vector3( 0, -1,  1), new Vector3( 1, -1,  1), new Vector3( 1,  0,  1)],
+                [new Vector3( 0,  1,  1), new Vector3(-1,  1,  1), new Vector3(-1,  0,  1)],
+                [new Vector3( 0, -1,  1), new Vector3(-1, -1,  1), new Vector3(-1,  0,  1)]
+            ],
 
-        this._occlusionNeighbours[5][0] = [new Vector3( 0,  1, -1), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)];
-        this._occlusionNeighbours[5][1] = [new Vector3( 0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)];
-        this._occlusionNeighbours[5][2] = [new Vector3( 0,  1, -1), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)];
-        this._occlusionNeighbours[5][3] = [new Vector3( 0, -1, -1), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)];
+            [
+                [new Vector3( 0,  1, -1), new Vector3(-1,  1, -1), new Vector3(-1,  0, -1)],
+                [new Vector3( 0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1,  0, -1)],
+                [new Vector3( 0,  1, -1), new Vector3( 1,  1, -1), new Vector3( 1,  0, -1)],
+                [new Vector3( 0, -1, -1), new Vector3( 1, -1, -1), new Vector3( 1,  0, -1)]
+            ]
+        ]
     }
 
     _registerData(data: VoxelData) {
@@ -320,7 +334,7 @@ export class Renderer {
     
         this._gl.canvas.addEventListener('mousemove', (e) => {
             this._mouseManager.handleInput(<MouseEvent>e);
-            this._camera.updateCamera();
+            this._camera.updateCamera(this._mouseManager.getMouseDelta());
         });
     
         this._gl.canvas.addEventListener('wheel', (e) => {

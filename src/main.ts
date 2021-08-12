@@ -1,6 +1,6 @@
-import { app, BrowserWindow, inAppPurchase } from "electron";
-import * as path from "path";
-import * as url from "url";
+import { app, BrowserWindow, Tray } from "electron";
+import path from "path";
+import url from "url";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -11,12 +11,19 @@ function createWindow () {
     //const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
     const width = 1400;
     const height = 800;
-    mainWindow = new BrowserWindow({width, height, webPreferences: {
+
+    //const appIcon = new Tray("../resources/icon.png");
+    mainWindow = new BrowserWindow({
+        width,
+        height,
+        webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
         enableRemoteModule: true
-    }});
-    mainWindow.setMenuBarVisibility(false);
+        },
+        icon: "./resources/icon.png"
+    });
+    //mainWindow.removeMenu();
     
     
     // Load index.html

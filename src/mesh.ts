@@ -1,7 +1,8 @@
 import * as twgl from "twgl.js";
 import * as fs from "fs";
 import * as path from "path";
-import {expandVertexData} from "expand-vertex-data";
+//import { expandVertexData } from "expand-vertex-data";
+const expandVertexData: any = require("expand-vertex-data");
 
 import { Triangle } from "./triangle";
 import { Vector3 } from "./vector";
@@ -83,6 +84,7 @@ export class Mesh {
         const materials = this._parseMaterial(materialString);
 
         // FIXME: Fix quad faces
+        //console.log(expandVertexData.expandVertexData(null, null));
         const expanded = expandVertexData(parsedJSON, {facesToTriangles: true});
 
         this._data = {
@@ -108,6 +110,7 @@ export class Mesh {
     }
 
     private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string) {
+        console.log(materialName, materialDiffuseColour, materialDiffuseTexturePath);
         if (materialDiffuseTexturePath !== "") {
             materialsJSON[materialName] = {
                 texturePath: materialDiffuseTexturePath,
@@ -128,7 +131,7 @@ export class Mesh {
 
         let materialName: string = "";
         let materialDiffuseColour: RGB = {r: 1.0, g: 1.0, b: 1.0};
-        let materialDiffuseTexturePath!: string;
+        let materialDiffuseTexturePath: string = "";
 
         for (let i = 0; i < lines.length; ++i) {
             const line = lines[i];
@@ -138,6 +141,8 @@ export class Mesh {
                 case "newmtl":
                     this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath);
                     materialName = lineTokens[1];
+                    materialDiffuseColour = {r: 0, g: 0, b: 0};
+                    materialDiffuseTexturePath = ""
                     break;
 
                 case "Kd":

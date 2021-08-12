@@ -83,7 +83,7 @@ export class Schematic {
                 outBuffer.end(() => console.log('Written!'));
             } 
             else {
-                console.log(err);
+                throw err;
             }
         });
     }

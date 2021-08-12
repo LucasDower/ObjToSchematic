@@ -1,7 +1,8 @@
 import { Vector3 } from "./vector";
 import { HashMap } from "./hash_map";
 import { UV, RGB } from "./util"; 
-import blocks from "../resources/blocks.json";
+//import blocks from "../resources/blocks.json";
+import fs from "fs";
 
 interface BlockInfo {
     name: string;
@@ -12,9 +13,18 @@ interface BlockInfo {
 export class BlockAtlas {
 
     private readonly _cachedBlocks: HashMap<Vector3, number>;
+    private readonly _blocks: Array<BlockInfo>;
 
     constructor() {
         this._cachedBlocks = new HashMap(1024);
+
+        const blocksString = fs.readFileSync("./resources/blocks.json", "utf-8");
+        if (!blocksString) {
+            throw Error("Could not load blocks.json")
+        }
+        
+        const blocksJSON = JSON.parse(blocksString);
+        this._blocks = blocksJSON;
     }
 
     public getTexcoord(voxelColour: RGB) {
@@ -27,14 +37,14 @@ export class BlockAtlas {
 
         let cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
         if (cachedBlockIndex) {
-            return blocks[cachedBlockIndex];
+            return this._blocks[cachedBlockIndex];
         }
 
         let minDistance = Infinity;
         let blockChoiceIndex!: number;
 
-        for (let i = 0; i < blocks.length; ++i) {
-            const block: BlockInfo = blocks[i];
+        for (let i = 0; i < this._blocks.length; ++i) {
+            const block: BlockInfo = this._blocks[i];
             const blockAvgColour = block.colour;
             const blockAvgColourVector = new Vector3(
                 blockAvgColour.r,
@@ -50,7 +60,7 @@ export class BlockAtlas {
         }
 
         this._cachedBlocks.add(voxelColourVector, blockChoiceIndex);
-        return blocks[blockChoiceIndex];
+        return this._blocks[blockChoiceIndex];
     }
 
 }

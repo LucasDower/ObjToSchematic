@@ -1,4 +1,4 @@
-import twgl from "twgl.js";
+import * as twgl from "twgl.js";
 
 /*
     WebGL buffers store vertex index data as Uint16 and will lead to frequent overflows.

@@ -23,7 +23,6 @@ export class AppContext {
 
 
     constructor() {     
-        console.log("AppContext constructor");
         this._voxelSize = $("#voxelInput").prop("value");
         
         const gl = (<HTMLCanvasElement>$("#c").get(0)).getContext("webgl");

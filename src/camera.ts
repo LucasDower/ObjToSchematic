@@ -17,8 +17,6 @@ export class ArcballCamera {
     private actualAzimuth = -1.0;
     private actualElevation = 1.3;
 
-    private mouseManager: MouseManager;
-
     private targetDistance: number;
     private targetAzimuth: number;
     private targetElevation: number;
@@ -42,8 +40,6 @@ export class ArcballCamera {
         this.gl = gl;
         this.aspect = gl.canvas.width / gl.canvas.height;
 
-        this.mouseManager = new MouseManager(gl);
-
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
         this.targetElevation = this.actualElevation;
@@ -51,14 +47,15 @@ export class ArcballCamera {
         this.updateCameraPosition();
     }
 
-    public updateCamera() {
+    public updateCamera(mouseDelta: {dx: number, dy: number}) {
         if (!this.isRotating) {
             return;
         }
+        //console.log("update camera");
 
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
-        const mouseDelta = this.mouseManager.getMouseDelta();
+        //console.log(mouseDelta);
         this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
         this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
 
