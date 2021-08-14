@@ -6,16 +6,16 @@ import { UV } from "./util";
 
 export class Triangle {
 
-    public readonly v0: Vector3;
-    public readonly v1: Vector3;
-    public readonly v2: Vector3;
+    public v0: Vector3;
+    public v1: Vector3;
+    public v2: Vector3;
     public readonly normal: Vector3;
     
     public readonly uv0: UV;
     public readonly uv1: UV;
     public readonly uv2: UV;
 
-    private readonly aabb!: AABB;
+    private aabb!: AABB;
 
     constructor(v0: Vector3, v1: Vector3, v2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
         this.v0 = v0;
@@ -30,25 +30,26 @@ export class Triangle {
         const f1 = Vector3.sub(v0, v2);
         this.normal = Vector3.cross(f0, f1).normalise();
 
-        // Calculate bounding box
-        {
-            const a = new Vector3(
-                Math.min(this.v0.x, this.v1.x, this.v2.x),
-                Math.min(this.v0.y, this.v1.y, this.v2.y),
-                Math.min(this.v0.z, this.v1.z, this.v2.z)
-            );
-    
-            const b = new Vector3(
-                Math.max(this.v0.x, this.v1.x, this.v2.x),
-                Math.max(this.v0.y, this.v1.y, this.v2.y),
-                Math.max(this.v0.z, this.v1.z, this.v2.z)
-            );
-    
-            const centre = Vector3.mulScalar(Vector3.add(a, b), 0.5);
-            const size = Vector3.abs(Vector3.sub(a, b));
-    
-            this.aabb = new AABB(centre, size);
-        }
+        this.buildAABB();
+    }
+
+    public buildAABB() {
+        const a = new Vector3(
+            Math.min(this.v0.x, this.v1.x, this.v2.x),
+            Math.min(this.v0.y, this.v1.y, this.v2.y),
+            Math.min(this.v0.z, this.v1.z, this.v2.z)
+        );
+
+        const b = new Vector3(
+            Math.max(this.v0.x, this.v1.x, this.v2.x),
+            Math.max(this.v0.y, this.v1.y, this.v2.y),
+            Math.max(this.v0.z, this.v1.z, this.v2.z)
+        );
+
+        const centre = Vector3.mulScalar(Vector3.add(a, b), 0.5);
+        const size = Vector3.abs(Vector3.sub(a, b));
+
+        this.aabb = new AABB(centre, size);
     }
 
     public getAABB() {

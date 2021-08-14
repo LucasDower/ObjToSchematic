@@ -4,6 +4,7 @@ import { byte, NBT, parse, short, TagType, writeUncompressed } from "prismarine-
 import { Vector3 } from "./vector";
 import { remote } from "electron"
 import { VoxelManager } from "./voxel_manager";
+import { Block } from "./block_atlas";
 
 //const zlib = require("zlib");
 //const fs = require('fs');
@@ -27,6 +28,7 @@ export class Schematic {
     constructor(voxelManager: VoxelManager) {
         //const minPos = voxelManager._voxelCentreToPosition(new Vector3(voxelManager.minX, voxelManager.minY, voxelManager.minZ));
         //const maxPos = voxelManager._voxelCentreToPosition(new Vector3(voxelManager.maxX, voxelManager.maxY, voxelManager.maxZ));
+        //console.log("SAMPLE", voxelManager.voxels[0]);
 
         const minPos = new Vector3(voxelManager.minX, voxelManager.minY, voxelManager.minZ);
         const maxPos = new Vector3(voxelManager.maxX, voxelManager.maxY, voxelManager.maxZ);
@@ -35,11 +37,12 @@ export class Schematic {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         let blocksData = Array<number>(bufferSize);
-        voxelManager.voxels.forEach((voxel, i) => {
+        voxelManager.voxels.forEach(voxel => {
+            //console.log(voxel);
             const indexVector = Vector3.sub(voxel, minPos);
             const index = this._getBufferIndex(indexVector);
             //this._schematic.value.Blocks.value[index] = 1;
-            blocksData[index] = 1.0
+            blocksData[index] = Block.Stone;
         });
 
         this._schematic = {

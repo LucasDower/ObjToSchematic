@@ -4,7 +4,7 @@ import { VoxelManager } from "./voxel_manager";
 import { Vector3 } from "./vector.js";
 import { Schematic } from "./schematic";
 //const dialog = from 'electron').remote.dialog;
-import remote from "electron";
+import {remote} from 'electron'; 
 import * as bootstrap from "bootstrap";
 
 enum ToastColour {
@@ -100,26 +100,43 @@ export class AppContext {
             return;
         }
         
-        this._voxelManager.clear();
-        this._voxelManager.setVoxelSize(this._voxelSize);
-        this._voxelManager.voxeliseMesh(this._loadedMesh);
-    
-        this._renderer.clear();
-        this._renderer.registerVoxelMesh(this._voxelManager);
-        this._renderer.compile();
+        try {
+            this._voxelManager.clear();
+            this._voxelManager.setVoxelSize(this._voxelSize);
+            this._voxelManager.voxeliseMesh(this._loadedMesh);
+        
+            this._renderer.clear();
+            this._renderer.registerVoxelMesh(this._voxelManager);
+            this._renderer.compile();
+        } catch (err) {
+            this._showToast(err.message, ToastColour.RED);
+            return;
+        }
 
         $('#exportBtnDisclaimer').prop('disabled', false);
-        $('#splitBtn').prop('disabled', false);
+        //$('#splitBtn').prop('disabled', false);
     
         this._showToast("Voxelised successfully", ToastColour.GREEN);
     }
 
     public exportDisclaimer() {
-        this._showModal("Warning", "Currently, add blocks in the schematic are exported as Stone blocks.");
+        const schematicHeight = Math.ceil(this._voxelManager.maxZ - this._voxelManager.minZ);
+        console.log("HEIGHT:", schematicHeight);
+
+        let message = `
+            Currently, all blocks in the schematic are exported as Stone blocks. This will be changed in the future.
+        `;
+        if (schematicHeight > 320) {
+            message += `<br><br> Note, this schematic is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16).`
+        }
+
+        this._showModal("Warning", message);
     }
 
-    public async export() {
-        const {filePath} = await remote.dialog.showSaveDialog({
+    public export() {
+        this._modal.hide();
+
+        const filePath = remote.dialog.showSaveDialogSync({
             title: "Save schematic",
             buttonLabel: "Save",
             filters: [{
@@ -129,6 +146,7 @@ export class AppContext {
         });
     
         if (filePath === undefined) {
+            console.error("no path");
             return;
         }
     
@@ -137,6 +155,7 @@ export class AppContext {
             schematic.exportSchematic(filePath);
         } catch (err) {
             this._showToast("Failed to export schematic", ToastColour.RED);
+            console.error(err);
             return;
         }
         

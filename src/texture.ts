@@ -11,8 +11,12 @@ export class Texture {
 	private _image: PNGWithMetadata;
 
 	constructor(filename: string) {
-		const file = fs.readFileSync(filename);
-		this._image = PNG.sync.read(file);
+		try {
+			const data = fs.readFileSync(filename);
+			this._image = PNG.sync.read(data);
+		} catch (err) {
+			throw Error(`Could not read ${filename}`);
+		}
 	}
 
 	getRGBA(uv: UV): RGBA {

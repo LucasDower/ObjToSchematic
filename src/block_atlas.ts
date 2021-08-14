@@ -10,6 +10,13 @@ interface BlockInfo {
     texcoord: UV
 }
 
+// https://minecraft.fandom.com/wiki/Java_Edition_data_values/Pre-flattening/Block_IDs
+export enum Block {
+    Stone = 1.0,
+    Dirt = 3.0,
+    Cobblestone = 4.0
+}
+
 export class BlockAtlas {
 
     private readonly _cachedBlocks: HashMap<Vector3, number>;

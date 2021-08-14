@@ -102,6 +102,7 @@ export class VoxelManager {
     addVoxel(vec: Vector3, blockTexcoord: UV) {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
+        //console.log(vec);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
 
         // [HACK] FIXME: Fix misaligned voxels
@@ -121,12 +122,12 @@ export class VoxelManager {
         this.voxelTexcoords.push(blockTexcoord);
         this.voxelsHash.add(pos);
 
-        this.minX = Math.min(this.minX, vec.x);
-        this.minY = Math.min(this.minY, vec.y);
-        this.minZ = Math.min(this.minZ, vec.z);
-        this.maxX = Math.max(this.maxX, vec.x);
-        this.maxY = Math.max(this.maxY, vec.y);
-        this.maxZ = Math.max(this.maxZ, vec.z);
+        this.minX = Math.min(this.minX, pos.x);
+        this.minY = Math.min(this.minY, pos.y);
+        this.minZ = Math.min(this.minZ, pos.z);
+        this.maxX = Math.max(this.maxX, pos.x);
+        this.maxY = Math.max(this.maxY, pos.y);
+        this.maxZ = Math.max(this.maxZ, pos.z);
     }
 
     // FIXME: Fix voxel meshing for AO and textures

@@ -106,7 +106,9 @@ export class Mesh {
         }
 
         this._parseTriangles(materials);
-        this._centreTriangles();
+        this._centreMesh();
+        this._normaliseMesh();
+
         this._loadTextures(materials);
     }
 
@@ -264,20 +266,10 @@ export class Mesh {
         }
     }
 
-    private _centreTriangles() {
-        const centre = this._getCentreOfMass();
-        console.log(centre);
-
-        this.materialTriangles.forEach(materialTriangle => {
-            materialTriangle.triangles.forEach(triangle => {
-                triangle.v0.sub(centre);
-                triangle.v1.sub(centre);
-                triangle.v2.sub(centre);
-            });
-        })
-    }
-
-    private _getCentreOfMass(): Vector3 {
+    // TODO: Factor in triagle's size, perform weighted sum
+    // to prevent areas of dense triangles dominating
+    private _centreMesh() {
+        // Find the centre
         let centre = new Vector3(0, 0, 0);
         let count = 0;
         this.materialTriangles.forEach(materialTriangle => {
@@ -285,9 +277,54 @@ export class Mesh {
                 centre.add(triangle.getCentre());
                 ++count;
             });
-        })
-        return centre.divScalar(count);
-    } 
+        });
+        centre.divScalar(count);
+
+        // Translate each triangle
+        this.materialTriangles.forEach(materialTriangle => {
+            materialTriangle.triangles.forEach(triangle => {
+                triangle.v0.sub(centre);
+                triangle.v1.sub(centre);
+                triangle.v2.sub(centre);
+                triangle.buildAABB();
+            });
+        });
+    }
+
+
+    /**
+     *  (Optional) Scale model so each imported model is the same size
+     */
+    private _normaliseMesh() {
+        // Find the size
+        let a = new Vector3( Infinity,  Infinity,  Infinity);
+        let b = new Vector3(-Infinity, -Infinity, -Infinity);
+        this.materialTriangles.forEach(materialTriangle => {
+            materialTriangle.triangles.forEach(triangle => {
+                const aabb = triangle.getAABB();
+                a.x = Math.min(a.x, aabb.a.x);
+                a.y = Math.min(a.y, aabb.a.y);
+                a.z = Math.min(a.z, aabb.a.z);
+                b.x = Math.max(b.x, aabb.b.x);
+                b.y = Math.max(b.y, aabb.b.y);
+                b.z = Math.max(b.z, aabb.b.z);
+            });
+        });
+
+        const size = Vector3.sub(b, a);
+        const targetSize = 8.0;
+        const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
+        
+        // Scale each triangle
+        this.materialTriangles.forEach(materialTriangle => {
+            materialTriangle.triangles.forEach(triangle => {
+                triangle.v0.mulScalar(scaleFactor);
+                triangle.v1.mulScalar(scaleFactor);
+                triangle.v2.mulScalar(scaleFactor);
+                triangle.buildAABB();
+            });
+        });
+    }
 
     _parseTriangles(materials: Materials) {
         this.materialTriangles = [];
