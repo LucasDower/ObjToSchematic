@@ -20,6 +20,10 @@ $("#splitBtn").on("click", () => {
 */
 
 
+$("#exportBtnDisclaimer").on("click", async () => {
+    context.exportDisclaimer();
+});
+
 $("#exportBtn").on("click", async () => {
     context.export();
 });

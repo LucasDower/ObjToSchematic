@@ -5,6 +5,7 @@ import { Vector3 } from "./vector.js";
 import { Schematic } from "./schematic";
 //const dialog = from 'electron').remote.dialog;
 import remote from "electron";
+import * as bootstrap from "bootstrap";
 
 enum ToastColour {
     RED = "bg-danger",
@@ -21,6 +22,9 @@ export class AppContext {
     private _voxelManager: VoxelManager;
     private _loadedMesh?: Mesh;
 
+    private _toast: bootstrap.Toast;
+    private _modal: bootstrap.Modal;
+
 
     constructor() {     
         this._voxelSize = $("#voxelInput").prop("value");
@@ -33,6 +37,9 @@ export class AppContext {
 
         this._renderer = new Renderer(this._gl);
         this._voxelManager = new VoxelManager(this._voxelSize);
+
+        this._toast = new bootstrap.Toast(<HTMLElement>document.getElementById('toast'), {delay: 3000});
+        this._modal = new bootstrap.Modal(<HTMLElement>document.getElementById('modal'), {});
     }
 
     public load() {
@@ -63,7 +70,7 @@ export class AppContext {
         $('#voxelInput').prop('disabled', false);
         $('#voxelBtn').prop('disabled', false);
         $('#splitBtn').prop('disabled', true);
-        $('#exportBtn').prop('disabled', true);
+        $('#exportBtnDisclaimer').prop('disabled', true);
     
         this._showToast(`Successfully loaded ${file.name}`, ToastColour.GREEN);
     }
@@ -100,12 +107,16 @@ export class AppContext {
         this._renderer.clear();
         this._renderer.registerVoxelMesh(this._voxelManager);
         this._renderer.compile();
-        $('#exportBtn').prop('disabled', false);
+
+        $('#exportBtnDisclaimer').prop('disabled', false);
         $('#splitBtn').prop('disabled', false);
     
-        this._showToast("Note, currently, all blocks are exported as Stone", ToastColour.ORANGE);
+        this._showToast("Voxelised successfully", ToastColour.GREEN);
     }
 
+    public exportDisclaimer() {
+        this._showModal("Warning", "Currently, add blocks in the schematic are exported as Stone blocks.");
+    }
 
     public async export() {
         const {filePath} = await remote.dialog.showSaveDialog({
@@ -145,8 +156,17 @@ export class AppContext {
         $("#toast").addClass(colour);
     
         $("#toastText").html(text);
-        (<any>$("#toast")).toast({ delay: 3000 });
-        (<any>$("#toast")).toast('show');
+        //$("#toast").toast({ delay: 3000 });
+        //$("#toast").toast('show');
+        this._toast.show();
+    }
+
+    private _showModal(title: string, text: string) {
+        $("#modalTitle").html(title);
+        $("#modalText").html(text);
+
+        //$("#modal").modal("show");
+        this._modal.show();
     }
 
 }

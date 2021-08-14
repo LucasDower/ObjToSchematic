@@ -22,8 +22,10 @@
   },
   "homepage": "https://github.com/LucasDower/ObjToSchematic#readme",
   "devDependencies": {
+    "@types/bootstrap": "^5.1.1",
     "@types/jquery": "^3.5.6",
     "@types/pngjs": "^6.0.1",
+    "bootstrap": "^5.1.0",
     "electron": "^13.1.4",
     "electron-packager": "^15.2.0",
     "ts-node": "^10.1.0",
