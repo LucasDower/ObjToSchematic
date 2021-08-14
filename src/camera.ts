@@ -1,45 +1,61 @@
-const { m4, v3: Vector3 } = require('twgl.js');
-const mouseHandler = require('./mouse.js');
-const mathUtil = require('./math.js');
+import { m4, v3 } from "twgl.js";
+import { MouseManager } from "./mouse";
+import * as mathUtil from "./math";
 
-class ArcballCamera {
 
-    constructor(fov, aspect, zNear, zFar) {
+export class ArcballCamera {
+
+    public isRotating = false;
+
+    private readonly fov: number;
+    private readonly zNear: number;
+    private readonly zFar: number;
+    private readonly cameraSmoothing = 0.025;
+    
+    public aspect: number;
+    private actualDistance = 18.0;
+    private actualAzimuth = -1.0;
+    private actualElevation = 1.3;
+
+    private targetDistance: number;
+    private targetAzimuth: number;
+    private targetElevation: number;
+
+    private readonly target: v3.Vec3 = [0, 0, 0];
+    private readonly up: v3.Vec3 = [0, 1, 0];
+    private eye: v3.Vec3 = [0, 0, 0];
+
+    private mouseSensitivity = 0.005;
+    private scrollSensitivity = 0.005;
+
+    private zoomDistMin = 1.0;
+    private zoomDistMax = 100.0;
+
+    private gl: WebGLRenderingContext;
+
+    constructor(fov: number, zNear: number, zFar: number, gl: WebGLRenderingContext) {
         this.fov = fov * Math.PI / 180;
-        this.aspect = aspect;
         this.zNear = zNear;
         this.zFar = zFar;
-
-        this.actualDistance = 18.0;
-        this.actualAzimuth = -1.0;
-        this.actualElevation = 1.3;
-
-        this.cameraSmoothing = 0.025;
+        this.gl = gl;
+        this.aspect = gl.canvas.width / gl.canvas.height;
 
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
         this.targetElevation = this.actualElevation;
 
         this.updateCameraPosition();
-
-        this.target = [0, 0, 0];
-        this.up = [0, 1, 0];
-
-        this.mouseSensitivity = 0.005;
-        this.scrollSensitivity = 0.005;
-
-        this.zoomDistMin = 1.0;
-        this.zoomDistMax = 100.0;
-
-        this.isRotating = false;
     }
 
-    updateCamera() {
+    public updateCamera(mouseDelta: {dx: number, dy: number}) {
         if (!this.isRotating) {
             return;
         }
+        //console.log("update camera");
 
-        const mouseDelta = mouseHandler.getMouseDelta();
+        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
+
+        //console.log(mouseDelta);
         this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
         this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
 
@@ -50,9 +66,9 @@ class ArcballCamera {
         this.updateCameraPosition();
     }
 
-    handleScroll(e) {
+    public handleScroll(e: WheelEvent) {
         this.targetDistance += e.deltaY * this.scrollSensitivity;
-        this.targetDistance = Math.max(Math.min(this.zoomDistMax, this.targetDistance), this.zoomDistMin);
+        this.targetDistance = mathUtil.clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
 
         this.updateCameraPosition();
     }
@@ -70,7 +86,7 @@ class ArcballCamera {
         ];
     }
 
-    getCameraPosition(azimuthOffset, elevationOffset) {
+    getCameraPosition(azimuthOffset: number, elevationOffset: number) {
         const azimuth = this.actualAzimuth + azimuthOffset;
         const elevation = this.actualElevation + elevationOffset;
         return [
@@ -80,40 +96,41 @@ class ArcballCamera {
         ];
     }
 
-    getProjectionMatrix() {
+    public getProjectionMatrix() {
         return m4.perspective(this.fov, this.aspect, this.zNear, this.zFar);
     }
 
-    getCameraMatrix() {
+    public getCameraMatrix() {
         return m4.lookAt(this.eye, this.target, this.up);
     }
 
-    getViewMatrix() {
+    public getViewMatrix() {
         return m4.inverse(this.getCameraMatrix());
     }
 
-    getViewProjection() {
+    public getViewProjection() {
         return m4.multiply(this.getProjectionMatrix(), this.getViewMatrix());
     }
 
-    getWorldMatrix() {
+    public getWorldMatrix() {
         return m4.identity();
     }
 
-    getWorldViewProjection() {
+    public getWorldViewProjection() {
         return m4.multiply(this.getViewProjection(), this.getWorldMatrix());
     }
 
-    getWorldInverseTranspose() {
+    public getWorldInverseTranspose() {
         return m4.transpose(m4.inverse(this.getWorldMatrix()));
     }
 
-    getInverseWorldViewProjection() {
+    public getInverseWorldViewProjection() {
         return m4.inverse(this.getWorldViewProjection());
     }
 
-    getMouseRay() {
-        const mousePos = mouseHandler.getMousePosNorm();
+    /*
+    public getMouseRay() {
+        const mousePos = this.mouseManager.getMousePosNorm();
         const inverseProjectionMatrix = this.getInverseWorldViewProjection();
         var origin = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, -1.0, 1.0]);
         var dest = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, 1.0, 1.0]);
@@ -127,6 +144,7 @@ class ArcballCamera {
     
         return {origin: origin, dest: dest};
     }
+    */
 
 }
 

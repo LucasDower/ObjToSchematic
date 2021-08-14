@@ -1,10 +1,23 @@
-const { Vector3 } = require('./vector.js');
-const { AABB } = require('./aabb.js');
-const { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } = require('./math.js');
+import { Vector3 } from "./vector";
+import { AABB } from "./aabb";
+import { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } from "./math";
+import { UV } from "./util";
 
-class Triangle {
 
-    constructor(v0, v1, v2, uv0, uv1, uv2) {
+export class Triangle {
+
+    public v0: Vector3;
+    public v1: Vector3;
+    public v2: Vector3;
+    public readonly normal: Vector3;
+    
+    public readonly uv0: UV;
+    public readonly uv1: UV;
+    public readonly uv2: UV;
+
+    private aabb!: AABB;
+
+    constructor(v0: Vector3, v1: Vector3, v2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
         this.v0 = v0;
         this.v1 = v1;
         this.v2 = v2;
@@ -16,12 +29,11 @@ class Triangle {
         const f0 = Vector3.sub(v1, v0);
         const f1 = Vector3.sub(v0, v2);
         this.normal = Vector3.cross(f0, f1).normalise();
-        //this.normal.normalise();
 
-        this._calculateBoundingBox();
+        this.buildAABB();
     }
 
-    _calculateBoundingBox() {
+    public buildAABB() {
         const a = new Vector3(
             Math.min(this.v0.x, this.v1.x, this.v2.x),
             Math.min(this.v0.y, this.v1.y, this.v2.y),
@@ -40,11 +52,15 @@ class Triangle {
         this.aabb = new AABB(centre, size);
     }
 
-    insideAABB(aabb) {
+    public getAABB() {
+        return this.aabb;
+    }
+
+    public insideAABB(aabb: AABB) {
         return Vector3.lessThanEqualTo(aabb.a, this.aabb.a) && Vector3.lessThanEqualTo(this.aabb.b, aabb.b);
     }
 
-    intersectAABB(aabb) {
+    public intersectAABB(aabb: AABB) {
         const extents = Vector3.mulScalar(aabb.size, 0.5);
 
         const v0 = Vector3.sub(this.v0, aabb.centre);
@@ -80,7 +96,11 @@ class Triangle {
         return true;
     }
 
-    _testAxis(v0, v1, v2, axis, extents) {
+    public getCentre() {
+        return Vector3.divScalar(Vector3.add(Vector3.add(this.v0, this.v1), this.v2), 3.0);
+    }
+
+    private _testAxis(v0: Vector3, v1: Vector3, v2: Vector3, axis: Vector3, extents: Vector3) {
         let p0 = Vector3.dot(v0, axis);
         let p1 = Vector3.dot(v1, axis);
         let p2 = Vector3.dot(v2, axis);
@@ -93,5 +113,3 @@ class Triangle {
     }
 
 }
-
-module.exports.Triangle = Triangle;

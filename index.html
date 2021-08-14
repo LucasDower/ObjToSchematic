@@ -42,7 +42,7 @@
           </div>
           <div class="col">
             <div class="d-grid">
-              <button id="exportBtn" class="btn btn-danger border-0" type="button" disabled>
+              <button id="exportBtnDisclaimer" class="btn btn-danger border-0" type="button" disabled>
                 <img src="./resources/svg/save.svg" alt="">
                 Export schematic
               </button>
@@ -60,11 +60,36 @@
       </div>
     </div>
 
+    <div id="modal" class="modal custom-modal-background fade" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <!--
+          <div class="modal-header custom-modal">
+            <h5 id="modalTitle" class="modal-title">modalTitle</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          -->
+          <div id="modalText" class="modal-body">
+            <p>modalText</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button id="exportBtn" type="button" class="btn btn-danger">
+            <img src="./resources/svg/save.svg" alt="">
+              Export
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </body>
 
   <script src="./src/vendor/jquery-3.6.0.min.js"></script>
   <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
   <script src="./src/vendor/popper.min.js"></script>
   <script src="./src/vendor/bootstrap.min.js"></script>
-  <script type="module" src="./src/client.js"></script>
+  <script>
+    require("./dist/client.js")
+</script>
 </html>

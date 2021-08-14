@@ -2,13 +2,14 @@
   "name": "objtoschematic",
   "version": "0.2.0",
   "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
-  "main": "main.js",
+  "main": "./dist/main.js",
   "engines": {
     "node": ">=14.0.0"
   },
   "scripts": {
-    "start": "electron .",
-    "build": "electron-packager . ObjToSchematic --platform=win32 --arch=x64"
+    "build": "tsc",
+    "start": "npm run build && electron ./dist/main.js",
+    "export": "electron-packager . ObjToSchematic --platform=win32 --arch=x64"
   },
   "repository": {
     "type": "git",
@@ -21,13 +22,14 @@
   },
   "homepage": "https://github.com/LucasDower/ObjToSchematic#readme",
   "devDependencies": {
+    "@types/bootstrap": "^5.1.1",
+    "@types/jquery": "^3.5.6",
+    "@types/pngjs": "^6.0.1",
+    "bootstrap": "^5.1.0",
     "electron": "^13.1.4",
     "electron-packager": "^15.2.0",
-    "twgl.js": "^4.19.1",
-    "wavefront-obj-parser": "^2.0.1",
-    "expand-vertex-data": "^1.1.2",
-    "prismarine-nbt": "^1.6.0",
-    "pngjs": "^6.0.0"
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5"
   },
   "dependencies": {
     "twgl.js": "^4.19.1",

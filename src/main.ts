@@ -1,25 +1,30 @@
-const electron = require('electron');
-const fs = require('fs');
-
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
-
-const path = require('path');
-const url = require('url');
+import { app, BrowserWindow, Tray } from "electron";
+import path from "path";
+import url from "url";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow;
+let mainWindow: BrowserWindow;
 
 function createWindow () {
     // Create the browser window.
+    //const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
+    const width = 1400;
+    const height = 800;
 
-    const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
-    mainWindow = new BrowserWindow({width, height, webPreferences: {
+    //const appIcon = new Tray("../resources/icon.png");
+    mainWindow = new BrowserWindow({
+        width,
+        height,
+        webPreferences: {
         nodeIntegration: true,
-        contextIsolation: false
-    }});
-
+        contextIsolation: false,
+        enableRemoteModule: true
+        },
+        icon: "./resources/icon.png"
+    });
+    //mainWindow.removeMenu();
+    
     
     // Load index.html
     mainWindow.loadURL(url.format({
@@ -28,13 +33,12 @@ function createWindow () {
         slashes: true
     }));    
     
-
     // Open the DevTools.
     //mainWindow.webContents.openDevTools();
-
+    
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
-        mainWindow = null;
+        app.quit();
     });
 }
 

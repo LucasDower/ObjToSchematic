@@ -1,39 +1,54 @@
-const { AABB, CubeAABB } = require("./aabb.js");
-const { Vector3 } = require("./vector.js");
-const { HashSet, HashMap } = require('./hash_map.js');
-const { Texture } = require("./texture.js");
-const { BlockAtlas } = require("./block_atlas.js");
+import { AABB, CubeAABB } from "./aabb";
+import { Vector3 }  from "./vector.js";
+import { HashSet, HashMap }  from "./hash_map";
+import { Texture } from "./texture";
+import { BlockAtlas }  from "./block_atlas";
+import { UV, RGB } from "./util";
+import { Triangle } from "./triangle";
+import { Mesh, MaterialType } from "./mesh";
 
-class VoxelManager {
 
-    constructor(voxelSize) {
+interface TriangleCubeAABBs {
+    triangle: Triangle;
+    AABBs: Array<CubeAABB>;
+}
+
+export class VoxelManager {
+
+    public voxels: Array<Vector3>;
+    public voxelTexcoords: Array<UV>;
+    public triangleAABBs: Array<TriangleCubeAABBs>;
+    public _voxelSize: number;
+    
+    private voxelsHash: HashSet<Vector3>;
+    private blockAtlas: BlockAtlas;
+    private _blockMode!: MaterialType;
+    private _currentTexture!: Texture;
+    private _currentColour!: RGB;
+    
+    public minX = Infinity; public maxX = -Infinity;
+    public minY = Infinity; public maxY = -Infinity;
+    public minZ = Infinity; public maxZ = -Infinity;  
+
+    constructor(voxelSize: number) {
         this._voxelSize = voxelSize;
         this.voxels = [];
         this.voxelTexcoords = [];
         this.triangleAABBs = [];
-        this.failedAABBs = [];
 
-        this.minX = Infinity; // JavaScript crack
-        this.minY = Infinity;
-        this.minZ = Infinity;
-        this.maxX = -Infinity;
-        this.maxY = -Infinity;
-        this.maxZ = -Infinity;
         this.voxelsHash = new HashSet(2048);
-
         this.blockAtlas = new BlockAtlas();
     }
 
-    setVoxelSize(voxelSize) {
+    public setVoxelSize(voxelSize: number) {
         this._voxelSize = voxelSize;
     }
 
-    _clearVoxels() {
+    private _clearVoxels() {
         this.voxels = [];
         this.voxelTexcoords = [];
-        this.failedAABBs = [];
         
-        this.minX = Infinity; // JavaScript crack
+        this.minX = Infinity;
         this.minY = Infinity;
         this.minZ = Infinity;
         this.maxX = -Infinity;
@@ -43,31 +58,28 @@ class VoxelManager {
         this.voxelsHash = new HashSet(2048);
     }
 
-    clear() {
+    public clear() {
         this.triangleAABBs = [];
         this._clearVoxels();
     }
 
-    _getTriangleCubeAABB(triangle) {
-        let gridSnappedCentre = Vector3.divScalar(triangle.aabb.centre, this._voxelSize);
-        gridSnappedCentre = Vector3.round(gridSnappedCentre);
-        gridSnappedCentre = Vector3.mulScalar(gridSnappedCentre, this._voxelSize);
+    private _snapToVoxelGrid(vec: Vector3) {
+        return vec.copy().divScalar(this._voxelSize).round().mulScalar(this._voxelSize);
+    }
 
-        let width = this._voxelSize;
-        //let cubeAABB = new AABB(gridSnappedCentre, new Vector3(size, size, size));
-        let cubeAABB = new CubeAABB(gridSnappedCentre, width);
+    private _getTriangleCubeAABB(triangle: Triangle) {
+        const triangleAABB = triangle.getAABB();
+        const gridSnappedCentre = this._snapToVoxelGrid(triangleAABB.centre);
 
+        let cubeAABB = new CubeAABB(gridSnappedCentre, this._voxelSize);
         while (!triangle.insideAABB(cubeAABB)) {
-            //cubeAABB = new AABB(cubeAABB.centre, Vector3.mulScalar(cubeAABB.size, 2.0));
             cubeAABB = new CubeAABB(cubeAABB.centre, cubeAABB.width * 2.0);
         }
 
-        //console.log(cubeAABB.centre);
         return cubeAABB;
     }
 
-    _toGridPosition(vec) {
-        //Vector3.round(Vector3.subScalar(Vector3.divScalar(vec, this._voxelSize), 0.5));
+    private _toGridPosition(vec: Vector3) {
         return new Vector3(
             Math.round(vec.x / this._voxelSize),
             Math.round(vec.y / this._voxelSize),
@@ -75,7 +87,7 @@ class VoxelManager {
         );
     }
 
-    _toModelPosition(vec) {
+    private _toModelPosition(vec: Vector3) {
         return new Vector3(
             vec.x * this._voxelSize,
             vec.y * this._voxelSize,
@@ -83,13 +95,14 @@ class VoxelManager {
         );
     }
 
-    isVoxelAt(pos) {
+    public isVoxelAt(pos: Vector3) {
         return this.voxelsHash.contains(pos);
     } 
 
-    addVoxel(vec, blockTexcoord) {
+    addVoxel(vec: Vector3, blockTexcoord: UV) {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
+        //console.log(vec);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
 
         // [HACK] FIXME: Fix misaligned voxels
@@ -109,15 +122,15 @@ class VoxelManager {
         this.voxelTexcoords.push(blockTexcoord);
         this.voxelsHash.add(pos);
 
-        this.minX = Math.min(this.minX, vec.x);
-        this.minY = Math.min(this.minY, vec.y);
-        this.minZ = Math.min(this.minZ, vec.z);
-        this.maxX = Math.max(this.maxX, vec.x);
-        this.maxY = Math.max(this.maxY, vec.y);
-        this.maxZ = Math.max(this.maxZ, vec.z);
+        this.minX = Math.min(this.minX, pos.x);
+        this.minY = Math.min(this.minY, pos.y);
+        this.minZ = Math.min(this.minZ, pos.z);
+        this.maxX = Math.max(this.maxX, pos.x);
+        this.maxY = Math.max(this.maxY, pos.y);
+        this.maxZ = Math.max(this.maxZ, pos.z);
     }
 
-    // TODO: Fix voxel meshing
+    // FIXME: Fix voxel meshing for AO and textures
     /*
     _findXExtent(pos) {
         let xEnd = pos.x + 1;
@@ -228,7 +241,7 @@ class VoxelManager {
     }
     */
 
-    splitVoxels() {
+    public splitVoxels() {
         this._voxelSize /= 2;
         this._clearVoxels();
         
@@ -240,7 +253,6 @@ class VoxelManager {
                 for (const sub of AABB.subdivide()) {
                     if (triangle.intersectAABB(sub)) {
                         const voxelColour = this._getVoxelColour(triangle, sub.centre);
-                        console.log(voxelColour);
                         const blockTexcoord = this.blockAtlas.getTexcoord(voxelColour);
 
                         this.addVoxel(sub.centre, blockTexcoord);
@@ -254,7 +266,7 @@ class VoxelManager {
         this.triangleAABBs = newTriangleAABBs;
     }
 
-    _getVoxelColour(triangle, centre) {
+    _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
         const p1 = triangle.v0;
         const p2 = triangle.v1;
         const p3 = triangle.v2;
@@ -272,27 +284,29 @@ class VoxelManager {
         const a2 = Vector3.cross(f3, f1).magnitude() / a;
         const a3 = Vector3.cross(f1, f2).magnitude() / a;
 
-        const u = uv1[0] * a1 + uv2[0] * a2 + uv3[0] * a3;
-        const v = uv1[1] * a1 + uv2[1] * a2 + uv3[1] * a3;
+        const uv = {
+            u: uv1.u * a1 + uv2.u * a2 + uv3.u * a3,
+            v: uv1.v * a1 + uv2.v * a2 + uv3.v * a3
+        }
 
-        //const rgba = triangle.material.texture.getRGBA(u, v);
-        if (this._blockMode === "TEXTURE") {
-            const rgba = this._currentTexture.getRGBA(u, v);
-            console.log(rgba);
-            return [rgba[0]/255, rgba[1]/255, rgba[2]/255];
+        if (this._blockMode === MaterialType.Texture) {
+            return this._currentTexture.getRGBA(uv);
         } else {
             return this._currentColour;
         }
     }
 
-    voxeliseTriangle(triangle) {
+    voxeliseTriangle(triangle: Triangle) {
         const cubeAABB = this._getTriangleCubeAABB(triangle);
 
         const triangleAABBs = [];
 
         let queue = [cubeAABB];
-        while (queue.length > 0) {
+        while (true) {
             const aabb = queue.shift();
+            if (!aabb) {
+                break;
+            }
             if (triangle.intersectAABB(aabb)) {
                 if (aabb.width > this._voxelSize) {
                     // Continue to subdivide
@@ -305,29 +319,28 @@ class VoxelManager {
                     this.addVoxel(aabb.centre, blockTexcoord);
                     triangleAABBs.push(aabb);
                 }
-            } else {
-                this.failedAABBs.push(aabb);
-            }
+            }        
         }
 
         this.triangleAABBs.push({triangle: triangle, AABBs: triangleAABBs});
     }
 
-    voxeliseMesh(mesh) {
-        for (const material in mesh.materialTriangles) {
-            if ("diffuseTexturePath" in mesh._materials[material]) {
-                this._currentTexture = new Texture(mesh._materials[material].diffuseTexturePath);
-                this._blockMode = "TEXTURE";
+    voxeliseMesh(mesh: Mesh) {
+        for (const materialName in mesh.materialTriangles) {
+            const materialTriangles = mesh.materialTriangles[materialName];
+            // Setup material
+            if (materialTriangles.material.type === MaterialType.Texture) {
+                this._currentTexture = new Texture(materialTriangles.material.texturePath);
+                this._blockMode = MaterialType.Texture;
             } else {
-                this._currentColour = mesh._materials[material].diffuseColour;
-                this._blockMode = "FILL";
+                this._currentColour = materialTriangles.material.diffuseColour;
+                this._blockMode = MaterialType.Fill;
             }
-            for (const triangle of mesh.materialTriangles[material]) {
+            // Handle triangles
+            for (const triangle of materialTriangles.triangles) {
                 this.voxeliseTriangle(triangle);
             }
         }
     }
 
 }
-
-module.exports.VoxelManager = VoxelManager;
