@@ -95,6 +95,10 @@ export class Triangle {
         return true;
     }
 
+    public getCentre() {
+        return Vector3.divScalar(Vector3.add(Vector3.add(this.v0, this.v1), this.v2), 3.0);
+    }
+
     private _testAxis(v0: Vector3, v1: Vector3, v2: Vector3, axis: Vector3, extents: Vector3) {
         let p0 = Vector3.dot(v0, axis);
         let p1 = Vector3.dot(v1, axis);

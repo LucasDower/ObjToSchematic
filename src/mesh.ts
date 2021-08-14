@@ -106,6 +106,7 @@ export class Mesh {
         }
 
         this._parseTriangles(materials);
+        this._centreTriangles();
         this._loadTextures(materials);
     }
 
@@ -263,6 +264,30 @@ export class Mesh {
         }
     }
 
+    private _centreTriangles() {
+        const centre = this._getCentreOfMass();
+        console.log(centre);
+
+        this.materialTriangles.forEach(materialTriangle => {
+            materialTriangle.triangles.forEach(triangle => {
+                triangle.v0.sub(centre);
+                triangle.v1.sub(centre);
+                triangle.v2.sub(centre);
+            });
+        })
+    }
+
+    private _getCentreOfMass(): Vector3 {
+        let centre = new Vector3(0, 0, 0);
+        let count = 0;
+        this.materialTriangles.forEach(materialTriangle => {
+            materialTriangle.triangles.forEach(triangle => {
+                centre.add(triangle.getCentre());
+                ++count;
+            });
+        })
+        return centre.divScalar(count);
+    } 
 
     _parseTriangles(materials: Materials) {
         this.materialTriangles = [];
@@ -312,5 +337,3 @@ export class Mesh {
     }
 
 }
-
-module.exports.Mesh = Mesh;

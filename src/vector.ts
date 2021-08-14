@@ -25,6 +25,13 @@ export class Vector3 extends Hashable {
         );
     }
 
+    add(vec: Vector3) {
+        this.x += vec.x;
+        this.y += vec.y;
+        this.z += vec.z;
+        return this;
+    }
+
     static addScalar(vec: Vector3, scalar: number) {
         return new Vector3(
             vec.x + scalar,
@@ -39,6 +46,13 @@ export class Vector3 extends Hashable {
             vecA.y - vecB.y,
             vecA.z - vecB.z
         );
+    }
+
+    sub(vec: Vector3) {
+        this.x -= vec.x;
+        this.y -= vec.y;
+        this.z -= vec.z;
+        return this;
     }
 
     static subScalar(vec: Vector3, scalar: number) {
