@@ -153,7 +153,7 @@ export class Renderer {
 
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
-                this.registerBox(voxel);
+                this.registerBox(voxel.position);
             });
         } else {
              // Setup arrays for calculating voxel ambient occlusion
@@ -162,7 +162,7 @@ export class Renderer {
                 const voxel = voxelManager.voxels[i];
                 //const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
-                this._registerVoxel(voxel, voxelManager, texcoord);
+                this._registerVoxel(voxel.position, voxelManager, texcoord);
             }
             /*
             voxelManager.voxels.forEach((voxel) => {

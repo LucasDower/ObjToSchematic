@@ -2,7 +2,7 @@ import { Renderer } from "./renderer";
 import { Mesh } from "./mesh";
 import { VoxelManager } from "./voxel_manager";
 import { Vector3 } from "./vector.js";
-import { Schematic } from "./schematic";
+import { Schematic, Litematic } from "./schematic";
 //const dialog = from 'electron').remote.dialog;
 import {remote} from 'electron'; 
 import * as bootstrap from "bootstrap";
@@ -153,7 +153,7 @@ export class AppContext {
         }
     
         try {
-            const schematic = new Schematic(this._voxelManager);
+            const schematic = new Litematic(this._voxelManager);
             schematic.exportSchematic(filePath);
         } catch (err) {
             this._showToast("Failed to export schematic", ToastColour.RED);

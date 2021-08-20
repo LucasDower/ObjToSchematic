@@ -40,6 +40,13 @@ export class Vector3 extends Hashable {
         );
     }
 
+    addScalar(scalar: number) {
+        this.x += scalar;
+        this.y += scalar;
+        this.z += scalar;
+        return this;
+    }
+
     static sub(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             vecA.x - vecB.x,
