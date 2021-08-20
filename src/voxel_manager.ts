@@ -267,26 +267,55 @@ export class VoxelManager {
     }
 
     _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
+        if (this._blockMode === MaterialType.Fill) {
+            return this._currentColour;
+        }
+        
+        let distV0 = Vector3.sub(triangle.v0, centre).magnitude();
+        let distV1 = Vector3.sub(triangle.v1, centre).magnitude();
+        let distV2 = Vector3.sub(triangle.v2, centre).magnitude();
+        
+        const k = distV0 + distV1 + distV2;
+        distV0 /= k;
+        distV1 /= k;
+        distV2 /= k;
+
+        const uv = {
+            u: triangle.uv0.u * distV0 + triangle.uv1.u * distV1 + triangle.uv2.u * distV2,
+            v: triangle.uv0.v * distV0 + triangle.uv1.v * distV1 + triangle.uv2.v * distV2,
+        }
+
+        return this._currentTexture.getRGBA(uv);
+    }
+
+    /*
+    _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
         const p1 = triangle.v0;
         const p2 = triangle.v1;
         const p3 = triangle.v2;
 
-        const uv1 = triangle.uv0;
-        const uv2 = triangle.uv1;
-        const uv3 = triangle.uv2;
+        const uv0 = triangle.uv0;
+        const uv1 = triangle.uv1;
+        const uv2 = triangle.uv2;
 
         const f1 = Vector3.sub(p1, centre);
         const f2 = Vector3.sub(p2, centre);
         const f3 = Vector3.sub(p3, centre);
 
         const a  = Vector3.cross(Vector3.sub(p1, p2), Vector3.sub(p1, p3)).magnitude();
-        const a1 = Vector3.cross(f2, f3).magnitude() / a;
-        const a2 = Vector3.cross(f3, f1).magnitude() / a;
-        const a3 = Vector3.cross(f1, f2).magnitude() / a;
+        let a0 = Vector3.cross(f2, f3).magnitude() / a;
+        let a1 = Vector3.cross(f3, f1).magnitude() / a;
+        let a2 = Vector3.cross(f1, f2).magnitude() / a;
+
+        
+        let w = a0 + a1 + a2;
+        a0 /= w;
+        a1 /= w;
+        a2 /= w
 
         const uv = {
-            u: uv1.u * a1 + uv2.u * a2 + uv3.u * a3,
-            v: uv1.v * a1 + uv2.v * a2 + uv3.v * a3
+            u: uv0.u * a0 + uv1.u * a1 + uv2.u * a2,
+            v: uv0.v * a0 + uv1.v * a1 + uv2.v * a2
         }
 
         if (this._blockMode === MaterialType.Texture) {
@@ -295,6 +324,7 @@ export class VoxelManager {
             return this._currentColour;
         }
     }
+    */
 
     voxeliseTriangle(triangle: Triangle) {
         const cubeAABB = this._getTriangleCubeAABB(triangle);
@@ -312,7 +342,7 @@ export class VoxelManager {
                     // Continue to subdivide
                     queue.push(...aabb.subdivide());
                 } else {
-                    // We've reached the voxel level, stop
+                    // We've reached the voxel level, stop                    
                     const voxelColour = this._getVoxelColour(triangle, aabb.centre);
                     const blockTexcoord = this.blockAtlas.getTexcoord(voxelColour);
 

@@ -17,16 +17,16 @@ export class Texture {
 		} catch (err) {
 			throw Error(`Could not read ${filename}`);
 		}
+		if (this._image.bpp !== 4) {
+			throw Error("Image must be RBGA format");
+		}
 	}
 
 	getRGBA(uv: UV): RGBA {
 		uv.v = 1 - uv.v;
 
-		let x = Math.floor(this._image.width * uv.u);
-		let y = Math.floor(this._image.height * uv.v);
-
-		x = clamp(x, 0, this._image.width - 1);
-		y = clamp(x, 0, this._image.height - 1);
+		const x = Math.floor(uv.u * this._image.width);
+		const y = Math.floor(uv.v * this._image.height);
 
 		const index = this._image.bpp * (this._image.width * y + x);
 		const rgba = this._image.data.slice(index, index + this._image.bpp)
@@ -40,5 +40,3 @@ export class Texture {
 	}
 
 }
-
-module.exports.Texture = Texture;
