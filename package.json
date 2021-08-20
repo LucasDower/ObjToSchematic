@@ -32,10 +32,11 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "twgl.js": "^4.19.1",
-    "wavefront-obj-parser": "^2.0.1",
     "expand-vertex-data": "^1.1.2",
+    "jpeg-js": "^0.4.3",
+    "pngjs": "^6.0.0",
     "prismarine-nbt": "^1.6.0",
-    "pngjs": "^6.0.0"
+    "twgl.js": "^4.19.1",
+    "wavefront-obj-parser": "^2.0.1"
   }
 }
