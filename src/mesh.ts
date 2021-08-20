@@ -7,7 +7,12 @@ const expandVertexData: any = require("expand-vertex-data");
 import { Triangle } from "./triangle";
 import { Vector3 } from "./vector";
 import { RGB } from "./util";
+import { Texture } from "./texture";
 
+export enum TextureFormat {
+    PNG,
+    JPEG
+}
 
 interface objData {
     vertexNormals: Array<number>;
@@ -31,7 +36,8 @@ export interface FillMaterial {
 export interface TextureMaterial {
     readonly type: MaterialType.Texture
     texturePath: string,
-    texture?: WebGLTexture
+    texture?: WebGLTexture,
+    format: TextureFormat
 }
 
 export enum MaterialType {
@@ -112,12 +118,13 @@ export class Mesh {
         this._loadTextures(materials);
     }
 
-    private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string) {
+    private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string, materialFormat: TextureFormat) {
         console.log(materialName, materialDiffuseColour, materialDiffuseTexturePath);
         if (materialDiffuseTexturePath !== "") {
             materialsJSON[materialName] = {
                 texturePath: materialDiffuseTexturePath,
-                type: MaterialType.Texture
+                type: MaterialType.Texture,
+                format: materialFormat
             };
         } else if (materialName !== "") {
             materialsJSON[materialName] = {
@@ -127,6 +134,7 @@ export class Mesh {
         }
     }
 
+    // TODO: Rewrite
     private _parseMaterial(materialString: string): Materials {
         var materialsJSON: Materials = {};
 
@@ -135,6 +143,7 @@ export class Mesh {
         let materialName: string = "";
         let materialDiffuseColour: RGB = {r: 1.0, g: 1.0, b: 1.0};
         let materialDiffuseTexturePath: string = "";
+        let materialTextureFormat: TextureFormat = TextureFormat.PNG;
 
         for (let i = 0; i < lines.length; ++i) {
             const line = lines[i];
@@ -142,7 +151,7 @@ export class Mesh {
 
             switch (lineTokens[0]) {
                 case "newmtl":
-                    this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath);
+                    this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath, materialTextureFormat);
                     materialName = lineTokens[1];
                     materialDiffuseColour = {r: 0, g: 0, b: 0};
                     materialDiffuseTexturePath = ""
@@ -174,8 +183,13 @@ export class Mesh {
                         throw Error(`Cannot load texture ${texturePath}`);
                     }
                     const _path = path.parse(texturePath);
-                    if (_path.ext.toLowerCase() != ".png") {
-                        throw Error(`Can only load .png textures`);
+                    if (".png" === _path.ext.toLowerCase()) {
+                        materialTextureFormat = TextureFormat.PNG;
+                    }
+                    else if ([".jpeg", ".jpg"].includes(_path.ext.toLowerCase())) {
+                        materialTextureFormat = TextureFormat.JPEG;
+                    } else {
+                        throw Error(`Can only load PNG and JPEG textures`);
                     }
 
                     materialDiffuseTexturePath = texturePath;
@@ -183,7 +197,7 @@ export class Mesh {
             }
         }
 
-        this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath);
+        this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath, materialTextureFormat);
 
         return materialsJSON;
     }

@@ -1,24 +1,31 @@
-//const fs = require("fs");
-//const png = require("pngjs").PNG;
-
 import * as fs from "fs";
-import { PNG, PNGWithMetadata } from "pngjs";
+import * as jpeg from "jpeg-js";
+import { PNG } from "pngjs";
 import { UV, RGBA } from "./util";
-import { clamp } from "./math";
+import { TextureFormat } from "./mesh";
+
 
 export class Texture {
 
-	private _image: PNGWithMetadata;
+	private _image: {
+		data: Buffer,
+		width: number,
+		height: number
+	};
 
-	constructor(filename: string) {
+	constructor(filename: string, format: TextureFormat) {
 		try {
 			const data = fs.readFileSync(filename);
-			this._image = PNG.sync.read(data);
+			if (format === TextureFormat.PNG) {
+				this._image = PNG.sync.read(data);
+			} else {
+				this._image = jpeg.decode(data);
+			}
+			if (this._image.width * this._image.height * 4 !== this._image.data.length) {
+				throw Error();
+			}
 		} catch (err) {
-			throw Error(`Could not read ${filename}`);
-		}
-		if (this._image.bpp !== 4) {
-			throw Error("Image must be RBGA format");
+			throw Error(`Could not parse ${filename}`);
 		}
 	}
 
@@ -28,15 +35,14 @@ export class Texture {
 		const x = Math.floor(uv.u * this._image.width);
 		const y = Math.floor(uv.v * this._image.height);
 
-		const index = this._image.bpp * (this._image.width * y + x);
-		const rgba = this._image.data.slice(index, index + this._image.bpp)
+		const index = 4 * (this._image.width * y + x);
+		const rgba = this._image.data.slice(index, index + 4)
 		
 		return {
 			r: rgba[0]/255,
 			g: rgba[1]/255,
 			b: rgba[2]/255,
-			a: rgba[3]/255
+			a: 1.0
 		};
 	}
-
 }

@@ -29,6 +29,7 @@ A tool to convert .obj files into Minecraft Schematics.
 * ✔️ **Quality of life**
   * ✔️ Model PSR, ✔️ voxel size preview ✔️ limit warnings
 * ✔️ **.mtl support for block choice**
+  * ✔️ PNG support, ✔️ JPEG support
 * ✔️ **Convert to TypeScript**
 * ⌛ Block choice exported
 

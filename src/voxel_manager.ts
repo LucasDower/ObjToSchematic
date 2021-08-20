@@ -1,6 +1,6 @@
-import { AABB, CubeAABB } from "./aabb";
+import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
-import { HashSet, HashMap }  from "./hash_map";
+import { HashSet }  from "./hash_map";
 import { Texture } from "./texture";
 import { BlockAtlas }  from "./block_atlas";
 import { UV, RGB } from "./util";
@@ -360,8 +360,8 @@ export class VoxelManager {
             const materialTriangles = mesh.materialTriangles[materialName];
             // Setup material
             if (materialTriangles.material.type === MaterialType.Texture) {
-                this._currentTexture = new Texture(materialTriangles.material.texturePath);
                 this._blockMode = MaterialType.Texture;
+                this._currentTexture = new Texture(materialTriangles.material.texturePath, materialTriangles.material.format);
             } else {
                 this._currentColour = materialTriangles.material.diffuseColour;
                 this._blockMode = MaterialType.Fill;
