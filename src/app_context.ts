@@ -23,7 +23,8 @@ export class AppContext {
     private _loadedMesh?: Mesh;
 
     private _toast: bootstrap.Toast;
-    private _modal: bootstrap.Modal;
+    private _modalExport: bootstrap.Modal;
+    private _modalGeneral: bootstrap.Modal;
 
 
     constructor() {     
@@ -39,7 +40,10 @@ export class AppContext {
         this._voxelManager = new VoxelManager(this._voxelSize);
 
         this._toast = new bootstrap.Toast(<HTMLElement>document.getElementById('toast'), {delay: 3000});
-        this._modal = new bootstrap.Modal(<HTMLElement>document.getElementById('modal'), {});
+        this._modalExport = new bootstrap.Modal(<HTMLElement>document.getElementById('modalExport'), {});
+        this._modalGeneral = new bootstrap.Modal(<HTMLElement>document.getElementById('modalGeneral'), {});
+
+        this._showModalGeneral("Note that in this current version, all blocks in the schematic will be exported as Stone blocks. This will be changed in version 0.4.");
     }
 
     public load() {
@@ -121,20 +125,18 @@ export class AppContext {
 
     public exportDisclaimer() {
         const schematicHeight = Math.ceil(this._voxelManager.maxZ - this._voxelManager.minZ);
-        console.log("HEIGHT:", schematicHeight);
 
-        let message = `
-            Currently, all blocks in the schematic are exported as Stone blocks. This will be changed in the future.
-        `;
         if (schematicHeight > 320) {
-            message += `<br><br> Note, this schematic is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16).`
+            let message = `Note, this schematic is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16).`
+            this._showModalExport(message);
+        } else {
+            this.export();
         }
 
-        this._showModal("Warning", message);
     }
 
     public export() {
-        this._modal.hide();
+        this._modalExport.hide();
 
         const filePath = remote.dialog.showSaveDialogSync({
             title: "Save schematic",
@@ -180,12 +182,14 @@ export class AppContext {
         this._toast.show();
     }
 
-    private _showModal(title: string, text: string) {
-        $("#modalTitle").html(title);
-        $("#modalText").html(text);
+    private _showModalExport(text: string) {
+        $("#modalExportText").html(text);
+        this._modalExport.show();
+    }
 
-        //$("#modal").modal("show");
-        this._modal.show();
+    private _showModalGeneral(text: string) {
+        $("#modalGeneralText").html(text);
+        this._modalGeneral.show();
     }
 
 }

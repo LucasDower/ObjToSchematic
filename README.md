@@ -31,20 +31,19 @@ A tool to convert .obj files into Minecraft Schematics.
 * ✔️ **.mtl support for block choice**
   * ✔️ PNG support, ✔️ JPEG support
 * ✔️ **Convert to TypeScript**
-* ⌛ Block choice exported
 
 0.4
-* Block painting
-* ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
-  * Progress bar
-0.5
-* Export to .litematic
-* Export to .mcstructure
+* ⌛ Block choice exported
+  * Export to .litematic
+  * Export to .mcstructure
 
 0.5
+* ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
+  * Progress bar
 * Node.js C++ addons
 
 0.6
+* Block painting
 * Building guides
 * Slice viewer
 * .fbx support

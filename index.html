@@ -3,7 +3,7 @@
 
   <head>
     <meta charset="utf8">
-    <title>TEST</title>
+    <title>ObjToSchematic</title>
     <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="./src/vendor/bootstrap.css">
   </head>
@@ -60,16 +60,11 @@
       </div>
     </div>
 
-    <div id="modal" class="modal custom-modal-background fade" tabindex="-1">
+    <!-- EXPORT DISCLAIMER -->
+    <div id="modalExport" class="modal custom-modal-background fade" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <!--
-          <div class="modal-header custom-modal">
-            <h5 id="modalTitle" class="modal-title">modalTitle</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          -->
-          <div id="modalText" class="modal-body">
+          <div id="modalExportText" class="modal-body">
             <p>modalText</p>
           </div>
           <div class="modal-footer">
@@ -78,6 +73,20 @@
             <img src="./resources/svg/save.svg" alt="">
               Export
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GENERAL DISCLAIMER -->
+    <div id="modalGeneral" class="modal custom-modal-background fade" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div id="modalGeneralText" class="modal-body">
+            <p>modalText</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
           </div>
         </div>
       </div>
