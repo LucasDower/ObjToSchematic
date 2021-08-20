@@ -1,4 +1,5 @@
 import * as twgl from "twgl.js";
+import path from "path";
 
 import { Vector3 } from "./vector";
 import { ArcballCamera } from "./camera";
@@ -55,7 +56,7 @@ export class Renderer {
         this._materialBuffers = [];
 
         this._atlasTexture = twgl.createTexture(this._gl, {
-            src: "./resources/blocks.png",
+            src: path.join(__dirname, "../resources/blocks.png"),
             mag: this._gl.NEAREST
         });
          

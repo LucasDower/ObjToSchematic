@@ -3,6 +3,7 @@ import { HashMap } from "./hash_map";
 import { UV, RGB } from "./util"; 
 //import blocks from "../resources/blocks.json";
 import fs from "fs";
+import path from "path";
 
 interface BlockInfo {
     name: string;
@@ -25,7 +26,9 @@ export class BlockAtlas {
     constructor() {
         this._cachedBlocks = new HashMap(1024);
 
-        const blocksString = fs.readFileSync("./resources/blocks.json", "utf-8");
+        const _path = path.join(__dirname, "../resources/blocks.json");
+        console.log(_path);
+        const blocksString = fs.readFileSync(_path, "utf-8");
         if (!blocksString) {
             throw Error("Could not load blocks.json")
         }

@@ -20,8 +20,7 @@ function createWindow () {
         nodeIntegration: true,
         contextIsolation: false,
         enableRemoteModule: true
-        },
-        icon: "./resources/icon.png"
+        }
     });
     //mainWindow.removeMenu();
     
