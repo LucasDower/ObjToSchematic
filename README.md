@@ -23,11 +23,11 @@ A tool to convert .obj files into Minecraft Schematics.
 * ✔️ **Greedy voxel meshing**
 * ✔️ **Export to schematic**
 
-0.3
+[0.3](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.3-alpha)
 * ✔️ **Faster voxel splitting**
 * ✔️ **Ambient occlusion**
 * ✔️ **Quality of life**
-  * ✔️ Model PSR, ✔️ voxel size preview ✔️ limit warnings
+  * ✔️ Model PSR, ✔️ height limit warnings
 * ✔️ **.mtl support for block choice**
   * ✔️ PNG support, ✔️ JPEG support
 * ✔️ **Convert to TypeScript**
