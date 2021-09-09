@@ -52,10 +52,13 @@ A tool to convert .obj files into Minecraft Schematics.
 You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
 
 * Download and install [Node.js](https://nodejs.org/en/).
-* Execute `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
+* Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
 * Navigate to `/ObjToSchematic-main`.
 * Run `npm install`.
 * Run `npm start`.
+
+
+![](https://i.imgur.com/BTj9gAx.gif)
 
 # Disclaimer
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
