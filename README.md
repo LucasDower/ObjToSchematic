@@ -7,11 +7,6 @@ A tool to convert .obj files into Minecraft Schematics.
 
 ![MinecraftPreview](/resources/minecraft.png)
 
-![DebugPreview](/resources/debug_preview.png)
-
-![MeshingPreview](/resources/greedy_meshing.png)
-
-
 # Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
 * ✔️ **.json model loading**
@@ -34,7 +29,7 @@ A tool to convert .obj files into Minecraft Schematics.
 
 0.4
 * ⌛ Block choice exported
-  * Export to .litematic
+  * ✔️ **Export to .litematic**
   * Export to .mcstructure
 
 0.5
@@ -62,3 +57,7 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 
 # Disclaimer
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
+
+![DebugPreview](/resources/debug_preview.png)
+
+![MeshingPreview](/resources/greedy_meshing.png)
