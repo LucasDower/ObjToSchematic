@@ -9,7 +9,8 @@ import { Mesh, MaterialType } from "./mesh";
 
 interface Block {
     position: Vector3;
-    block: string
+    colours: Array<RGB>;
+    block?: string
 }
 
 
@@ -107,6 +108,25 @@ export class VoxelManager {
         return this.voxelsHash.contains(pos);
     } 
 
+    assignBlocks() {
+        this.blockPalette = [];
+
+        for (let i = 0; i < this.voxels.length; ++i) {
+            let averageColour = this.voxels[i].colours.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
+            let n = this.voxels[i].colours.length;
+            averageColour.r /= n;
+            averageColour.g /= n;
+            averageColour.b /= n;
+            const block = this.blockAtlas.getBlock(averageColour);
+            this.voxels[i].block = block.name;
+            this.voxelTexcoords.push(block.texcoord);
+
+            if (!this.blockPalette.includes(block.name)) {
+                this.blockPalette.push(block.name);
+            }
+        }
+    }
+
     addVoxel(vec: Vector3, block: BlockInfo) {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
@@ -124,15 +144,25 @@ export class VoxelManager {
         // Convert to 
         const pos = this._toGridPosition(vec);
         if (this.voxelsHash.contains(pos)) {
-            return;
+            for (let i = 0; i < this.voxels.length; ++i) {
+                if (this.voxels[i].position.equals(pos)) {
+                    this.voxels[i].colours.push(block.colour);
+                    //console.log("Overlap");
+                    return;
+                }
+            }
+            
+        } else {
+            this.voxels.push({position: pos, colours: [block.colour]});
+            //this.voxelTexcoords.push(block.texcoord);
+            this.voxelsHash.add(pos);
         }
 
+        /*
         if (!this.blockPalette.includes(block.name)) {
             this.blockPalette.push(block.name);
         }
-        this.voxels.push({position: pos, block: block.name});
-        this.voxelTexcoords.push(block.texcoord);
-        this.voxelsHash.add(pos);
+        */
 
         this.minX = Math.min(this.minX, pos.x);
         this.minY = Math.min(this.minY, pos.y);
@@ -356,9 +386,9 @@ export class VoxelManager {
                 } else {
                     // We've reached the voxel level, stop                    
                     const voxelColour = this._getVoxelColour(triangle, aabb.centre);
-                    const blockTexcoord = this.blockAtlas.getBlock(voxelColour);
+                    const block = this.blockAtlas.getBlock(voxelColour);
 
-                    this.addVoxel(aabb.centre, blockTexcoord);
+                    this.addVoxel(aabb.centre, block);
                     triangleAABBs.push(aabb);
                 }
             }        
@@ -383,6 +413,7 @@ export class VoxelManager {
                 this.voxeliseTriangle(triangle);
             }
         }
+        this.assignBlocks();
         console.log(this.blockPalette);
     }
 

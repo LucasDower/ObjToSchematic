@@ -1,4 +1,5 @@
 import { AppContext } from "./app_context";
+import { ExportFormat } from "./app_context";
 
 const context = new AppContext();
 
@@ -9,7 +10,7 @@ $("#loadBtn").on("click", () => {
 
 
 $("#voxelBtn").on("click", () => {
-    context.voxelise();
+    context.voxeliseDisclaimer();
 });
 
 
@@ -20,12 +21,17 @@ $("#splitBtn").on("click", () => {
 */
 
 
-$("#exportBtnDisclaimer").on("click", async () => {
-    context.exportDisclaimer();
-});
-
 $("#exportBtn").on("click", async () => {
     context.export();
+});
+
+
+$("#exportSchematic").on("click", async () => {
+    context.exportDisclaimer(ExportFormat.SCHEMATIC);
+});
+
+$("#exportLitematic").on("click", async () => {
+    context.exportDisclaimer(ExportFormat.LITEMATIC);
 });
 
 
