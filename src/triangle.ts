@@ -72,6 +72,10 @@ export class Triangle {
         const f2 = Vector3.sub(v0, v2);
 
         const axis = [
+            Vector3.cross(f0, f2),
+            xAxis,
+            yAxis,
+            zAxis,
             fastCrossXAxis(f0),
             fastCrossXAxis(f1),
             fastCrossXAxis(f2),
@@ -80,11 +84,7 @@ export class Triangle {
             fastCrossYAxis(f2),
             fastCrossZAxis(f0),
             fastCrossZAxis(f1),
-            fastCrossZAxis(f2),
-            xAxis,
-            yAxis,
-            zAxis,
-            Vector3.cross(f0, f2)
+            fastCrossZAxis(f2)
         ];
 
         for (const ax of axis) {

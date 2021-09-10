@@ -1,104 +1,112 @@
 <!DOCTYPE html>
 <html>
 
-  <head>
-    <meta charset="utf8">
-    <title>ObjToSchematic</title>
-    <link rel="stylesheet" href="./styles.css">
-    <link rel="stylesheet" href="./src/vendor/bootstrap.css">
-  </head>
+<head>
+  <meta charset="utf8">
+  <title>ObjToSchematic</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./src/vendor/bootstrap.css">
+</head>
 
-  <body>
-    <canvas id="c"></canvas>
-    <div class="toolbar">
-      <div class="container">
-        <div class="row">
-          <div class="col">
-            <div class="input-group">
-              <input type="file" accept=".obj" class="form-control" id="fileInput">
-              <button id="loadBtn" class="btn btn-primary border-0" type="button">
-                <img src="./resources/svg/load.svg" alt="">
-                Load
-              </button>
-            </div>
+<body>
+  <canvas id="c"></canvas>
+  <div class="toolbar">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <div class="input-group">
+            <input type="file" accept=".obj" class="form-control" id="fileInput">
+            <button id="loadBtn" class="btn btn-primary border-0" type="button">
+              <img src="./resources/svg/load.svg" alt="">
+              Load
+            </button>
           </div>
-          <div class="col">
-            <div class="input-group">
-              <label class="input-group-text ">Voxel size</label>
-              <input id="voxelInput" type="number" min="0.1" step="0.1" value="0.1" class="form-control border-0" disabled>
-              <button id="splitBtn" class="btn btn-primary border-0" type="button"  data-bs-toggle="tooltip" data-bs-placement="bottom" title="Half voxel size (faster)" disabled>
-                <img src="./resources/svg/split.svg" alt="">
-              </button>
-              <!--
+        </div>
+        <div class="col">
+          <div class="input-group">
+            <label class="input-group-text ">Voxel size</label>
+            <input id="voxelInput" type="number" min="0.1" step="0.1" value="0.1" class="form-control border-0"
+              disabled>
+            <button id="splitBtn" class="btn btn-primary border-0" type="button" data-bs-toggle="tooltip"
+              data-bs-placement="bottom" title="Half voxel size (faster)" disabled>
+              <img src="./resources/svg/split.svg" alt="">
+            </button>
+            <!--
               <button id="joinBtn" class="btn btn-primary border-0" type="button" disabled>
                 <img src="./resources/svg/join.svg" alt="">
               </button>
               -->
-              <button id="voxelBtn" class="btn btn-primary border-0" type="button" disabled>
-                <img src="./resources/svg/voxel.svg" alt="">
-                Voxelise
-              </button>
-            </div>
-          </div>
-          <div class="col">
-            <div class="d-grid">
-              <button id="exportBtnDisclaimer" class="btn btn-danger border-0" type="button" disabled>
-                <img src="./resources/svg/save.svg" alt="">
-                Export schematic
-              </button>
-            </div>
+            <button id="voxelBtn" class="btn btn-primary border-0" type="button" disabled>
+              <img src="./resources/svg/voxel.svg" alt="">
+              Voxelise
+            </button>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="d-flex">
-        <div id="toastText" class="toast-body ms-2">
-          toastText
-        </div>
-      </div>
-    </div>
-
-    <!-- EXPORT DISCLAIMER -->
-    <div id="modalExport" class="modal custom-modal-background fade" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div id="modalExportText" class="modal-body">
-            <p>modalText</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button id="exportBtn" type="button" class="btn btn-danger">
-            <img src="./resources/svg/save.svg" alt="">
-              Export
+        <div class="col">
+          <div class="btn-group" role="group" aria-label="Basic example">
+            <button id="exportSchematic" type="button" class="btn btn-danger" disabled>
+              <img src="./resources/svg/save.svg" alt="">
+              Export .schematic
+            </button>
+            <button id="exportLitematic" type="button" class="btn btn-danger" disabled>
+              <img src="./resources/svg/save.svg" alt="">
+              Export .litematic
             </button>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- GENERAL DISCLAIMER -->
-    <div id="modalGeneral" class="modal custom-modal-background fade" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div id="modalGeneralText" class="modal-body">
-            <p>modalText</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
-          </div>
+  <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert"
+    aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div id="toastText" class="toast-body ms-2">
+        toastText
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT DISCLAIMER -->
+  <div id="modalExport" class="modal custom-modal-background fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div id="modalExportText" class="modal-body">
+          <p>modalText</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="exportBtn" type="button" class="btn btn-danger">
+            <img src="./resources/svg/save.svg" alt="">
+            Export
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-  </body>
+  <!-- GENERAL DISCLAIMER -->
+  <div id="modalGeneral" class="modal custom-modal-background fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div id="modalGeneralText" class="modal-body">
+          <p>modalText</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script src="./src/vendor/jquery-3.6.0.min.js"></script>
-  <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
-  <script src="./src/vendor/popper.min.js"></script>
-  <script src="./src/vendor/bootstrap.min.js"></script>
-  <script>
-    require("./dist/client.js")
+</body>
+
+<script src="./src/vendor/jquery-3.6.0.min.js"></script>
+<script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
+<script src="./src/vendor/popper.min.js"></script>
+<script src="./src/vendor/bootstrap.min.js"></script>
+<script>
+  require("./dist/client.js")
 </script>
+
 </html>

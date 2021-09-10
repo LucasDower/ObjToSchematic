@@ -2,7 +2,7 @@ import { Renderer } from "./renderer";
 import { Mesh } from "./mesh";
 import { VoxelManager } from "./voxel_manager";
 import { Vector3 } from "./vector.js";
-import { Schematic } from "./schematic";
+import { Schematic, Litematic, Exporter } from "./schematic";
 //const dialog = from 'electron').remote.dialog;
 import {remote} from 'electron'; 
 import * as bootstrap from "bootstrap";
@@ -11,6 +11,11 @@ enum ToastColour {
     RED = "bg-danger",
     ORANGE = "bg-warning",
     GREEN = "bg-success"
+}
+
+export enum ExportFormat {
+    SCHEMATIC = "schematic",
+    LITEMATIC = "litematic"
 }
 
 
@@ -24,7 +29,9 @@ export class AppContext {
 
     private _toast: bootstrap.Toast;
     private _modalExport: bootstrap.Modal;
+    //private _modalVoxelise: bootstrap.Modal;
     private _modalGeneral: bootstrap.Modal;
+    private _cachedFormat?: ExportFormat;
 
 
     constructor() {     
@@ -41,9 +48,10 @@ export class AppContext {
 
         this._toast = new bootstrap.Toast(<HTMLElement>document.getElementById('toast'), {delay: 3000});
         this._modalExport = new bootstrap.Modal(<HTMLElement>document.getElementById('modalExport'), {});
+        //this._modalVoxelise = new bootstrap.Modal(<HTMLElement>document.getElementById('modalVoxelise'), {});
         this._modalGeneral = new bootstrap.Modal(<HTMLElement>document.getElementById('modalGeneral'), {});
 
-        this._showModalGeneral("Note that in this current version, all blocks in the schematic will be exported as Stone blocks. This will be changed in version 0.4.");
+        //this._showModalGeneral("Note that in this current version, all blocks in the schematic will be exported as Stone blocks. This will be changed in version 0.4.");
     }
 
     public load() {
@@ -61,7 +69,7 @@ export class AppContext {
     
         try {
             this._loadedMesh = new Mesh(files[0].path, this._gl);
-        } catch (err) {
+        } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
             console.log(err);
             return;
@@ -74,7 +82,9 @@ export class AppContext {
         $('#voxelInput').prop('disabled', false);
         $('#voxelBtn').prop('disabled', false);
         $('#splitBtn').prop('disabled', true);
-        $('#exportBtnDisclaimer').prop('disabled', true);
+
+        $('#exportSchematic').prop('disabled', true);
+        $('#exportLitematic').prop('disabled', true);
     
         this._showToast(`Successfully loaded ${file.name}`, ToastColour.GREEN);
     }
@@ -91,6 +101,11 @@ export class AppContext {
         this.renderer.compile();
     }
     */
+
+    public voxeliseDisclaimer() {
+        //this._modalVoxelise.show();
+        this.voxelise();
+    }
 
     public voxelise() {
         const newVoxelSize = $("#voxelInput").prop('value');
@@ -112,38 +127,49 @@ export class AppContext {
             this._renderer.clear();
             this._renderer.registerVoxelMesh(this._voxelManager);
             this._renderer.compile();
-        } catch (err) {
+        } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
             return;
         }
 
-        $('#exportBtnDisclaimer').prop('disabled', false);
-        //$('#splitBtn').prop('disabled', false);
+        $('#exportSchematic').prop('disabled', false);
+        $('#exportLitematic').prop('disabled', false);
     
         this._showToast("Voxelised successfully", ToastColour.GREEN);
     }
 
-    public exportDisclaimer() {
+    public exportDisclaimer(exportFormat: ExportFormat) {
         const schematicHeight = Math.ceil(this._voxelManager.maxZ - this._voxelManager.minZ);
 
+        let message = "";
         if (schematicHeight > 320) {
-            let message = `Note, this schematic is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16).`
-            this._showModalExport(message);
-        } else {
-            this.export();
+            message += `Note, this structure is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16). `;
+        }
+        if (exportFormat == ExportFormat.SCHEMATIC) {
+            message += "Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks use the .litematic format with the Litematica mod.";
         }
 
+        this._cachedFormat = exportFormat;
+
+        if (message.length == 0) {
+            this.export();
+        } else {
+            this._showModalExport(message);
+        }
     }
 
     public export() {
         this._modalExport.hide();
 
         const filePath = remote.dialog.showSaveDialogSync({
-            title: "Save schematic",
+            title: "Save structure",
             buttonLabel: "Save",
-            filters: [{
+            filters: this._cachedFormat == ExportFormat.SCHEMATIC ? [{
                 name: 'Schematic',
                 extensions: ['schematic']
+            }] : [{
+                name: 'Litematic',
+                extensions: ['litematic']
             }]
         });
     
@@ -153,15 +179,20 @@ export class AppContext {
         }
     
         try {
-            const schematic = new Schematic(this._voxelManager);
-            schematic.exportSchematic(filePath);
+            let exporter: Exporter;
+            if (this._cachedFormat == ExportFormat.SCHEMATIC) {
+                exporter = new Schematic(this._voxelManager);
+            } else { 
+                exporter = new Litematic(this._voxelManager);
+            }
+            exporter.export(filePath);
         } catch (err) {
-            this._showToast("Failed to export schematic", ToastColour.RED);
+            this._showToast("Failed to export", ToastColour.RED);
             console.error(err);
             return;
         }
         
-        this._showToast("Successfully saved schematic", ToastColour.GREEN);
+        this._showToast("Successfully saved", ToastColour.GREEN);
     }
 
 

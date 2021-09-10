@@ -5,7 +5,7 @@ import { UV, RGB } from "./util";
 import fs from "fs";
 import path from "path";
 
-interface BlockInfo {
+export interface BlockInfo {
     name: string;
     colour: RGB;
     texcoord: UV
@@ -37,12 +37,8 @@ export class BlockAtlas {
         this._blocks = blocksJSON;
     }
 
-    public getTexcoord(voxelColour: RGB) {
-        const block = this._getBlock(voxelColour);
-        return block.texcoord;
-    }
 
-    private _getBlock(voxelColour: RGB): BlockInfo {
+    public getBlock(voxelColour: RGB): BlockInfo {
         const voxelColourVector = new Vector3(voxelColour.r, voxelColour.g, voxelColour.b);
 
         let cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
