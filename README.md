@@ -1,7 +1,7 @@
 # ObjToSchematic
 A tool to convert .obj files into Minecraft Schematics.
 
-:warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
+![Preview](/resources/preview3.png)
 
 ![Preview](/resources/preview2.jpg)
 
@@ -56,6 +56,8 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 ![](https://i.imgur.com/BTj9gAx.gif)
 
 # Disclaimer
+:warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
+
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
 ![DebugPreview](/resources/debug_preview.png)
