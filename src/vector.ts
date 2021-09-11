@@ -25,6 +25,14 @@ export class Vector3 extends Hashable {
         );
     }
 
+    static parse(f1: string, f2: string, f3: string) {
+        return new Vector3(
+            parseFloat(f1),
+            parseFloat(f2),
+            parseFloat(f3)
+        )
+    }
+
     add(vec: Vector3) {
         this.x += vec.x;
         this.y += vec.y;

@@ -313,9 +313,9 @@ export class VoxelManager {
             return this._currentColour;
         }
         
-        let distV0 = Vector3.sub(triangle.v0, centre).magnitude();
-        let distV1 = Vector3.sub(triangle.v1, centre).magnitude();
-        let distV2 = Vector3.sub(triangle.v2, centre).magnitude();
+        let distV0 = Vector3.sub(triangle.v0.position, centre).magnitude();
+        let distV1 = Vector3.sub(triangle.v1.position, centre).magnitude();
+        let distV2 = Vector3.sub(triangle.v2.position, centre).magnitude();
         
         const k = distV0 + distV1 + distV2;
         distV0 /= k;
@@ -323,8 +323,8 @@ export class VoxelManager {
         distV2 /= k;
 
         const uv = {
-            u: triangle.uv0.u * distV0 + triangle.uv1.u * distV1 + triangle.uv2.u * distV2,
-            v: triangle.uv0.v * distV0 + triangle.uv1.v * distV1 + triangle.uv2.v * distV2,
+            u: triangle.v0.texcoord.u * distV0 + triangle.v1.texcoord.u * distV1 + triangle.v2.texcoord.u * distV2,
+            v: triangle.v0.texcoord.v * distV0 + triangle.v1.texcoord.v * distV1 + triangle.v2.texcoord.v * distV2,
         }
 
         return this._currentTexture.getRGBA(uv);
@@ -398,23 +398,25 @@ export class VoxelManager {
     }
 
     voxeliseMesh(mesh: Mesh) {
-        for (const materialName in mesh.materialTriangles) {
-            const materialTriangles = mesh.materialTriangles[materialName];
+        mesh.materials.forEach(material => {
             // Setup material
-            if (materialTriangles.material.type === MaterialType.Texture) {
+            console.log("VOXELISING", material.name);
+
+            if (material.materialData?.type === MaterialType.Texture) {
                 this._blockMode = MaterialType.Texture;
-                this._currentTexture = new Texture(materialTriangles.material.texturePath, materialTriangles.material.format);
+                this._currentTexture = new Texture(material.materialData.texturePath, material.materialData.format);
             } else {
-                this._currentColour = materialTriangles.material.diffuseColour;
+                this._currentColour = material.materialData!.diffuseColour;
                 this._blockMode = MaterialType.Fill;
             }
             // Handle triangles
-            for (const triangle of materialTriangles.triangles) {
-                this.voxeliseTriangle(triangle);
-            }
-        }
+            material.faces.forEach(face => {
+                console.log("FACE");
+                this.voxeliseTriangle(face);
+            });
+        });
+
         this.assignBlocks();
-        console.log(this.blockPalette);
     }
 
 }

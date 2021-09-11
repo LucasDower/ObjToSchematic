@@ -69,6 +69,8 @@ export class AppContext {
     
         try {
             this._loadedMesh = new Mesh(files[0].path, this._gl);
+            this._loadedMesh.loadTextures(this._gl);
+
         } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
             console.log(err);
@@ -129,6 +131,7 @@ export class AppContext {
             this._renderer.compile();
         } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
+            console.error(err);
             return;
         }
 
