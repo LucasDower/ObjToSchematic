@@ -30,7 +30,10 @@ A tool to convert .obj files into Minecraft Schematics.
 0.4
 * ⌛ Block choice exported
   * ✔️ **Export to .litematic**
-  * Export to .mcstructure
+  * Export to .nbt (structure blocks)
+* Alpha support
+  * Alpha texture maps
+  * Transparent blocks
 
 0.5
 * ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
