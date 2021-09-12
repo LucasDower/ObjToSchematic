@@ -26,6 +26,11 @@ export class Vertex {
         this.normal = normal;
     }
 
+
+    public copy() {
+        return new Vertex(this.position.copy(), { u: this.texcoord.u, v: this.texcoord.v }, this.normal.copy());
+    }
+
     public static parseFromOBJ(
         vertexToken: string,
         vertexPositionMap: VertexMap<Vector3>,
@@ -125,6 +130,7 @@ export class Mesh {
         if (!path.isAbsolute(parsedOBJ.mtlPath)) {
             parsedOBJ.mtlPath = path.join(objPath.dir, parsedOBJ.mtlPath);
         }
+        parsedOBJ.mtlPath = parsedOBJ.mtlPath.trimEnd();
         
         // Parse .mtl
         const materialString = fs.readFileSync(parsedOBJ.mtlPath).toString('utf8');
@@ -134,10 +140,11 @@ export class Mesh {
         this.materials = this._mergeMaterialData(parsedOBJ, parsedMTL);
         this._centreMesh();
         this._normaliseMesh();
+
+        console.log(this.materials);
     }
 
     private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string, materialFormat: TextureFormat) {
-        console.log(materialName, materialDiffuseColour, materialDiffuseTexturePath);
         if (materialDiffuseTexturePath !== "") {
             materialsJSON[materialName] = {
                 texturePath: materialDiffuseTexturePath,
@@ -244,7 +251,9 @@ export class Mesh {
         let vertexNormalIndex = 1;
 
         let currentMaterial: Material = new Material("");
-        let materials: Array<Material> = [];
+
+        let materialMap: {[name: string]: Material} = {};
+        //let materials: Array<Material> = [];
 
         lines.forEach(line => {
             const tokens = line.split(" ");
@@ -253,34 +262,71 @@ export class Mesh {
                     mtlPath = tokens[1];
                     break;
                 case "v":
-                    vertexPositionMap[vertexPositionIndex++] = Vector3.parse(tokens[1], tokens[2], tokens[3]);
+                    vertexPositionMap[vertexPositionIndex++] = Vector3.parse(line);
                     break;
                 case "vn":
-                    vertexNormalMap[vertexNormalIndex++] = Vector3.parse(tokens[1], tokens[2], tokens[3]);
+                    vertexNormalMap[vertexNormalIndex++] = Vector3.parse(line);
                     break;
                 case "vt":
                     vertexTexcoordMap[vertexTexcoordIndex++] = { u: parseFloat(tokens[1]), v: parseFloat(tokens[2]) };
                     break;
+            }
+        });
+
+        lines.forEach(line => {
+            line = line.replace(/[\n\r]/g, '').trimEnd();
+            const tokens = line.split(" ");
+            switch (tokens[0]) {
                 case "usemtl":
-                    if (currentMaterial.isFilled()) {
-                        materials.push(currentMaterial);
+                    if (currentMaterial.isFilled() && !(currentMaterial.name in materialMap)) {
+                        materialMap[currentMaterial.name] = currentMaterial;
                     }
-                    currentMaterial = new Material(tokens[1]);
+                    if (tokens[1] in materialMap) {
+                        console.log("Material already found", tokens[1]);
+                        currentMaterial = materialMap[tokens[1]];
+                    } else {
+                        console.log("New material", tokens[1])
+                        currentMaterial = new Material(tokens[1]);
+                    }
                     break;
                 case "f":
-                    const v0 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                    const v1 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                    const v2 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    if (tokens.length === 5) {
+                        // QUAD
+                        const v1 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                        const v2 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                        const v3 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                        const v4 = Vertex.parseFromOBJ(tokens[4], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
 
-                    const face = new Triangle(v0, v1, v2);
-                    currentMaterial.addFace(face);
+                        const face = new Triangle(v4.copy(), v2.copy(), v1.copy());
+                        const face2 = new Triangle(v4.copy(), v3.copy(), v2.copy());
+
+                        currentMaterial.addFace(face);
+                        currentMaterial.addFace(face2);
+                    } else if (tokens.length === 4) {
+                        // TRI
+                        const v0 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                        const v1 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                        const v2 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+
+                        const face = new Triangle(v0, v1, v2);
+                        currentMaterial.addFace(face);
+                    } else {
+                        throw Error(`Unexpected number of face vertices, expected 3 or 4, got ${tokens.length - 1}`);
+                    }
                     break;
             }
         });
 
-        if (currentMaterial.isFilled()) {
-            materials.push(currentMaterial);
+        if (currentMaterial.isFilled() && !(currentMaterial.name in materialMap)) {
+            materialMap[currentMaterial.name] = currentMaterial;
         }
+
+        let materials: Array<Material> = [];
+        for (const material in materialMap) {
+            materials.push(materialMap[material]);
+        }
+
+        console.log(materials);
 
         return {
             mtlPath: mtlPath,
@@ -337,15 +383,17 @@ export class Mesh {
         });
 
         const size = Vector3.sub(b, a);
+        console.log("size", size);
         const targetSize = 8.0;
         const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
+        console.log("scaleFactor", scaleFactor)
 
         // Scale each triangle
         this.materials.forEach(material => {
             material.faces.forEach(face => {
-                face.v0.position.mulScalar(scaleFactor);
-                face.v1.position.mulScalar(scaleFactor);
-                face.v2.position.mulScalar(scaleFactor);
+                face.v0.position = Vector3.mulScalar(face.v0.position, scaleFactor);
+                face.v1.position = Vector3.mulScalar(face.v1.position, scaleFactor);
+                face.v2.position = Vector3.mulScalar(face.v2.position, scaleFactor);
                 face.updateAABB();
             });
         });

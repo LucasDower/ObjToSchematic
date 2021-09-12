@@ -25,11 +25,12 @@ export class Vector3 extends Hashable {
         );
     }
 
-    static parse(f1: string, f2: string, f3: string) {
+    static parse(line: string) {
+    var regex = /[+-]?\d+(\.\d+)?/g;
+    var floats = line.match(regex)!.map(function(v) { return parseFloat(v); });
+
         return new Vector3(
-            parseFloat(f1),
-            parseFloat(f2),
-            parseFloat(f3)
+            floats[0], floats[1], floats[2]
         )
     }
 
