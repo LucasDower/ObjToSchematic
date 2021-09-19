@@ -6,56 +6,40 @@
   <title>ObjToSchematic</title>
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./src/vendor/bootstrap.css">
+
+  
 </head>
 
 <body>
   <canvas id="c"></canvas>
   <div class="toolbar">
-    <div class="container">
-      <div class="row">
-        <div class="col">
-          <div class="input-group">
-            <input type="file" accept=".obj" class="form-control" id="fileInput">
-            <button id="loadBtn" class="btn btn-primary border-0" type="button">
-              <img src="./resources/svg/load.svg" alt="">
-              Load
-            </button>
-          </div>
-        </div>
-        <div class="col">
-          <div class="input-group">
-            <label class="input-group-text ">Voxel size</label>
-            <input id="voxelInput" type="number" min="0.1" step="0.1" value="0.1" class="form-control border-0"
-              disabled>
-            <button id="splitBtn" class="btn btn-primary border-0" type="button" data-bs-toggle="tooltip"
-              data-bs-placement="bottom" title="Half voxel size (faster)" disabled>
-              <img src="./resources/svg/split.svg" alt="">
-            </button>
-            <!--
-              <button id="joinBtn" class="btn btn-primary border-0" type="button" disabled>
-                <img src="./resources/svg/join.svg" alt="">
-              </button>
-              -->
-            <button id="voxelBtn" class="btn btn-primary border-0" type="button" disabled>
-              <img src="./resources/svg/voxel.svg" alt="">
-              Voxelise
-            </button>
-          </div>
-        </div>
-        <div class="col">
-          <div class="btn-group" role="group" aria-label="Basic example">
-            <button id="exportSchematic" type="button" class="btn btn-danger" disabled>
-              <img src="./resources/svg/save.svg" alt="">
-              Export .schematic
-            </button>
-            <button id="exportLitematic" type="button" class="btn btn-danger" disabled>
-              <img src="./resources/svg/save.svg" alt="">
-              Export .litematic
-            </button>
-          </div>
+    <div class="row">
+
+      <div class="col">
+        <div class="input-group">
+          <span id="buttonChooseFile" class="input-group-addon button pill-left">
+            Choose file
+          </span><input id="inputFile" class="text-field pill-right" style="cursor: pointer" type="text" value="">
         </div>
       </div>
+
+      <div class="col">
+        <div class="input-group">
+          <span class="input-group-addon button pill-left">
+            Voxel size
+          </span><input class="text-field" type="number" value="0.1">
+          <button class="button pill-right bg-blue">Voxelise</button>
+        </div>
+      </div>
+
+      <div class="col">
+        <button class="button bg-red pill-left half-width">Export .schematic</button><button class="button bg-red pill-right half-width">Export .litematic</button>
+      </div>
     </div>
+  </div>
+
+  <div class="box">
+    <div class="box-div">Model loaded successfully</div>
   </div>
 
   <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert"
