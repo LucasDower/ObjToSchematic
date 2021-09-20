@@ -21,7 +21,7 @@ void main() {
 
   //vec3 diffuse = texture2D(u_texture, v_texcoord).rgb;
   //vec3 diffuse = v_colour;
-  vec2 tex = v_blockTexcoord + (v_texcoord / (16.0 * 3.0));
+  vec2 tex = v_blockTexcoord + (v_texcoord / (14.0 * 3.0));
   vec3 diffuse = texture2D(u_texture, tex).rgb;
   //vec3 diffuse = vec3(1.0, 1.0, 1.0);
   gl_FragColor = vec4(diffuse * (v_lighting * g), 1.0);
