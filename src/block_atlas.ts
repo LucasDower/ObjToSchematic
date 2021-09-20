@@ -27,13 +27,12 @@ export class BlockAtlas {
         this._cachedBlocks = new HashMap(1024);
 
         const _path = path.join(__dirname, "../resources/blocks.json");
-        console.log(_path);
         const blocksString = fs.readFileSync(_path, "utf-8");
         if (!blocksString) {
             throw Error("Could not load blocks.json")
         }
         
-        const blocksJSON = JSON.parse(blocksString);
+        const blocksJSON = JSON.parse(blocksString).blocks;
         this._blocks = blocksJSON;
     }
 
