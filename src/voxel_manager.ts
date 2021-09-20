@@ -1,6 +1,6 @@
 import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
-import { HashSet }  from "./hash_map";
+import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
 import { BlockAtlas, BlockInfo }  from "./block_atlas";
 import { UV, RGB } from "./util";
@@ -26,7 +26,7 @@ export class VoxelManager {
     public triangleAABBs: Array<TriangleCubeAABBs>;
     public _voxelSize: number;
     
-    private voxelsHash: HashSet<Vector3>;
+    private voxelsHash: HashMap<Vector3, Block>;
     private blockAtlas: BlockAtlas;
     private _blockMode!: MaterialType;
     private _currentTexture!: Texture;
@@ -43,7 +43,7 @@ export class VoxelManager {
         this.voxelTexcoords = [];
         this.triangleAABBs = [];
 
-        this.voxelsHash = new HashSet(2048);
+        this.voxelsHash = new HashMap(2048);
         this.blockAtlas = new BlockAtlas();
         this.blockPalette = [];
     }
@@ -64,7 +64,7 @@ export class VoxelManager {
         this.maxY = -Infinity;
         this.maxZ = -Infinity;
 
-        this.voxelsHash = new HashSet(2048);
+        this.voxelsHash = new HashMap(2048);
     }
 
     public clear() {
@@ -105,7 +105,7 @@ export class VoxelManager {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this.voxelsHash.contains(pos);
+        return this.voxelsHash.get(pos) !== undefined;
     } 
 
     assignBlocks() {
@@ -132,6 +132,7 @@ export class VoxelManager {
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         //console.log(vec);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
+        const pos = this._toGridPosition(vec);
 
         // [HACK] FIXME: Fix misaligned voxels
         // Some vec data is not not grid-snapped to voxelSize-spacing
@@ -141,28 +142,15 @@ export class VoxelManager {
             return;
         }
 
-        // Convert to 
-        const pos = this._toGridPosition(vec);
-        if (this.voxelsHash.contains(pos)) {
-            for (let i = 0; i < this.voxels.length; ++i) {
-                if (this.voxels[i].position.equals(pos)) {
-                    this.voxels[i].colours.push(block.colour);
-                    //console.log("Overlap");
-                    return;
-                }
-            }
-            
+        // Is there already a voxel in this position?
+        let voxel = this.voxelsHash.get(pos);
+        if (voxel !== undefined) {
+            voxel.colours.push(block.colour);            
         } else {
-            this.voxels.push({position: pos, colours: [block.colour]});
-            //this.voxelTexcoords.push(block.texcoord);
-            this.voxelsHash.add(pos);
+            voxel = {position: pos, colours: [block.colour]};
+            this.voxels.push(voxel);
+            this.voxelsHash.add(pos, voxel);
         }
-
-        /*
-        if (!this.blockPalette.includes(block.name)) {
-            this.blockPalette.push(block.name);
-        }
-        */
 
         this.minX = Math.min(this.minX, pos.x);
         this.minY = Math.min(this.minY, pos.y);
