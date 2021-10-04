@@ -1,37 +1,43 @@
 import { AppContext } from "./app_context";
-import { ExportFormat } from "./app_context";
+import { Schematic, Litematic } from "./schematic";
+import { remote } from "electron"; 
 
 const context = new AppContext();
 
+function handleFileLoad() {
+    const files = remote.dialog.showOpenDialogSync({
+        title: "Load Waveform .obj file",
+        buttonLabel: "Load",
+        filters: [{
+            name: 'Waveform obj file',
+            extensions: ['obj']
+        }]
+    });
 
-$("#loadBtn").on("click", () => {
-    context.load();
+    if (files) {
+        context.load(files);
+    }
+}
+
+
+$("#buttonChooseFile").on("click", () => {
+    handleFileLoad();
 });
 
-
-$("#voxelBtn").on("click", () => {
-    context.voxeliseDisclaimer();
+$("#inputFile").on("click", () => {
+    handleFileLoad();
 });
 
-
-/*
-$("#splitBtn").on("click", () => {
-    context.split();
-});
-*/
-
-
-$("#exportBtn").on("click", async () => {
-    context.export();
+$("#buttonVoxelise").on("click", () => {
+    context.voxelise();
 });
 
-
-$("#exportSchematic").on("click", async () => {
-    context.exportDisclaimer(ExportFormat.SCHEMATIC);
+$("#buttonSchematic").on("click", async () => {
+    context.exportDisclaimer(new Schematic());
 });
 
-$("#exportLitematic").on("click", async () => {
-    context.exportDisclaimer(ExportFormat.LITEMATIC);
+$("#buttonLitematic").on("click", async () => {
+    context.exportDisclaimer(new Litematic());
 });
 
 

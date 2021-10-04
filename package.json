@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && electron ./dist/main.js",
+    "start": "npm run-script build && electron ./dist/main.js --enable-logging",
     "export": "electron-packager . ObjToSchematic --platform=win32 --arch=x64"
   },
   "repository": {

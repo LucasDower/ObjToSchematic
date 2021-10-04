@@ -5,92 +5,70 @@
   <meta charset="utf8">
   <title>ObjToSchematic</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./src/vendor/bootstrap.css">
-
-  
 </head>
 
-<body>
-  <canvas id="c"></canvas>
-  <div class="toolbar">
-    <div class="row">
-
-      <div class="col">
-        <div class="input-group">
-          <span id="buttonChooseFile" class="input-group-addon button pill-left">
-            Choose file
-          </span><input id="inputFile" class="text-field pill-right" style="cursor: pointer" type="text" value="">
+  <div id="main">
+    <canvas id="c"></canvas>
+    <div class="toolbar-container">
+      <div class="toolbar-container glass pill-left pill-right">
+        <div class="toolbar-item pill-left toolbar-item-1">
+          <div class="input-group">
+            <button id="buttonChooseFile" class="input-group-item pill-left">
+              Choose file
+            </button>
+            <input id="inputFile" type="text"
+              class="input-group-item input-group-item-dominant pill-right text-field cursor-pointer" value=""
+              readonly></input>
+          </div>
         </div>
-      </div>
-
-      <div class="col">
-        <div class="input-group">
-          <span class="input-group-addon button pill-left">
-            Voxel size
-          </span><input class="text-field" type="number" value="0.1">
-          <button class="button pill-right bg-blue">Voxelise</button>
+        <div class="toolbar-item toolbar-item-2">
+          <div id="groupVoxel" class="input-group transparent">
+            <div class="input-group-item pill-left">Voxel size</div>
+            <input id="inputVoxelSize" type="number" class="input-group-item input-group-item-dominant text-field"
+              value="0.1" disabled>
+            </input>
+            <button id="buttonVoxelise" class="input-group-item pill-right bg-primary cursor-pointer" disabled>
+              Voxelise
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div class="col">
-        <button class="button bg-red pill-left half-width">Export .schematic</button><button class="button bg-red pill-right half-width">Export .litematic</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="box">
-    <div class="box-div">Model loaded successfully</div>
-  </div>
-
-  <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert"
-    aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div id="toastText" class="toast-body ms-2">
-        toastText
-      </div>
-    </div>
-  </div>
-
-  <!-- EXPORT DISCLAIMER -->
-  <div id="modalExport" class="modal custom-modal-background fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div id="modalExportText" class="modal-body">
-          <p>modalText</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="exportBtn" type="button" class="btn btn-danger">
-            <img src="./resources/svg/save.svg" alt="">
-            Export
-          </button>
+        <div class="toolbar-item pill-right toolbar-item-3">
+          <div id="groupExport" class="input-group transparent">
+            <button id="buttonSchematic" class="input-group-item input-group-item-dominant pill-left bg-secondary"
+              disabled>
+              Export .schematic
+            </button>
+            <button id="buttonLitematic" class="input-group-item input-group-item-dominant pill-right bg-secondary"
+              disabled>
+              Export .litematic
+            </button>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- GENERAL DISCLAIMER -->
-  <div id="modalGeneral" class="modal custom-modal-background fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div id="modalGeneralText" class="modal-body">
-          <p>modalText</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
-        </div>
+  <div id="toast" class="status-container pill-left pill-right glass toast hide"></div>
+
+  <div id="modal" class="pill-left pill-right glass modal" hidden>
+    <div class="content">
+      <div id="textModal" class="modalTop"></div>
+      <div class="modalBottom">
+        <button id="buttonModalAction" class="button pill bg-secondary"></button>
+        <button id="buttonModalClose" class="button pill bg-primary">Close</button>
       </div>
     </div>
   </div>
 
-</body>
 
-<script src="./src/vendor/jquery-3.6.0.min.js"></script>
-<script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
-<script src="./src/vendor/popper.min.js"></script>
-<script src="./src/vendor/bootstrap.min.js"></script>
-<script>
-  require("./dist/client.js")
-</script>
+  </body>
+
+  <script src="./src/vendor/jquery-3.6.0.min.js"></script>
+  <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
+  <script src="./src/vendor/popper.min.js"></script>
+  <script>
+    require("./dist/client.js");
+  </script>
 
 </html>

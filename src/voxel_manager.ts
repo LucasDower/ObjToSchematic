@@ -6,10 +6,12 @@ import { BlockAtlas, BlockInfo }  from "./block_atlas";
 import { UV, RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
+import fs from "fs";
 
 interface Block {
     position: Vector3;
-    colours: Array<RGB>;
+    colours?: Array<RGB>;
+    colour?: RGB;
     block?: string
 }
 
@@ -112,14 +114,17 @@ export class VoxelManager {
         this.blockPalette = [];
 
         for (let i = 0; i < this.voxels.length; ++i) {
-            let averageColour = this.voxels[i].colours.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
-            let n = this.voxels[i].colours.length;
+            let averageColour = this.voxels[i].colours!.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
+            let n = this.voxels[i].colours!.length;
             averageColour.r /= n;
             averageColour.g /= n;
             averageColour.b /= n;
             const block = this.blockAtlas.getBlock(averageColour);
             this.voxels[i].block = block.name;
+            this.voxels[i].colour = averageColour;
+            delete this.voxels[i].colours;
             this.voxelTexcoords.push(block.texcoord);
+
 
             if (!this.blockPalette.includes(block.name)) {
                 this.blockPalette.push(block.name);
@@ -146,7 +151,7 @@ export class VoxelManager {
         if (this.voxelsHash.contains(pos)) {
             for (let i = 0; i < this.voxels.length; ++i) {
                 if (this.voxels[i].position.equals(pos)) {
-                    this.voxels[i].colours.push(block.colour);
+                    this.voxels[i].colours!.push(block.colour);
                     //console.log("Overlap");
                     return;
                 }
@@ -414,7 +419,14 @@ export class VoxelManager {
             }
         }
         this.assignBlocks();
-        console.log(this.blockPalette);
+        
+        this._dumpVoxelsToFile();
+    }
+
+    private _dumpVoxelsToFile() {
+        const json = JSON.stringify(this.voxels);
+        console.log(this.voxels.length);
+        fs.writeFileSync('block_dump.json', json);
     }
 
 }

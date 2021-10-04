@@ -1,144 +1,237 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400&display=swap');
-
-
-body {
-  margin: 0;
-  padding: 0;
-}
 
 canvas {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: #101214;
 }
 
-.toolbar {
-  position: absolute;
-  margin-left: 20%;
-  margin-top: 30px;
-  padding: 10px;
-  padding-top: 8.5px;
-  width: 60%;
-  height: 60px;
+body {
+  margin: 0px;
+  background-color: rgb(25, 25, 25);
+  background-size: 100%;
+  font-family: 'Lexend', sans-serif;
+}
+
+input {
+  font-family: 'Lexend', sans-serif;
+  font-size: medium;
+}
+
+input:enabled {
+  outline: none;
+}
+
+button {
+  font-family: 'Lexend', sans-serif;
+  font-size: medium;
+}
+
+button:hover:enabled {
+  cursor: pointer;
+  transition: 0.2s;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+button:disabled {
+  cursor: default;
+  transition: 0.2s;
+}
+
+.toolbar-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: auto;
+  margin: auto;
+}
+
+.status-container {
+  position: fixed;
+  left: 50%;
+  bottom: 25px;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+}
+
+.glass {
   background-color: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(20px);
-  border-radius: 100px;
+  border: solid;
+  border-color: rgba(255, 255, 255, 0.1);
   border-width: 1.5px;
-  border-style: solid;
-  border-color: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 1rem 2rem rgba(0, 0, 0, .175);
+  margin-top: 25px;
 }
 
-.canvas-toast {
-  position:absolute;
-  left:10px;
-  top:68px;
+.toast {
+  padding: 10px 50px !important;
+  font-weight: 300;
+  transition: 0.5s;
 }
 
-.custom-modal-background {
-  background-color: rgba(0, 0, 0, .25);
-  backdrop-filter: blur(5px);
+.hide {
+  opacity: 0;
+  transition: 0.5s;
 }
 
+.bg-success {
+  background-color: rgba(40, 167, 69, 0.5) !important;
+  color: white !important;
+}
+
+.bg-failure {
+  background-color: rgba(220, 53, 69, 0.5) !important;
+  color: white !important;
+}
+
+.transparent {
+  opacity: 0.5;
+}
+
+.toolbar-item {
+  padding: 10px;
+  cursor: default;
+}
 
 .input-group {
   display: flex;
   align-content: stretch;
 }
 
-.input-group > input {
-  flex: 1 0 auto;
+.input-group-item {
+  background-color: #EFEFEF;
+  padding: 10px 14px;
+  border: solid;
+  border-color: rgba(0, 0, 0, 0.25);
+  border-width: 1.5px 0px;
 }
 
-
-.input-group-addon {
-  padding: 0.5em 1em;
-}
-
-.bg-blue {
-  background-color: #0D6EFD !important;
-  color: white !important;
-}
-
-.bg-red {
-  background-color: #BB2D3B !important;
-  color: white !important;
+.input-group-item-dominant {
+  flex-grow: 1;
 }
 
 .pill-left {
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
-  padding-left: 20px;
+  border-top-left-radius: 32px;
+  border-bottom-left-radius: 32px;
+  border-left-width: 1.5px;
+  border-right-width: 0px;
 }
 
 .pill-right {
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-  padding-right: 20px;
-}
-
-.button {
-  height: 40px;
-  padding-left: 15px;
-  padding-right: 15px;
-  font-size: 15px;
-  font-family: 'Lexend', sans-serif;
-  font-weight: 400;
-  border: none;
-  color: #33393F;
-  background: #EFEFEF;
-  line-height: 25px;
-}
-
-.button:hover {
-  cursor: pointer;
+  border-top-right-radius: 32px;
+  border-bottom-right-radius: 32px;
+  border-right-width: 1.5px;
+  border-left-width: 0px;
 }
 
 .text-field {
   background-color: white;
-  height: 40px;
-  padding-left: 15px;
-  padding-right: 15px;
-  font-family: 'Lexend', sans-serif;
-  font-size: 15px;
-  color: gray;
   font-weight: 300;
-  border: none;
+  cursor: text;
+  color: #808080;
 }
 
-input:focus {
-  border: none;
+.text-field:read-only {
+  cursor: pointer;
 }
 
-.half-width {
-  width: 50%;
+.text-field:disabled {
+  background-color: #EFEFEF;
+  cursor: default;
 }
 
-input:focus {
-  outline: none;
-}
-
-.box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.box-div {
-  position: absolute;
-  margin-top: 280px;
-  height:  40px;
-  padding-left: 50px;
-  padding-right: 50px;
-  background-color: #28a746c4;
-  backdrop-filter: blur(20px);
-  border-radius: 100px;
-  text-align: center;
-  padding-top: 6px;
+.bg-primary {
+  background-color: #007bff;
   color: white;
+}
+
+.bg-secondary {
+  background-color: #dc3545;
+  color: white;
+}
+
+.bg-primary:disabled {
+  background-color: #5AAAFF;
+}
+
+.bg-secondary:disabled {
+  background-color: #E87C87;
+}
+
+.bg-primary:hover:enabled {
+  background-color: #0069D9;
+}
+
+.bg-secondary:hover:enabled {
+  background-color: #C82333;
+}
+
+@media (max-width: 1200px) {
+  .toolbar-container {
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+  }
+  .input-group-item-dominant {
+    flex-grow: 0;
+  }
+  .toolbar-item-1 {
+    border-top-right-radius: 200px;
+    border-bottom-right-radius: 200px;
+    border-right-width: 1.5px;
+    border-left-width: 0px;
+  }
+  .toolbar-item-2 {
+    border-top-left-radius: 200px;
+    border-bottom-left-radius: 200px;
+    border-top-right-radius: 200px;
+    border-bottom-right-radius: 200px;
+    border-right-width: 1.5px;
+    border-left-width: 1.5px;
+  }
+  .toolbar-item-3 {
+    border-top-left-radius: 200px;
+    border-bottom-left-radius: 200px;
+    border-right-width: 0px;
+    border-left-width: 1.5px;
+  }
+}
+
+
+
+.pill {
+  border-radius: 32px;
   border-width: 1.5px;
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.modal {
+  position: absolute;
+  padding: 40px;
+  margin: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+}
+
+div.content {
+  display: flex;
+  flex-direction: column;
+}
+ 
+.modalTop {
+  color: white;
+  flex: 1;
+  font-weight: 300;
+}
+
+.modalBottom {
+  flex: none;
+  padding-top: 50px;
+}
+
+.button {
+  padding: 8px 40px;
 }

@@ -5,26 +5,28 @@ import { Vector3 } from "./vector";
 import { VoxelManager } from "./voxel_manager";
 import { Block } from "./block_atlas";
 
-
 export abstract class Exporter {
 
-    protected _voxelManager: VoxelManager
-    protected _minPos: Vector3
-    protected _maxPos: Vector3
-    protected _sizeVector: Vector3
+    protected _voxelManager!: VoxelManager
+    protected _minPos!: Vector3
+    protected _maxPos!: Vector3
+    protected _sizeVector!: Vector3
 
-    constructor(voxelManager: VoxelManager) {
+    abstract convertToNBT(): NBT
+    abstract getFormatFilter(): Electron.FileFilter;
+    abstract getFormatName(): string;
+    
+    getFormatDisclaimer(): string | undefined {
+        return;
+    }
+
+    export(filePath: string, voxelManager: VoxelManager): boolean {
         this._voxelManager = voxelManager;
 
         this._minPos = new Vector3(voxelManager.minX, voxelManager.minY, voxelManager.minZ);
         this._maxPos = new Vector3(voxelManager.maxX, voxelManager.maxY, voxelManager.maxZ);
         this._sizeVector = Vector3.sub(this._maxPos, this._minPos).addScalar(1);
-        console.log(this._minPos, this._maxPos);
-    }
 
-    abstract convertToNBT(): NBT
-
-    export(filePath: string): boolean {
         const nbt = this.convertToNBT();
 
         const outBuffer = fs.createWriteStream(filePath);
@@ -77,6 +79,21 @@ export class Schematic extends Exporter {
 
     _getBufferIndex(vec: Vector3, sizeVector: Vector3) {
         return (sizeVector.z * sizeVector.x * vec.y) + (sizeVector.x * vec.z) + vec.x;
+    }
+
+    getFormatFilter() {
+        return {
+            name: this.getFormatName(),
+            extensions: ['schematic']
+        }
+    }
+
+    getFormatName() {
+        return "Schematic";
+    }
+
+    getFormatDisclaimer() {
+        return "Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.";
     }
 
 }
@@ -242,6 +259,17 @@ export class Litematic extends Exporter {
         };
 
         return nbt;
+    }
+    
+    getFormatFilter() {
+        return {
+            name: this.getFormatName(),
+            extensions: ['litematic']
+        }
+    }
+
+    getFormatName() {
+        return "Litematic";
     }
 
 }
