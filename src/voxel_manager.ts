@@ -6,6 +6,7 @@ import { BlockAtlas, BlockInfo }  from "./block_atlas";
 import { UV, RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
+import { triangleArea } from "./math";
 
 interface Block {
     position: Vector3;
@@ -301,18 +302,26 @@ export class VoxelManager {
             return this._currentColour;
         }
         
-        let distV0 = Vector3.sub(triangle.v0, centre).magnitude();
-        let distV1 = Vector3.sub(triangle.v1, centre).magnitude();
-        let distV2 = Vector3.sub(triangle.v2, centre).magnitude();
-        
-        const k = distV0 + distV1 + distV2;
-        distV0 /= k;
-        distV1 /= k;
-        distV2 /= k;
+        const dist01 = Vector3.sub(triangle.v0, triangle.v1).magnitude();
+        const dist12 = Vector3.sub(triangle.v1, triangle.v2).magnitude();
+        const dist20 = Vector3.sub(triangle.v2, triangle.v0).magnitude();
+
+        const k0 = Vector3.sub(triangle.v0, centre).magnitude();
+        const k1 = Vector3.sub(triangle.v1, centre).magnitude();
+        const k2 = Vector3.sub(triangle.v2, centre).magnitude();
+
+        const area01 = triangleArea(dist01, k0, k1);
+        const area12 = triangleArea(dist12, k1, k2);
+        const area20 = triangleArea(dist20, k2, k0);
+        const total = area01 + area12 + area20;
+
+        const w0 = area12 / total;
+        const w1 = area20 / total;
+        const w2 = area01 / total;
 
         const uv = {
-            u: triangle.uv0.u * distV0 + triangle.uv1.u * distV1 + triangle.uv2.u * distV2,
-            v: triangle.uv0.v * distV0 + triangle.uv1.v * distV1 + triangle.uv2.v * distV2,
+            u: triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
+            v: triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         }
 
         return this._currentTexture.getRGBA(uv);
