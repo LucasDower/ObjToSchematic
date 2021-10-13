@@ -22,6 +22,7 @@ export class BlockAtlas {
 
     private readonly _cachedBlocks: HashMap<Vector3, number>;
     private readonly _blocks: Array<BlockInfo>;
+    public readonly _atlasSize: number;
 
     constructor() {
         this._cachedBlocks = new HashMap(1024);
@@ -32,8 +33,9 @@ export class BlockAtlas {
             throw Error("Could not load blocks.json")
         }
         
-        const blocksJSON = JSON.parse(blocksString).blocks;
-        this._blocks = blocksJSON;
+        const json = JSON.parse(blocksString)
+        this._atlasSize = json.atlasSize;
+        this._blocks = json.blocks;
     }
 
 

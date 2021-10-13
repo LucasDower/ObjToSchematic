@@ -35,6 +35,7 @@ export class Renderer {
         buffer: BottomlessBuffer,
         material: (FillMaterial | TextureMaterial)
     }>;
+    private _atlasSize?: number;
 
     constructor(gl: WebGLRenderingContext) {
         this._gl = gl;
@@ -151,6 +152,8 @@ export class Renderer {
         //const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
         const sizeVector = new Vector3(1.0, 1.0, 1.0);
 
+        this._atlasSize = voxelManager.blockAtlas._atlasSize;
+
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
                 this.registerBox(voxel.position);
@@ -213,7 +216,8 @@ export class Renderer {
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, this._shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_texture: this._atlasTexture,
-            u_voxelSize: voxelSize
+            u_voxelSize: voxelSize,
+            u_atlasSize: this._atlasSize
         });
         
         /*

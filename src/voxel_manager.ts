@@ -28,7 +28,7 @@ export class VoxelManager {
     public _voxelSize: number;
     
     private voxelsHash: HashMap<Vector3, Block>;
-    private blockAtlas: BlockAtlas;
+    public blockAtlas: BlockAtlas;
     private _blockMode!: MaterialType;
     private _currentTexture!: Texture;
     private _currentColour!: RGB;
@@ -302,6 +302,7 @@ export class VoxelManager {
             return this._currentColour;
         }
         
+        // TODO: Could cache dist values
         const dist01 = Vector3.sub(triangle.v0, triangle.v1).magnitude();
         const dist12 = Vector3.sub(triangle.v1, triangle.v2).magnitude();
         const dist20 = Vector3.sub(triangle.v2, triangle.v0).magnitude();

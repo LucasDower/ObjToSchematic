@@ -61,6 +61,8 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Run `npm install`.
 * Run `npm start`.
 
+Support for choosing the block palette is not yet supported. Instead, you can rebuild blocks.json with `npm run-script atlas` using only the blocks you want to export with. This also means you can use custom texture packs to get more accurate block-colour matching.
+
 
 ![](https://i.imgur.com/BTj9gAx.gif)
 
