@@ -1,5 +1,5 @@
 # ObjToSchematic
-A tool to convert .obj files into Minecraft Schematics.
+A tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
 
 ![Preview](/resources/preview3.png)
 
@@ -34,11 +34,12 @@ A tool to convert .obj files into Minecraft Schematics.
 * Alpha support
   * Alpha texture maps
   * Transparent blocks
-* Support for non-uniform block models (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
+* ⌛ Support for non-uniform block models (i.e. not all sides have same texture e.g. Oak Log, Crafting Table) (see [atlas-integration](https://github.com/LucasDower/ObjToSchematic/tree/atlas-integration))
 * ⌛ UI Redesign (use an actual UI framework) (see [redesign](https://github.com/LucasDower/ObjToSchematic/tree/redesign))
   * Block palette (choose blocks to export with)
   * Options for toggling fallable blocks
 * Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
+* Dithering
 
 0.5
 * ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
