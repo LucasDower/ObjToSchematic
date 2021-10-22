@@ -16,6 +16,7 @@ green_stained_glass.json
 light_gray_stained_glass.json
 magenta_stained_glass.json
 pink_stained_glass.json
+blue_stained_glass.json
 purple_stained_glass.json
 red_stained_glass.json
 white_stained_glass.json

@@ -5,10 +5,26 @@ import { UV, RGB } from "./util";
 import fs from "fs";
 import path from "path";
 
+
+export interface TextureInfo {
+    name: string
+    texcoord: UV
+}
+
+export interface FaceInfo {
+    [face: string]: TextureInfo,
+    up: TextureInfo,
+    down: TextureInfo,
+    north: TextureInfo,
+    south: TextureInfo,
+    east: TextureInfo,
+    west: TextureInfo
+}
+
 export interface BlockInfo {
     name: string;
     colour: RGB;
-    texcoord: UV
+    faces: FaceInfo
 }
 
 // https://minecraft.fandom.com/wiki/Java_Edition_data_values/Pre-flattening/Block_IDs

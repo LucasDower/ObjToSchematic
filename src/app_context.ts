@@ -129,6 +129,7 @@ export class AppContext {
             this._renderer.compile();
         } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
+            console.error(err);
             return;
         }
 

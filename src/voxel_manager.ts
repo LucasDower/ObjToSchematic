@@ -2,7 +2,7 @@ import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
 import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
-import { BlockAtlas, BlockInfo }  from "./block_atlas";
+import { BlockAtlas, BlockInfo, TextureInfo, FaceInfo }  from "./block_atlas";
 import { UV, RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
@@ -14,7 +14,6 @@ interface Block {
     block?: string
 }
 
-
 interface TriangleCubeAABBs {
     triangle: Triangle;
     AABBs: Array<CubeAABB>;
@@ -23,7 +22,7 @@ interface TriangleCubeAABBs {
 export class VoxelManager {
 
     public voxels: Array<Block>;
-    public voxelTexcoords: Array<UV>;
+    public voxelTexcoords: Array<FaceInfo>;
     public triangleAABBs: Array<TriangleCubeAABBs>;
     public _voxelSize: number;
     
@@ -120,7 +119,7 @@ export class VoxelManager {
             averageColour.b /= n;
             const block = this.blockAtlas.getBlock(averageColour);
             this.voxels[i].block = block.name;
-            this.voxelTexcoords.push(block.texcoord);
+            this.voxelTexcoords.push(block.faces);
 
             if (!this.blockPalette.includes(block.name)) {
                 this.blockPalette.push(block.name);
