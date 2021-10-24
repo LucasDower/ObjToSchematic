@@ -34,7 +34,7 @@ A tool to convert .obj files into Minecraft Schematics.
 * Alpha support
   * Alpha texture maps
   * Transparent blocks
-* Support for non-uniform block models (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
+* ✔️ **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
 * ⌛ UI Redesign (use an actual UI framework) (see [redesign](https://github.com/LucasDower/ObjToSchematic/tree/redesign))
   * Block palette (choose blocks to export with)
   * Options for toggling fallable blocks
