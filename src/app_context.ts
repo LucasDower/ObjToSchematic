@@ -23,8 +23,6 @@ export class AppContext {
 
     private _voxelSize: number;
     private _gl: WebGLRenderingContext;
-    private _renderer: Renderer;
-    private _voxelManager: VoxelManager;
     private _loadedMesh?: Mesh;
 
     private _toast: bootstrap.Toast;
@@ -33,18 +31,20 @@ export class AppContext {
     private _modalGeneral: bootstrap.Modal;
     private _cachedFormat?: ExportFormat;
 
+    private static _instance: AppContext;
 
-    constructor() {     
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {     
         this._voxelSize = $("#voxelInput").prop("value");
         
-        const gl = (<HTMLCanvasElement>$("#c").get(0)).getContext("webgl");
+        const gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl");
         if (!gl) {
             throw Error("Could not load WebGL context");
         }
         this._gl = gl;
-
-        this._renderer = new Renderer(this._gl);
-        this._voxelManager = new VoxelManager(this._voxelSize);
 
         this._toast = new bootstrap.Toast(<HTMLElement>document.getElementById('toast'), {delay: 3000});
         this._modalExport = new bootstrap.Modal(<HTMLElement>document.getElementById('modalExport'), {});
@@ -75,9 +75,10 @@ export class AppContext {
             return;
         }
         
-        this._renderer.clear();
-        this._renderer.registerMesh(this._loadedMesh);
-        this._renderer.compile();
+        const renderer = Renderer.Get;
+        renderer.clear();
+        renderer.registerMesh(this._loadedMesh);
+        renderer.compile();
     
         $('#voxelInput').prop('disabled', false);
         $('#voxelBtn').prop('disabled', false);
@@ -120,13 +121,15 @@ export class AppContext {
         }
         
         try {
-            this._voxelManager.clear();
-            this._voxelManager.setVoxelSize(this._voxelSize);
-            this._voxelManager.voxeliseMesh(this._loadedMesh);
+            const voxelManager = VoxelManager.Get;
+            voxelManager.clear();
+            voxelManager.setVoxelSize(this._voxelSize);
+            voxelManager.voxeliseMesh(this._loadedMesh);
         
-            this._renderer.clear();
-            this._renderer.registerVoxelMesh(this._voxelManager);
-            this._renderer.compile();
+            const renderer = Renderer.Get;
+            renderer.clear();
+            renderer.registerVoxelMesh();
+            renderer.compile();
         } catch (err: any) {
             this._showToast(err.message, ToastColour.RED);
             console.error(err);
@@ -140,7 +143,8 @@ export class AppContext {
     }
 
     public exportDisclaimer(exportFormat: ExportFormat) {
-        const schematicHeight = Math.ceil(this._voxelManager.maxZ - this._voxelManager.minZ);
+        const voxelManager = VoxelManager.Get;
+        const schematicHeight = Math.ceil(voxelManager.maxZ - voxelManager.minZ);
 
         let message = "";
         if (schematicHeight > 320) {
@@ -182,9 +186,9 @@ export class AppContext {
         try {
             let exporter: Exporter;
             if (this._cachedFormat == ExportFormat.SCHEMATIC) {
-                exporter = new Schematic(this._voxelManager);
+                exporter = new Schematic();
             } else { 
-                exporter = new Litematic(this._voxelManager);
+                exporter = new Litematic();
             }
             exporter.export(filePath);
         } catch (err) {
@@ -196,11 +200,9 @@ export class AppContext {
         this._showToast("Successfully saved", ToastColour.GREEN);
     }
 
-
     public draw() {
-        this._renderer.draw(this._voxelManager._voxelSize);
+        Renderer.Get.draw(VoxelManager.Get._voxelSize);
     }
-
 
     private _showToast(text: string, colour: ToastColour) {
         $("#toast").removeClass(ToastColour.RED);

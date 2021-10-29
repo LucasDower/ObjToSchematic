@@ -8,18 +8,15 @@ import { Block } from "./block_atlas";
 
 export abstract class Exporter {
 
-    protected _voxelManager: VoxelManager
     protected _minPos: Vector3
     protected _maxPos: Vector3
     protected _sizeVector: Vector3
 
-    constructor(voxelManager: VoxelManager) {
-        this._voxelManager = voxelManager;
-
+    constructor() {
+        const voxelManager = VoxelManager.Get;
         this._minPos = new Vector3(voxelManager.minX, voxelManager.minY, voxelManager.minZ);
         this._maxPos = new Vector3(voxelManager.maxX, voxelManager.maxY, voxelManager.maxZ);
         this._sizeVector = Vector3.sub(this._maxPos, this._minPos).addScalar(1);
-        console.log(this._minPos, this._maxPos);
     }
 
     abstract convertToNBT(): NBT
@@ -47,11 +44,10 @@ export abstract class Exporter {
 export class Schematic extends Exporter {
 
     convertToNBT() {
-
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         let blocksData = Array<number>(bufferSize);
-        this._voxelManager.voxels.forEach(voxel => {
+        VoxelManager.Get.voxels.forEach(voxel => {
             const indexVector = Vector3.sub(voxel.position, this._minPos);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
             blocksData[index] = Block.Stone;
@@ -96,7 +92,7 @@ export class Litematic extends Exporter {
     }
 
     _createBlockMapping(): BlockMapping {
-        const blockPalette = this._voxelManager.blockPalette;
+        const blockPalette = VoxelManager.Get.blockPalette;
         
         let blockMapping: BlockMapping = {"air": 0};
         for (let i = 0; i < blockPalette.length; ++i) {
@@ -112,7 +108,7 @@ export class Litematic extends Exporter {
         console.log(this._sizeVector);
 
         let buffer = Array<BlockID>(bufferSize).fill(0);
-        this._voxelManager.voxels.forEach(voxel => {
+        VoxelManager.Get.voxels.forEach(voxel => {
             const indexVector = Vector3.sub(voxel.position, this._minPos);
             const index = this._getBufferIndex(indexVector);
             buffer[index] = blockMapping[voxel.block || "air"];
@@ -204,7 +200,7 @@ export class Litematic extends Exporter {
                         RegionCount: { type: TagType.Int, value: 1 },
                         TimeCreated: { type: TagType.Long, value: [0, 0] },
                         TimeModified: { type: TagType.Long, value: [0, 0] },
-                        TotalBlocks: { type: TagType.Int, value: this._voxelManager.voxels.length },
+                        TotalBlocks: { type: TagType.Int, value: VoxelManager.Get.voxels.length },
                         TotalVolume: { type: TagType.Int, value: bufferSize },
                     },
                 },

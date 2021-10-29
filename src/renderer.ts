@@ -16,15 +16,15 @@ import { FaceInfo } from "./block_atlas";
 
 export class Renderer {
 
+    public _gl: WebGLRenderingContext;
+
     private _backgroundColour: RGB = {r: 0.1, g: 0.1, b: 0.1};
     private _strokeColour: RGB = {r: 1.0, g: 0.0, b: 0.0};
     private _fov: number = 30;
-    private _gl: WebGLRenderingContext;
-    private _camera: ArcballCamera;
     private _shaderManager: ShaderManager;
     private _atlasTexture: WebGLTexture;
     private _occlusionNeighbours!: Array<Array<Array<Vector3>>>; // Ew
-    private _mouseManager: MouseManager
+    //private _mouseManager: MouseManager
 
     private _debug: boolean = false;
     private _compiled: boolean = false;
@@ -38,20 +38,24 @@ export class Renderer {
     }>;
     private _atlasSize?: number;
 
-    constructor(gl: WebGLRenderingContext) {
-        this._gl = gl;
-        this._camera = new ArcballCamera(this._fov, 0.5, 100.0, gl);
-        this._mouseManager = new MouseManager(gl);
+    private static _instance: Renderer;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {
+        console.log("CONSTRUCTED RENDERER");
+
+        this._gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl")!;
+        //this._mouseManager = MouseManager.Get;
         this._shaderManager = new ShaderManager(this._gl);
 
-        this._registerEvents();  // Register mouse events for interacting with canvas
         this._getNewBuffers();   // Setup WebGL Buffers
         this._setupOcclusions();
 
         this._debug = false;
         this._compiled = false;
-
-        console.log(twgl.primitives.createCubeVertices(1.0));
         
 
         //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
@@ -153,9 +157,9 @@ export class Renderer {
         console.log("MATERIAL BUFFERS:", this._materialBuffers);
     }
 
-    registerVoxelMesh(voxelManager: VoxelManager) {
+    registerVoxelMesh() {
+        const voxelManager = VoxelManager.Get;
         const voxelSize = voxelManager._voxelSize;
-        //const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
         const sizeVector = new Vector3(1.0, 1.0, 1.0);
 
         this._atlasSize = voxelManager.blockAtlas._atlasSize;
@@ -207,6 +211,8 @@ export class Renderer {
     }
 
     draw(voxelSize: number) {
+        ArcballCamera.Get.updateCamera();
+
         if (!this._compiled) {
             return;
         }
@@ -215,12 +221,12 @@ export class Renderer {
 
         // Draw debug register
         this._drawRegister(this._registerDebug, this._gl.LINES, this._shaderManager.debugProgram, {
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
+            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
         });
 
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, this._shaderManager.aoProgram, {
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
+            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: voxelSize,
             u_atlasSize: this._atlasSize
@@ -236,19 +242,20 @@ export class Renderer {
         */
 
         // Draw material registers
+        const camera = ArcballCamera.Get;
         this._materialBuffers.forEach((materialBuffer) => {
             if (materialBuffer.material.type == MaterialType.Texture) {
                 this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedTextureProgram, {
-                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-                    u_worldViewProjection: this._camera.getWorldViewProjection(),
-                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: camera.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture
                 });
             } else {
                 this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedFillProgram, {
-                    u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-                    u_worldViewProjection: this._camera.getWorldViewProjection(),
-                    u_worldInverseTranspose: this._camera.getWorldInverseTranspose(),
+                    u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: camera.getWorldViewProjection(),
+                    u_worldInverseTranspose: camera.getWorldInverseTranspose(),
                     u_fillColour: rgbToArray(materialBuffer.material.diffuseColour)
                 });
             }
@@ -322,7 +329,7 @@ export class Renderer {
     _setupScene() {
         twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement>this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-        this._camera.aspect = this._gl.canvas.width / this._gl.canvas.height;
+        ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
         
         this._gl.enable(this._gl.DEPTH_TEST);
@@ -331,26 +338,7 @@ export class Renderer {
         this._gl.clearColor(this._backgroundColour.r, this._backgroundColour.g, this._backgroundColour.b, 1.0);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
-        this._camera.updateCameraPosition();  
-    }
-
-    _registerEvents() {
-        this._gl.canvas.addEventListener('mousedown', (e) => {
-            this._camera.isRotating = true;
-        });
-    
-        this._gl.canvas.addEventListener('mouseup', (e) => {
-            this._camera.isRotating = false;
-        });
-    
-        this._gl.canvas.addEventListener('mousemove', (e) => {
-            this._mouseManager.handleInput(<MouseEvent>e);
-            this._camera.updateCamera(this._mouseManager.getMouseDelta());
-        });
-    
-        this._gl.canvas.addEventListener('wheel', (e) => {
-            this._camera.handleScroll(<WheelEvent>e);
-        });
+        ArcballCamera.Get.updateCameraPosition();  
     }
 
     _drawBuffer(drawMode: number, buffer: {numElements: number, buffer: twgl.BufferInfo}, shader: twgl.ProgramInfo, uniforms: any) {

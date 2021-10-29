@@ -1,6 +1,7 @@
 import { m4, v3 } from "twgl.js";
 import { MouseManager } from "./mouse";
 import * as mathUtil from "./math";
+import { Renderer } from "./renderer";
 
 
 export class ArcballCamera {
@@ -33,12 +34,18 @@ export class ArcballCamera {
 
     private gl: WebGLRenderingContext;
 
-    constructor(fov: number, zNear: number, zFar: number, gl: WebGLRenderingContext) {
-        this.fov = fov * Math.PI / 180;
-        this.zNear = zNear;
-        this.zFar = zFar;
-        this.gl = gl;
-        this.aspect = gl.canvas.width / gl.canvas.height;
+    private static _instance: ArcballCamera;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {
+        this.fov = 30 * (Math.PI / 180);
+        this.zNear = 0.5;
+        this.zFar = 100.0;
+        this.gl = Renderer.Get._gl;
+        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
@@ -47,7 +54,7 @@ export class ArcballCamera {
         this.updateCameraPosition();
     }
 
-    public updateCamera(mouseDelta: {dx: number, dy: number}) {
+    public updateCamera() {
         if (!this.isRotating) {
             return;
         }
@@ -56,19 +63,13 @@ export class ArcballCamera {
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
         //console.log(mouseDelta);
+        const mouseDelta = MouseManager.Get.getMouseDelta();
         this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
         this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
 
         // Prevent the camera going upside-down
         const eps = 0.01;
         this.targetElevation = Math.max(Math.min(Math.PI - eps, this.targetElevation), eps);
-
-        this.updateCameraPosition();
-    }
-
-    public handleScroll(e: WheelEvent) {
-        this.targetDistance += e.deltaY * this.scrollSensitivity;
-        this.targetDistance = mathUtil.clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
 
         this.updateCameraPosition();
     }
@@ -94,6 +95,21 @@ export class ArcballCamera {
             this.actualDistance * Math.cos(elevation),
             this.actualDistance * Math.sin(azimuth) * -Math.sin(elevation)
         ];
+    }
+
+    public onMouseDown(e: MouseEvent) {
+        this.isRotating = true;
+    }
+
+    public onMouseUp(e: MouseEvent) {
+        this.isRotating = false;
+    }
+
+    public onWheelScroll(e: WheelEvent) {
+        this.targetDistance += e.deltaY * this.scrollSensitivity;
+        this.targetDistance = mathUtil.clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
+
+        this.updateCameraPosition();
     }
 
     public getProjectionMatrix() {
