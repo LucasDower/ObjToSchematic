@@ -5,7 +5,17 @@ A tool to convert .obj model files into Minecraft Schematics or [Litematica](htt
 
 ![Preview](/resources/preview2.jpg)
 
-![MinecraftPreview](/resources/minecraft.png)
+# Usage
+You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
+
+* Download and install [Node.js](https://nodejs.org/en/).
+* Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
+* Navigate to `/ObjToSchematic-main`.
+* Run `npm install`.
+* Run `npm start`.
+* Note, for now, all .obj models **must** be triangulated before importing.
+
+Support for choosing the block palette is not yet supported. Instead, you can edit `/tools/default-ignore-list.txt` to include blocks you don't want to be used and then run `npm run-script atlas`. You can also place custom textures in `/tools/blocks/` for more accurate block-colour matching when building with resource packs.
 
 # Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
@@ -53,25 +63,9 @@ A tool to convert .obj model files into Minecraft Schematics or [Litematica](htt
 * .fbx import support
 * Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
 
-# Usage
-You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
-
-* Download and install [Node.js](https://nodejs.org/en/).
-* Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
-* Navigate to `/ObjToSchematic-main`.
-* Run `npm install`.
-* Run `npm start`.
-
-Support for choosing the block palette is not yet supported. Instead, you can rebuild blocks.json with `npm run-script atlas` using only the blocks you want to export with. This also means you can use custom texture packs to get more accurate block-colour matching.
-
-
-![](https://i.imgur.com/BTj9gAx.gif)
-
 # Disclaimer
 :warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
 
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
-![DebugPreview](/resources/debug_preview.png)
-
-![MeshingPreview](/resources/greedy_meshing.png)
+![MinecraftPreview](/resources/minecraft.png)
