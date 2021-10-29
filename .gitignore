@@ -4,3 +4,5 @@ ObjToSchematic-win32-x64
 /resources/*.obj
 /resources/*.mtl
 /dist
+/tools/blocks
+/tools/models

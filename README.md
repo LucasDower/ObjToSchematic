@@ -34,7 +34,7 @@ A tool to convert .obj model files into Minecraft Schematics or [Litematica](htt
 * Alpha support
   * Alpha texture maps
   * Transparent blocks
-* ⌛ Support for non-uniform block models (i.e. not all sides have same texture e.g. Oak Log, Crafting Table) (see [atlas-integration](https://github.com/LucasDower/ObjToSchematic/tree/atlas-integration))
+* ✔️ **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
 * ⌛ UI Redesign (use an actual UI framework) (see [redesign](https://github.com/LucasDower/ObjToSchematic/tree/redesign))
   * Block palette (choose blocks to export with)
   * Options for toggling fallable blocks
@@ -61,6 +61,8 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Navigate to `/ObjToSchematic-main`.
 * Run `npm install`.
 * Run `npm start`.
+
+Support for choosing the block palette is not yet supported. Instead, you can rebuild blocks.json with `npm run-script atlas` using only the blocks you want to export with. This also means you can use custom texture packs to get more accurate block-colour matching.
 
 
 ![](https://i.imgur.com/BTj9gAx.gif)
