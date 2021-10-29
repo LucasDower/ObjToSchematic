@@ -5,10 +5,26 @@ import { UV, RGB } from "./util";
 import fs from "fs";
 import path from "path";
 
+
+export interface TextureInfo {
+    name: string
+    texcoord: UV
+}
+
+export interface FaceInfo {
+    [face: string]: TextureInfo,
+    up: TextureInfo,
+    down: TextureInfo,
+    north: TextureInfo,
+    south: TextureInfo,
+    east: TextureInfo,
+    west: TextureInfo
+}
+
 export interface BlockInfo {
     name: string;
     colour: RGB;
-    texcoord: UV
+    faces: FaceInfo
 }
 
 // https://minecraft.fandom.com/wiki/Java_Edition_data_values/Pre-flattening/Block_IDs
@@ -22,19 +38,20 @@ export class BlockAtlas {
 
     private readonly _cachedBlocks: HashMap<Vector3, number>;
     private readonly _blocks: Array<BlockInfo>;
+    public readonly _atlasSize: number;
 
     constructor() {
         this._cachedBlocks = new HashMap(1024);
 
         const _path = path.join(__dirname, "../resources/blocks.json");
-        console.log(_path);
         const blocksString = fs.readFileSync(_path, "utf-8");
         if (!blocksString) {
             throw Error("Could not load blocks.json")
         }
         
-        const blocksJSON = JSON.parse(blocksString);
-        this._blocks = blocksJSON;
+        const json = JSON.parse(blocksString)
+        this._atlasSize = json.atlasSize;
+        this._blocks = json.blocks;
     }
 
 

@@ -1,11 +1,13 @@
 import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
-import { HashSet }  from "./hash_map";
+import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
-import { BlockAtlas, BlockInfo }  from "./block_atlas";
+import { BlockAtlas, BlockInfo, TextureInfo, FaceInfo }  from "./block_atlas";
 import { UV, RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
+import { triangleArea } from "./math";
+
 import fs from "fs";
 
 interface Block {
@@ -15,7 +17,6 @@ interface Block {
     block?: string
 }
 
-
 interface TriangleCubeAABBs {
     triangle: Triangle;
     AABBs: Array<CubeAABB>;
@@ -24,12 +25,12 @@ interface TriangleCubeAABBs {
 export class VoxelManager {
 
     public voxels: Array<Block>;
-    public voxelTexcoords: Array<UV>;
+    public voxelTexcoords: Array<FaceInfo>;
     public triangleAABBs: Array<TriangleCubeAABBs>;
     public _voxelSize: number;
     
-    private voxelsHash: HashSet<Vector3>;
-    private blockAtlas: BlockAtlas;
+    private voxelsHash: HashMap<Vector3, Block>;
+    public blockAtlas: BlockAtlas;
     private _blockMode!: MaterialType;
     private _currentTexture!: Texture;
     private _currentColour!: RGB;
@@ -45,7 +46,7 @@ export class VoxelManager {
         this.voxelTexcoords = [];
         this.triangleAABBs = [];
 
-        this.voxelsHash = new HashSet(2048);
+        this.voxelsHash = new HashMap(2048);
         this.blockAtlas = new BlockAtlas();
         this.blockPalette = [];
     }
@@ -66,7 +67,7 @@ export class VoxelManager {
         this.maxY = -Infinity;
         this.maxZ = -Infinity;
 
-        this.voxelsHash = new HashSet(2048);
+        this.voxelsHash = new HashMap(2048);
     }
 
     public clear() {
@@ -107,7 +108,7 @@ export class VoxelManager {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this.voxelsHash.contains(pos);
+        return this.voxelsHash.get(pos) !== undefined;
     } 
 
     assignBlocks() {
@@ -121,9 +122,7 @@ export class VoxelManager {
             averageColour.b /= n;
             const block = this.blockAtlas.getBlock(averageColour);
             this.voxels[i].block = block.name;
-            this.voxels[i].colour = averageColour;
-            delete this.voxels[i].colours;
-            this.voxelTexcoords.push(block.texcoord);
+            this.voxelTexcoords.push(block.faces);
 
 
             if (!this.blockPalette.includes(block.name)) {
@@ -137,6 +136,7 @@ export class VoxelManager {
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
         //console.log(vec);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
+        const pos = this._toGridPosition(vec);
 
         // [HACK] FIXME: Fix misaligned voxels
         // Some vec data is not not grid-snapped to voxelSize-spacing
@@ -146,28 +146,15 @@ export class VoxelManager {
             return;
         }
 
-        // Convert to 
-        const pos = this._toGridPosition(vec);
-        if (this.voxelsHash.contains(pos)) {
-            for (let i = 0; i < this.voxels.length; ++i) {
-                if (this.voxels[i].position.equals(pos)) {
-                    this.voxels[i].colours!.push(block.colour);
-                    //console.log("Overlap");
-                    return;
-                }
-            }
-            
+        // Is there already a voxel in this position?
+        let voxel = this.voxelsHash.get(pos);
+        if (voxel !== undefined) {
+            voxel.colours.push(block.colour);            
         } else {
-            this.voxels.push({position: pos, colours: [block.colour]});
-            //this.voxelTexcoords.push(block.texcoord);
-            this.voxelsHash.add(pos);
+            voxel = {position: pos, colours: [block.colour]};
+            this.voxels.push(voxel);
+            this.voxelsHash.add(pos, voxel);
         }
-
-        /*
-        if (!this.blockPalette.includes(block.name)) {
-            this.blockPalette.push(block.name);
-        }
-        */
 
         this.minX = Math.min(this.minX, pos.x);
         this.minY = Math.min(this.minY, pos.y);
@@ -318,18 +305,27 @@ export class VoxelManager {
             return this._currentColour;
         }
         
-        let distV0 = Vector3.sub(triangle.v0, centre).magnitude();
-        let distV1 = Vector3.sub(triangle.v1, centre).magnitude();
-        let distV2 = Vector3.sub(triangle.v2, centre).magnitude();
-        
-        const k = distV0 + distV1 + distV2;
-        distV0 /= k;
-        distV1 /= k;
-        distV2 /= k;
+        // TODO: Could cache dist values
+        const dist01 = Vector3.sub(triangle.v0, triangle.v1).magnitude();
+        const dist12 = Vector3.sub(triangle.v1, triangle.v2).magnitude();
+        const dist20 = Vector3.sub(triangle.v2, triangle.v0).magnitude();
+
+        const k0 = Vector3.sub(triangle.v0, centre).magnitude();
+        const k1 = Vector3.sub(triangle.v1, centre).magnitude();
+        const k2 = Vector3.sub(triangle.v2, centre).magnitude();
+
+        const area01 = triangleArea(dist01, k0, k1);
+        const area12 = triangleArea(dist12, k1, k2);
+        const area20 = triangleArea(dist20, k2, k0);
+        const total = area01 + area12 + area20;
+
+        const w0 = area12 / total;
+        const w1 = area20 / total;
+        const w2 = area01 / total;
 
         const uv = {
-            u: triangle.uv0.u * distV0 + triangle.uv1.u * distV1 + triangle.uv2.u * distV2,
-            v: triangle.uv0.v * distV0 + triangle.uv1.v * distV1 + triangle.uv2.v * distV2,
+            u: triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
+            v: triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         }
 
         return this._currentTexture.getRGBA(uv);

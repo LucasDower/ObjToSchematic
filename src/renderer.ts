@@ -11,6 +11,7 @@ import { RGB, UV, rgbToArray } from "./util";
 import { VoxelManager } from "./voxel_manager";
 import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
+import { FaceInfo } from "./block_atlas";
 
 
 export class Renderer {
@@ -35,6 +36,7 @@ export class Renderer {
         buffer: BottomlessBuffer,
         material: (FillMaterial | TextureMaterial)
     }>;
+    private _atlasSize?: number;
 
     constructor(gl: WebGLRenderingContext) {
         this._gl = gl;
@@ -49,7 +51,7 @@ export class Renderer {
         this._debug = false;
         this._compiled = false;
 
-
+        console.log(twgl.primitives.createCubeVertices(1.0));
         
 
         //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
@@ -78,7 +80,7 @@ export class Renderer {
         this._registerData(data);
     }
 
-    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: UV) {   
+    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
         let occlusions = new Array<Array<number>>(6);   
         // For each face
         for (let f = 0; f < 6; ++f) {
@@ -108,9 +110,14 @@ export class Renderer {
                 data.occlusion[j * 16 + k] = occlusions[j][k % 4];
             }
         }
-        const l = data.position.length / 3;
-        for (let i = 0; i < l; ++i) {
-            data.blockTexcoord.push(blockTexcoord.u, blockTexcoord.v);
+    
+        // Assign the textures to each face
+        const faceOrder = ["north", "south", "up", "down", "east", "west"];
+        for (const face of faceOrder) {
+            for (let i = 0; i < 4; ++i) {
+                const texcoord = blockTexcoord[face].texcoord;
+                data.blockTexcoord.push(texcoord.u, texcoord.v);
+            }
         }
 
         this._registerVoxels.add(data);
@@ -150,6 +157,8 @@ export class Renderer {
         const voxelSize = voxelManager._voxelSize;
         //const sizeVector = new Vector3(voxelSize, voxelSize, voxelSize);
         const sizeVector = new Vector3(1.0, 1.0, 1.0);
+
+        this._atlasSize = voxelManager.blockAtlas._atlasSize;
 
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
@@ -213,7 +222,8 @@ export class Renderer {
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, this._shaderManager.aoProgram, {
             u_worldViewProjection: this._camera.getWorldViewProjection(),
             u_texture: this._atlasTexture,
-            u_voxelSize: voxelSize
+            u_voxelSize: voxelSize,
+            u_atlasSize: this._atlasSize
         });
         
         /*
