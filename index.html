@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 
+<body>
   <div id="main">
     <canvas id="c"></canvas>
     <div class="toolbar-container">
@@ -25,7 +26,7 @@
           <div id="groupVoxel" class="input-group transparent">
             <div class="input-group-item pill-left">Voxel size</div>
             <input id="inputVoxelSize" type="number" class="input-group-item input-group-item-dominant text-field"
-              value="0.1" disabled>
+              value="0.25" min="0.01" step="0.01" disabled>
             </input>
             <button id="buttonVoxelise" class="input-group-item pill-right bg-primary cursor-pointer" disabled>
               Voxelise
@@ -60,15 +61,13 @@
       </div>
     </div>
   </div>
+</body>
 
-
-  </body>
-
-  <script src="./src/vendor/jquery-3.6.0.min.js"></script>
-  <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
-  <script src="./src/vendor/popper.min.js"></script>
-  <script>
-    require("./dist/client.js");
-  </script>
+<script src="./src/vendor/jquery-3.6.0.min.js"></script>
+<script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
+<script src="./src/vendor/popper.min.js"></script>
+<script>
+  require("./dist/client.js");
+</script>
 
 </html>

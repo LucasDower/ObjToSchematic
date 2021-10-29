@@ -1,31 +1,15 @@
 import { AppContext } from "./app_context";
 import { Schematic, Litematic } from "./schematic";
-import { remote } from "electron"; 
 
 const context = new AppContext();
 
-function handleFileLoad() {
-    const files = remote.dialog.showOpenDialogSync({
-        title: "Load Waveform .obj file",
-        buttonLabel: "Load",
-        filters: [{
-            name: 'Waveform obj file',
-            extensions: ['obj']
-        }]
-    });
-
-    if (files) {
-        context.load(files);
-    }
-}
-
 
 $("#buttonChooseFile").on("click", () => {
-    handleFileLoad();
+    context.load();
 });
 
 $("#inputFile").on("click", () => {
-    handleFileLoad();
+    context.load();
 });
 
 $("#buttonVoxelise").on("click", () => {

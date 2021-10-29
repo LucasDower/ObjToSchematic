@@ -1,18 +1,12 @@
-import { Schematic, Litematic, Exporter } from "./schematic";
+import { Exporter } from "./schematic";
 import { VoxelManager } from "./voxel_manager";
 import { Renderer } from "./renderer";
 import { Toast, ToastStyle } from "./ui/toast";
 import { Modal } from "./ui/modal";
 import { Mesh } from "./mesh";
 
-import { remote } from 'electron'; 
+import { remote } from "electron"; 
 import path from "path";
-
-enum ToastColour {
-    RED = "bg-danger",
-    ORANGE = "bg-warning",
-    GREEN = "bg-success"
-}
 
 
 export class AppContext {
@@ -38,8 +32,17 @@ export class AppContext {
 
     }
     
-    public load(files: Array<string>) {
-        if (files.length != 1) {
+    public load() {
+        const files = remote.dialog.showOpenDialogSync({
+            title: "Load Waveform .obj file",
+            buttonLabel: "Load",
+            filters: [{
+                name: 'Waveform obj file',
+                extensions: ['obj']
+            }]
+        });
+
+        if (!files || files.length != 1) {
             return;
         }
         
@@ -54,7 +57,7 @@ export class AppContext {
         try {
             this._loadedMesh = new Mesh(file, this._gl);
         } catch (err: any) {
-            console.log(err);
+            console.error(err);
             Toast.show("Could not load mesh", ToastStyle.Failure);
             return;
         }
@@ -91,12 +94,19 @@ export class AppContext {
             this._voxelManager.clear();
             this._voxelManager.setVoxelSize(this._voxelSize);
             this._voxelManager.voxeliseMesh(this._loadedMesh);
-        
+        } catch (err: any) {
+            console.error(err.message);
+            Toast.show("Could not voxelise mesh", ToastStyle.Failure);
+            return;
+        }
+
+        try {
             this._renderer.clear();
             this._renderer.registerVoxelMesh(this._voxelManager);
             this._renderer.compile();
         } catch (err: any) {
-            Toast.show(err.message, ToastStyle.Failure);
+            console.error(err.message);
+            Toast.show("Could not register voxel mesh", ToastStyle.Failure);
             return;
         }
 
@@ -136,7 +146,6 @@ export class AppContext {
         });
     
         if (filePath === undefined) {
-            console.error("no path");
             return;
         }
     

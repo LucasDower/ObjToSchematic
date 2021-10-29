@@ -30,7 +30,7 @@ export class Texture {
 	}
 
 	getRGBA(uv: UV): RGBA {
-		uv.v = 1 - uv.v;
+		//uv.v = 1 - uv.v;
 
 		const x = Math.floor(uv.u * this._image.width);
 		const y = Math.floor(uv.v * this._image.height);
