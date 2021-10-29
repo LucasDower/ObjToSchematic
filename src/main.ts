@@ -14,8 +14,10 @@ function createWindow () {
 
     //const appIcon = new Tray("../resources/icon.png");
     mainWindow = new BrowserWindow({
-        width,
-        height,
+        width: width,
+        height: height,
+        minWidth: 1280,
+        minHeight: 720,
         webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,

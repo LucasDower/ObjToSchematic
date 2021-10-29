@@ -1,35 +1,237 @@
-body {
-  margin: 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400&display=swap');
 
 canvas {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: #101214;
 }
 
-.toolbar {
+body {
+  margin: 0px;
+  background-color: rgb(25, 25, 25);
+  background-size: 100%;
+  font-family: 'Lexend', sans-serif;
+}
+
+input {
+  font-family: 'Lexend', sans-serif;
+  font-size: medium;
+}
+
+input:enabled {
+  outline: none;
+}
+
+button {
+  font-family: 'Lexend', sans-serif;
+  font-size: medium;
+}
+
+button:hover:enabled {
+  cursor: pointer;
+  transition: 0.2s;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+button:disabled {
+  cursor: default;
+  transition: 0.2s;
+}
+
+.toolbar-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: auto;
+  margin: auto;
+}
+
+.status-container {
+  position: fixed;
+  left: 50%;
+  bottom: 25px;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+}
+
+.glass {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  border: solid;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-width: 1.5px;
+  margin-top: 25px;
+}
+
+.toast {
+  padding: 10px 50px !important;
+  font-weight: 300;
+  transition: 0.5s;
+}
+
+.hide {
+  opacity: 0;
+  transition: 0.5s;
+}
+
+.bg-success {
+  background-color: rgba(40, 167, 69, 0.5) !important;
+  color: white !important;
+}
+
+.bg-failure {
+  background-color: rgba(220, 53, 69, 0.5) !important;
+  color: white !important;
+}
+
+.transparent {
+  opacity: 0.5;
+}
+
+.toolbar-item {
+  padding: 10px;
+  cursor: default;
+}
+
+.input-group {
+  display: flex;
+  align-content: stretch;
+}
+
+.input-group-item {
+  background-color: #EFEFEF;
+  padding: 10px 14px;
+  border: solid;
+  border-color: rgba(0, 0, 0, 0.25);
+  border-width: 1.5px 0px;
+}
+
+.input-group-item-dominant {
+  flex-grow: 1;
+}
+
+.pill-left {
+  border-top-left-radius: 32px;
+  border-bottom-left-radius: 32px;
+  border-left-width: 1.5px;
+  border-right-width: 0px;
+}
+
+.pill-right {
+  border-top-right-radius: 32px;
+  border-bottom-right-radius: 32px;
+  border-right-width: 1.5px;
+  border-left-width: 0px;
+}
+
+.text-field {
+  background-color: white;
+  font-weight: 300;
+  cursor: text;
+  color: #808080;
+}
+
+.text-field:read-only {
+  cursor: pointer;
+}
+
+.text-field:disabled {
+  background-color: #EFEFEF;
+  cursor: default;
+}
+
+.bg-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.bg-secondary {
+  background-color: #dc3545;
+  color: white;
+}
+
+.bg-primary:disabled {
+  background-color: #5AAAFF;
+}
+
+.bg-secondary:disabled {
+  background-color: #E87C87;
+}
+
+.bg-primary:hover:enabled {
+  background-color: #0069D9;
+}
+
+.bg-secondary:hover:enabled {
+  background-color: #C82333;
+}
+
+@media (max-width: 1200px) {
+  .toolbar-container {
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+  }
+  .input-group-item-dominant {
+    flex-grow: 0;
+  }
+  .toolbar-item-1 {
+    border-top-right-radius: 200px;
+    border-bottom-right-radius: 200px;
+    border-right-width: 1.5px;
+    border-left-width: 0px;
+  }
+  .toolbar-item-2 {
+    border-top-left-radius: 200px;
+    border-bottom-left-radius: 200px;
+    border-top-right-radius: 200px;
+    border-bottom-right-radius: 200px;
+    border-right-width: 1.5px;
+    border-left-width: 1.5px;
+  }
+  .toolbar-item-3 {
+    border-top-left-radius: 200px;
+    border-bottom-left-radius: 200px;
+    border-right-width: 0px;
+    border-left-width: 1.5px;
+  }
+}
+
+
+
+.pill {
+  border-radius: 32px;
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.modal {
   position: absolute;
-  width: 100%;
-  height: 58px;
-  padding-top: 10px;
-  background-color: rgba(0, 0, 0, .25);
-  backdrop-filter: blur(10px);
+  padding: 40px;
+  margin: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
 }
 
-.canvas-toast {
-  position:absolute;
-  left:10px;
-  top:68px;
+div.content {
+  display: flex;
+  flex-direction: column;
+}
+ 
+.modalTop {
+  color: white;
+  flex: 1;
+  font-weight: 300;
 }
 
-.custom-modal-background {
-  background-color: rgba(0, 0, 0, .25);
-  backdrop-filter: blur(5px);
+.modalBottom {
+  flex: none;
+  padding-top: 50px;
 }
 
-.debug {
-  border: 1px;
-  border-color: red;
+.button {
+  padding: 8px 40px;
 }

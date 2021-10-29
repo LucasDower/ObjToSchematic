@@ -10,7 +10,8 @@ import { triangleArea } from "./math";
 
 interface Block {
     position: Vector3;
-    colours: Array<RGB>;
+    colours?: Array<RGB>;
+    colour?: RGB;
     block?: string
 }
 
@@ -112,14 +113,15 @@ export class VoxelManager {
         this.blockPalette = [];
 
         for (let i = 0; i < this.voxels.length; ++i) {
-            let averageColour = this.voxels[i].colours.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
-            let n = this.voxels[i].colours.length;
+            let averageColour = this.voxels[i].colours!.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
+            let n = this.voxels[i].colours!.length;
             averageColour.r /= n;
             averageColour.g /= n;
             averageColour.b /= n;
             const block = this.blockAtlas.getBlock(averageColour);
             this.voxels[i].block = block.name;
             this.voxelTexcoords.push(block.faces);
+
 
             if (!this.blockPalette.includes(block.name)) {
                 this.blockPalette.push(block.name);
@@ -144,8 +146,8 @@ export class VoxelManager {
 
         // Is there already a voxel in this position?
         let voxel = this.voxelsHash.get(pos);
-        if (voxel !== undefined) {
-            voxel.colours.push(block.colour);            
+        if (voxel !== undefined) { 
+            voxel.colours!.push(block.colour);
         } else {
             voxel = {position: pos, colours: [block.colour]};
             this.voxels.push(voxel);
@@ -411,7 +413,6 @@ export class VoxelManager {
             }
         }
         this.assignBlocks();
-        console.log(this.blockPalette);
     }
 
 }

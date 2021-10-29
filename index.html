@@ -5,52 +5,44 @@
   <meta charset="utf8">
   <title>ObjToSchematic</title>
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./src/vendor/bootstrap.css">
 </head>
 
 <body>
-  <canvas id="c"></canvas>
-  <div class="toolbar">
-    <div class="container">
-      <div class="row">
-        <div class="col">
+  <div id="main">
+    <canvas id="c"></canvas>
+    <div class="toolbar-container">
+      <div class="toolbar-container glass pill-left pill-right">
+        <div class="toolbar-item pill-left toolbar-item-1">
           <div class="input-group">
-            <input type="file" accept=".obj" class="form-control" id="fileInput">
-            <button id="loadBtn" class="btn btn-primary border-0" type="button">
-              <img src="./resources/svg/load.svg" alt="">
-              Load
+            <button id="buttonChooseFile" class="input-group-item pill-left">
+              Choose file
             </button>
+            <input id="inputFile" type="text"
+              class="input-group-item input-group-item-dominant pill-right text-field cursor-pointer" value=""
+              readonly></input>
           </div>
         </div>
-        <div class="col">
-          <div class="input-group">
-            <label class="input-group-text ">Voxel size</label>
-            <input id="voxelInput" type="number" min="0.1" step="0.1" value="0.1" class="form-control border-0"
-              disabled>
-            <button id="splitBtn" class="btn btn-primary border-0" type="button" data-bs-toggle="tooltip"
-              data-bs-placement="bottom" title="Half voxel size (faster)" disabled>
-              <img src="./resources/svg/split.svg" alt="">
-            </button>
-            <!--
-              <button id="joinBtn" class="btn btn-primary border-0" type="button" disabled>
-                <img src="./resources/svg/join.svg" alt="">
-              </button>
-              -->
-            <button id="voxelBtn" class="btn btn-primary border-0" type="button" disabled>
-              <img src="./resources/svg/voxel.svg" alt="">
+        <div class="toolbar-item toolbar-item-2">
+          <div id="groupVoxel" class="input-group transparent">
+            <div class="input-group-item pill-left">Voxel size</div>
+            <input id="inputVoxelSize" type="number" class="input-group-item input-group-item-dominant text-field"
+              value="0.25" min="0.01" step="0.01" disabled>
+            </input>
+            <button id="buttonVoxelise" class="input-group-item pill-right bg-primary cursor-pointer" disabled>
               Voxelise
             </button>
           </div>
         </div>
-        <div class="col">
-          <div class="btn-group" role="group" aria-label="Basic example">
-            <button id="exportSchematic" type="button" class="btn btn-danger" disabled>
-              <img src="./resources/svg/save.svg" alt="">
+        <div class="toolbar-item pill-right toolbar-item-3">
+          <div id="groupExport" class="input-group transparent">
+            <button id="buttonSchematic" class="input-group-item input-group-item-dominant pill-left bg-secondary"
+              disabled>
               Export .schematic
             </button>
-            <button id="exportLitematic" type="button" class="btn btn-danger" disabled>
-              <img src="./resources/svg/save.svg" alt="">
+            <button id="buttonLitematic" class="input-group-item input-group-item-dominant pill-right bg-secondary"
+              disabled>
               Export .litematic
+            </button>
             </button>
           </div>
         </div>
@@ -58,55 +50,24 @@
     </div>
   </div>
 
-  <div id="toast" class="toast canvas-toast align-items-center text-white bg-danger border-0" role="alert"
-    aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div id="toastText" class="toast-body ms-2">
-        toastText
+  <div id="toast" class="status-container pill-left pill-right glass toast hide"></div>
+
+  <div id="modal" class="pill-left pill-right glass modal" hidden>
+    <div class="content">
+      <div id="textModal" class="modalTop"></div>
+      <div class="modalBottom">
+        <button id="buttonModalAction" class="button pill bg-secondary"></button>
+        <button id="buttonModalClose" class="button pill bg-primary">Close</button>
       </div>
     </div>
   </div>
-
-  <!-- EXPORT DISCLAIMER -->
-  <div id="modalExport" class="modal custom-modal-background fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div id="modalExportText" class="modal-body">
-          <p>modalText</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="exportBtn" type="button" class="btn btn-danger">
-            <img src="./resources/svg/save.svg" alt="">
-            Export
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- GENERAL DISCLAIMER -->
-  <div id="modalGeneral" class="modal custom-modal-background fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div id="modalGeneralText" class="modal-body">
-          <p>modalText</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Okay</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </body>
 
 <script src="./src/vendor/jquery-3.6.0.min.js"></script>
 <script src="./src/vendor/jquery-3.3.1.slim.min.js"></script>
 <script src="./src/vendor/popper.min.js"></script>
-<script src="./src/vendor/bootstrap.min.js"></script>
 <script>
-  require("./dist/client.js")
+  require("./dist/client.js");
 </script>
 
 </html>
