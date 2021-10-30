@@ -1,12 +1,11 @@
 import { m4, v3 } from "twgl.js";
 import { MouseManager } from "./mouse";
-import * as mathUtil from "./math";
+import { degreesToRadians, clamp } from "./math";
 import { Renderer } from "./renderer";
-
 
 export class ArcballCamera {
 
-    public isRotating = false;
+    public isUserRotating = false;
 
     private readonly fov: number;
     private readonly zNear: number;
@@ -41,7 +40,7 @@ export class ArcballCamera {
     }
 
     private constructor() {
-        this.fov = 30 * (Math.PI / 180);
+        this.fov = 30 * degreesToRadians;
         this.zNear = 0.5;
         this.zFar = 100.0;
         this.gl = Renderer.Get._gl;
@@ -50,34 +49,25 @@ export class ArcballCamera {
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
         this.targetElevation = this.actualElevation;
-
-        this.updateCameraPosition();
     }
 
     public updateCamera() {
-        if (!this.isRotating) {
-            return;
-        }
-        //console.log("update camera");
-
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
+        
+        // Update target location if user is rotating camera
+        if (this.isUserRotating) {
+            const mouseDelta = MouseManager.Get.getMouseDelta();
+            this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
+            this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
 
-        //console.log(mouseDelta);
-        const mouseDelta = MouseManager.Get.getMouseDelta();
-        this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
-        this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
+            // Prevent the camera going upside-down
+            const eps = 0.01;
+            this.targetElevation = Math.max(Math.min(Math.PI - eps, this.targetElevation), eps);
+        }
 
-        // Prevent the camera going upside-down
-        const eps = 0.01;
-        this.targetElevation = Math.max(Math.min(Math.PI - eps, this.targetElevation), eps);
-
-        this.updateCameraPosition();
-    }
-
-    updateCameraPosition() {
-        this.actualDistance += (this.targetDistance - this.actualDistance) * 2 * this.cameraSmoothing;
-
-        this.actualAzimuth += (this.targetAzimuth - this.actualAzimuth) * this.cameraSmoothing;
+        // Move camera towards target location
+        this.actualDistance  += (this.targetDistance  - this.actualDistance ) * this.cameraSmoothing;
+        this.actualAzimuth   += (this.targetAzimuth   - this.actualAzimuth  ) * this.cameraSmoothing;
         this.actualElevation += (this.targetElevation - this.actualElevation) * this.cameraSmoothing;
 
         this.eye = [
@@ -98,18 +88,16 @@ export class ArcballCamera {
     }
 
     public onMouseDown(e: MouseEvent) {
-        this.isRotating = true;
+        this.isUserRotating = true;
     }
 
     public onMouseUp(e: MouseEvent) {
-        this.isRotating = false;
+        this.isUserRotating = false;
     }
 
     public onWheelScroll(e: WheelEvent) {
         this.targetDistance += e.deltaY * this.scrollSensitivity;
-        this.targetDistance = mathUtil.clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
-
-        this.updateCameraPosition();
+        this.targetDistance = clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
     }
 
     public getProjectionMatrix() {

@@ -337,8 +337,6 @@ export class Renderer {
         this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.r, this._backgroundColour.g, this._backgroundColour.b, 1.0);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-
-        ArcballCamera.Get.updateCameraPosition();  
     }
 
     _drawBuffer(drawMode: number, buffer: {numElements: number, buffer: twgl.BufferInfo}, shader: twgl.ProgramInfo, uniforms: any) {

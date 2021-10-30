@@ -63,6 +63,7 @@ export class AppContext {
     
         const file = files[0];
         if (!file.name.endsWith(".obj") && !file.name.endsWith(".OBJ")) {
+            throw Error("Files must be .obj format");
             this._showToast("Files must be .obj format", ToastColour.RED);
             return;
         }
