@@ -2,8 +2,8 @@ import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
 import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
-import { BlockAtlas, BlockInfo, TextureInfo, FaceInfo }  from "./block_atlas";
-import { UV, RGB } from "./util";
+import { BlockAtlas, BlockInfo, FaceInfo }  from "./block_atlas";
+import { RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
 import { triangleArea } from "./math";
@@ -34,9 +34,8 @@ export class VoxelManager {
     private _currentColour!: RGB;
     public blockPalette: Array<string>;
     
-    public minX = Infinity; public maxX = -Infinity;
-    public minY = Infinity; public maxY = -Infinity;
-    public minZ = Infinity; public maxZ = -Infinity;  
+    public min = new Vector3( Infinity,  Infinity,  Infinity);
+    public max = new Vector3(-Infinity, -Infinity, -Infinity);
 
     private static _instance: VoxelManager;
 
@@ -64,12 +63,8 @@ export class VoxelManager {
         this.voxelTexcoords = [];
         this.blockPalette = []
         
-        this.minX = Infinity;
-        this.minY = Infinity;
-        this.minZ = Infinity;
-        this.maxX = -Infinity;
-        this.maxY = -Infinity;
-        this.maxZ = -Infinity;
+        this.min = new Vector3( Infinity,  Infinity,  Infinity);
+        this.max = new Vector3(-Infinity, -Infinity, -Infinity);
 
         this.voxelsHash = new HashMap(2048);
     }
@@ -115,7 +110,7 @@ export class VoxelManager {
         return this.voxelsHash.get(pos) !== undefined;
     } 
 
-    assignBlocks() {
+    public assignBlocks() {
         this.blockPalette = [];
 
         for (let i = 0; i < this.voxels.length; ++i) {
@@ -135,10 +130,9 @@ export class VoxelManager {
         }
     }
 
-    addVoxel(vec: Vector3, block: BlockInfo) {
+    public addVoxel(vec: Vector3, block: BlockInfo) {
 
         // (0.5, 0.5, 0.5) -> (0, 0, 0);
-        //console.log(vec);
         vec = Vector3.subScalar(vec, this._voxelSize / 2);
         const pos = this._toGridPosition(vec);
 
@@ -160,151 +154,11 @@ export class VoxelManager {
             this.voxelsHash.add(pos, voxel);
         }
 
-        this.minX = Math.min(this.minX, pos.x);
-        this.minY = Math.min(this.minY, pos.y);
-        this.minZ = Math.min(this.minZ, pos.z);
-        this.maxX = Math.max(this.maxX, pos.x);
-        this.maxY = Math.max(this.maxY, pos.y);
-        this.maxZ = Math.max(this.maxZ, pos.z);
+        this.min = Vector3.min(this.min, pos);
+        this.max = Vector3.max(this.max, pos);
     }
 
-    // FIXME: Fix voxel meshing for AO and textures
-    /*
-    _findXExtent(pos) {
-        let xEnd = pos.x + 1;
-
-        while (this.voxelsHash.contains(new Vector3(xEnd, pos.y, pos.z)) && !this.seen.contains(new Vector3(xEnd, pos.y, pos.z))) {
-            //console.log("Marking:", new Vector3(xEnd, y, z));
-            this.seen.add(new Vector3(xEnd, pos.y, pos.z));
-            ++xEnd;
-        }
-
-        return xEnd - 1;
-    }
-
-    _findZExtent(pos, xEnd) {
-        let canMerge = true;
-        let zEnd = pos.z + 1;
-
-        do {
-            //console.log("zEnd:", z, zEnd);
-            for (let i = pos.x; i <= xEnd; ++i) {
-                const here = new Vector3(i, pos.y, zEnd);
-                if (!this.voxelsHash.contains(here) || this.seen.contains(here)) {
-                    canMerge = false;
-                    break;
-                }
-            }
-            if (canMerge) {
-                // Mark all as seen
-                for (let i = pos.x; i <= xEnd; ++i) {
-                    const here = new Vector3(i, pos.y, zEnd);
-                    //console.log("Marking:", new Vector3(xEnd, y, z));
-                    this.seen.add(here);
-                }
-                ++zEnd;
-            }
-        } while (canMerge);
-
-        return zEnd - 1;
-    }
-
-    _findYExtent(pos, xEnd, zEnd) {
-        let canMerge = true;
-        let yEnd = pos.y + 1;
-
-        do {
-            for (let i = pos.x; i <= xEnd; ++i) {
-                for (let j = pos.z; j <= zEnd; ++j) {
-                    const here = new Vector3(i, yEnd, j);
-                    if (!this.voxelsHash.contains(here) || this.seen.contains(here)) {
-                        canMerge = false;
-                        break;
-                    }
-                }
-            }
-
-            if (canMerge) {
-                // Mark all as seen
-                for (let i = pos.x; i <= xEnd; ++i) {
-                    for (let j = pos.z; j <= zEnd; ++j) {
-                        const here = new Vector3(i, yEnd, j);
-                        this.seen.add(here);
-                    }
-                }
-                ++yEnd;
-            }
-        } while (canMerge);
-
-        return yEnd - 1;
-    }
-
-    buildMesh() {
-
-        this.mesh = [];
-        this.seen = new HashSet(2048);
-        //console.log(this.voxelsHash);
-
-        const minPos = this._toGridPosition(new Vector3(this.minX, this.minY, this.minZ));
-        const maxPos = this._toGridPosition(new Vector3(this.maxX, this.maxY, this.maxZ));
-
-        for (let y = minPos.y; y <= maxPos.y; ++y) {
-            for (let z = minPos.z; z <= maxPos.z; ++z) {
-                for (let x = minPos.x; x <= maxPos.x; ++x) {
-                    
-                    const pos = new Vector3(x, y, z);
-
-                    if (this.seen.contains(pos) || !this.voxelsHash.contains(pos)) {
-                        continue;
-                    }
-
-                    let xEnd = this._findXExtent(pos);
-                    let zEnd = this._findZExtent(pos, xEnd);
-                    let yEnd = this._findYExtent(pos, xEnd, zEnd);
-
-                    let centre = new Vector3((xEnd + x)/2, (yEnd + y)/2, (zEnd + z)/2);
-                    let size = new Vector3(xEnd - x + 1, yEnd - y + 1, zEnd - z + 1);
-
-                    this.mesh.push({
-                        centre: this._toModelPosition(centre),
-                        size: this._toModelPosition(size)
-                    });
-                }
-            }
-        }
-
-        //console.log("Mesh:", this.mesh);
-
-        return this.mesh;
-    }
-    */
-
-    public splitVoxels() {
-        this._voxelSize /= 2;
-        this._clearVoxels();
-        
-        const newTriangleAABBs = [];
-
-        for (const {triangle, AABBs} of this.triangleAABBs) {
-            const triangleAABBs = [];
-            for (const AABB of AABBs) {
-                for (const sub of AABB.subdivide()) {
-                    if (triangle.intersectAABB(sub)) {
-                        const voxelColour = this._getVoxelColour(triangle, sub.centre);
-                        const block = this.blockAtlas.getBlock(voxelColour);
-
-                        this.addVoxel(sub.centre, block);
-                        triangleAABBs.push(sub);
-                    }
-                }
-            }
-            newTriangleAABBs.push({triangle: triangle, AABBs: triangleAABBs});
-        }
-
-        this.triangleAABBs = newTriangleAABBs;
-    }
-
-    _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
+    private _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
         if (this._blockMode === MaterialType.Fill) {
             return this._currentColour;
         }
@@ -335,45 +189,7 @@ export class VoxelManager {
         return this._currentTexture.getRGBA(uv);
     }
 
-    /*
-    _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
-        const p1 = triangle.v0;
-        const p2 = triangle.v1;
-        const p3 = triangle.v2;
-
-        const uv0 = triangle.uv0;
-        const uv1 = triangle.uv1;
-        const uv2 = triangle.uv2;
-
-        const f1 = Vector3.sub(p1, centre);
-        const f2 = Vector3.sub(p2, centre);
-        const f3 = Vector3.sub(p3, centre);
-
-        const a  = Vector3.cross(Vector3.sub(p1, p2), Vector3.sub(p1, p3)).magnitude();
-        let a0 = Vector3.cross(f2, f3).magnitude() / a;
-        let a1 = Vector3.cross(f3, f1).magnitude() / a;
-        let a2 = Vector3.cross(f1, f2).magnitude() / a;
-
-        
-        let w = a0 + a1 + a2;
-        a0 /= w;
-        a1 /= w;
-        a2 /= w
-
-        const uv = {
-            u: uv0.u * a0 + uv1.u * a1 + uv2.u * a2,
-            v: uv0.v * a0 + uv1.v * a1 + uv2.v * a2
-        }
-
-        if (this._blockMode === MaterialType.Texture) {
-            return this._currentTexture.getRGBA(uv);
-        } else {
-            return this._currentColour;
-        }
-    }
-    */
-
-    voxeliseTriangle(triangle: Triangle) {
+    public voxeliseTriangle(triangle: Triangle) {
         const cubeAABB = this._getTriangleCubeAABB(triangle);
 
         const triangleAABBs = [];
@@ -416,7 +232,6 @@ export class VoxelManager {
             }
             // Handle triangles
             material.faces.forEach(face => {
-                console.log("FACE");
                 this.voxeliseTriangle(face);
             });
         });

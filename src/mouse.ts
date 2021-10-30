@@ -43,10 +43,12 @@ export class MouseManager {
     }
 
     public getMouseDelta() {
-        return {
+        const delta = {
             dx:    this.currMouse.x - this.prevMouse.x,
             dy:  -(this.currMouse.y - this.prevMouse.y)
         };
+        this.prevMouse = this.currMouse;
+        return delta;
     };
 
     public getMousePosNorm() {

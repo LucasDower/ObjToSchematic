@@ -164,6 +164,24 @@ export class Vector3 extends Hashable {
         );
     }
 
+    /** Performs element-wise min */
+    static min(vecA: Vector3, vecB: Vector3) {
+        return new Vector3(
+            Math.min(vecA.x, vecB.x),
+            Math.min(vecA.y, vecB.y),
+            Math.min(vecA.z, vecB.z)
+        );
+    }
+
+    /** Performs element-wise max */
+    static max(vecA: Vector3, vecB: Vector3) {
+        return new Vector3(
+            Math.max(vecA.x, vecB.x),
+            Math.max(vecA.y, vecB.y),
+            Math.max(vecA.z, vecB.z)
+        );
+    }
+
     override hash() {
         const p0 = 73856093;
         const p1 = 19349663;

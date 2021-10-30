@@ -1,6 +1,7 @@
 import * as twgl from "twgl.js";
 import * as fs from "fs";
 import * as path from "path";
+import { Renderer } from "./renderer";
 
 
 export class ShaderManager {
@@ -10,7 +11,15 @@ export class ShaderManager {
     public readonly debugProgram: twgl.ProgramInfo;
     public readonly aoProgram: twgl.ProgramInfo;
 
-    constructor(gl: WebGLRenderingContext) {
+    private static _instance: ShaderManager;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {
+        const gl = Renderer.Get._gl;
+
         const shadedVertexTextureShader = this._getShader('shaded_vertex.vs');
         const shadedFragmentTextureShader = this._getShader('shaded_fragment.fs');
         this.shadedTextureProgram = twgl.createProgramInfo(gl, [shadedVertexTextureShader, shadedFragmentTextureShader]);

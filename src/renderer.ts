@@ -20,8 +20,6 @@ export class Renderer {
 
     private _backgroundColour: RGB = {r: 0.1, g: 0.1, b: 0.1};
     private _strokeColour: RGB = {r: 1.0, g: 0.0, b: 0.0};
-    private _fov: number = 30;
-    private _shaderManager: ShaderManager;
     private _atlasTexture: WebGLTexture;
     private _occlusionNeighbours!: Array<Array<Array<Vector3>>>; // Ew
     //private _mouseManager: MouseManager
@@ -46,15 +44,10 @@ export class Renderer {
 
     private constructor() {
         this._gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl")!;
-        this._shaderManager = new ShaderManager(this._gl);
 
-        this._getNewBuffers();   // Setup WebGL Buffers
+        this._getNewBuffers();
         this._setupOcclusions();
 
-        this._debug = false;
-        this._compiled = false;
-
-        //this._blockTexture = twgl.createTexture(this._gl, { src: "resources/blocks/stone.png", mag: this._gl.NEAREST });
         this._materialBuffers = [];
 
         this._atlasTexture = twgl.createTexture(this._gl, {
@@ -204,7 +197,7 @@ export class Renderer {
         this._compiled = true;
     }
 
-    draw(voxelSize: number) {
+    draw() {
         ArcballCamera.Get.updateCamera();
 
         if (!this._compiled) {
@@ -214,15 +207,15 @@ export class Renderer {
         this._setupScene();
 
         // Draw debug register
-        this._drawRegister(this._registerDebug, this._gl.LINES, this._shaderManager.debugProgram, {
+        this._drawRegister(this._registerDebug, this._gl.LINES, ShaderManager.Get.debugProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
         });
 
         // Draw voxel register
-        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, this._shaderManager.aoProgram, {
+        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, ShaderManager.Get.aoProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
-            u_voxelSize: voxelSize,
+            u_voxelSize: VoxelManager.Get._voxelSize,
             u_atlasSize: this._atlasSize
         });
 
@@ -239,14 +232,14 @@ export class Renderer {
         const camera = ArcballCamera.Get;
         this._materialBuffers.forEach((materialBuffer) => {
             if (materialBuffer.material.type == MaterialType.Texture) {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedTextureProgram, {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, ShaderManager.Get.shadedTextureProgram, {
                     u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: camera.getWorldViewProjection(),
                     u_worldInverseTranspose: camera.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture
                 });
             } else {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, this._shaderManager.shadedFillProgram, {
+                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, ShaderManager.Get.shadedFillProgram, {
                     u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: camera.getWorldViewProjection(),
                     u_worldInverseTranspose: camera.getWorldInverseTranspose(),

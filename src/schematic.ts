@@ -7,9 +7,6 @@ import { Block } from "./block_atlas";
 
 export abstract class Exporter {
 
-    protected _voxelManager!: VoxelManager
-    protected _minPos!: Vector3
-    protected _maxPos!: Vector3
     protected _sizeVector!: Vector3
 
     abstract convertToNBT(): NBT
@@ -20,12 +17,8 @@ export abstract class Exporter {
         return;
     }
 
-    export(filePath: string, voxelManager: VoxelManager): boolean {
-        this._voxelManager = voxelManager;
-
-        this._minPos = new Vector3(voxelManager.minX, voxelManager.minY, voxelManager.minZ);
-        this._maxPos = new Vector3(voxelManager.maxX, voxelManager.maxY, voxelManager.maxZ);
-        this._sizeVector = Vector3.sub(this._maxPos, this._minPos).addScalar(1);
+    export(filePath: string): boolean {
+        this._sizeVector = Vector3.sub(VoxelManager.Get.max, VoxelManager.Get.min).addScalar(1);
 
         const nbt = this.convertToNBT();
 
@@ -53,7 +46,7 @@ export class Schematic extends Exporter {
 
         let blocksData = Array<number>(bufferSize);
         VoxelManager.Get.voxels.forEach(voxel => {
-            const indexVector = Vector3.sub(voxel.position, this._minPos);
+            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
             blocksData[index] = Block.Stone;
         });
@@ -125,11 +118,10 @@ export class Litematic extends Exporter {
 
     _createBlockBuffer(blockMapping: BlockMapping): Array<BlockID> {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
-        console.log(this._sizeVector);
 
         let buffer = Array<BlockID>(bufferSize).fill(0);
         VoxelManager.Get.voxels.forEach(voxel => {
-            const indexVector = Vector3.sub(voxel.position, this._minPos);
+            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
             const index = this._getBufferIndex(indexVector);
             buffer[index] = blockMapping[voxel.block || "air"];
         });
@@ -139,7 +131,6 @@ export class Litematic extends Exporter {
 
     _createBlockStates(blockMapping: BlockMapping) {
         const blockEncoding = this._encodeBlockBuffer(blockMapping);
-
 
         let blockStates = new Array<long>();
 

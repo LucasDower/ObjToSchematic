@@ -24,7 +24,7 @@ function createWindow () {
         enableRemoteModule: true
         }
     });
-    mainWindow.removeMenu();
+    //mainWindow.removeMenu();
     
     
     // Load index.html

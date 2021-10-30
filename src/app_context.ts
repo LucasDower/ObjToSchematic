@@ -1,19 +1,36 @@
-import { Exporter } from "./schematic";
+import { Exporter, Litematic, Schematic } from "./schematic";
 import { VoxelManager } from "./voxel_manager";
-import { Renderer } from "./renderer";
 import { Toast, ToastStyle } from "./ui/toast";
+import { ToggleableGroup } from "./ui/group";
+import { Renderer } from "./renderer";
 import { Modal } from "./ui/modal";
 import { Mesh } from "./mesh";
 
 import { remote } from "electron"; 
 import path from "path";
 
+interface ReturnStatus {
+    message: string,
+    style: ToastStyle,
+    error?: unknown
+}
+
+export enum Action {
+    Load,
+    Voxelise,
+    ExportSchematic,
+    ExportLitematic,
+    ConfirmExport
+}
 
 export class AppContext {
 
-    private _voxelSize: number;
+    private _voxelSize = 1.0;
     private _gl: WebGLRenderingContext;
     private _loadedMesh?: Mesh;
+    private _groupVoxelise: ToggleableGroup;
+    private _groupExport: ToggleableGroup;
+    private _actionMap = new Map<Action, (() => ReturnStatus | void)>();
 
     private static _instance: AppContext;
 
@@ -21,17 +38,33 @@ export class AppContext {
         return this._instance || (this._instance = new this());
     }
 
-    private constructor() {     
-        this._voxelSize = $("#voxelInput").prop("value");
-        
+    private constructor() {
         const gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl");
         if (!gl) {
             throw Error("Could not load WebGL context");
         }
         this._gl = gl;
+
+        this._actionMap.set(Action.Load,            () => { return this._load(); });
+        this._actionMap.set(Action.Voxelise,        () => { return this._voxelise(); });
+        this._actionMap.set(Action.ExportSchematic, () => { return this._preexport(new Schematic()); });
+        this._actionMap.set(Action.ExportLitematic, () => { return this._preexport(new Litematic()); });
+
+        this._groupVoxelise = new ToggleableGroup(["#inputVoxelSize", "#buttonVoxelise"], "#groupVoxelise", false);
+        this._groupExport   = new ToggleableGroup(["#buttonSchematic", "#buttonLitematic"], "#groupExport", false);
+    }
+
+    public do(action: Action) {
+        const status = this._actionMap.get(action)!();
+        if (status) {
+            if (status.error) {
+                console.error(status.error);
+            }
+            Toast.show(status.message, status.style);
+        }
     }
     
-    public load() {
+    private _load(): ReturnStatus {
         const files = remote.dialog.showOpenDialogSync({
             title: "Load Waveform .obj file",
             buttonLabel: "Load",
@@ -42,13 +75,12 @@ export class AppContext {
         });
 
         if (!files || files.length != 1) {
-            return;
+            return { message: "A single .obj file must be selected to load", style: ToastStyle.Failure };
         }
         
         const file = files[0];
         if (!file.endsWith(".obj") && !file.endsWith(".OBJ")) {
-            Toast.show("Files must be .obj format", ToastStyle.Failure);
-            return;
+            return { message: "Files must be .obj format", style: ToastStyle.Failure };
         }
         
         const parsedPath = path.parse(file);
@@ -56,73 +88,57 @@ export class AppContext {
         try {
             this._loadedMesh = new Mesh(file, this._gl);
             this._loadedMesh.loadTextures(this._gl);
-
-        } catch (err: any) {
-            console.error(err);
-            Toast.show("Could not load mesh", ToastStyle.Failure);
-            return;
+        } catch (err: unknown) {
+            return { error: err, message: "Could not load mesh", style: ToastStyle.Failure };
         }
         
-        const renderer = Renderer.Get;
-        renderer.clear();
-        renderer.registerMesh(this._loadedMesh);
-        renderer.compile();
+        try {
+            const renderer = Renderer.Get;
+            renderer.clear();
+            renderer.registerMesh(this._loadedMesh);
+            renderer.compile();
+        } catch (err: unknown) {
+            return { message: "Could not render mesh", style: ToastStyle.Failure };
+        }
     
         $('#inputFile').prop("value", parsedPath.base);
-        $('#groupVoxel').removeClass("transparent");
-        
-        $('#inputVoxelSize').prop('disabled', false);
-        $('#buttonVoxelise').prop('disabled', false);
-        
-        $('#buttonSchematic').prop('disabled', true);
-        $('#buttonLitematic').prop('disabled', true);
+
+        this._groupVoxelise.setEnabled(true);
+        this._groupExport.setEnabled(false);
     
-        Toast.show("Loaded successfully", ToastStyle.Success);
+        return { message: "Loaded successfully", style: ToastStyle.Success };
     }
 
-    public voxeliseDisclaimer() {
-        //this._modalVoxelise.show();
-        this.voxelise();
-    }
-
-    public voxelise() {
+    private _voxelise(): ReturnStatus {
         const newVoxelSize = $("#inputVoxelSize").prop('value');
         if (newVoxelSize < 0.001) {
-            Toast.show("Voxel size must be at least 0.001", ToastStyle.Failure);
-            return;
+            return { message: "Voxel size must be at least 0.001", style: ToastStyle.Failure };
         }
         this._voxelSize = newVoxelSize;
-
-        if (!this._loadedMesh) {
-            return;
-        }
         
         try {
             const voxelManager = VoxelManager.Get;
             voxelManager.clear();
             voxelManager.setVoxelSize(this._voxelSize);
-            voxelManager.voxeliseMesh(this._loadedMesh);
+            voxelManager.voxeliseMesh(this._loadedMesh!);
         
             const renderer = Renderer.Get;
             renderer.clear();
             renderer.registerVoxelMesh();
             renderer.compile();
         } catch (err: any) {
-            console.error(err.message);
-            Toast.show("Could not register voxel mesh", ToastStyle.Failure);
-            return;
+            return { error: err, message: "Could not register voxel mesh", style: ToastStyle.Failure };
         }
 
-        $('#groupExport').removeClass("transparent");
-        $('#buttonSchematic').prop('disabled', false);
-        $('#buttonLitematic').prop('disabled', false);
-    
-        Toast.show("Voxelised successfully", ToastStyle.Success);
+        this._groupExport.setEnabled(true);
+        return { message: "Voxelised successfully", style: ToastStyle.Success };
     }
 
-    public exportDisclaimer(exporter: Exporter) {
+    private _preexport(exporter: Exporter) {
         const voxelManager = VoxelManager.Get;
-        const schematicHeight = Math.ceil(voxelManager.maxZ - voxelManager.minZ);
+
+        console.log(voxelManager.min, voxelManager.max);
+        const schematicHeight = Math.ceil(voxelManager.max.z - voxelManager.min.z);
 
         let message = "";
         if (schematicHeight > 320) {
@@ -135,14 +151,14 @@ export class AppContext {
         }
 
         if (message.length == 0) {
-            this.export(exporter);
+            return this._export(exporter);
         } else {
-            Modal.setButton("Export", () => { this.export(exporter); });
+            Modal.setButton("Export", () => { this._export(exporter); });
             Modal.show(message);
         }
     }
 
-    public export(exporter: Exporter) {
+    private _export(exporter: Exporter): ReturnStatus {
         const filePath = remote.dialog.showSaveDialogSync({
             title: "Save structure",
             buttonLabel: "Save",
@@ -150,22 +166,20 @@ export class AppContext {
         });
     
         if (filePath === undefined) {
-            return;
+            return { message: "Output cancelled", style: ToastStyle.Success };
         }
     
         try {
-            exporter.export(filePath, VoxelManager.Get);
-        } catch (err) {
-            console.error(err);
-            Toast.show("Failed to export", ToastStyle.Failure)
-            return;
+            exporter.export(filePath);
+        } catch (err: unknown) {
+            return { error: err, message: "Failed to export", style: ToastStyle.Failure };
         }
 
-        Toast.show("Successfully exported", ToastStyle.Success);
+        return { message: "Successfully exported", style: ToastStyle.Success };
     }
 
     public draw() {
-        Renderer.Get.draw(VoxelManager.Get._voxelSize);
+        Renderer.Get.draw();
     }
 
 }
