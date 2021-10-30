@@ -45,7 +45,7 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
   * Alpha texture maps
   * Transparent blocks
 * ✔️ **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
-* ⌛ UI Redesign (use an actual UI framework) (see [redesign](https://github.com/LucasDower/ObjToSchematic/tree/redesign))
+* ✔️ **UI Redesign**
   * Block palette (choose blocks to export with)
   * Options for toggling fallable blocks
 * Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
