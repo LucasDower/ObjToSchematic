@@ -38,7 +38,13 @@ export class VoxelManager {
     public minY = Infinity; public maxY = -Infinity;
     public minZ = Infinity; public maxZ = -Infinity;  
 
-    constructor(voxelSize: number) {
+    private static _instance: VoxelManager;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this(1.0));
+    }
+
+    private constructor(voxelSize: number) {
         this._voxelSize = voxelSize;
         this.voxels = [];
         this.voxelTexcoords = [];

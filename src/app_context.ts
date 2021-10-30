@@ -13,23 +13,22 @@ export class AppContext {
 
     private _voxelSize: number;
     private _gl: WebGLRenderingContext;
-    private _renderer: Renderer;
-    private _voxelManager: VoxelManager;
     private _loadedMesh?: Mesh;
 
+    private static _instance: AppContext;
 
-    constructor() {     
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {     
         this._voxelSize = $("#voxelInput").prop("value");
         
-        const gl = (<HTMLCanvasElement>$("#c").get(0)).getContext("webgl");
+        const gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl");
         if (!gl) {
             throw Error("Could not load WebGL context");
         }
         this._gl = gl;
-
-        this._renderer = new Renderer(this._gl);
-        this._voxelManager = new VoxelManager(this._voxelSize);
-
     }
     
     public load() {
@@ -64,10 +63,11 @@ export class AppContext {
             return;
         }
         
-        this._renderer.clear();
-        this._renderer.registerMesh(this._loadedMesh);
-        this._renderer.compile();
-        
+        const renderer = Renderer.Get;
+        renderer.clear();
+        renderer.registerMesh(this._loadedMesh);
+        renderer.compile();
+    
         $('#inputFile').prop("value", parsedPath.base);
         $('#groupVoxel').removeClass("transparent");
         
@@ -76,8 +76,13 @@ export class AppContext {
         
         $('#buttonSchematic').prop('disabled', true);
         $('#buttonLitematic').prop('disabled', true);
-        
+    
         Toast.show("Loaded successfully", ToastStyle.Success);
+    }
+
+    public voxeliseDisclaimer() {
+        //this._modalVoxelise.show();
+        this.voxelise();
     }
 
     public voxelise() {
@@ -93,19 +98,15 @@ export class AppContext {
         }
         
         try {
-            this._voxelManager.clear();
-            this._voxelManager.setVoxelSize(this._voxelSize);
-            this._voxelManager.voxeliseMesh(this._loadedMesh);
-        } catch (err: any) {
-            console.error(err.message);
-            Toast.show("Could not voxelise mesh", ToastStyle.Failure);
-            return;
-        }
-
-        try {
-            this._renderer.clear();
-            this._renderer.registerVoxelMesh(this._voxelManager);
-            this._renderer.compile();
+            const voxelManager = VoxelManager.Get;
+            voxelManager.clear();
+            voxelManager.setVoxelSize(this._voxelSize);
+            voxelManager.voxeliseMesh(this._loadedMesh);
+        
+            const renderer = Renderer.Get;
+            renderer.clear();
+            renderer.registerVoxelMesh();
+            renderer.compile();
         } catch (err: any) {
             console.error(err.message);
             Toast.show("Could not register voxel mesh", ToastStyle.Failure);
@@ -120,7 +121,8 @@ export class AppContext {
     }
 
     public exportDisclaimer(exporter: Exporter) {
-        const schematicHeight = Math.ceil(this._voxelManager.maxZ - this._voxelManager.minZ);
+        const voxelManager = VoxelManager.Get;
+        const schematicHeight = Math.ceil(voxelManager.maxZ - voxelManager.minZ);
 
         let message = "";
         if (schematicHeight > 320) {
@@ -152,7 +154,7 @@ export class AppContext {
         }
     
         try {
-            exporter.export(filePath, this._voxelManager);
+            exporter.export(filePath, VoxelManager.Get);
         } catch (err) {
             console.error(err);
             Toast.show("Failed to export", ToastStyle.Failure)
@@ -162,9 +164,8 @@ export class AppContext {
         Toast.show("Successfully exported", ToastStyle.Success);
     }
 
-
     public draw() {
-        this._renderer.draw(this._voxelManager._voxelSize);
+        Renderer.Get.draw(VoxelManager.Get._voxelSize);
     }
 
 }

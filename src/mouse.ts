@@ -1,4 +1,6 @@
-interface MouseInfo {
+import { Renderer } from "./renderer";
+
+interface MouseState {
     x: number,
     y: number,
     buttons: number
@@ -11,17 +13,23 @@ export class MouseManager {
     private static readonly MOUSE_LEFT = 1;
     private static readonly MOUSE_RIGHT = 2;
 
-    private prevMouse: MouseInfo;
-    private currMouse: MouseInfo;
+    private prevMouse: MouseState;
+    private currMouse: MouseState;
 
-    constructor(gl: WebGLRenderingContext) {
+    private static _instance: MouseManager;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this(Renderer.Get._gl));
+    }
+
+    private constructor(gl: WebGLRenderingContext) {
         this._gl = gl;
 
         this.currMouse = { x: -1, y: -1, buttons: 0 };
         this.prevMouse = { x: -1, y: -1, buttons: 0 };
     }
 
-    public handleInput(e: MouseEvent) {
+    public onMouseMove(e: MouseEvent) {
         this.prevMouse = this.currMouse;
         this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
     }

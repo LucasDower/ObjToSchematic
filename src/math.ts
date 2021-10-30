@@ -29,3 +29,5 @@ export const triangleArea = (a: number, b: number, c: number) => {
 export const xAxis = new Vector3(1.0, 0.0, 0.0);
 export const yAxis = new Vector3(0.0, 1.0, 0.0);
 export const zAxis = new Vector3(0.0, 0.0, 1.0);
+
+export const degreesToRadians = Math.PI / 180;

@@ -1,7 +1,6 @@
 import { Vector3 } from "./vector";
 import { HashMap } from "./hash_map";
 import { UV, RGB } from "./util"; 
-//import blocks from "../resources/blocks.json";
 import fs from "fs";
 import path from "path";
 
