@@ -6,6 +6,7 @@ import { Triangle } from "./triangle";
 import { Vector3 } from "./vector";
 import { RGB, UV } from "./util";
 import { TextureFormat } from "./texture";
+import { triangleArea } from "./math";
 
 type VertexMap<T> = { [index: number]: T };
 
@@ -335,20 +336,20 @@ export class Mesh {
     }
 
 
-    // TODO: Factor in triangle's size, perform weighted sum
-    // to prevent areas of dense triangles dominating
     private _centreMesh() {
-        // Find the centre
         let centre = new Vector3(0, 0, 0);
-        let count = 0;
+        let totalWeight = 0;
         this.materials.forEach(material => {
             material.faces.forEach(face => {
-                centre.add(face.getCentre());
-                ++count;
+                const k0 = Vector3.sub(face.v0.position, face.v1.position).magnitude();
+                const k1 = Vector3.sub(face.v1.position, face.v2.position).magnitude();
+                const k2 = Vector3.sub(face.v2.position, face.v0.position).magnitude();
+                const weight = triangleArea(k0, k1, k2);
+                totalWeight += weight
+                centre.add(face.getCentre().mulScalar(weight));
             });
         });
-        centre.divScalar(count);
-        console.log(centre);
+        centre.divScalar(totalWeight);
 
         // Translate each triangle
         this.materials.forEach(material => {
