@@ -1,28 +1,7 @@
 import * as twgl from "twgl.js";
 import { Triangle } from "./triangle";
 import { Vector3 } from "./vector";
-import { UV } from "./util";
 import { VoxelData } from "./buffer";
-
-enum DataType {
-    PositionIndexData,
-    PositionTexcoordNormalIndexData
-}
-
-/*
-export interface PositionIndexData {
-    type: DataType.PositionIndexData,
-    position: Float32Array,
-    indices: Uint16Array
-}
-
-export interface PositionTexcoordNormalIndexData extends PositionIndexData {
-    type: DataType.PositionTexcoordNormalIndexData,
-    
-    texcoord: Float32Array,
-    normal: Float32Array
-}
-*/
 
 
 export class GeometryTemplates {
@@ -34,13 +13,14 @@ export class GeometryTemplates {
         const b = triangle.v1;
         const c = triangle.v2;
         const n = triangle.normal;
+        //console.log(triangle);
 
         if (debug) {
             return {
                 position: new Float32Array([
-                    a.x, a.y, a.z,
-                    b.x, b.y, b.z,
-                    c.x, c.y, c.z,
+                    a.position.x, a.position.y, a.position.z,
+                    b.position.x, b.position.y, b.position.z,
+                    c.position.x, c.position.y, c.position.z,
                 ]),
                 indices: new Uint16Array([
                     0, 1,
@@ -51,14 +31,14 @@ export class GeometryTemplates {
         } else {
             return {
                 position: new Float32Array([
-                    a.x, a.y, a.z,
-                    b.x, b.y, b.z,
-                    c.x, c.y, c.z,
+                    a.position.x, a.position.y, a.position.z,
+                    b.position.x, b.position.y, b.position.z,
+                    c.position.x, c.position.y, c.position.z,
                 ]),
                 texcoord: new Float32Array([
-                    triangle.uv0.u, triangle.uv0.v,
-                    triangle.uv1.u, triangle.uv1.v,
-                    triangle.uv2.u, triangle.uv2.v
+                    a.texcoord.u, a.texcoord.v,
+                    b.texcoord.u, b.texcoord.v,
+                    c.texcoord.u, c.texcoord.v
                 ]),
                 normal: new Float32Array([
                     n.x, n.y, n.z,

@@ -56,6 +56,8 @@ export class AppContext {
         
         try {
             this._loadedMesh = new Mesh(file, this._gl);
+            this._loadedMesh.loadTextures(this._gl);
+
         } catch (err: any) {
             console.error(err);
             Toast.show("Could not load mesh", ToastStyle.Failure);

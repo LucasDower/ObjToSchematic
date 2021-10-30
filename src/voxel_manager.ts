@@ -304,13 +304,13 @@ export class VoxelManager {
         }
         
         // TODO: Could cache dist values
-        const dist01 = Vector3.sub(triangle.v0, triangle.v1).magnitude();
-        const dist12 = Vector3.sub(triangle.v1, triangle.v2).magnitude();
-        const dist20 = Vector3.sub(triangle.v2, triangle.v0).magnitude();
+        const dist01 = Vector3.sub(triangle.v0.position, triangle.v1.position).magnitude();
+        const dist12 = Vector3.sub(triangle.v1.position, triangle.v2.position).magnitude();
+        const dist20 = Vector3.sub(triangle.v2.position, triangle.v0.position).magnitude();
 
-        const k0 = Vector3.sub(triangle.v0, centre).magnitude();
-        const k1 = Vector3.sub(triangle.v1, centre).magnitude();
-        const k2 = Vector3.sub(triangle.v2, centre).magnitude();
+        const k0 = Vector3.sub(triangle.v0.position, centre).magnitude();
+        const k1 = Vector3.sub(triangle.v1.position, centre).magnitude();
+        const k2 = Vector3.sub(triangle.v2.position, centre).magnitude();
 
         const area01 = triangleArea(dist01, k0, k1);
         const area12 = triangleArea(dist12, k1, k2);
@@ -322,8 +322,8 @@ export class VoxelManager {
         const w2 = area01 / total;
 
         const uv = {
-            u: triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
-            v: triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
+            u: triangle.v0.texcoord.u * w0 + triangle.v1.texcoord.u * w1 + triangle.v2.texcoord.u * w2,
+            v: triangle.v0.texcoord.v * w0 + triangle.v1.texcoord.v * w1 + triangle.v2.texcoord.v * w2,
         }
 
         return this._currentTexture.getRGBA(uv);
@@ -397,21 +397,24 @@ export class VoxelManager {
     }
 
     voxeliseMesh(mesh: Mesh) {
-        for (const materialName in mesh.materialTriangles) {
-            const materialTriangles = mesh.materialTriangles[materialName];
+        mesh.materials.forEach(material => {
             // Setup material
-            if (materialTriangles.material.type === MaterialType.Texture) {
+            console.log("VOXELISING", material.name);
+
+            if (material.materialData?.type === MaterialType.Texture) {
                 this._blockMode = MaterialType.Texture;
-                this._currentTexture = new Texture(materialTriangles.material.texturePath, materialTriangles.material.format);
+                this._currentTexture = new Texture(material.materialData.texturePath, material.materialData.format);
             } else {
-                this._currentColour = materialTriangles.material.diffuseColour;
+                this._currentColour = material.materialData!.diffuseColour;
                 this._blockMode = MaterialType.Fill;
             }
             // Handle triangles
-            for (const triangle of materialTriangles.triangles) {
-                this.voxeliseTriangle(triangle);
-            }
-        }
+            material.faces.forEach(face => {
+                console.log("FACE");
+                this.voxeliseTriangle(face);
+            });
+        });
+
         this.assignBlocks();
     }
 

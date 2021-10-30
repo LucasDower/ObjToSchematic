@@ -2,8 +2,11 @@ import * as fs from "fs";
 import * as jpeg from "jpeg-js";
 import { PNG } from "pngjs";
 import { UV, RGBA } from "./util";
-import { TextureFormat } from "./mesh";
 
+export enum TextureFormat {
+	PNG,
+	JPEG
+}
 
 export class Texture {
 
