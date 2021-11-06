@@ -345,7 +345,7 @@ export class Mesh {
                 const k1 = Vector3.sub(face.v1.position, face.v2.position).magnitude();
                 const k2 = Vector3.sub(face.v2.position, face.v0.position).magnitude();
                 const weight = triangleArea(k0, k1, k2);
-                totalWeight += weight
+                totalWeight += weight;
                 centre.add(face.getCentre().mulScalar(weight));
             });
         });

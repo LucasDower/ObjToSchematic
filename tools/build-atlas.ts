@@ -39,7 +39,9 @@ enum parentModel {
     Cube = "minecraft:block/cube",
     CubeAll = "minecraft:block/cube_all",
     CubeColumn = "minecraft:block/cube_column",
-    CubeColumnHorizontal = "minecraft:block/cube_column_horizontal"
+    CubeColumnHorizontal = "minecraft:block/cube_column_horizontal",
+    TemplateSingleFace = "minecraft:block/template_single_face",
+    TemplateGlazedTerracotta = "minecraft:block/template_glazed_terracotta",
 }
 
 interface Model {
@@ -106,6 +108,26 @@ fs.readdirSync(path.join(__dirname, "./models")).forEach(filename => {
                 west: { name: modelData.textures.west }
             }
             break;
+        case parentModel.TemplateSingleFace:
+            faceData = {
+                up: { name: modelData.textures.texture },
+                down: { name: modelData.textures.texture },
+                north: { name: modelData.textures.texture },
+                south: { name: modelData.textures.texture },
+                east: { name: modelData.textures.texture },
+                west: { name: modelData.textures.texture }
+            }
+            break;
+        case parentModel.TemplateGlazedTerracotta:
+                faceData = {
+                    up: { name: modelData.textures.pattern },
+                    down: { name: modelData.textures.pattern },
+                    north: { name: modelData.textures.pattern },
+                    south: { name: modelData.textures.pattern },
+                    east: { name: modelData.textures.pattern },
+                    west: { name: modelData.textures.pattern }
+                }
+                break;
         default:
             return;
     }

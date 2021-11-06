@@ -123,6 +123,7 @@ export class Renderer {
 
     public registerMesh(mesh: Mesh) {
         //console.log(mesh);
+        this._gl.disable(this._gl.CULL_FACE);
 
         mesh.materials.forEach(material => {
             const materialBuffer = new BottomlessBuffer([
@@ -145,6 +146,9 @@ export class Renderer {
     }
 
     registerVoxelMesh() {
+
+        this._gl.enable(this._gl.CULL_FACE);
+
         const voxelManager = VoxelManager.Get;
         const voxelSize = voxelManager._voxelSize;
         const sizeVector = new Vector3(1.0, 1.0, 1.0);

@@ -112,6 +112,7 @@ export class VoxelManager {
 
     public assignBlocks() {
         this.blockPalette = [];
+        let meanSquaredError = 0.0;
 
         for (let i = 0; i < this.voxels.length; ++i) {
             let averageColour = this.voxels[i].colours!.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
@@ -120,6 +121,10 @@ export class VoxelManager {
             averageColour.g /= n;
             averageColour.b /= n;
             const block = this.blockAtlas.getBlock(averageColour);
+
+            const squaredError = Math.pow(255 * (block.colour.r - averageColour.r), 2) + Math.pow(255 * (block.colour.g - averageColour.g), 2) + Math.pow(255 * (block.colour.b - averageColour.b), 2);
+            meanSquaredError += squaredError;
+
             this.voxels[i].block = block.name;
             this.voxelTexcoords.push(block.faces);
 
@@ -128,6 +133,10 @@ export class VoxelManager {
                 this.blockPalette.push(block.name);
             }
         }
+
+        meanSquaredError /= this.voxels.length;
+        console.log("Mean Squared Error:", meanSquaredError);
+
     }
 
     public addVoxel(vec: Vector3, block: BlockInfo) {

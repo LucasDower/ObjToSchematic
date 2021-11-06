@@ -22,3 +22,8 @@ red_stained_glass.json
 white_stained_glass.json
 glass.json
 spawner.json
+brown_mushroom_block_inventory.json
+red_mushroom_block_inventory.json
+cartography_table.json
+fletching_table.json
+redstone_lamp_on.json
