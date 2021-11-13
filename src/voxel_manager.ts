@@ -1,4 +1,3 @@
-import { CubeAABB } from "./aabb";
 import { Vector3 }  from "./vector.js";
 import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
@@ -6,7 +5,7 @@ import { BlockAtlas, BlockInfo, FaceInfo }  from "./block_atlas";
 import { RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
-import { roundToNearest, floorToNearest, triangleArea } from "./math";
+import { triangleArea } from "./math";
 import { Axes, generateRays, rayIntersectTriangle } from "./ray";
 
 interface Block {
@@ -16,16 +15,10 @@ interface Block {
     block?: string
 }
 
-interface TriangleCubeAABBs {
-    triangle: Triangle;
-    AABBs: Array<CubeAABB>;
-}
-
 export class VoxelManager {
 
     public voxels: Array<Block>;
     public voxelTexcoords: Array<FaceInfo>;
-    public triangleAABBs: Array<TriangleCubeAABBs>;
     public _voxelSize: number;
     
     private voxelsHash: HashMap<Vector3, Block>;
@@ -48,7 +41,6 @@ export class VoxelManager {
         this._voxelSize = voxelSize;
         this.voxels = [];
         this.voxelTexcoords = [];
-        this.triangleAABBs = [];
 
         this.voxelsHash = new HashMap(2048);
         this.blockAtlas = new BlockAtlas();
@@ -68,43 +60,6 @@ export class VoxelManager {
         this.max = new Vector3(-Infinity, -Infinity, -Infinity);
 
         this.voxelsHash = new HashMap(2048);
-    }
-
-    public clear() {
-        this.triangleAABBs = [];
-        this._clearVoxels();
-    }
-
-    private _snapToVoxelGrid(vec: Vector3) {
-        return vec.copy().divScalar(this._voxelSize).round().mulScalar(this._voxelSize);
-    }
-
-    private _getTriangleCubeAABB(triangle: Triangle) {
-        const triangleAABB = triangle.getAABB();
-        const gridSnappedCentre = this._snapToVoxelGrid(triangleAABB.centre);
-
-        let cubeAABB = new CubeAABB(gridSnappedCentre, this._voxelSize);
-        while (!triangle.insideAABB(cubeAABB)) {
-            cubeAABB = new CubeAABB(cubeAABB.centre, cubeAABB.width * 2.0);
-        }
-
-        return cubeAABB;
-    }
-
-    private _toGridPosition(vec: Vector3) {
-        return new Vector3(
-            Math.round(vec.x / this._voxelSize),
-            Math.round(vec.y / this._voxelSize),
-            Math.round(vec.z / this._voxelSize)
-        );
-    }
-
-    private _toModelPosition(vec: Vector3) {
-        return new Vector3(
-            vec.x * this._voxelSize,
-            vec.y * this._voxelSize,
-            vec.z * this._voxelSize
-        );
     }
 
     public isVoxelAt(pos: Vector3) {
@@ -140,22 +95,7 @@ export class VoxelManager {
 
     }
 
-    public addVoxel(vec: Vector3, block: BlockInfo) {
-
-        // (0.5, 0.5, 0.5) -> (0, 0, 0);
-        vec = Vector3.subScalar(vec, this._voxelSize / 2);
-        const pos = this._toGridPosition(vec);
-
-        // [HACK] FIXME: Fix misaligned voxels
-        // Some vec data is not not grid-snapped to voxelSize-spacing
-        /*
-        const test = Vector3.divScalar(vec, this._voxelSize);
-        if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.z % 1 < 0.9 && test.z % 1 > 0.1)) {
-            console.warn("Misaligned voxel, skipping...");
-            return;
-        }
-        */
-
+    public addVoxel(pos: Vector3, block: BlockInfo) {
         // Is there already a voxel in this position?
         let voxel = this.voxelsHash.get(pos);
         if (voxel !== undefined) { 
@@ -202,26 +142,31 @@ export class VoxelManager {
     }
 
     public voxeliseTriangle(triangle: Triangle) {
-        const rayList = generateRays(triangle);
+
         const voxelSize = VoxelManager.Get._voxelSize;
+        const v0Scaled = Vector3.divScalar(triangle.v0.position, voxelSize);
+        const v1Scaled = Vector3.divScalar(triangle.v1.position, voxelSize);
+        const v2Scaled = Vector3.divScalar(triangle.v2.position, voxelSize);
+
+        const rayList = generateRays(v0Scaled, v1Scaled, v2Scaled);
 
         rayList.forEach(ray => {
-            const intersection = rayIntersectTriangle(ray, triangle);
+            const intersection = rayIntersectTriangle(ray, v0Scaled, v1Scaled, v2Scaled);
             if (intersection) {
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
                     case Axes.x:
-                        voxelPosition = new Vector3(floorToNearest(intersection.x, voxelSize), intersection.y, intersection.z);
+                        voxelPosition = new Vector3(Math.round(intersection.x), intersection.y, intersection.z);
                         break;
                     case Axes.y:
-                        voxelPosition = new Vector3(intersection.x, floorToNearest(intersection.y, voxelSize), intersection.z);
+                        voxelPosition = new Vector3(intersection.x, Math.round(intersection.y), intersection.z);
                         break;
                     case Axes.z:
-                        voxelPosition = new Vector3(intersection.x, intersection.y, floorToNearest(intersection.z, voxelSize));
+                        voxelPosition = new Vector3(intersection.x, intersection.y, Math.round(intersection.z));
                         break;
                 }
 
-                const voxelColour = this._getVoxelColour(triangle, voxelPosition);
+                const voxelColour = this._getVoxelColour(triangle, Vector3.mulScalar(voxelPosition, voxelSize));
                 const block = this.blockAtlas.getBlock(voxelColour);
 
                 this.addVoxel(voxelPosition, block);
@@ -230,10 +175,10 @@ export class VoxelManager {
     }
 
     voxeliseMesh(mesh: Mesh) {
+        this._clearVoxels();
+
         mesh.materials.forEach(material => {
             // Setup material
-            console.log("VOXELISING", material.name);
-
             if (material.materialData?.type === MaterialType.Texture) {
                 this._blockMode = MaterialType.Texture;
                 this._currentTexture = new Texture(material.materialData.texturePath, material.materialData.format);

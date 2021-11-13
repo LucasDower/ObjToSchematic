@@ -118,7 +118,6 @@ export class AppContext {
         
         try {
             const voxelManager = VoxelManager.Get;
-            voxelManager.clear();
             voxelManager.setVoxelSize(this._voxelSize);
             voxelManager.voxeliseMesh(this._loadedMesh!);
         
