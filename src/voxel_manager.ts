@@ -6,7 +6,8 @@ import { BlockAtlas, BlockInfo, FaceInfo }  from "./block_atlas";
 import { RGB } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
-import { triangleArea } from "./math";
+import { roundToNearest, floorToNearest, triangleArea } from "./math";
+import { Axes, generateRays, rayIntersectTriangle } from "./ray";
 
 interface Block {
     position: Vector3;
@@ -147,11 +148,13 @@ export class VoxelManager {
 
         // [HACK] FIXME: Fix misaligned voxels
         // Some vec data is not not grid-snapped to voxelSize-spacing
+        /*
         const test = Vector3.divScalar(vec, this._voxelSize);
         if ((test.x % 1 < 0.9 && test.x % 1 > 0.1) || (test.y % 1 < 0.9 && test.y % 1 > 0.1) || (test.z % 1 < 0.9 && test.z % 1 > 0.1)) {
             console.warn("Misaligned voxel, skipping...");
             return;
         }
+        */
 
         // Is there already a voxel in this position?
         let voxel = this.voxelsHash.get(pos);
@@ -199,32 +202,31 @@ export class VoxelManager {
     }
 
     public voxeliseTriangle(triangle: Triangle) {
-        const cubeAABB = this._getTriangleCubeAABB(triangle);
+        const rayList = generateRays(triangle);
+        const voxelSize = VoxelManager.Get._voxelSize;
 
-        const triangleAABBs = [];
-
-        let queue = [cubeAABB];
-        while (true) {
-            const aabb = queue.shift();
-            if (!aabb) {
-                break;
-            }
-            if (triangle.intersectAABB(aabb)) {
-                if (aabb.width > this._voxelSize) {
-                    // Continue to subdivide
-                    queue.push(...aabb.subdivide());
-                } else {
-                    // We've reached the voxel level, stop                    
-                    const voxelColour = this._getVoxelColour(triangle, aabb.centre);
-                    const block = this.blockAtlas.getBlock(voxelColour);
-
-                    this.addVoxel(aabb.centre, block);
-                    triangleAABBs.push(aabb);
+        rayList.forEach(ray => {
+            const intersection = rayIntersectTriangle(ray, triangle);
+            if (intersection) {
+                let voxelPosition: Vector3;
+                switch (ray.axis) {
+                    case Axes.x:
+                        voxelPosition = new Vector3(floorToNearest(intersection.x, voxelSize), intersection.y, intersection.z);
+                        break;
+                    case Axes.y:
+                        voxelPosition = new Vector3(intersection.x, floorToNearest(intersection.y, voxelSize), intersection.z);
+                        break;
+                    case Axes.z:
+                        voxelPosition = new Vector3(intersection.x, intersection.y, floorToNearest(intersection.z, voxelSize));
+                        break;
                 }
-            }        
-        }
 
-        this.triangleAABBs.push({triangle: triangle, AABBs: triangleAABBs});
+                const voxelColour = this._getVoxelColour(triangle, voxelPosition);
+                const block = this.blockAtlas.getBlock(voxelColour);
+
+                this.addVoxel(voxelPosition, block);
+            }
+        });
     }
 
     voxeliseMesh(mesh: Mesh) {

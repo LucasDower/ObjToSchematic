@@ -110,7 +110,7 @@ export class AppContext {
     }
 
     private _voxelise(): ReturnStatus {
-        const newVoxelSize = $("#inputVoxelSize").prop('value');
+        const newVoxelSize: number = parseFloat($("#inputVoxelSize").prop('value'));
         if (newVoxelSize < 0.001) {
             return { message: "Voxel size must be at least 0.001", style: ToastStyle.Failure };
         }
