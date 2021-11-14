@@ -1,5 +1,5 @@
 # ObjToSchematic
-A tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
+A visual tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
 
 ![Preview](/resources/preview3.png)
 
@@ -19,49 +19,51 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 
 # Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
-* ✔️ **.json model loading**
-* ✔️ **Model voxelisation**
-* ✔️ **Optimised voxelisation & rendering overhaul**
-* ✔️ **Basic .obj file loader UI**
+* 🟢 **.json model loading**
+* 🟢 **Model voxelisation**
+* 🟢 **Optimised voxelisation & rendering overhaul**
+* 🟢 **Basic .obj file loader UI**
 
 [0.2](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.2-alpha)
-* ✔️ **Greedy voxel meshing**
-* ✔️ **Export to schematic**
+* 🟠 <s>**Greedy voxel meshing**</s> (Removed)
+* 🟢 **Export to schematic**
 
 [0.3](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.3-alpha)
-* ✔️ **Faster voxel splitting**
-* ✔️ **Ambient occlusion**
-* ✔️ **Quality of life**
-  * ✔️ Model PSR, ✔️ height limit warnings
-* ✔️ **.mtl support for block choice**
-  * ✔️ PNG support, ✔️ JPEG support
-* ✔️ **Convert to TypeScript**
+* 🟠 <s>**Voxel splitting**</s> (Removed)
+* 🟢 **Ambient occlusion**
+* 🟢 **Quality of life**
+  * Model PSR, height limit warnings
+* 🟢 **.mtl support for block choice**
+  * PNG support, JPEG support
+* 🟢 **Convert to TypeScript**
 
 0.4
-* ⌛ Block choice exported
-  * ✔️ **Export to .litematic**
+* 🟡 Block choice exported
+  * Export to .litematic
   * Export to .nbt (structure blocks)
-* Alpha support
+* ⚪ Alpha support
   * Alpha texture maps
   * Transparent blocks
-* ✔️ **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
-* ✔️ **UI Redesign**
+* 🟢 **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
+* 🟢 **UI Redesign**
   * Block palette (choose blocks to export with)
   * Options for toggling fallable blocks
-* Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
-* Dithering
+* ⚪ Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
+* 🟢 **Optimised ambient occlusion**
+* 🟢 **Transition to ray-based voxelisation**
+* ⚪ Dithering
 
 0.5
-* ⌛ Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
+* 🟡 Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
-* Node.js C++ addons
+* ⚪ Node.js C++ addons
 
 0.6
-* Block painting
-* Building guides
-* Slice viewer
-* .fbx import support
-* Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
+* ⚪ Block painting
+* ⚪ Building guides
+* ⚪ Slice viewer
+* ⚪ .fbx import support
+* ⚪ Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
 
 # Disclaimer
 :warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
