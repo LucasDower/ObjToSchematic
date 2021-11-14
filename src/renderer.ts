@@ -13,6 +13,11 @@ import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
 import { FaceInfo } from "./block_atlas";
 
+/** Recommended, but slower */
+const ENABLE_AMBIENT_OCCLUSION = true;
+
+/** Darkens corner even if corner block does not exist, recommended */
+const AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
 
 export class Renderer {
 
@@ -21,8 +26,7 @@ export class Renderer {
     private _backgroundColour: RGB = {r: 0.1, g: 0.1, b: 0.1};
     private _strokeColour: RGB = {r: 1.0, g: 0.0, b: 0.0};
     private _atlasTexture: WebGLTexture;
-    private _occlusionNeighbours!: Array<Array<Array<Vector3>>>; // Ew
-    //private _mouseManager: MouseManager
+    private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
     private _debug: boolean = false;
     private _compiled: boolean = false;
@@ -54,11 +58,7 @@ export class Renderer {
             src: path.join(__dirname, "../resources/blocks.png"),
             mag: this._gl.NEAREST
         });
-
     }
-
-
-
 
     public set strokeColour(colour: RGB) {
         this._strokeColour = colour;
@@ -111,25 +111,47 @@ export class Renderer {
             if (faceVisible) {
                 for (let v = 0; v < 4; ++v) {
                     let numNeighbours = 0;
-                    for (let i = 0; i < 3; ++i) {
-                        const localNeighbour = this._occlusionNeighbours[f][v][i];
-                        const neighbourIndex = Renderer._getNeighbourIndex(localNeighbour);
+                    for (let i = 0; i < 2; ++i) {
+                        const neighbourIndex = this._occlusionNeighboursIndices[f][v][i];
                         numNeighbours += localNeighbourhoodCache[neighbourIndex];
                     }
-                    occlusions[f][v] = numNeighbours;
+                    // If both edge blocks along this vertex exist,
+                    // assume corner exists (even if it doesnt)
+                    // (This is a stylistic choice)
+                    if (numNeighbours == 2 && AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
+                        ++numNeighbours;
+                    } else {
+                    const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
+                    numNeighbours += localNeighbourhoodCache[neighbourIndex];
+                    }
+
+                    // Convert from occlusion denoting the occlusion factor to the 
+                    // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
+                    occlusions[f][v] = 1.0 - 0.2 * numNeighbours;
                 }
             }
 
-            // Convert from occlusion denoting the occlusion factor to the 
-            // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-            occlusions[f] = occlusions[f].map(x => 1.0 - 0.2 * x);
         }
 
         return occlusions;
     }
 
+    private static _getBlankOcclusions() {
+        let blankOcclusions = new Array<Array<number>>(6);
+        for (let f = 0; f < 6; ++f) {
+            blankOcclusions[f] = [1, 1, 1, 1];
+        }
+        return blankOcclusions;
+    }
+
     private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
-        let occlusions = this._calculateOcclusions(centre);
+        let occlusions: number[][];
+        if (ENABLE_AMBIENT_OCCLUSION) {
+            occlusions = this._calculateOcclusions(centre);
+        } else {
+            occlusions = Renderer._getBlankOcclusions();
+        }
+
         let data: VoxelData = GeometryTemplates.getBoxBufferData(centre, false);
 
         // Each vertex of a face needs the occlusion data for the other 3 vertices
@@ -245,15 +267,6 @@ export class Renderer {
             u_atlasSize: this._atlasSize
         });
 
-        /*
-        // Draw default register
-        this._drawRegister(this._registerDefault, this._gl.TRIANGLES, shaderManager.shadedProgram, {
-            u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
-        });
-        */
-
         // Draw material registers
         const camera = ArcballCamera.Get;
         this._materialBuffers.forEach((materialBuffer) => {
@@ -284,55 +297,66 @@ export class Renderer {
     _setupOcclusions() {
         // TODO: Find some for-loop to clean this up        
 
-        this._occlusionNeighbours = [
+        // [Edge, Edge, Corrner]
+        const occlusionNeighbours = [
             [
                 // +X
-                [new Vector3(1, 1, 0), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, 1), new Vector3(1, 0, 1)]
+                [new Vector3(1, 1, 0), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
+                [new Vector3(1, -1, 0), new Vector3(1, 0, -1), new Vector3(1, -1, -1)],
+                [new Vector3(1, 1, 0), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
+                [new Vector3(1, -1, 0), new Vector3(1, 0, 1), new Vector3(1, -1, 1)]
             ],
 
             [
                 // -X
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, -1), new Vector3(-1, 0, -1)]
+                [new Vector3(-1, 1, 0), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(-1, -1, 0), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)],
+                [new Vector3(-1, 1, 0), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(-1, -1, 0), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1) ]
             ],
 
             [
                 // +Y
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(0, 1, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(0, 1, -1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(0, 1, 1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, -1), new Vector3(0, 1, -1)]
+                [new Vector3(-1, 1, 0), new Vector3(0, 1, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(-1, 1, 0), new Vector3(0, 1, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(1, 1, 0), new Vector3(0, 1, 1), new Vector3(1, 1, 1)],
+                [new Vector3(1, 1, 0), new Vector3(0, 1, -1), new Vector3(1, 1, -1)]
             ],
 
             [
                 // -Y
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, -1), new Vector3(0, -1, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(0, -1, 1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(0, -1, -1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, 1), new Vector3(0, -1, 1)]
+                [new Vector3(-1, -1, 0), new Vector3(0, -1, -1), new Vector3(-1, -1, -1)],
+                [new Vector3(-1, -1, 0), new Vector3(0, -1, 1), new Vector3(-1, -1, 1)],
+                [new Vector3(1, -1, 0), new Vector3(0, -1, -1), new Vector3(1, -1, -1)],
+                [new Vector3(1, -1, 0), new Vector3(0, -1, 1), new Vector3(1, -1, 1)]
             ],
 
             [
                 // + Z
-                [new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(0, -1, 1), new Vector3(1, -1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(0, 1, 1), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(0, -1, 1), new Vector3(-1, -1, 1), new Vector3(-1, 0, 1)]
+                [new Vector3(0, 1, 1), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
+                [new Vector3(0, -1, 1), new Vector3(1, 0, 1), new Vector3(1, -1, 1)],
+                [new Vector3(0, 1, 1), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(0, -1, 1), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)]
             ],
 
             [
                 // -Z
-                [new Vector3(0, 1, -1), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(0, 1, -1), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(0, -1, -1), new Vector3(1, -1, -1), new Vector3(1, 0, -1)]
+                [new Vector3(0, 1, -1), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(0, -1, -1), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1)],
+                [new Vector3(0, 1, -1), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
+                [new Vector3(0, -1, -1), new Vector3(1, 0, -1), new Vector3(1, -1, -1)]
             ]
         ]
+
+        this._occlusionNeighboursIndices = new Array<Array<Array<number>>>();
+        for (let i = 0; i < 6; ++i) {
+            let row = new Array<Array<number>>();
+            for (let j = 0; j < 4; ++j) {
+                row.push(occlusionNeighbours[i][j].map(x => Renderer._getNeighbourIndex(x)));
+            }
+            this._occlusionNeighboursIndices.push(row);
+        }
+        console.log(this._occlusionNeighboursIndices);
     }
 
     _registerData(data: VoxelData) {
