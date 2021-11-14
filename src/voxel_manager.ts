@@ -63,7 +63,7 @@ export class VoxelManager {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this.voxelsHash.get(pos) !== undefined;
+        return this.voxelsHash.has(pos);
     } 
 
     public assignBlocks() {

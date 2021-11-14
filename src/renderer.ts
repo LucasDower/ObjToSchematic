@@ -73,17 +73,50 @@ export class Renderer {
         this._registerData(data);
     }
 
-    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
-        let occlusions = new Array<Array<number>>(6);   
+    private static _getNeighbourIndex(neighbour: Vector3) {
+        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
+    }
+
+    private static _faceNormal = [
+        new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
+        new Vector3(0, 1, 0), new Vector3(0, -1, 0),
+        new Vector3(0, 0, 1), new Vector3(0, 0, -1),
+    ]
+
+    private _calculateOcclusions(centre: Vector3) {
+        const voxelManager = VoxelManager.Get; 
+        
+        // Cache local neighbours
+        const localNeighbourhoodCache = Array<number>(27);
+        for (let i = -1; i <= 1; ++i) {
+            for (let j = -1; j <= 1; ++j) {
+                for (let k = -1; k <= 1; ++k) {
+                    const neighbour = new Vector3(i, j, k);
+                    const neighbourIndex = Renderer._getNeighbourIndex(neighbour);
+                    localNeighbourhoodCache[neighbourIndex] = voxelManager.isVoxelAt(Vector3.add(centre, neighbour)) ? 1 : 0;
+                }
+            }
+        }
+
+        let occlusions = new Array<Array<number>>(6);
         // For each face
         for (let f = 0; f < 6; ++f) {
-            // For each vertex
             occlusions[f] = [0, 0, 0, 0];
 
-            for (let v = 0; v < 4; ++v) {
-                // For each occlusion vertex
-                for (let o = 0; o < 3; ++o) {
-                    occlusions[f][v] += voxelManager.isVoxelAt(Vector3.add(centre, this._occlusionNeighbours[f][v][o])) ? 1 : 0;
+            // Only compute ambient occlusion if this face is visible
+            const faceNormal = Renderer._faceNormal[f];
+            const faceNeighbourIndex = Renderer._getNeighbourIndex(faceNormal);
+            const faceVisible = localNeighbourhoodCache[faceNeighbourIndex] === 0;
+
+            if (faceVisible) {
+                for (let v = 0; v < 4; ++v) {
+                    let numNeighbours = 0;
+                    for (let i = 0; i < 3; ++i) {
+                        const localNeighbour = this._occlusionNeighbours[f][v][i];
+                        const neighbourIndex = Renderer._getNeighbourIndex(localNeighbour);
+                        numNeighbours += localNeighbourhoodCache[neighbourIndex];
+                    }
+                    occlusions[f][v] = numNeighbours;
                 }
             }
 
@@ -92,6 +125,11 @@ export class Renderer {
             occlusions[f] = occlusions[f].map(x => 1.0 - 0.2 * x);
         }
 
+        return occlusions;
+    }
+
+    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
+        let occlusions = this._calculateOcclusions(centre);
         let data: VoxelData = GeometryTemplates.getBoxBufferData(centre, false);
 
         // Each vertex of a face needs the occlusion data for the other 3 vertices
@@ -146,12 +184,9 @@ export class Renderer {
     }
 
     registerVoxelMesh() {
-
         this._gl.enable(this._gl.CULL_FACE);
 
         const voxelManager = VoxelManager.Get;
-        const voxelSize = voxelManager._voxelSize;
-        const sizeVector = new Vector3(1.0, 1.0, 1.0);
 
         this._atlasSize = voxelManager.blockAtlas._atlasSize;
 
@@ -161,26 +196,13 @@ export class Renderer {
             });
         } else {
             // Setup arrays for calculating voxel ambient occlusion
-
             for (let i = 0; i < voxelManager.voxels.length; ++i) {
                 const voxel = voxelManager.voxels[i];
                 //const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
                 this._registerVoxel(voxel.position, voxelManager, texcoord);
             }
-            /*
-            voxelManager.voxels.forEach((voxel) => {
-                this._registerVoxel(voxel, voxelManager);
-            });
-            */
         }
-
-        /*
-        const mesh = voxelManager.buildMesh();
-        for (const box of mesh) {
-            this.registerBox(box.centre, box.size, false);
-        }
-        */
     }
 
     clear() {
@@ -264,6 +286,7 @@ export class Renderer {
 
         this._occlusionNeighbours = [
             [
+                // +X
                 [new Vector3(1, 1, 0), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
                 [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(1, 0, -1)],
                 [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
@@ -271,6 +294,7 @@ export class Renderer {
             ],
 
             [
+                // -X
                 [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
                 [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(-1, 0, 1)],
                 [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
@@ -278,6 +302,7 @@ export class Renderer {
             ],
 
             [
+                // +Y
                 [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(0, 1, 1)],
                 [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(0, 1, -1)],
                 [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(0, 1, 1)],
@@ -285,6 +310,7 @@ export class Renderer {
             ],
 
             [
+                // -Y
                 [new Vector3(-1, -1, 0), new Vector3(-1, -1, -1), new Vector3(0, -1, -1)],
                 [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(0, -1, 1)],
                 [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(0, -1, -1)],
@@ -292,6 +318,7 @@ export class Renderer {
             ],
 
             [
+                // + Z
                 [new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
                 [new Vector3(0, -1, 1), new Vector3(1, -1, 1), new Vector3(1, 0, 1)],
                 [new Vector3(0, 1, 1), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
@@ -299,6 +326,7 @@ export class Renderer {
             ],
 
             [
+                // -Z
                 [new Vector3(0, 1, -1), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
                 [new Vector3(0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1, 0, -1)],
                 [new Vector3(0, 1, -1), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
