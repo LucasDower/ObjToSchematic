@@ -357,6 +357,7 @@ export class Mesh {
                 face.v0.position = Vector3.sub(face.v0.position, centre);
                 face.v1.position = Vector3.sub(face.v1.position, centre);
                 face.v2.position = Vector3.sub(face.v2.position, centre);
+                face.updateAABB();
             });
         });
     }
@@ -372,13 +373,13 @@ export class Mesh {
 
         this.materials.forEach(material => {
             material.faces.forEach(face => {
-                const aabb = face.getBounds();
-                a.x = Math.min(a.x, aabb.minX);
-                a.y = Math.min(a.y, aabb.minY);
-                a.z = Math.min(a.z, aabb.minZ);
-                b.x = Math.max(b.x, aabb.maxX);
-                b.y = Math.max(b.y, aabb.maxY);
-                b.z = Math.max(b.z, aabb.maxZ);
+                const aabb = face.getAABB();
+                a.x = Math.min(a.x, aabb.a.x);
+                a.y = Math.min(a.y, aabb.a.y);
+                a.z = Math.min(a.z, aabb.a.z);
+                b.x = Math.max(b.x, aabb.b.x);
+                b.y = Math.max(b.y, aabb.b.y);
+                b.z = Math.max(b.z, aabb.b.z);
             });
         });
 
@@ -394,6 +395,7 @@ export class Mesh {
                 face.v0.position = Vector3.mulScalar(face.v0.position, scaleFactor);
                 face.v1.position = Vector3.mulScalar(face.v1.position, scaleFactor);
                 face.v2.position = Vector3.mulScalar(face.v2.position, scaleFactor);
+                face.updateAABB();
             });
         });
     }

@@ -28,12 +28,3 @@ export interface RGBA {
     b: number,
     a: number
 }
-
-export interface Bounds {
-    minX: number,
-    minY: number,
-    minZ: number,
-    maxX: number,
-    maxY: number,
-    maxZ: number,
-}

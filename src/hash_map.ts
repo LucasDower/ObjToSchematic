@@ -73,19 +73,6 @@ export class HashMap<K extends Hashable, V> {
         }
     }
 
-    public has(item: K): boolean {
-        const binIndex = this._getBin(item);
-
-        const list = this._bins[binIndex];
-        for (const {key, value} of list) {
-            if (item.equals(key)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public add(key: K, value: V) {
         const binIndex = this._getBin(key);
         this._bins[binIndex].push({key, value});

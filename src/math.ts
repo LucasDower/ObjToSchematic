@@ -21,18 +21,6 @@ export const clamp = (value: number, min: number, max: number) => {
     return Math.max(Math.min(max, value), min);
 }
 
-export const floorToNearest = (value: number, base: number) => {
-    return Math.floor(value / base) * base;
-}
-
-export const ceilToNearest = (value: number, base: number) => {
-    return Math.ceil(value / base) * base;
-}
-
-export const roundToNearest = (value: number, base: number) => {
-    return Math.round(value / base) * base;
-}
-
 export const triangleArea = (a: number, b: number, c: number) => {
     const p = (a + b + c) / 2;
     return Math.sqrt(p * (p - a) * (p - b) * (p - c));
