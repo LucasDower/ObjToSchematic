@@ -167,7 +167,7 @@ export class SegmentedBuffer {
         }
 
         if (this._willOverflow(data)) {
-            console.log("Cycling buffer...");
+            //console.log("Cycling buffer...");
             this._cycle();
         }
 
@@ -303,7 +303,7 @@ export class BottomlessBuffer {
         }
 
         if (this._willOverflow(data)) {
-            console.log("Cycling buffer...");
+            //console.log("Cycling buffer...");
             this._cycle();
         }
 

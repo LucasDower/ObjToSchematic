@@ -1,8 +1,6 @@
 import { Vector3 } from "./vector";
-import { AABB } from "./aabb";
-import { xAxis, yAxis, zAxis, fastCrossXAxis, fastCrossYAxis, fastCrossZAxis } from "./math";
-import { UV } from "./util";
 import { Vertex } from "./mesh";
+import { Bounds } from "./util";
 
 
 export class Triangle {
@@ -11,7 +9,6 @@ export class Triangle {
     public v1: Vertex;
     public v2: Vertex;
     public readonly normal: Vector3;
-    private aabb?: AABB;
 
     constructor(v0: Vertex, v1: Vertex, v2: Vertex) {
         this.v0 = v0;
@@ -21,88 +18,21 @@ export class Triangle {
         const f0 = Vector3.sub(v1.position, v0.position);
         const f1 = Vector3.sub(v0.position, v2.position);
         this.normal = Vector3.cross(f0, f1).normalise();
-
-        this.updateAABB();
-    }
-
-    public updateAABB() {
-        const a = new Vector3(
-            Math.min(this.v0.position.x, this.v1.position.x, this.v2.position.x),
-            Math.min(this.v0.position.y, this.v1.position.y, this.v2.position.y),
-            Math.min(this.v0.position.z, this.v1.position.z, this.v2.position.z)
-        );
-
-        const b = new Vector3(
-            Math.max(this.v0.position.x, this.v1.position.x, this.v2.position.x),
-            Math.max(this.v0.position.y, this.v1.position.y, this.v2.position.y),
-            Math.max(this.v0.position.z, this.v1.position.z, this.v2.position.z)
-        );
-
-        const centre = Vector3.mulScalar(Vector3.add(a, b), 0.5);
-        const size = Vector3.abs(Vector3.sub(a, b));
-
-        this.aabb = new AABB(centre, size);
-    }
-
-    public getAABB() {
-        return this.aabb!;
-    }
-
-    public insideAABB(aabb: AABB) {
-        return Vector3.lessThanEqualTo(aabb.a, this.aabb!.a) && Vector3.lessThanEqualTo(this.aabb!.b, aabb.b);
-    }
-
-    public intersectAABB(aabb: AABB) {
-        const extents = Vector3.mulScalar(aabb.size, 0.5);
-
-        const v0 = Vector3.sub(this.v0.position, aabb.centre);
-        const v1 = Vector3.sub(this.v1.position, aabb.centre);
-        const v2 = Vector3.sub(this.v2.position, aabb.centre);
-
-        const f0 = Vector3.sub(v1, v0);
-        const f1 = Vector3.sub(v2, v1);
-        const f2 = Vector3.sub(v0, v2);
-
-        const axis = [
-            Vector3.cross(f0, f2),
-            xAxis,
-            yAxis,
-            zAxis,
-            fastCrossXAxis(f0),
-            fastCrossXAxis(f1),
-            fastCrossXAxis(f2),
-            fastCrossYAxis(f0),
-            fastCrossYAxis(f1),
-            fastCrossYAxis(f2),
-            fastCrossZAxis(f0),
-            fastCrossZAxis(f1),
-            fastCrossZAxis(f2)
-        ];
-
-        for (const ax of axis) {
-            if (this._testAxis(v0, v1, v2, ax, extents)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public getCentre(): Vector3 {
         return Vector3.divScalar(Vector3.add(Vector3.add(this.v0.position, this.v1.position), this.v2.position), 3.0);
     }
 
-
-    private _testAxis(v0: Vector3, v1: Vector3, v2: Vector3, axis: Vector3, extents: Vector3) {
-        let p0 = Vector3.dot(v0, axis);
-        let p1 = Vector3.dot(v1, axis);
-        let p2 = Vector3.dot(v2, axis);
-
-        let r = extents.x * Math.abs(Vector3.dot(xAxis, axis)) +
-                extents.y * Math.abs(Vector3.dot(yAxis, axis)) +
-                extents.z * Math.abs(Vector3.dot(zAxis, axis));
-
-        return (Math.min(p0, p1, p2) > r || Math.max(p0, p1, p2) < -r);
+    public getBounds(): Bounds {
+        return {
+            minX: Math.min(this.v0.position.x, this.v1.position.x, this.v2.position.x),
+            minY: Math.min(this.v0.position.y, this.v1.position.y, this.v2.position.y),
+            minZ: Math.min(this.v0.position.z, this.v1.position.z, this.v2.position.z),
+            maxX: Math.max(this.v0.position.x, this.v1.position.x, this.v2.position.x),
+            maxY: Math.max(this.v0.position.y, this.v1.position.y, this.v2.position.y),
+            maxZ: Math.max(this.v0.position.z, this.v1.position.z, this.v2.position.z),
+        }
     }
 
 }
