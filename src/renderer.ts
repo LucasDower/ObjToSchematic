@@ -101,7 +101,7 @@ export class Renderer {
         let occlusions = new Array<Array<number>>(6);
         // For each face
         for (let f = 0; f < 6; ++f) {
-            occlusions[f] = [0, 0, 0, 0];
+            occlusions[f] = [1, 1, 1, 1];
 
             // Only compute ambient occlusion if this face is visible
             const faceNormal = Renderer._faceNormal[f];
@@ -182,9 +182,6 @@ export class Renderer {
     }
 
     public registerMesh(mesh: Mesh) {
-        //console.log(mesh);
-        this._gl.disable(this._gl.CULL_FACE);
-
         mesh.materials.forEach(material => {
             const materialBuffer = new BottomlessBuffer([
                 { name: 'position', numComponents: 3 },
@@ -376,7 +373,6 @@ export class Renderer {
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
 
         this._gl.enable(this._gl.DEPTH_TEST);
-        //this._gl.enable(this._gl.CULL_FACE);
         this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.r, this._backgroundColour.g, this._backgroundColour.b, 1.0);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
