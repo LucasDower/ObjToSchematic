@@ -13,6 +13,11 @@ import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
 import { FaceInfo } from "./block_atlas";
 
+/** Recommended, but slower */
+const ENABLE_AMBIENT_OCCLUSION = true;
+
+/** Darkens corner even if corner block does not exist, recommended */
+const AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
 
 export class Renderer {
 
@@ -21,8 +26,7 @@ export class Renderer {
     private _backgroundColour: RGB = {r: 0.1, g: 0.1, b: 0.1};
     private _strokeColour: RGB = {r: 1.0, g: 0.0, b: 0.0};
     private _atlasTexture: WebGLTexture;
-    private _occlusionNeighbours!: Array<Array<Array<Vector3>>>; // Ew
-    //private _mouseManager: MouseManager
+    private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
     private _debug: boolean = false;
     private _compiled: boolean = false;
@@ -54,11 +58,7 @@ export class Renderer {
             src: path.join(__dirname, "../resources/blocks.png"),
             mag: this._gl.NEAREST
         });
-
     }
-
-
-
 
     public set strokeColour(colour: RGB) {
         this._strokeColour = colour;
@@ -73,23 +73,83 @@ export class Renderer {
         this._registerData(data);
     }
 
-    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
-        let occlusions = new Array<Array<number>>(6);   
+    private static _getNeighbourIndex(neighbour: Vector3) {
+        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
+    }
+
+    private static _faceNormal = [
+        new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
+        new Vector3(0, 1, 0), new Vector3(0, -1, 0),
+        new Vector3(0, 0, 1), new Vector3(0, 0, -1),
+    ]
+
+    private _calculateOcclusions(centre: Vector3) {
+        const voxelManager = VoxelManager.Get; 
+        
+        // Cache local neighbours
+        const localNeighbourhoodCache = Array<number>(27);
+        for (let i = -1; i <= 1; ++i) {
+            for (let j = -1; j <= 1; ++j) {
+                for (let k = -1; k <= 1; ++k) {
+                    const neighbour = new Vector3(i, j, k);
+                    const neighbourIndex = Renderer._getNeighbourIndex(neighbour);
+                    localNeighbourhoodCache[neighbourIndex] = voxelManager.isVoxelAt(Vector3.add(centre, neighbour)) ? 1 : 0;
+                }
+            }
+        }
+
+        let occlusions = new Array<Array<number>>(6);
         // For each face
         for (let f = 0; f < 6; ++f) {
-            // For each vertex
             occlusions[f] = [0, 0, 0, 0];
 
-            for (let v = 0; v < 4; ++v) {
-                // For each occlusion vertex
-                for (let o = 0; o < 3; ++o) {
-                    occlusions[f][v] += voxelManager.isVoxelAt(Vector3.add(centre, this._occlusionNeighbours[f][v][o])) ? 1 : 0;
+            // Only compute ambient occlusion if this face is visible
+            const faceNormal = Renderer._faceNormal[f];
+            const faceNeighbourIndex = Renderer._getNeighbourIndex(faceNormal);
+            const faceVisible = localNeighbourhoodCache[faceNeighbourIndex] === 0;
+
+            if (faceVisible) {
+                for (let v = 0; v < 4; ++v) {
+                    let numNeighbours = 0;
+                    for (let i = 0; i < 2; ++i) {
+                        const neighbourIndex = this._occlusionNeighboursIndices[f][v][i];
+                        numNeighbours += localNeighbourhoodCache[neighbourIndex];
+                    }
+                    // If both edge blocks along this vertex exist,
+                    // assume corner exists (even if it doesnt)
+                    // (This is a stylistic choice)
+                    if (numNeighbours == 2 && AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
+                        ++numNeighbours;
+                    } else {
+                    const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
+                    numNeighbours += localNeighbourhoodCache[neighbourIndex];
+                    }
+
+                    // Convert from occlusion denoting the occlusion factor to the 
+                    // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
+                    occlusions[f][v] = 1.0 - 0.2 * numNeighbours;
                 }
             }
 
-            // Convert from occlusion denoting the occlusion factor to the 
-            // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-            occlusions[f] = occlusions[f].map(x => 1.0 - 0.2 * x);
+        }
+
+        return occlusions;
+    }
+
+    private static _getBlankOcclusions() {
+        let blankOcclusions = new Array<Array<number>>(6);
+        for (let f = 0; f < 6; ++f) {
+            blankOcclusions[f] = [1, 1, 1, 1];
+        }
+        return blankOcclusions;
+    }
+
+    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
+        let occlusions: number[][];
+        if (ENABLE_AMBIENT_OCCLUSION) {
+            occlusions = this._calculateOcclusions(centre);
+        } else {
+            occlusions = Renderer._getBlankOcclusions();
         }
 
         let data: VoxelData = GeometryTemplates.getBoxBufferData(centre, false);
@@ -146,12 +206,9 @@ export class Renderer {
     }
 
     registerVoxelMesh() {
-
         this._gl.enable(this._gl.CULL_FACE);
 
         const voxelManager = VoxelManager.Get;
-        const voxelSize = voxelManager._voxelSize;
-        const sizeVector = new Vector3(1.0, 1.0, 1.0);
 
         this._atlasSize = voxelManager.blockAtlas._atlasSize;
 
@@ -161,26 +218,13 @@ export class Renderer {
             });
         } else {
             // Setup arrays for calculating voxel ambient occlusion
-
             for (let i = 0; i < voxelManager.voxels.length; ++i) {
                 const voxel = voxelManager.voxels[i];
                 //const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
                 this._registerVoxel(voxel.position, voxelManager, texcoord);
             }
-            /*
-            voxelManager.voxels.forEach((voxel) => {
-                this._registerVoxel(voxel, voxelManager);
-            });
-            */
         }
-
-        /*
-        const mesh = voxelManager.buildMesh();
-        for (const box of mesh) {
-            this.registerBox(box.centre, box.size, false);
-        }
-        */
     }
 
     clear() {
@@ -223,15 +267,6 @@ export class Renderer {
             u_atlasSize: this._atlasSize
         });
 
-        /*
-        // Draw default register
-        this._drawRegister(this._registerDefault, this._gl.TRIANGLES, shaderManager.shadedProgram, {
-            u_lightWorldPos: this._camera.getCameraPosition(0.0, 0.0),
-            u_worldViewProjection: this._camera.getWorldViewProjection(),
-            u_worldInverseTranspose: this._camera.getWorldInverseTranspose()
-        });
-        */
-
         // Draw material registers
         const camera = ArcballCamera.Get;
         this._materialBuffers.forEach((materialBuffer) => {
@@ -262,49 +297,66 @@ export class Renderer {
     _setupOcclusions() {
         // TODO: Find some for-loop to clean this up        
 
-        this._occlusionNeighbours = [
+        // [Edge, Edge, Corrner]
+        const occlusionNeighbours = [
             [
-                [new Vector3(1, 1, 0), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, 1), new Vector3(1, 0, 1)]
+                // +X
+                [new Vector3(1, 1, 0), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
+                [new Vector3(1, -1, 0), new Vector3(1, 0, -1), new Vector3(1, -1, -1)],
+                [new Vector3(1, 1, 0), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
+                [new Vector3(1, -1, 0), new Vector3(1, 0, 1), new Vector3(1, -1, 1)]
             ],
 
             [
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, -1), new Vector3(-1, 0, -1)]
+                // -X
+                [new Vector3(-1, 1, 0), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(-1, -1, 0), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)],
+                [new Vector3(-1, 1, 0), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(-1, -1, 0), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1) ]
             ],
 
             [
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, 1), new Vector3(0, 1, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(-1, 1, -1), new Vector3(0, 1, -1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, 1), new Vector3(0, 1, 1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 1, -1), new Vector3(0, 1, -1)]
+                // +Y
+                [new Vector3(-1, 1, 0), new Vector3(0, 1, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(-1, 1, 0), new Vector3(0, 1, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(1, 1, 0), new Vector3(0, 1, 1), new Vector3(1, 1, 1)],
+                [new Vector3(1, 1, 0), new Vector3(0, 1, -1), new Vector3(1, 1, -1)]
             ],
 
             [
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, -1), new Vector3(0, -1, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, -1, 1), new Vector3(0, -1, 1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, -1), new Vector3(0, -1, -1)],
-                [new Vector3(1, -1, 0), new Vector3(1, -1, 1), new Vector3(0, -1, 1)]
+                // -Y
+                [new Vector3(-1, -1, 0), new Vector3(0, -1, -1), new Vector3(-1, -1, -1)],
+                [new Vector3(-1, -1, 0), new Vector3(0, -1, 1), new Vector3(-1, -1, 1)],
+                [new Vector3(1, -1, 0), new Vector3(0, -1, -1), new Vector3(1, -1, -1)],
+                [new Vector3(1, -1, 0), new Vector3(0, -1, 1), new Vector3(1, -1, 1)]
             ],
 
             [
-                [new Vector3(0, 1, 1), new Vector3(1, 1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(0, -1, 1), new Vector3(1, -1, 1), new Vector3(1, 0, 1)],
-                [new Vector3(0, 1, 1), new Vector3(-1, 1, 1), new Vector3(-1, 0, 1)],
-                [new Vector3(0, -1, 1), new Vector3(-1, -1, 1), new Vector3(-1, 0, 1)]
+                // + Z
+                [new Vector3(0, 1, 1), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
+                [new Vector3(0, -1, 1), new Vector3(1, 0, 1), new Vector3(1, -1, 1)],
+                [new Vector3(0, 1, 1), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
+                [new Vector3(0, -1, 1), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)]
             ],
 
             [
-                [new Vector3(0, 1, -1), new Vector3(-1, 1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(0, -1, -1), new Vector3(-1, -1, -1), new Vector3(-1, 0, -1)],
-                [new Vector3(0, 1, -1), new Vector3(1, 1, -1), new Vector3(1, 0, -1)],
-                [new Vector3(0, -1, -1), new Vector3(1, -1, -1), new Vector3(1, 0, -1)]
+                // -Z
+                [new Vector3(0, 1, -1), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
+                [new Vector3(0, -1, -1), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1)],
+                [new Vector3(0, 1, -1), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
+                [new Vector3(0, -1, -1), new Vector3(1, 0, -1), new Vector3(1, -1, -1)]
             ]
         ]
+
+        this._occlusionNeighboursIndices = new Array<Array<Array<number>>>();
+        for (let i = 0; i < 6; ++i) {
+            let row = new Array<Array<number>>();
+            for (let j = 0; j < 4; ++j) {
+                row.push(occlusionNeighbours[i][j].map(x => Renderer._getNeighbourIndex(x)));
+            }
+            this._occlusionNeighboursIndices.push(row);
+        }
+        console.log(this._occlusionNeighboursIndices);
     }
 
     _registerData(data: VoxelData) {
