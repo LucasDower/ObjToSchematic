@@ -51,7 +51,7 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 * ⚪ Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
 * 🟢 **Optimised ambient occlusion**
 * 🟢 **Transition to ray-based voxelisation**
-* ⚪ Dithering
+* 🟢 **Dithering**
 
 0.5
 * 🟡 Multithreading (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
