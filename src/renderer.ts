@@ -11,13 +11,8 @@ import { RGB, UV, rgbToArray } from "./util";
 import { VoxelManager } from "./voxel_manager";
 import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
-import { FaceInfo } from "./block_atlas";
-
-/** Recommended, but slower */
-const ENABLE_AMBIENT_OCCLUSION = true;
-
-/** Darkens corner even if corner block does not exist, recommended */
-const AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
+import { FaceInfo, BlockAtlas } from "./block_atlas";
+import { AppConfig } from "./config"
 
 export class Renderer {
 
@@ -118,7 +113,7 @@ export class Renderer {
                     // If both edge blocks along this vertex exist,
                     // assume corner exists (even if it doesnt)
                     // (This is a stylistic choice)
-                    if (numNeighbours == 2 && AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
+                    if (numNeighbours == 2 && AppConfig.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
                         ++numNeighbours;
                     } else {
                     const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
@@ -144,9 +139,9 @@ export class Renderer {
         return blankOcclusions;
     }
 
-    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
+    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo) {   
         let occlusions: number[][];
-        if (ENABLE_AMBIENT_OCCLUSION) {
+        if (AppConfig.AMBIENT_OCCLUSION_ENABLED) {
             occlusions = this._calculateOcclusions(centre);
         } else {
             occlusions = Renderer._getBlankOcclusions();
@@ -191,7 +186,6 @@ export class Renderer {
 
             material.faces.forEach(face => {
                 const data = GeometryTemplates.getTriangleBufferData(face, false);
-                //console.log(data);
                 materialBuffer.add(data);
             });
 
@@ -207,7 +201,7 @@ export class Renderer {
 
         const voxelManager = VoxelManager.Get;
 
-        this._atlasSize = voxelManager.blockAtlas._atlasSize;
+        this._atlasSize = BlockAtlas.Get._atlasSize;
 
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
@@ -219,7 +213,7 @@ export class Renderer {
                 const voxel = voxelManager.voxels[i];
                 //const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
-                this._registerVoxel(voxel.position, voxelManager, texcoord);
+                this._registerVoxel(voxel.position, texcoord);
             }
         }
     }
@@ -232,7 +226,6 @@ export class Renderer {
     compile() {
         this._registerDebug.compile(this._gl);
         this._registerVoxels.compile(this._gl);
-        //this._registerDefault.compile(this._gl);
 
         this._materialBuffers.forEach((materialBuffer) => {
             materialBuffer.buffer.compile(this._gl);
