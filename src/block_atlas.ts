@@ -35,11 +35,17 @@ export enum Block {
 
 export class BlockAtlas {
 
-    private readonly _cachedBlocks: HashMap<Vector3, number>;
+    private _cachedBlocks: HashMap<Vector3, number>;
     private readonly _blocks: Array<BlockInfo>;
     public readonly _atlasSize: number;
 
-    constructor() {
+    private static _instance: BlockAtlas;
+
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    private constructor() {
         this._cachedBlocks = new HashMap(1024);
 
         const _path = path.join(__dirname, "../resources/blocks.json");

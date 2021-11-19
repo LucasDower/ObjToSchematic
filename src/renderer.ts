@@ -11,13 +11,8 @@ import { RGB, UV, rgbToArray } from "./util";
 import { VoxelManager } from "./voxel_manager";
 import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
-import { FaceInfo } from "./block_atlas";
-
-/** Recommended, but slower */
-const ENABLE_AMBIENT_OCCLUSION = true;
-
-/** Darkens corner even if corner block does not exist, recommended */
-const AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
+import { FaceInfo, BlockAtlas } from "./block_atlas";
+import { AppConfig } from "./config"
 
 export class Renderer {
 
@@ -101,7 +96,7 @@ export class Renderer {
         let occlusions = new Array<Array<number>>(6);
         // For each face
         for (let f = 0; f < 6; ++f) {
-            occlusions[f] = [0, 0, 0, 0];
+            occlusions[f] = [1, 1, 1, 1];
 
             // Only compute ambient occlusion if this face is visible
             const faceNormal = Renderer._faceNormal[f];
@@ -118,7 +113,7 @@ export class Renderer {
                     // If both edge blocks along this vertex exist,
                     // assume corner exists (even if it doesnt)
                     // (This is a stylistic choice)
-                    if (numNeighbours == 2 && AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
+                    if (numNeighbours == 2 && AppConfig.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
                         ++numNeighbours;
                     } else {
                     const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
@@ -144,9 +139,9 @@ export class Renderer {
         return blankOcclusions;
     }
 
-    private _registerVoxel(centre: Vector3, voxelManager: VoxelManager, blockTexcoord: FaceInfo) {   
+    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo) {   
         let occlusions: number[][];
-        if (ENABLE_AMBIENT_OCCLUSION) {
+        if (AppConfig.AMBIENT_OCCLUSION_ENABLED) {
             occlusions = this._calculateOcclusions(centre);
         } else {
             occlusions = Renderer._getBlankOcclusions();
@@ -182,9 +177,6 @@ export class Renderer {
     }
 
     public registerMesh(mesh: Mesh) {
-        //console.log(mesh);
-        this._gl.disable(this._gl.CULL_FACE);
-
         mesh.materials.forEach(material => {
             const materialBuffer = new BottomlessBuffer([
                 { name: 'position', numComponents: 3 },
@@ -194,7 +186,6 @@ export class Renderer {
 
             material.faces.forEach(face => {
                 const data = GeometryTemplates.getTriangleBufferData(face, false);
-                //console.log(data);
                 materialBuffer.add(data);
             });
 
@@ -210,7 +201,7 @@ export class Renderer {
 
         const voxelManager = VoxelManager.Get;
 
-        this._atlasSize = voxelManager.blockAtlas._atlasSize;
+        this._atlasSize = BlockAtlas.Get._atlasSize;
 
         if (this._debug) {
             voxelManager.voxels.forEach((voxel) => {
@@ -222,7 +213,7 @@ export class Renderer {
                 const voxel = voxelManager.voxels[i];
                 //const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
-                this._registerVoxel(voxel.position, voxelManager, texcoord);
+                this._registerVoxel(voxel.position, texcoord);
             }
         }
     }
@@ -235,7 +226,6 @@ export class Renderer {
     compile() {
         this._registerDebug.compile(this._gl);
         this._registerVoxels.compile(this._gl);
-        //this._registerDefault.compile(this._gl);
 
         this._materialBuffers.forEach((materialBuffer) => {
             materialBuffer.buffer.compile(this._gl);
@@ -376,7 +366,6 @@ export class Renderer {
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
 
         this._gl.enable(this._gl.DEPTH_TEST);
-        //this._gl.enable(this._gl.CULL_FACE);
         this._gl.enable(this._gl.BLEND);
         this._gl.clearColor(this._backgroundColour.r, this._backgroundColour.g, this._backgroundColour.b, 1.0);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);

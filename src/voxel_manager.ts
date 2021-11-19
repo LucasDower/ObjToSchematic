@@ -2,11 +2,13 @@ import { Vector3 }  from "./vector.js";
 import { HashMap }  from "./hash_map";
 import { Texture } from "./texture";
 import { BlockAtlas, BlockInfo, FaceInfo }  from "./block_atlas";
-import { RGB } from "./util";
+import { RGB, getAverageColour } from "./util";
 import { Triangle } from "./triangle";
 import { Mesh, MaterialType } from "./mesh";
 import { triangleArea } from "./math";
 import { Axes, generateRays, rayIntersectTriangle } from "./ray";
+import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from "./block_assigner.js";
+import { AppConfig } from "./config.js";
 
 interface Block {
     position: Vector3;
@@ -22,7 +24,6 @@ export class VoxelManager {
     public _voxelSize: number;
     
     private voxelsHash: HashMap<Vector3, Block>;
-    public blockAtlas: BlockAtlas;
     private _blockMode!: MaterialType;
     private _currentTexture!: Texture;
     private _currentColour!: RGB;
@@ -43,7 +44,6 @@ export class VoxelManager {
         this.voxelTexcoords = [];
 
         this.voxelsHash = new HashMap(2048);
-        this.blockAtlas = new BlockAtlas();
         this.blockPalette = [];
     }
 
@@ -54,7 +54,7 @@ export class VoxelManager {
     private _clearVoxels() {
         this.voxels = [];
         this.voxelTexcoords = [];
-        this.blockPalette = []
+        this.blockPalette = [];
         
         this.min = new Vector3( Infinity,  Infinity,  Infinity);
         this.max = new Vector3(-Infinity, -Infinity, -Infinity);
@@ -66,33 +66,35 @@ export class VoxelManager {
         return this.voxelsHash.has(pos);
     } 
 
+    private _assignBlock(voxelIndex: number, block: BlockInfo) {
+        this.voxels[voxelIndex].block = block.name;
+        this.voxelTexcoords.push(block.faces);
+
+        if (!this.blockPalette.includes(block.name)) {
+            this.blockPalette.push(block.name);
+        }
+    }
+
     public assignBlocks() {
         this.blockPalette = [];
         let meanSquaredError = 0.0;
 
         for (let i = 0; i < this.voxels.length; ++i) {
-            let averageColour = this.voxels[i].colours!.reduce((a, c) => {return {r: a.r + c.r, g: a.g + c.g, b: a.b + c.b}})
-            let n = this.voxels[i].colours!.length;
-            averageColour.r /= n;
-            averageColour.g /= n;
-            averageColour.b /= n;
-            const block = this.blockAtlas.getBlock(averageColour);
+            const voxel = this.voxels[i];
+            
+            const averageColour = getAverageColour(voxel.colours!);
+
+            const blockAssigner = AppConfig.DITHERING_ENABLED ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
+            const block = blockAssigner.assignBlock(averageColour, voxel.position);
 
             const squaredError = Math.pow(255 * (block.colour.r - averageColour.r), 2) + Math.pow(255 * (block.colour.g - averageColour.g), 2) + Math.pow(255 * (block.colour.b - averageColour.b), 2);
             meanSquaredError += squaredError;
 
-            this.voxels[i].block = block.name;
-            this.voxelTexcoords.push(block.faces);
-
-
-            if (!this.blockPalette.includes(block.name)) {
-                this.blockPalette.push(block.name);
-            }
+            this._assignBlock(i, block);
         }
 
         meanSquaredError /= this.voxels.length;
         console.log("Mean Squared Error:", meanSquaredError);
-
     }
 
     public addVoxel(pos: Vector3, block: BlockInfo) {
@@ -167,7 +169,7 @@ export class VoxelManager {
                 }
 
                 const voxelColour = this._getVoxelColour(triangle, Vector3.mulScalar(voxelPosition, voxelSize));
-                const block = this.blockAtlas.getBlock(voxelColour);
+                const block = BlockAtlas.Get.getBlock(voxelColour);
 
                 this.addVoxel(voxelPosition, block);
             }
