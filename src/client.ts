@@ -1,5 +1,5 @@
 import { Schematic, Litematic } from "./schematic";
-import { Action, AppContext } from "./app_context";
+import { AppContext } from "./app_context";
 import { ArcballCamera } from "./camera";
 import { MouseManager } from "./mouse";
 
@@ -8,12 +8,13 @@ function AddEvent(htmlElementID: string, event: string, delegate: (e: any) => vo
 }
 
 // Register Events
-const context = AppContext.Get;
+/*
 AddEvent("buttonChooseFile", "click",       () => { context.do(Action.Load); });
 AddEvent("inputFile",        "click",       () => { context.do(Action.Load); });
 AddEvent("buttonVoxelise",   "click",       () => { context.do(Action.Voxelise); });
 AddEvent("buttonSchematic",  "click", async () => { context.do(Action.ExportSchematic); });
 AddEvent("buttonLitematic",  "click", async () => { context.do(Action.ExportLitematic); });
+*/
 
 const camera = ArcballCamera.Get;
 AddEvent("canvas", "mousedown", (e) => { camera.onMouseDown(e); });
@@ -25,6 +26,7 @@ AddEvent("canvas", "mousemove", (e) => { mouseManager.onMouseMove(e); });
 
 
 // Begin draw loop
+const context = AppContext.Get;
 function render() {
     context.draw();
     requestAnimationFrame(render);

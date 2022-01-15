@@ -59,7 +59,7 @@ export class SegmentedBuffer {
     private _indicesInsertIndex: number = 0;
     private _maxIndex: number = 0;
     private _compiled: boolean = false;
-    private _sanityCheck: boolean = true;
+    private _sanityCheck: boolean = false;
 
     constructor(bufferSize: number, attributes: Array<IndexedAttributed>) {
         this._bufferSize = bufferSize;

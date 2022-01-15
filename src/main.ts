@@ -6,7 +6,7 @@ import url from "url";
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow: BrowserWindow;
 
-function createWindow () {
+function createWindow() {
     // Create the browser window.
     //const {width, height} = electron.screen.getPrimaryDisplay().workAreaSize;
     const width = 1400;
@@ -19,24 +19,24 @@ function createWindow () {
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
-        enableRemoteModule: true
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
         }
     });
     //mainWindow.removeMenu();
-    
-    
+
+
     // Load index.html
     mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, '../index.html'),
         protocol: 'file:',
         slashes: true
-    }));    
-    
+    }));
+
     // Open the DevTools.
     //mainWindow.webContents.openDevTools();
-    
+
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
         app.quit();

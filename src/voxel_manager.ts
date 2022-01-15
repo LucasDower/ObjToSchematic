@@ -22,7 +22,7 @@ export class VoxelManager {
     public voxels: Array<Block>;
     public voxelTexcoords: Array<FaceInfo>;
     public _voxelSize: number;
-    
+
     private voxelsHash: HashMap<Vector3, Block>;
     private _blockMode!: MaterialType;
     private _currentTexture!: Texture;
