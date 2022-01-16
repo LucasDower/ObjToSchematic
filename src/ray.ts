@@ -1,14 +1,13 @@
-import { Vector3 } from "./vector";
-import { Triangle } from "./triangle";
-import { floorToNearest, ceilToNearest, xAxis, yAxis, zAxis } from "./math";
-import { VoxelManager } from "./voxel_manager";
-import { Bounds } from "./util";
+import { Vector3 } from './vector';
+import { Bounds } from './util';
 
 const EPSILON = 0.0000001;
 
+/* eslint-disable */
 export enum Axes {
-    x, y, z
+    x, y, z,
 }
+/* eslint-enable */
 
 interface Ray {
     origin: Vector3,
@@ -24,9 +23,9 @@ export function generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> 
         maxX: Math.ceil(Math.max(v0.x, v1.x, v2.x)),
         maxY: Math.ceil(Math.max(v0.y, v1.y, v2.y)),
         maxZ: Math.ceil(Math.max(v0.z, v1.z, v2.z)),
-    }
+    };
 
-    let rayList: Array<Ray> = [];
+    const rayList: Array<Ray> = [];
     traverseX(rayList, bounds);
     traverseY(rayList, bounds);
     traverseZ(rayList, bounds);
@@ -39,7 +38,7 @@ function traverseX(rayList: Array<Ray>, bounds: Bounds) {
             rayList.push({
                 origin: new Vector3(bounds.minX, y, z),
                 direction: new Vector3(1, 0, 0),
-                axis: Axes.x
+                axis: Axes.x,
             });
         }
     }
@@ -51,7 +50,7 @@ function traverseY(rayList: Array<Ray>, bounds: Bounds) {
             rayList.push({
                 origin: new Vector3(x, bounds.minY, z),
                 direction: new Vector3(0, 1, 0),
-                axis: Axes.y
+                axis: Axes.y,
             });
         }
     }
@@ -63,7 +62,7 @@ function traverseZ(rayList: Array<Ray>, bounds: Bounds) {
             rayList.push({
                 origin: new Vector3(x, y, bounds.minZ),
                 direction: new Vector3(0, 0, 1),
-                axis: Axes.z
+                axis: Axes.z,
             });
         }
     }

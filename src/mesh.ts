@@ -1,20 +1,18 @@
-import * as twgl from "twgl.js";
-import * as fs from "fs";
-import * as path from "path";
+import * as twgl from 'twgl.js';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import { Triangle } from "./triangle";
-import { Vector3 } from "./vector";
-import { RGB, UV } from "./util";
-import { TextureFormat } from "./texture";
-import { triangleArea } from "./math";
+import { Triangle } from './triangle';
+import { Vector3 } from './vector';
+import { RGB, UV } from './util';
+import { TextureFormat } from './texture';
+import { triangleArea } from './math';
 
 type VertexMap<T> = { [index: number]: T };
 
-
 export class Vertex {
-
     public position: Vector3;
-    public texcoord: UV
+    public texcoord: UV;
     public normal: Vector3;
 
     constructor(position: Vector3, texcoord: UV, normal: Vector3) {
@@ -38,7 +36,7 @@ export class Vertex {
         vertexTexcoordMap: VertexMap<UV>,
         vertexNormalMap: VertexMap<Vector3>,
     ) {
-        const tokens = vertexToken.split("/");
+        const tokens = vertexToken.split('/');
 
         const positionIndex = parseFloat(tokens[0]);
         const texcoordIndex = parseFloat(tokens[1]);
@@ -50,7 +48,6 @@ export class Vertex {
 
         return new Vertex(position, texcoord, normal);
     }
-
 }
 
 
@@ -75,10 +72,12 @@ export interface TextureMaterial {
     format: TextureFormat
 }
 
+/* eslint-disable */
 export enum MaterialType {
     Texture,
     Fill
 }
+/* eslint-enable */
 
 export interface MaterialTriangles {
     material: (FillMaterial | TextureMaterial);
@@ -86,7 +85,6 @@ export interface MaterialTriangles {
 }
 
 class Material {
-
     public name: string;
     public faces: Array<Triangle>;
     public materialData: (FillMaterial | TextureMaterial);
@@ -95,7 +93,7 @@ class Material {
         this.name = name;
         this.faces = [];
 
-        let material: FillMaterial = { diffuseColour: { r: 1, g: 1, b: 1 }, type: MaterialType.Fill}
+        const material: FillMaterial = { diffuseColour: { r: 1, g: 1, b: 1 }, type: MaterialType.Fill};
         this.materialData = material;
     }
 
@@ -104,35 +102,33 @@ class Material {
     }
 
     public isFilled(): boolean {
-        return this.name !== "" && this.faces.length > 0;
+        return this.name !== '' && this.faces.length > 0;
     }
 
     public attachMTLData(materialData: (FillMaterial | TextureMaterial)) {
         this.materialData = materialData;
     }
-
 }
 
 export class Mesh {
-
-    public materials: Array<Material>
+    public materials: Array<Material>;
 
     constructor(objPathString: string, gl: WebGLRenderingContext) {
         // Parse .obj
         const wavefrontString = fs.readFileSync(objPathString).toString('utf8');
         const parsedOBJ = this._parseOBJFile(wavefrontString);
-        
+
         // TODO: Create blank .mtl when not found
         if (!parsedOBJ.mtlPath) {
-            throw Error("No .mtl file found.");
+            throw Error('No .mtl file found.');
         }
-        
+
         const objPath = path.parse(objPathString);
         if (!path.isAbsolute(parsedOBJ.mtlPath)) {
             parsedOBJ.mtlPath = path.join(objPath.dir, parsedOBJ.mtlPath);
         }
         parsedOBJ.mtlPath = parsedOBJ.mtlPath.trimEnd();
-        
+
         // Parse .mtl
         const materialString = fs.readFileSync(parsedOBJ.mtlPath).toString('utf8');
         const parsedMTL = this._parseMaterial(materialString, objPath);
@@ -146,29 +142,29 @@ export class Mesh {
     }
 
     private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string, materialFormat: TextureFormat) {
-        if (materialDiffuseTexturePath !== "") {
+        if (materialDiffuseTexturePath !== '') {
             materialsJSON[materialName] = {
                 texturePath: materialDiffuseTexturePath,
                 type: MaterialType.Texture,
-                format: materialFormat
+                format: materialFormat,
             };
-        } else if (materialName !== "") {
+        } else if (materialName !== '') {
             materialsJSON[materialName] = {
                 diffuseColour: materialDiffuseColour,
-                type: MaterialType.Fill
+                type: MaterialType.Fill,
             };
         }
     }
 
     // TODO: Rewrite
     private _parseMaterial(materialString: string, objPath: path.ParsedPath): Materials {
-        var materialsJSON: Materials = {};
+        const materialsJSON: Materials = {};
 
         const lines = materialString.split('\n');
 
-        let materialName: string = "";
+        let materialName: string = '';
         let materialDiffuseColour: RGB = { r: 1.0, g: 1.0, b: 1.0 };
-        let materialDiffuseTexturePath: string = "";
+        let materialDiffuseTexturePath: string = '';
         let materialTextureFormat: TextureFormat = TextureFormat.PNG;
 
         for (let i = 0; i < lines.length; ++i) {
@@ -176,50 +172,49 @@ export class Mesh {
             const lineTokens = line.trim().split(/\s+/);
 
             switch (lineTokens[0]) {
-                case "newmtl":
-                    this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath, materialTextureFormat);
-                    materialName = lineTokens[1];
-                    materialDiffuseColour = { r: 0, g: 0, b: 0 };
-                    materialDiffuseTexturePath = ""
-                    break;
+            case 'newmtl':
+                this._addMaterial(materialsJSON, materialName, materialDiffuseColour, materialDiffuseTexturePath, materialTextureFormat);
+                materialName = lineTokens[1];
+                materialDiffuseColour = { r: 0, g: 0, b: 0 };
+                materialDiffuseTexturePath = '';
+                break;
 
-                case "Kd":
-                    const diffuseColour = lineTokens.slice(1).map(x => parseFloat(x))
-                    if (!diffuseColour || diffuseColour.length != 3) {
-                        throw Error(`Could not parse .mtl file. (Line ${i + 1})`);
-                    }
-                    if (diffuseColour.some(x => Number.isNaN(x))) {
-                        throw Error(`Could not parse .mtl file. (Line ${i + 1})`);
-                    }
-                    materialDiffuseColour = {
-                        r: diffuseColour[0], g: diffuseColour[1], b: diffuseColour[2]
-                    };
-                    break;
+            case 'Kd':
+                const diffuseColour = lineTokens.slice(1).map((x) => parseFloat(x));
+                if (!diffuseColour || diffuseColour.length != 3) {
+                    throw Error(`Could not parse .mtl file. (Line ${i + 1})`);
+                }
+                if (diffuseColour.some((x) => Number.isNaN(x))) {
+                    throw Error(`Could not parse .mtl file. (Line ${i + 1})`);
+                }
+                materialDiffuseColour = {
+                    r: diffuseColour[0], g: diffuseColour[1], b: diffuseColour[2],
+                };
+                break;
 
-                case "map_Kd":
-                    if (!lineTokens[1]) {
-                        throw Error(`No valid path to texture in .mtl file. (Line ${i + 1})`);
-                    }
-                    let texturePath = lineTokens[1];
-                    if (!path.isAbsolute(texturePath)) {
-                        texturePath = path.join(objPath.dir, texturePath);
-                    }
-                    if (!fs.existsSync(texturePath)) {
-                        console.error(texturePath);
-                        throw Error(`Cannot load texture ${texturePath}`);
-                    }
-                    const _path = path.parse(texturePath);
-                    if (".png" === _path.ext.toLowerCase()) {
-                        materialTextureFormat = TextureFormat.PNG;
-                    }
-                    else if ([".jpeg", ".jpg"].includes(_path.ext.toLowerCase())) {
-                        materialTextureFormat = TextureFormat.JPEG;
-                    } else {
-                        throw Error(`Can only load PNG and JPEG textures`);
-                    }
+            case 'map_Kd':
+                if (!lineTokens[1]) {
+                    throw Error(`No valid path to texture in .mtl file. (Line ${i + 1})`);
+                }
+                let texturePath = lineTokens[1];
+                if (!path.isAbsolute(texturePath)) {
+                    texturePath = path.join(objPath.dir, texturePath);
+                }
+                if (!fs.existsSync(texturePath)) {
+                    console.error(texturePath);
+                    throw Error(`Cannot load texture ${texturePath}`);
+                }
+                const _path = path.parse(texturePath);
+                if ('.png' === _path.ext.toLowerCase()) {
+                    materialTextureFormat = TextureFormat.PNG;
+                } else if (['.jpeg', '.jpg'].includes(_path.ext.toLowerCase())) {
+                    materialTextureFormat = TextureFormat.JPEG;
+                } else {
+                    throw Error(`Can only load PNG and JPEG textures`);
+                }
 
-                    materialDiffuseTexturePath = texturePath;
-                    break;
+                materialDiffuseTexturePath = texturePath;
+                break;
             }
         }
 
@@ -230,7 +225,7 @@ export class Mesh {
 
 
     private _mergeMaterialData(parsedOBJ: ParsedOBJ, parsedMTL: Materials): Array<Material> {
-        parsedOBJ.materials.forEach(material => {
+        parsedOBJ.materials.forEach((material) => {
             material.attachMTLData(parsedMTL[material.name]);
         });
 
@@ -239,82 +234,82 @@ export class Mesh {
 
 
     private _parseOBJFile(wavefrontString: string): ParsedOBJ {
-        const lines = wavefrontString.split("\n");
+        const lines = wavefrontString.split('\n');
 
         let mtlPath: (string | undefined);
 
-        let vertexPositionMap: VertexMap<Vector3> = {};
-        let vertexTexcoordMap: VertexMap<UV> = {};
-        let vertexNormalMap: VertexMap<Vector3> = {};
+        const vertexPositionMap: VertexMap<Vector3> = {};
+        const vertexTexcoordMap: VertexMap<UV> = {};
+        const vertexNormalMap: VertexMap<Vector3> = {};
 
         let vertexPositionIndex = 1;
         let vertexTexcoordIndex = 1;
         let vertexNormalIndex = 1;
 
-        let currentMaterial: Material = new Material("");
+        let currentMaterial: Material = new Material('');
 
-        let materialMap: {[name: string]: Material} = {};
-        //let materials: Array<Material> = [];
+        const materialMap: {[name: string]: Material} = {};
+        // let materials: Array<Material> = [];
 
-        lines.forEach(line => {
-            const tokens = line.split(" ");
+        lines.forEach((line) => {
+            const tokens = line.split(' ');
             switch (tokens[0]) {
-                case "mtllib":
-                    mtlPath = tokens[1];
-                    break;
-                case "v":
-                    vertexPositionMap[vertexPositionIndex++] = Vector3.parse(line);
-                    break;
-                case "vn":
-                    vertexNormalMap[vertexNormalIndex++] = Vector3.parse(line);
-                    break;
-                case "vt":
-                    vertexTexcoordMap[vertexTexcoordIndex++] = { u: parseFloat(tokens[1]), v: parseFloat(tokens[2]) };
-                    break;
+            case 'mtllib':
+                mtlPath = tokens[1];
+                break;
+            case 'v':
+                vertexPositionMap[vertexPositionIndex++] = Vector3.parse(line);
+                break;
+            case 'vn':
+                vertexNormalMap[vertexNormalIndex++] = Vector3.parse(line);
+                break;
+            case 'vt':
+                vertexTexcoordMap[vertexTexcoordIndex++] = { u: parseFloat(tokens[1]), v: parseFloat(tokens[2]) };
+                break;
             }
         });
 
-        lines.forEach(line => {
+        lines.forEach((line) => {
             line = line.replace(/[\n\r]/g, '').trimEnd();
-            const tokens = line.split(" ");
+            const tokens = line.split(' ');
             switch (tokens[0]) {
-                case "usemtl":
-                    if (currentMaterial.isFilled() && !(currentMaterial.name in materialMap)) {
-                        materialMap[currentMaterial.name] = currentMaterial;
-                    }
-                    if (tokens[1] in materialMap) {
-                        console.log("Material already found", tokens[1]);
-                        currentMaterial = materialMap[tokens[1]];
-                    } else {
-                        console.log("New material", tokens[1])
-                        currentMaterial = new Material(tokens[1]);
-                    }
-                    break;
-                case "f":
-                    if (tokens.length === 5) {
-                        // QUAD
-                        const v1 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                        const v2 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                        const v3 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                        const v4 = Vertex.parseFromOBJ(tokens[4], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+            case 'usemtl':
+                if (currentMaterial.isFilled() && !(currentMaterial.name in materialMap)) {
+                    materialMap[currentMaterial.name] = currentMaterial;
+                }
+                if (tokens[1] in materialMap) {
+                    console.log('Material already found', tokens[1]);
+                    currentMaterial = materialMap[tokens[1]];
+                } else {
+                    console.log('New material', tokens[1]);
+                    currentMaterial = new Material(tokens[1]);
+                }
+                break;
+            case 'f':
+                if (tokens.length === 5) {
+                    // QUAD
+                    const v1 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    const v2 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    const v3 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    const v4 = Vertex.parseFromOBJ(tokens[4], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
 
-                        const face = new Triangle(v4.copy(), v2.copy(), v1.copy());
-                        const face2 = new Triangle(v4.copy(), v3.copy(), v2.copy());
+                    const face = new Triangle(v4.copy(), v2.copy(), v1.copy());
+                    const face2 = new Triangle(v4.copy(), v3.copy(), v2.copy());
 
-                        currentMaterial.addFace(face);
-                        currentMaterial.addFace(face2);
-                    } else if (tokens.length === 4) {
-                        // TRI
-                        const v0 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                        const v1 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
-                        const v2 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    currentMaterial.addFace(face);
+                    currentMaterial.addFace(face2);
+                } else if (tokens.length === 4) {
+                    // TRI
+                    const v0 = Vertex.parseFromOBJ(tokens[1], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    const v1 = Vertex.parseFromOBJ(tokens[2], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
+                    const v2 = Vertex.parseFromOBJ(tokens[3], vertexPositionMap, vertexTexcoordMap, vertexNormalMap);
 
-                        const face = new Triangle(v0, v1, v2);
-                        currentMaterial.addFace(face);
-                    } else {
-                        throw Error(`Unexpected number of face vertices, expected 3 or 4, got ${tokens.length - 1}`);
-                    }
-                    break;
+                    const face = new Triangle(v0, v1, v2);
+                    currentMaterial.addFace(face);
+                } else {
+                    throw Error(`Unexpected number of face vertices, expected 3 or 4, got ${tokens.length - 1}`);
+                }
+                break;
             }
         });
 
@@ -322,7 +317,7 @@ export class Mesh {
             materialMap[currentMaterial.name] = currentMaterial;
         }
 
-        let materials: Array<Material> = [];
+        const materials: Array<Material> = [];
         for (const material in materialMap) {
             materials.push(materialMap[material]);
         }
@@ -331,16 +326,16 @@ export class Mesh {
 
         return {
             mtlPath: mtlPath,
-            materials: materials
-        }
+            materials: materials,
+        };
     }
 
 
     private _centreMesh() {
-        let centre = new Vector3(0, 0, 0);
+        const centre = new Vector3(0, 0, 0);
         let totalWeight = 0;
-        this.materials.forEach(material => {
-            material.faces.forEach(face => {
+        this.materials.forEach((material) => {
+            material.faces.forEach((face) => {
                 const k0 = Vector3.sub(face.v0.position, face.v1.position).magnitude();
                 const k1 = Vector3.sub(face.v1.position, face.v2.position).magnitude();
                 const k2 = Vector3.sub(face.v2.position, face.v0.position).magnitude();
@@ -352,8 +347,8 @@ export class Mesh {
         centre.divScalar(totalWeight);
 
         // Translate each triangle
-        this.materials.forEach(material => {
-            material.faces.forEach(face => {
+        this.materials.forEach((material) => {
+            material.faces.forEach((face) => {
                 face.v0.position = Vector3.sub(face.v0.position, centre);
                 face.v1.position = Vector3.sub(face.v1.position, centre);
                 face.v2.position = Vector3.sub(face.v2.position, centre);
@@ -367,11 +362,11 @@ export class Mesh {
      */
     private _normaliseMesh() {
         // Find the size
-        let a = new Vector3(Infinity, Infinity, Infinity);
-        let b = new Vector3(-Infinity, -Infinity, -Infinity);
+        const a = new Vector3(Infinity, Infinity, Infinity);
+        const b = new Vector3(-Infinity, -Infinity, -Infinity);
 
-        this.materials.forEach(material => {
-            material.faces.forEach(face => {
+        this.materials.forEach((material) => {
+            material.faces.forEach((face) => {
                 const aabb = face.getBounds();
                 a.x = Math.min(a.x, aabb.minX);
                 a.y = Math.min(a.y, aabb.minY);
@@ -383,14 +378,14 @@ export class Mesh {
         });
 
         const size = Vector3.sub(b, a);
-        console.log("size", size);
+        console.log('size', size);
         const targetSize = 8.0;
         const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
-        console.log("scaleFactor", scaleFactor)
+        console.log('scaleFactor', scaleFactor);
 
         // Scale each triangle
-        this.materials.forEach(material => {
-            material.faces.forEach(face => {
+        this.materials.forEach((material) => {
+            material.faces.forEach((face) => {
                 face.v0.position = Vector3.mulScalar(face.v0.position, scaleFactor);
                 face.v1.position = Vector3.mulScalar(face.v1.position, scaleFactor);
                 face.v2.position = Vector3.mulScalar(face.v2.position, scaleFactor);
@@ -399,14 +394,13 @@ export class Mesh {
     }
 
     public loadTextures(gl: WebGLRenderingContext) {
-        this.materials.forEach(material => {
+        this.materials.forEach((material) => {
             if (material.materialData?.type === MaterialType.Texture) {
                 material.materialData.texture = twgl.createTexture(gl, {
                     src: material.materialData.texturePath,
-                    mag: gl.LINEAR
+                    mag: gl.LINEAR,
                 });
             }
         });
     }
-
 }

@@ -1,6 +1,6 @@
-import { BlockAtlas, BlockInfo } from "./block_atlas";
-import { assert, RGB } from "./util";
-import { Vector3 } from "./vector";
+import { BlockAtlas, BlockInfo } from './block_atlas';
+import { assert, RGB } from './util';
+import { Vector3 } from './vector';
 
 interface BlockAssigner {
     assignBlock(voxelColour: RGB, voxelPosition: Vector3): BlockInfo;
@@ -13,7 +13,6 @@ export class BasicBlockAssigner implements BlockAssigner {
 }
 
 export class OrderedDitheringBlockAssigner implements BlockAssigner {
-
     /** 4x4x4 */
     private static _size = 4;
     private static _threshold = 256 / 8;
@@ -26,12 +25,12 @@ export class OrderedDitheringBlockAssigner implements BlockAssigner {
         3, 19, 5, 21, 51, 35, 53, 37,
         1, 17, 7, 23, 49, 33, 55, 39,
         27, 43, 29, 45, 11, 59, 13, 61,
-        25, 41, 31, 47, 9, 57, 15, 63
+        25, 41, 31, 47, 9, 57, 15, 63,
     ];
 
     private _getThresholdValue(x: number, y: number, z: number) {
         const size = OrderedDitheringBlockAssigner._size;
-        assert(0 <= x && x < size && 0 <= y && y < size && 0 <= z && z < size)
+        assert(0 <= x && x < size && 0 <= y && y < size && 0 <= z && z < size);
         const index = (x + (size * y) + (size * size * z));
         assert(0 <= index && index < size * size * size);
         return (OrderedDitheringBlockAssigner._mapMatrix[index] / (size * size * size)) - 0.5;
@@ -42,16 +41,15 @@ export class OrderedDitheringBlockAssigner implements BlockAssigner {
         const map = this._getThresholdValue(
             Math.abs(voxelPosition.x % size),
             Math.abs(voxelPosition.y % size),
-            Math.abs(voxelPosition.z % size)
+            Math.abs(voxelPosition.z % size),
         );
 
         const newVoxelColour = {
             r: ((255 * voxelColour.r) + map * OrderedDitheringBlockAssigner._threshold) / 255,
             g: ((255 * voxelColour.g) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            b: ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255
+            b: ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
         };
 
         return BlockAtlas.Get.getBlock(newVoxelColour);
-
     }
 }

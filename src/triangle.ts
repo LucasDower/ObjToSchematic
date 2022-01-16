@@ -1,10 +1,7 @@
-import { Vector3 } from "./vector";
-import { Vertex } from "./mesh";
-import { Bounds } from "./util";
-
-
+import { Vector3 } from './vector';
+import { Vertex } from './mesh';
+import { Bounds } from './util';
 export class Triangle {
-
     public v0: Vertex;
     public v1: Vertex;
     public v2: Vertex;
@@ -32,7 +29,6 @@ export class Triangle {
             maxX: Math.max(this.v0.position.x, this.v1.position.x, this.v2.position.x),
             maxY: Math.max(this.v0.position.y, this.v1.position.y, this.v2.position.y),
             maxZ: Math.max(this.v0.position.z, this.v1.position.z, this.v2.position.z),
-        }
+        };
     }
-
 }

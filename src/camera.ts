@@ -1,17 +1,16 @@
-import { m4, v3 } from "twgl.js";
-import { MouseManager } from "./mouse";
-import { degreesToRadians, clamp } from "./math";
-import { Renderer } from "./renderer";
+import { m4, v3 } from 'twgl.js';
+import { MouseManager } from './mouse';
+import { degreesToRadians, clamp } from './math';
+import { Renderer } from './renderer';
 
 export class ArcballCamera {
-
     public isUserRotating = false;
 
     private readonly fov: number;
     private readonly zNear: number;
     private readonly zFar: number;
     private readonly cameraSmoothing = 0.025;
-    
+
     public aspect: number;
     private actualDistance = 18.0;
     private actualAzimuth = -1.0;
@@ -53,7 +52,7 @@ export class ArcballCamera {
 
     public updateCamera() {
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
-        
+
         // Update target location if user is rotating camera
         if (this.isUserRotating) {
             const mouseDelta = MouseManager.Get.getMouseDelta();
@@ -73,7 +72,7 @@ export class ArcballCamera {
         this.eye = [
             this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation),
             this.actualDistance * Math.cos(this.actualElevation),
-            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation)
+            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation),
         ];
     }
 
@@ -83,7 +82,7 @@ export class ArcballCamera {
         return [
             this.actualDistance * Math.cos(azimuth ) * -Math.sin(elevation),
             this.actualDistance * Math.cos(elevation),
-            this.actualDistance * Math.sin(azimuth) * -Math.sin(elevation)
+            this.actualDistance * Math.sin(azimuth) * -Math.sin(elevation),
         ];
     }
 
@@ -138,18 +137,17 @@ export class ArcballCamera {
         const inverseProjectionMatrix = this.getInverseWorldViewProjection();
         var origin = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, -1.0, 1.0]);
         var dest = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, 1.0, 1.0]);
-    
+
         origin[0] /= origin[3];
         origin[1] /= origin[3];
         origin[2] /= origin[3];
         dest[0] /= dest[3];
         dest[1] /= dest[3];
         dest[2] /= dest[3];
-    
+
         return {origin: origin, dest: dest};
     }
     */
-
 }
 
 

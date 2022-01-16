@@ -1,11 +1,9 @@
-import * as twgl from "twgl.js";
-import * as fs from "fs";
-import * as path from "path";
-import { Renderer } from "./renderer";
-
+import * as twgl from 'twgl.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Renderer } from './renderer';
 
 export class ShaderManager {
-
     public readonly shadedTextureProgram: twgl.ProgramInfo;
     public readonly shadedFillProgram: twgl.ProgramInfo;
     public readonly debugProgram: twgl.ProgramInfo;
@@ -27,7 +25,7 @@ export class ShaderManager {
         const shadedVertexFillShader = this._getShader('shaded_vertex_fill.vs');
         const shadedFragmentFillShader = this._getShader('shaded_fragment_fill.fs');
         this.shadedFillProgram = twgl.createProgramInfo(gl, [shadedVertexFillShader, shadedFragmentFillShader]);
-        
+
         const debugVertexShader = this._getShader('debug_vertex.vs');
         const debugFragmentShader = this._getShader('debug_fragment.fs');
         this.debugProgram = twgl.createProgramInfo(gl, [debugVertexShader, debugFragmentShader]);
@@ -41,5 +39,4 @@ export class ShaderManager {
         const absPath = path.join(__dirname, '../shaders/' + filename);
         return fs.readFileSync(absPath, 'utf8');
     }
-
 }

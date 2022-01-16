@@ -1,18 +1,17 @@
-import * as zlib from "zlib";
-import * as fs from "fs";
-import { NBT, TagType, writeUncompressed } from "prismarine-nbt";
-import { Vector3 } from "./vector";
-import { VoxelManager } from "./voxel_manager";
-import { Block } from "./block_atlas";
+import * as zlib from 'zlib';
+import * as fs from 'fs';
+import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
+import { Vector3 } from './vector';
+import { VoxelManager } from './voxel_manager';
+import { Block } from './block_atlas';
 
 export abstract class Exporter {
+    protected _sizeVector!: Vector3;
 
-    protected _sizeVector!: Vector3
-
-    abstract convertToNBT(): NBT
+    public abstract convertToNBT(): NBT
     abstract getFormatFilter(): Electron.FileFilter;
     abstract getFormatName(): string;
-    
+
     getFormatDisclaimer(): string | undefined {
         return;
     }
@@ -23,7 +22,7 @@ export abstract class Exporter {
         const nbt = this.convertToNBT();
 
         const outBuffer = fs.createWriteStream(filePath);
-        const newBuffer = writeUncompressed(nbt, "big");
+        const newBuffer = writeUncompressed(nbt, 'big');
 
         zlib.gzip(newBuffer, (err, buffer) => {
             if (!err) {
@@ -35,17 +34,14 @@ export abstract class Exporter {
 
         return false;
     }
-
 }
 
-
 export class Schematic extends Exporter {
-
     convertToNBT() {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
-        let blocksData = Array<number>(bufferSize);
-        VoxelManager.Get.voxels.forEach(voxel => {
+        const blocksData = Array<number>(bufferSize);
+        VoxelManager.Get.voxels.forEach((voxel) => {
             const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
             blocksData[index] = Block.Stone;
@@ -62,8 +58,8 @@ export class Schematic extends Exporter {
                 Blocks: { type: TagType.ByteArray, value: blocksData },
                 Data: { type: TagType.ByteArray, value: new Array<number>(bufferSize).fill(0) },
                 Entities: { type: TagType.List, value: { type: TagType.Int, value: Array(0) } },
-                TileEntities: { type: TagType.List, value: { type: TagType.Int, value: Array(0) } }
-            }
+                TileEntities: { type: TagType.List, value: { type: TagType.Int, value: Array(0) } },
+            },
         };
 
         return nbt;
@@ -76,18 +72,17 @@ export class Schematic extends Exporter {
     getFormatFilter() {
         return {
             name: this.getFormatName(),
-            extensions: ['schematic']
-        }
+            extensions: ['schematic'],
+        };
     }
 
     getFormatName() {
-        return "Schematic";
+        return 'Schematic';
     }
 
     getFormatDisclaimer() {
-        return "Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.";
+        return 'Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.';
     }
-
 }
 
 type BlockID = number;
@@ -98,7 +93,6 @@ interface BlockMapping {
 }
 
 export class Litematic extends Exporter {
-
     // XZY
     _getBufferIndex(vec: Vector3) {
         return (this._sizeVector.z * this._sizeVector.x * vec.y) + (this._sizeVector.x * vec.z) + vec.x;
@@ -106,8 +100,8 @@ export class Litematic extends Exporter {
 
     _createBlockMapping(): BlockMapping {
         const blockPalette = VoxelManager.Get.blockPalette;
-        
-        let blockMapping: BlockMapping = {"air": 0};
+
+        const blockMapping: BlockMapping = { 'air': 0 };
         for (let i = 0; i < blockPalette.length; ++i) {
             const blockName = blockPalette[i];
             blockMapping[blockName] = i + 1; // Ensure 0 maps to air
@@ -119,11 +113,11 @@ export class Litematic extends Exporter {
     _createBlockBuffer(blockMapping: BlockMapping): Array<BlockID> {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
-        let buffer = Array<BlockID>(bufferSize).fill(0);
-        VoxelManager.Get.voxels.forEach(voxel => {
+        const buffer = Array<BlockID>(bufferSize).fill(0);
+        VoxelManager.Get.voxels.forEach((voxel) => {
             const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
             const index = this._getBufferIndex(indexVector);
-            buffer[index] = blockMapping[voxel.block || "air"];
+            buffer[index] = blockMapping[voxel.block || 'air'];
         });
 
         return buffer;
@@ -132,7 +126,7 @@ export class Litematic extends Exporter {
     _createBlockStates(blockMapping: BlockMapping) {
         const blockEncoding = this._encodeBlockBuffer(blockMapping);
 
-        let blockStates = new Array<long>();
+        const blockStates = new Array<long>();
 
         for (let i = blockEncoding.length; i > 0; i -= 64) {
             let right = parseInt(blockEncoding.substring(i-32, i), 2);
@@ -140,55 +134,52 @@ export class Litematic extends Exporter {
 
             // TODO: Cleanup, UINT32 -> INT32
             if (right > 2147483647) {
-                //right = -(-right & 0xFFFFFFFF);
                 right -= 4294967296;
             }
             if (left > 2147483647) {
-                //left = -(-left & 0xFFFFFFFF);
                 left -= 4294967296;
             }
 
             blockStates.push([left, right]);
         }
-        
+
         return blockStates;
     }
 
     _encodeBlockBuffer(blockMapping: BlockMapping) {
-        let blockBuffer = this._createBlockBuffer(blockMapping);
+        const blockBuffer = this._createBlockBuffer(blockMapping);
 
         const paletteSize = Object.keys(blockMapping).length;
         let stride = (paletteSize - 1).toString(2).length;
         stride = Math.max(2, stride);
 
-        let encoding = "";
+        let encoding = '';
         for (let i = blockBuffer.length - 1; i >= 0; --i) {
-            encoding += blockBuffer[i].toString(2).padStart(stride, "0");
+            encoding += blockBuffer[i].toString(2).padStart(stride, '0');
         }
 
         const requiredLength = Math.ceil(encoding.length / 64) * 64;
-        encoding = encoding.padStart(requiredLength, "0");
+        encoding = encoding.padStart(requiredLength, '0');
 
         return encoding;
     }
 
     _createBlockStatePalette(blockMapping: BlockMapping) {
-        let blockStatePalette = Array(Object.keys(blockMapping).length);
+        const blockStatePalette = Array(Object.keys(blockMapping).length);
         for (const block of Object.keys(blockMapping)) {
             const index = blockMapping[block];
-            const blockName = "minecraft:" + block;
+            const blockName = 'minecraft:' + block;
             blockStatePalette[index] = { Name: { type: TagType.String, value: blockName } };
         }
-        blockStatePalette[0] = { Name: { type: TagType.String, value: "minecraft:air" } };
+        blockStatePalette[0] = { Name: { type: TagType.String, value: 'minecraft:air' } };
 
         return blockStatePalette;
     }
 
     convertToNBT() {
-        
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
         const blockMapping = this._createBlockMapping();
-                
+
         const blockStates = this._createBlockStates(blockMapping);
         const blockStatePalette = this._createBlockStatePalette(blockMapping);
 
@@ -198,16 +189,16 @@ export class Litematic extends Exporter {
             value: {
                 Metadata: {
                     type: TagType.Compound, value: {
-                        Author: { type: TagType.String, value: "" },
-                        Description: { type: TagType.String, value: "" },
+                        Author: { type: TagType.String, value: '' },
+                        Description: { type: TagType.String, value: '' },
                         Size: {
                             type: TagType.Compound, value: {
                                 x: { type: TagType.Int, value: this._sizeVector.x },
                                 y: { type: TagType.Int, value: this._sizeVector.y },
                                 z: { type: TagType.Int, value: this._sizeVector.z },
-                            }
+                            },
                         },
-                        Name: { type: TagType.String, value: "" },
+                        Name: { type: TagType.String, value: '' },
                         RegionCount: { type: TagType.Int, value: 1 },
                         TimeCreated: { type: TagType.Long, value: [0, 0] },
                         TimeModified: { type: TagType.Long, value: [0, 0] },
@@ -226,7 +217,7 @@ export class Litematic extends Exporter {
                                         x: { type: TagType.Int, value: 0 },
                                         y: { type: TagType.Int, value: 0 },
                                         z: { type: TagType.Int, value: 0 },
-                                    }
+                                    },
                                 },
                                 BlockStatePalette: { type: TagType.List, value: { type: TagType.Compound, value: blockStatePalette } },
                                 Size: {
@@ -234,32 +225,31 @@ export class Litematic extends Exporter {
                                         x: { type: TagType.Int, value: this._sizeVector.x },
                                         y: { type: TagType.Int, value: this._sizeVector.y },
                                         z: { type: TagType.Int, value: this._sizeVector.z },
-                                    }
+                                    },
                                 },
                                 PendingFluidTicks: { type: TagType.List, value: { type: TagType.Int, value: [] } },
                                 TileEntities: { type: TagType.List, value: { type: TagType.Int, value: [] } },
-                                Entities: { type: TagType.List, value: { type: TagType.Int, value: [] } }
-                            }
-                        }
+                                Entities: { type: TagType.List, value: { type: TagType.Int, value: [] } },
+                            },
+                        },
                     },
                 },
                 MinecraftDataVersion: { type: TagType.Int, value: 2730 },
-                Version: { type: TagType.Int, value: 5 }
-            }
+                Version: { type: TagType.Int, value: 5 },
+            },
         };
 
         return nbt;
     }
-    
+
     getFormatFilter() {
         return {
             name: this.getFormatName(),
-            extensions: ['litematic']
-        }
+            extensions: ['litematic'],
+        };
     }
 
     getFormatName() {
-        return "Litematic";
+        return 'Litematic';
     }
-
 }

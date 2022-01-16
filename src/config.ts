@@ -10,5 +10,5 @@ export namespace AppConfig {
 
     /** Recomended, better matches colours */
     export const DITHERING_ENABLED = true;
-    
+
 }

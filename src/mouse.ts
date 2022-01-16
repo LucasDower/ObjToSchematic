@@ -1,4 +1,4 @@
-import { Renderer } from "./renderer";
+import { Renderer } from './renderer';
 
 interface MouseState {
     x: number,
@@ -7,7 +7,6 @@ interface MouseState {
 }
 
 export class MouseManager {
-
     private _gl: WebGLRenderingContext;
 
     private static readonly MOUSE_LEFT = 1;
@@ -44,8 +43,8 @@ export class MouseManager {
 
     public getMouseDelta() {
         const delta = {
-            dx:    this.currMouse.x - this.prevMouse.x,
-            dy:  -(this.currMouse.y - this.prevMouse.y)
+            dx: this.currMouse.x - this.prevMouse.x,
+            dy: -(this.currMouse.y - this.prevMouse.y),
         };
         this.prevMouse = this.currMouse;
         return delta;
@@ -56,5 +55,4 @@ export class MouseManager {
         const normY = -(2 * (this.currMouse.y / this._gl.canvas.height) - 1);
         return { x: normX, y: normY };
     }
-
 }

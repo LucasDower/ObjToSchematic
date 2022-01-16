@@ -16,8 +16,10 @@ export interface RGB {
 }
 
 export function getAverageColour(colours: Array<RGB>) {
-    let averageColour = colours.reduce((a, c) => { return { r: a.r + c.r, g: a.g + c.g, b: a.b + c.b } });
-    let n = colours.length;
+    const averageColour = colours.reduce((a, c) => {
+        return { r: a.r + c.r, g: a.g + c.g, b: a.b + c.b };
+    });
+    const n = colours.length;
     averageColour.r /= n;
     averageColour.g /= n;
     averageColour.b /= n;
@@ -47,7 +49,7 @@ export interface Bounds {
     maxZ: number,
 }
 
-export function assert(condition: boolean, errorMessage: string = "Assertion Failed") {
+export function assert(condition: boolean, errorMessage = 'Assertion Failed') {
     if (!condition) {
         throw Error(errorMessage);
     }

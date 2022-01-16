@@ -1,7 +1,6 @@
-import { Hashable } from "./hash_map";
+import { Hashable } from './hash_map';
 
 export class Vector3 extends Hashable {
-
     public x: number;
     public y: number;
     public z: number;
@@ -21,17 +20,19 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vecA.x + vecB.x,
             vecA.y + vecB.y,
-            vecA.z + vecB.z
+            vecA.z + vecB.z,
         );
     }
 
     static parse(line: string) {
-    var regex = /[+-]?\d+(\.\d+)?/g;
-    var floats = line.match(regex)!.map(function(v) { return parseFloat(v); });
+        const regex = /[+-]?\d+(\.\d+)?/g;
+        const floats = line.match(regex)!.map(function(v) {
+            return parseFloat(v);
+        });
 
         return new Vector3(
-            floats[0], floats[1], floats[2]
-        )
+            floats[0], floats[1], floats[2],
+        );
     }
 
     add(vec: Vector3) {
@@ -45,7 +46,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vec.x + scalar,
             vec.y + scalar,
-            vec.z + scalar
+            vec.z + scalar,
         );
     }
 
@@ -60,7 +61,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vecA.x - vecB.x,
             vecA.y - vecB.y,
-            vecA.z - vecB.z
+            vecA.z - vecB.z,
         );
     }
 
@@ -75,7 +76,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vec.x - scalar,
             vec.y - scalar,
-            vec.z - scalar
+            vec.z - scalar,
         );
     }
 
@@ -87,7 +88,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vec.x,
             vec.y,
-            vec.z
+            vec.z,
         );
     }
 
@@ -95,7 +96,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             this.x,
             this.y,
-            this.z
+            this.z,
         );
     }
 
@@ -103,7 +104,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             scalar * vec.x,
             scalar * vec.y,
-            scalar * vec.z
+            scalar * vec.z,
         );
     }
 
@@ -118,7 +119,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vec.x / scalar,
             vec.y / scalar,
-            vec.z / scalar
+            vec.z / scalar,
         );
     }
 
@@ -137,7 +138,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             Math.round(vec.x),
             Math.round(vec.y),
-            Math.round(vec.z)
+            Math.round(vec.z),
         );
     }
 
@@ -152,7 +153,7 @@ export class Vector3 extends Hashable {
         return new Vector3(
             Math.abs(vec.x),
             Math.abs(vec.y),
-            Math.abs(vec.z)
+            Math.abs(vec.z),
         );
     }
 
@@ -160,25 +161,23 @@ export class Vector3 extends Hashable {
         return new Vector3(
             vecA.y * vecB.z - vecA.z * vecB.y,
             vecA.z * vecB.x - vecA.x * vecB.z,
-            vecA.x * vecB.y - vecA.y * vecB.x
+            vecA.x * vecB.y - vecA.y * vecB.x,
         );
     }
 
-    /** Performs element-wise min */
     static min(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             Math.min(vecA.x, vecB.x),
             Math.min(vecA.y, vecB.y),
-            Math.min(vecA.z, vecB.z)
+            Math.min(vecA.z, vecB.z),
         );
     }
 
-    /** Performs element-wise max */
     static max(vecA: Vector3, vecB: Vector3) {
         return new Vector3(
             Math.max(vecA.x, vecB.x),
             Math.max(vecA.y, vecB.y),
-            Math.max(vecA.z, vecB.z)
+            Math.max(vecA.z, vecB.z),
         );
     }
 
@@ -186,7 +185,7 @@ export class Vector3 extends Hashable {
         const p0 = 73856093;
         const p1 = 19349663;
         const p2 = 83492791;
-        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2); 
+        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2);
     }
 
     equals(vec: Vector3) {
@@ -205,5 +204,4 @@ export class Vector3 extends Hashable {
 
         return this;
     }
-    
 }

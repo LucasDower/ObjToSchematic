@@ -1,9 +1,8 @@
-import { Vector3 } from "./vector";
-import { HashMap } from "./hash_map";
-import { UV, RGB } from "./util"; 
-import fs from "fs";
-import path from "path";
-
+import { Vector3 } from './vector';
+import { HashMap } from './hash_map';
+import { UV, RGB } from './util';
+import fs from 'fs';
+import path from 'path';
 
 export interface TextureInfo {
     name: string
@@ -27,14 +26,14 @@ export interface BlockInfo {
 }
 
 // https://minecraft.fandom.com/wiki/Java_Edition_data_values/Pre-flattening/Block_IDs
+/* eslint-disable */
 export enum Block {
     Stone = 1.0,
     Dirt = 3.0,
     Cobblestone = 4.0
 }
-
+/* eslint-enable */
 export class BlockAtlas {
-
     private _cachedBlocks: HashMap<Vector3, number>;
     private readonly _blocks: Array<BlockInfo>;
     public readonly _atlasSize: number;
@@ -48,13 +47,13 @@ export class BlockAtlas {
     private constructor() {
         this._cachedBlocks = new HashMap(1024);
 
-        const _path = path.join(__dirname, "../resources/blocks.json");
-        const blocksString = fs.readFileSync(_path, "utf-8");
+        const _path = path.join(__dirname, '../resources/blocks.json');
+        const blocksString = fs.readFileSync(_path, 'utf-8');
         if (!blocksString) {
-            throw Error("Could not load blocks.json")
+            throw Error('Could not load blocks.json');
         }
-        
-        const json = JSON.parse(blocksString)
+
+        const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
         this._blocks = json.blocks;
     }
@@ -63,7 +62,7 @@ export class BlockAtlas {
     public getBlock(voxelColour: RGB): BlockInfo {
         const voxelColourVector = new Vector3(voxelColour.r, voxelColour.g, voxelColour.b);
 
-        let cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
+        const cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
         if (cachedBlockIndex) {
             return this._blocks[cachedBlockIndex];
         }
@@ -77,7 +76,7 @@ export class BlockAtlas {
             const blockAvgColourVector = new Vector3(
                 blockAvgColour.r,
                 blockAvgColour.g,
-                blockAvgColour.b
+                blockAvgColour.b,
             );
 
             const distance = Vector3.sub(blockAvgColourVector, voxelColourVector).magnitude();
@@ -90,5 +89,4 @@ export class BlockAtlas {
         this._cachedBlocks.add(voxelColourVector, blockChoiceIndex);
         return this._blocks[blockChoiceIndex];
     }
-
 }

@@ -5,7 +5,6 @@ export abstract class Hashable {
 
 
 export class HashSet<T extends Hashable> {
-    
     private _numBins: number;
     protected _bins: Array<Array<T>>;
 
@@ -39,12 +38,10 @@ export class HashSet<T extends Hashable> {
         }
         return false;
     }
-
 }
 
 
 export class HashMap<K extends Hashable, V> {
-
     private _numBins: number;
     protected _bins: Array<Array<{key: K, value: V}>>;
 
@@ -73,11 +70,12 @@ export class HashMap<K extends Hashable, V> {
         }
     }
 
+    /* eslint-disable */
     public has(item: K): boolean {
         const binIndex = this._getBin(item);
 
         const list = this._bins[binIndex];
-        for (const {key, value} of list) {
+        for (const { key, value } of list) { 
             if (item.equals(key)) {
                 return true;
             }
@@ -85,10 +83,10 @@ export class HashMap<K extends Hashable, V> {
 
         return false;
     }
+    /* eslint-enable */
 
     public add(key: K, value: V) {
         const binIndex = this._getBin(key);
         this._bins[binIndex].push({key, value});
     }
-
 }

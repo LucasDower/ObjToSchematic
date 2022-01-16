@@ -1,8 +1,8 @@
-import * as twgl from "twgl.js";
+import * as twgl from 'twgl.js';
 
 /*
     WebGL buffers store vertex index data as Uint16 and will lead to frequent overflows.
-    SegmentedBuffer automatically partitions buffers to avoid overflows and removes the 
+    SegmentedBuffer automatically partitions buffers to avoid overflows and removes the
     overhead of .push/.concat when adding data
 */
 
@@ -46,16 +46,15 @@ export interface VoxelData {
 }
 
 export class SegmentedBuffer {
-
     public WebGLBuffers: Array<{
         buffer: twgl.BufferInfo,
         numElements: number
-    }>
+    }>;
 
     private _bufferSize: number;
     private _completeBuffers: Array<CompleteBuffer>;
     private _buffer!: SegmentedBufferData;
-    private _attributes: {[name: string]: IndexedAttributed}
+    private _attributes: {[name: string]: IndexedAttributed};
     private _indicesInsertIndex: number = 0;
     private _maxIndex: number = 0;
     private _compiled: boolean = false;
@@ -71,7 +70,7 @@ export class SegmentedBuffer {
             this._attributes[attr.name] = {
                 name: attr.name,
                 numComponents: attr.numComponents,
-                insertIndex: 0
+                insertIndex: 0,
             };
         }
 
@@ -83,12 +82,12 @@ export class SegmentedBuffer {
             indices: {
                 numComponents: 1,
                 data: new Uint16Array(this._bufferSize),
-            }
+            },
         };
         for (const attr in this._attributes) {
             this._buffer[attr] = {
                 numComponents: this._attributes[attr].numComponents,
-                data: new Float32Array(this._bufferSize)
+                data: new Float32Array(this._bufferSize),
             };
             this._attributes[attr].insertIndex = 0;
         }
@@ -107,7 +106,7 @@ export class SegmentedBuffer {
 
     private _willOverflow(data: VoxelData): boolean {
         // Check for indices Uint16 overflow
-        //const dataMaxIndex = Math.max(...data.indices);
+        // const dataMaxIndex = Math.max(...data.indices);
         const dataMaxIndex = data.indices.reduce((a, v) => Math.max(a, v));
         if ((this._maxIndex + dataMaxIndex) > 65535) {
             return true;
@@ -132,7 +131,7 @@ export class SegmentedBuffer {
             throw `Given data does not have indices data`;
         }
         */
-        //const setsRequired = Math.max(...data.indices) + 1;
+        // const setsRequired = Math.max(...data.indices) + 1;
         const setsRequired = data.indices.reduce((a, v) => Math.max(a, v)) + 1;
         for (const attr in this._attributes) {
             if (!(attr in data)) {
@@ -143,31 +142,31 @@ export class SegmentedBuffer {
             }
             const numSets = data[attr].length / this._attributes[attr].numComponents;
             if (numSets != setsRequired) {
-                //throw `Number of indices does not match number of ${attr} components given`;
+                // throw `Number of indices does not match number of ${attr} components given`;
                 throw Error(`Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data[attr].length}`);
             }
         }
     }
 
-    private _addDataToAttribute(attr: string, attr_data: (Uint16Array | Float32Array | Array<number>)) {
+    private _addDataToAttribute(attr: string, attrData: (Uint16Array | Float32Array | Array<number>)) {
         const indexOffset = this._attributes[attr].insertIndex;
-        attr_data.forEach((value, i) => {
+        attrData.forEach((value, i) => {
             this._buffer[attr].data[i + indexOffset] = value;
         });
-        this._attributes[attr].insertIndex += attr_data.length;
+        this._attributes[attr].insertIndex += attrData.length;
     }
 
     public add(data: VoxelData) {
         if (this._compiled) {
-            throw Error("Buffer already compiled, cannot add more data");
+            throw Error('Buffer already compiled, cannot add more data');
         }
- 
+
         if (this._sanityCheck) {
             this._checkDataMatchesAttributes(data);
         }
 
         if (this._willOverflow(data)) {
-            //console.log("Cycling buffer...");
+            // console.log("Cycling buffer...");
             this._cycle();
         }
 
@@ -178,11 +177,10 @@ export class SegmentedBuffer {
 
         this._indicesInsertIndex += data.indices.length;
         this._maxIndex += 1 + data.indices.reduce((a, v) => Math.max(a, v));
-        
+
         for (const attr in this._attributes) {
             this._addDataToAttribute(attr, data[attr]);
         }
-
     }
 
 
@@ -198,27 +196,24 @@ export class SegmentedBuffer {
         this._completeBuffers.forEach((buffer, i) => {
             this.WebGLBuffers[i] = {
                 buffer: twgl.createBufferInfoFromArrays(gl, buffer.buffer),
-                numElements: buffer.numElements
+                numElements: buffer.numElements,
             };
         });
 
         this._compiled = true;
     }
-
 }
 
 
-
 export class BottomlessBuffer {
-
     public WebGLBuffers: Array<{
         buffer: twgl.BufferInfo,
         numElements: number
-    }>
+    }>;
 
     private _completeBuffers: Array<CompleteBuffer>;
     private _buffer!: BottomlessBufferData;
-    private _attributes: {[name: string]: Attribute}
+    private _attributes: {[name: string]: Attribute};
     private _maxIndex: number = 0;
     private _compiled: boolean = false;
     private _sanityCheck: boolean = true;
@@ -233,7 +228,7 @@ export class BottomlessBuffer {
         for (const attr of attributes) {
             this._attributes[attr.name] = {
                 name: attr.name,
-                numComponents: attr.numComponents
+                numComponents: attr.numComponents,
             };
         }
 
@@ -245,12 +240,12 @@ export class BottomlessBuffer {
 
     _getNewBuffer() {
         this._buffer = {
-            indices: {numComponents: 1, data: []}
+            indices: {numComponents: 1, data: []},
         };
         for (const attr in this._attributes) {
             this._buffer[attr] = {
                 numComponents: this._attributes[attr].numComponents,
-                data: []
+                data: [],
             };
         }
     }
@@ -267,14 +262,14 @@ export class BottomlessBuffer {
 
     _willOverflow(data: VoxelData) {
         // Check for indices Uint16 overflow
-        //const dataMaxIndex = Math.max(...data.indices);
+        // const dataMaxIndex = Math.max(...data.indices);
         const dataMaxIndex = data.indices.reduce((a, v) => Math.max(a, v));
         return ((this._maxIndex + dataMaxIndex) > 65535);
     }
 
     _checkDataMatchesAttributes(data: VoxelData) {
-        if (!('indices'in data)) {
-            throw `Given data does not have indices data`;
+        if (!('indices' in data)) {
+            throw Error('Given data does not have indices data');
         }
         const setsRequired = data.indices.reduce((a, v) => Math.max(a, v)) + 1;
         for (const attr in this._attributes) {
@@ -286,7 +281,7 @@ export class BottomlessBuffer {
             }
             const numSets = data[attr].length / this._attributes[attr].numComponents;
             if (numSets != setsRequired) {
-                //throw `Number of indices does not match number of ${attr} components given`;
+                // throw `Number of indices does not match number of ${attr} components given`;
                 throw Error(`Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data[attr].length}`);
             }
         }
@@ -295,26 +290,26 @@ export class BottomlessBuffer {
 
     add(data: VoxelData) {
         if (this._compiled) {
-            throw Error("Buffer already compiled, cannot add more data");
+            throw Error('Buffer already compiled, cannot add more data');
         }
- 
+
         if (this._sanityCheck) {
             this._checkDataMatchesAttributes(data);
         }
 
         if (this._willOverflow(data)) {
-            //console.log("Cycling buffer...");
+            // console.log("Cycling buffer...");
             this._cycle();
         }
 
         // Add the new indices data
-        data.indices.forEach(index => {
+        data.indices.forEach((index) => {
             this._buffer.indices.data.push(index + this._maxIndex);
         });
         this._maxIndex += 1 + data.indices.reduce((a, v) => Math.max(a, v));
-        
+
         for (const attr in this._attributes) {
-            data[attr].forEach(v => {
+            data[attr].forEach((v) => {
                 this._buffer[attr].data.push(v);
             });
         }
@@ -332,11 +327,10 @@ export class BottomlessBuffer {
         this._completeBuffers.forEach((buffer, i) => {
             this.WebGLBuffers[i] = {
                 buffer: twgl.createBufferInfoFromArrays(gl, buffer.buffer),
-                numElements: buffer.numElements
+                numElements: buffer.numElements,
             };
         });
 
         this._compiled = true;
     }
-
 }
