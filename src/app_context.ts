@@ -1,35 +1,45 @@
+import { buildUI, registerUI, Group, Component, setEnabled } from "./ui/layout";
 import { Exporter, Litematic, Schematic } from "./schematic";
 import { VoxelManager } from "./voxel_manager";
-import { Toast, ToastStyle } from "./ui/toast";
-import { ToggleableGroup } from "./ui/group";
 import { Renderer } from "./renderer";
-import { Modal } from "./ui/modal";
 import { Mesh } from "./mesh";
 
-import { remote } from "electron"; 
-import path from "path";
+import { SliderElement } from "./ui/elements/slider";
+import { ComboBoxElement } from "./ui/elements/combobox";
+import { FileInputElement } from "./ui/elements/file_input";
 
+import { remote } from "electron";
+import fs from "fs";
+import { ButtonElement } from "./ui/elements/button";
+import { LabelElement } from "./ui/elements/label";
+import { OutputElement } from "./ui/elements/output";
+
+export enum ActionReturnType {
+    Success,
+    Warning,
+    Failure
+}
 interface ReturnStatus {
     message: string,
-    style: ToastStyle,
+    type: ActionReturnType,
     error?: unknown
 }
 
 export enum Action {
-    Load,
-    Voxelise,
-    ExportSchematic,
-    ExportLitematic,
-    ConfirmExport
+    Load = 0,
+    Simplify = 1,
+    Voxelise = 2,
+    Palette = 3,
+    Export = 4,
 }
 
 export class AppContext {
+    public ambientOcclusion: boolean;
+    public dithering: boolean;
 
-    private _voxelSize = 1.0;
     private _gl: WebGLRenderingContext;
     private _loadedMesh?: Mesh;
-    private _groupVoxelise: ToggleableGroup;
-    private _groupExport: ToggleableGroup;
+    private _ui: Group[];
     private _actionMap = new Map<Action, (() => ReturnStatus | void)>();
 
     private static _instance: AppContext;
@@ -39,146 +49,238 @@ export class AppContext {
     }
 
     private constructor() {
-        const gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl");
+        this.ambientOcclusion = true;
+        this.dithering = true;
+
+        this._actionMap.set(Action.Load,     () => { return this._load(); });
+        this._actionMap.set(Action.Simplify, () => {});
+        this._actionMap.set(Action.Voxelise, () => { return this._voxelise(); });
+        this._actionMap.set(Action.Palette,  () => { return this._palette(); } );
+        this._actionMap.set(Action.Export,   () => { return this._export(); });
+
+        this._ui = [
+            {
+                label: "Input",
+                components: [
+                    { 
+                        label: new LabelElement("label1", "Wavefront .obj file"),
+                        type: new FileInputElement("objFile", "obj")
+                    },
+                    { 
+                        label: new LabelElement("label2", "Material .mtl file"),
+                        type: new FileInputElement("mtlFile", "mtl")
+                    },
+                ],
+                submitButton: new ButtonElement("loadMesh", "Load mesh", () => { this.do(Action.Load); }),
+                output: new OutputElement("output1")
+            },
+            {
+                label: "Simplify",
+                components: [
+                    {
+                        label: new LabelElement("label3", "Ratio"),
+                        type: new SliderElement("ratio", 0.0, 1.0, 0.01, 0.5) },
+                ],
+                submitButton: new ButtonElement("simplifyMesh", "Simplify mesh", () => { }),
+                output: new OutputElement("output2")
+            },
+            {
+                label: "Build",
+                components: [
+                    {
+                        label: new LabelElement("label4", "Voxel size"),
+                        type: new SliderElement("voxelSize", 0.01, 0.5, 0.01, 0.1)
+                    },
+                    {
+                        label: new LabelElement("label5", "Ambient occlusion"),
+                        type: new ComboBoxElement("ambientOcclusion", [
+                            { id: "on", displayText: "On (recommended)" },
+                            { id: "off", displayText: "Off (faster)" },
+                        ])
+                    },
+                ],
+                submitButton: new ButtonElement("voxeliseMesh", "Voxelise mesh", () => { this.do(Action.Voxelise); }),
+                output: new OutputElement("output3")
+            },
+            {
+                label: "Palette",
+                components: [
+                    {
+                        label: new LabelElement("label6", "Block palette"),
+                        type: new ComboBoxElement("blockPalette", [
+                            { id: "default", displayText: "Default" }
+                        ])
+                    },
+                    {
+                        label: new LabelElement("label7", "Choice method"),
+                        type: new ComboBoxElement("choiceMethod", [
+                            { id: "euclidian", displayText: "Euclidian distance" }
+                        ])
+                    },
+                    {
+                        label: new LabelElement("label8", "Dithering"),
+                        type: new ComboBoxElement("dithering", [
+                            { id: "on", displayText: "On (recommended)" },
+                            { id: "off", displayText: "Off" },
+                        ])
+                    },
+                ],
+                submitButton: new ButtonElement("assignBlocks", "Assign blocks", () => { this.do(Action.Palette); }),
+                output: new OutputElement("output4")
+            },
+            {
+                label: "Export",
+                components: [
+                    { 
+                        label: new LabelElement("label9", "File format"),
+                        type: new ComboBoxElement("fileFormat",
+                        [
+                            { id: "litematic", displayText: "Litematic" },
+                            { id: "schematic", displayText: "Schematic" },
+                        ])
+                    },
+                ],
+                submitButton: new ButtonElement("exportStructure", "Export structure", () => { this.do(Action.Export); }),
+                output: new OutputElement("output5")
+            }
+        ]
+
+        buildUI(this._ui);
+        registerUI(this._ui);
+        setEnabled(this._ui[1], false);
+        setEnabled(this._ui[2], false);
+        setEnabled(this._ui[3], false);
+        setEnabled(this._ui[4], false);
+
+        const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext("webgl");
         if (!gl) {
             throw Error("Could not load WebGL context");
         }
         this._gl = gl;
-
-        this._actionMap.set(Action.Load,            () => { return this._load(); });
-        this._actionMap.set(Action.Voxelise,        () => { return this._voxelise(); });
-        this._actionMap.set(Action.ExportSchematic, () => { return this._preexport(new Schematic()); });
-        this._actionMap.set(Action.ExportLitematic, () => { return this._preexport(new Litematic()); });
-
-        this._groupVoxelise = new ToggleableGroup(["#inputVoxelSize", "#buttonVoxelise"], "#groupVoxelise", false);
-        this._groupExport   = new ToggleableGroup(["#buttonSchematic", "#buttonLitematic"], "#groupExport", false);
     }
 
     public do(action: Action) {
         const status = this._actionMap.get(action)!();
         if (status) {
+            this._ui[action].output.setMessage(status.message, status.type);
             if (status.error) {
                 console.error(status.error);
             }
-            Toast.show(status.message, status.style);
         }
     }
-    
-    private _load(): ReturnStatus {
-        const files = remote.dialog.showOpenDialogSync({
-            title: "Load Waveform .obj file",
-            buttonLabel: "Load",
-            filters: [{
-                name: 'Waveform obj file',
-                extensions: ['obj']
-            }]
-        });
 
-        if (!files || files.length != 1) {
-            return { message: "A single .obj file must be selected to load", style: ToastStyle.Failure };
+    private _load(): ReturnStatus {
+        setEnabled(this._ui[1], false);
+        setEnabled(this._ui[2], false);
+        setEnabled(this._ui[3], false);
+        setEnabled(this._ui[4], false);
+
+        const objPath = (<FileInputElement>this._ui[0].components[0].type).getValue();
+        if (!fs.existsSync(objPath)) {
+            return { message: "Selected .obj cannot be found", type: ActionReturnType.Failure };
         }
-        
-        const file = files[0];
-        if (!file.endsWith(".obj") && !file.endsWith(".OBJ")) {
-            return { message: "Files must be .obj format", style: ToastStyle.Failure };
+
+        const mtlPath = (<FileInputElement>this._ui[0].components[1].type).getValue();
+        if (!fs.existsSync(mtlPath)) {
+            return { message: "Selected .mtl cannot be found", type: ActionReturnType.Failure };
         }
-        
-        const parsedPath = path.parse(file);
-        
+
         try {
-            this._loadedMesh = new Mesh(file, this._gl);
+            this._loadedMesh = new Mesh(objPath, this._gl);
             this._loadedMesh.loadTextures(this._gl);
         } catch (err: unknown) {
-            return { error: err, message: "Could not load mesh", style: ToastStyle.Failure };
+            return { error: err, message: "Could not load mesh", type: ActionReturnType.Failure };
         }
-        
+
         try {
             const renderer = Renderer.Get;
             renderer.clear();
             renderer.registerMesh(this._loadedMesh);
             renderer.compile();
         } catch (err: unknown) {
-            return { message: "Could not render mesh", style: ToastStyle.Failure };
+            return { message: "Could not render mesh", type: ActionReturnType.Failure };
         }
-    
-        $('#inputFile').prop("value", parsedPath.base);
 
-        this._groupVoxelise.setEnabled(true);
-        this._groupExport.setEnabled(false);
-    
-        return { message: "Loaded successfully", style: ToastStyle.Success };
+        setEnabled(this._ui[2], true);
+        return { message: "Loaded successfully", type: ActionReturnType.Success };
     }
 
     private _voxelise(): ReturnStatus {
-        const newVoxelSize: number = parseFloat($("#inputVoxelSize").prop('value'));
-        if (newVoxelSize < 0.001) {
-            return { message: "Voxel size must be at least 0.001", style: ToastStyle.Failure };
-        }
-        this._voxelSize = newVoxelSize;
-        
+        setEnabled(this._ui[3], false);
+        setEnabled(this._ui[4], false);
+
+        const voxelSize = (<SliderElement>this._ui[2].components[0].type).getValue();
+        const ambientOcclusion = (<ComboBoxElement>this._ui[2].components[1].type).getValue();
+        this.ambientOcclusion = ambientOcclusion === "on";
+
         try {
             const voxelManager = VoxelManager.Get;
-            voxelManager.setVoxelSize(this._voxelSize);
+            voxelManager.setVoxelSize(voxelSize);
             voxelManager.voxeliseMesh(this._loadedMesh!);
-        
+
             const renderer = Renderer.Get;
             renderer.clear();
             renderer.registerVoxelMesh();
             renderer.compile();
         } catch (err: any) {
-            return { error: err, message: "Could not register voxel mesh", style: ToastStyle.Failure };
+            return { error: err, message: "Could not register voxel mesh", type: ActionReturnType.Failure };
         }
 
-        this._groupExport.setEnabled(true);
-        return { message: "Voxelised successfully", style: ToastStyle.Success };
+        setEnabled(this._ui[3], true);
+        return { message: "Voxelised successfully", type: ActionReturnType.Success };
     }
 
-    private _preexport(exporter: Exporter) {
-        const voxelManager = VoxelManager.Get;
+    private _palette(): ReturnStatus {
+        setEnabled(this._ui[4], false);
+        
+        const dithering = (<ComboBoxElement>this._ui[3].components[2].type).getValue();
+        this.dithering = dithering === "on";
 
-        console.log(voxelManager.min, voxelManager.max);
-        const schematicHeight = Math.ceil(voxelManager.max.z - voxelManager.min.z);
+        try {
+            const voxelManager = VoxelManager.Get;
+            voxelManager.assignBlocks();
 
-        let message = "";
-        if (schematicHeight > 320) {
-            message += `Note, this structure is <b>${schematicHeight}</b> blocks tall, this is larger than the height of a Minecraft world (320 in 1.17, 256 in <=1.16). `;
+            const renderer = Renderer.Get;
+            renderer.clear();
+            renderer.registerVoxelMesh();
+            renderer.compile();
+        } catch (err: any) {
+            return { error: err, message: "Could not register voxel mesh", type: ActionReturnType.Failure };
         }
 
-        const formatDisclaimer = exporter.getFormatDisclaimer();
-        if (formatDisclaimer) {
-            message += "\n" + formatDisclaimer;
-        }
+        setEnabled(this._ui[4], true);
+        return { message: "Blocks assigned successfully", type: ActionReturnType.Success };
+    }
 
-        if (message.length == 0) {
-            return this._export(exporter);
+    private _export(): ReturnStatus {
+        const exportFormat = (<ComboBoxElement>this._ui[4].components[0].type).getValue();
+        let exporter: Exporter;
+        if (exportFormat === "schematic") {
+            exporter = new Schematic();
         } else {
-            Modal.setButton("Export", () => { this._export(exporter); });
-            Modal.show(message);
+            exporter = new Litematic();
         }
-    }
 
-    private _export(exporter: Exporter): ReturnStatus {
         const filePath = remote.dialog.showSaveDialogSync({
             title: "Save structure",
             buttonLabel: "Save",
-            filters: [ exporter.getFormatFilter() ]
+            filters: [exporter.getFormatFilter()]
         });
-    
+
         if (filePath === undefined) {
-            return { message: "Output cancelled", style: ToastStyle.Success };
+            return { message: "Output cancelled", type: ActionReturnType.Warning };
         }
-    
+
         try {
             exporter.export(filePath);
         } catch (err: unknown) {
-            return { error: err, message: "Failed to export", style: ToastStyle.Failure };
+            return { error: err, message: "Failed to export", type: ActionReturnType.Failure };
         }
 
-        return { message: "Successfully exported", style: ToastStyle.Success };
+        return { message: "Successfully exported", type: ActionReturnType.Success };
     }
 
     public draw() {
         Renderer.Get.draw();
     }
-
 }

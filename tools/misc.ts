@@ -14,7 +14,7 @@ export function isDirSetup(relativePath: string, jarAssetDir: string) {
     } else {
         fs.mkdirSync(dir);
     }
-    log(LogStyle.Warning, `Copy the contents of .minecraft/versions/<version>/<version>.jar/${jarAssetDir} from a Minecraft game files into ${relativePath}`);
+    log(LogStyle.Warning, `Copy the contents of .minecraft/versions/<version>/<version>.jar/${jarAssetDir} from a Minecraft game files into ${relativePath} or fetch them automatically`);
     return false;
 }
 

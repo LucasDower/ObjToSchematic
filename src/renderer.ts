@@ -13,6 +13,7 @@ import { Triangle } from "./triangle";
 import { Mesh, FillMaterial, TextureMaterial, MaterialType } from "./mesh";
 import { FaceInfo, BlockAtlas } from "./block_atlas";
 import { AppConfig } from "./config"
+import { AppContext } from "./app_context";
 
 export class Renderer {
 
@@ -42,7 +43,7 @@ export class Renderer {
     }
 
     private constructor() {
-        this._gl = (<HTMLCanvasElement>$("#canvas").get(0)).getContext("webgl")!;
+        this._gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext("webgl")!;
 
         this._getNewBuffers();
         this._setupOcclusions();
@@ -139,9 +140,18 @@ export class Renderer {
         return blankOcclusions;
     }
 
-    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo) {   
+    private static readonly _faceNormals  = [
+        new Vector3(1,  0,  0),
+        new Vector3(-1, 0,  0),
+        new Vector3(0,  1,  0),
+        new Vector3(0, -1,  0),
+        new Vector3(0,  0,  1),
+        new Vector3(0,  0, -1),
+    ];
+
+    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo) {
         let occlusions: number[][];
-        if (AppConfig.AMBIENT_OCCLUSION_ENABLED) {
+        if (AppContext.Get.ambientOcclusion) {
             occlusions = this._calculateOcclusions(centre);
         } else {
             occlusions = Renderer._getBlankOcclusions();
@@ -168,7 +178,19 @@ export class Renderer {
             }
         }
 
-        this._registerVoxels.add(data);
+        for (let i = 0; i < 6; ++i)
+        {
+            if (!VoxelManager.Get.isVoxelAt(Vector3.add(centre, Renderer._faceNormals[i]))) {
+                this._registerVoxels.add({
+                    position: data.position.slice(i * 12, (i+1) * 12),
+                    occlusion: data.occlusion.slice(i * 16, (i+1) * 16),
+                    normal: data.normal.slice(i * 12, (i+1) * 12),
+                    indices: data.indices.slice(0, 6),
+                    texcoord: data.texcoord.slice(i * 8, (i+1) * 8),
+                    blockTexcoord: data.blockTexcoord.slice(i * 8, (i+1) * 8),
+                });
+            }           
+        }
     }
 
     public registerTriangle(triangle: Triangle) {
