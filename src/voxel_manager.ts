@@ -8,7 +8,7 @@ import { Mesh, MaterialType } from "./mesh";
 import { triangleArea } from "./math";
 import { Axes, generateRays, rayIntersectTriangle } from "./ray";
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from "./block_assigner.js";
-import { AppConfig } from "./config.js";
+import { AppContext } from "./app_context.js";
 
 interface Block {
     position: Vector3;
@@ -77,6 +77,7 @@ export class VoxelManager {
 
     public assignBlocks() {
         this.blockPalette = [];
+        this.voxelTexcoords = [];
         let meanSquaredError = 0.0;
 
         for (let i = 0; i < this.voxels.length; ++i) {
@@ -84,7 +85,8 @@ export class VoxelManager {
             
             const averageColour = getAverageColour(voxel.colours!);
 
-            const blockAssigner = AppConfig.DITHERING_ENABLED ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
+            const ditheringEnabled = AppContext.Get.dithering;
+            const blockAssigner = ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
             const block = blockAssigner.assignBlock(averageColour, voxel.position);
 
             const squaredError = Math.pow(255 * (block.colour.r - averageColour.r), 2) + Math.pow(255 * (block.colour.g - averageColour.g), 2) + Math.pow(255 * (block.colour.b - averageColour.b), 2);
@@ -95,6 +97,17 @@ export class VoxelManager {
 
         meanSquaredError /= this.voxels.length;
         console.log("Mean Squared Error:", meanSquaredError);
+    }
+
+    public assignBlankBlocks() {
+        this.blockPalette = [];
+
+        const whiteColour = { r: 1.0, g: 1.0, b: 1.0 };
+        const block = new BasicBlockAssigner().assignBlock(whiteColour, new Vector3(0, 0, 0));
+
+        for (let i = 0; i < this.voxels.length; ++i) {
+            this._assignBlock(i, block);
+        }
     }
 
     public addVoxel(pos: Vector3, block: BlockInfo) {
@@ -176,6 +189,10 @@ export class VoxelManager {
         });
     }
 
+    public paintMesh() {
+        this.assignBlocks();
+    }
+
     voxeliseMesh(mesh: Mesh) {
         this._clearVoxels();
 
@@ -194,7 +211,8 @@ export class VoxelManager {
             });
         });
 
-        this.assignBlocks();
+        this.assignBlankBlocks();
+        //this.assignBlocks();
     }
 
 }

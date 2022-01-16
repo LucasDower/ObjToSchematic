@@ -5,6 +5,7 @@
   --canvas-width: calc(100% - var(--properties-width));
   --pill-radius: 6px;
   --prim-color: #008C74;
+  --prim-color-hover: #009e84;
   --prim-color-disabled: #004e41;
   --prop-bg-color: #333333;
 }
@@ -116,7 +117,7 @@ canvas {
   font-size: 90%;
   padding: 12px 18px;
   line-height: 180%;
-  border: 1px solid rgb(255, 255, 255, 0);
+  min-height: 22px;
 }
 
 .round-top {
@@ -147,10 +148,13 @@ select {
   color: #A8A8A8;
   background-color: #2F2F2F;
 }
-
 select:hover {
   color: #C6C6C6;
   background-color: #383838;
+}
+select:disabled {
+  background-color: #282828 !important;
+  color: #535353;
 }
 
 .file-input {
@@ -209,7 +213,7 @@ select:hover {
 }
 .button:hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
-  background-color: #00A6D8;
+  background-color: var(--prim-color-hover);
   cursor: pointer;
 }
 .button-disabled {
@@ -273,4 +277,12 @@ select:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.border-warning {
+  border: 1.5px solid orange;
+}
+
+.border-error {
+  border: 1.5px solid red;
 }

@@ -3,7 +3,7 @@ import { assert } from "../../util";
 
 export class ButtonElement extends BaseUIElement {
     private _label: string;
-    private _onClick: () => void
+    private _onClick: () => void;
 
     public constructor(id: string, label: string, onClick: () => void) {
         super(id);
@@ -26,7 +26,7 @@ export class ButtonElement extends BaseUIElement {
 
         element.addEventListener("click", () => {
             if (this._isEnabled) {
-                this._onClick()
+                this._onClick();
             }
         });
     }

@@ -1,15 +1,17 @@
 import { ButtonElement } from "./elements/button";
 import { LabelElement } from "./elements/label";
+import { OutputElement } from "./elements/output";
 
 export interface Group {
-    label: string,
-    components: Component[]
-    submitButton: ButtonElement
+    label: string;
+    components: Component[];
+    submitButton: ButtonElement;
+    output: OutputElement;
 }
 
 export interface Component {
-    label : LabelElement,
-    type: BaseUIElement,
+    label: LabelElement;
+    type: BaseUIElement;
 }
 
 export abstract class BaseUIElement {
@@ -59,9 +61,7 @@ function buildComponent(componentParams: Group) {
         </div>
         <div class="item item-body">
             <div class="sub-right">
-                <div class="item-body-sunken">
-                    Nothing
-                </div>
+                ${componentParams.output.generateHTML()}
             </div>
         </div>
     `;
