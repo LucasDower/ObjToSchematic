@@ -81,6 +81,10 @@ export function buildUI(myItems: Group[]) {
     for (const item of myItems) {
       itemHTML += `
         <div class="item item-body">
+            <div class="sub-right">
+                <div class="h-div">
+                </div>
+            </div>
             <div class="sub-left-alt">
                 ${item.label.toUpperCase()}
             </div>

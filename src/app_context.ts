@@ -89,7 +89,7 @@ export class AppContext {
                 components: [
                     {
                         label: new LabelElement("label4", "Voxel size"),
-                        type: new SliderElement("voxelSize", 0.01, 1.0, 0.01, 0.1)
+                        type: new SliderElement("voxelSize", 0.01, 0.5, 0.01, 0.1)
                     },
                     {
                         label: new LabelElement("label5", "Ambient occlusion"),
@@ -170,7 +170,9 @@ export class AppContext {
     }
 
     private _load(): ReturnStatus {
+        setEnabled(this._ui[1], false);
         setEnabled(this._ui[2], false);
+        setEnabled(this._ui[3], false);
         setEnabled(this._ui[4], false);
 
         const objPath = (<FileInputElement>this._ui[0].components[0].type).getValue();

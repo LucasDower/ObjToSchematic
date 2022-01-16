@@ -1,13 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400&display=swap');
 
 :root {
-  --properties-width: max(450px, 25%);
+  --properties-width: max(400px, 20%);
   --canvas-width: calc(100% - var(--properties-width));
   --pill-radius: 6px;
-  --prim-color: #008C74;
-  --prim-color-hover: #009e84;
-  --prim-color-disabled: #004e41;
-  --prop-bg-color: #333333;
+  --prim-color: hsl(190, 100%, 27%);
+  --prim-color-hover: hsl(190, 100%, 35%);
+  --prim-color-disabled: hsl(190, 100%, 15%);
+  --prop-bg-color: #1A1A1A;
 }
 
 body {
@@ -23,7 +23,7 @@ body {
   position: absolute;
   width: var(--properties-width);
   height: 100%;
-  border-right: 1.5px solid rgb(35, 35, 35);
+  border-right: 2px solid #252525;
   overflow: auto;
 }
 
@@ -48,8 +48,8 @@ canvas {
 .menu {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 20px);
-  padding: 10px;
+  width: calc(100%);
+  background-color: #1A1A1A;
 }
 
 .container {
@@ -57,10 +57,9 @@ canvas {
   flex-direction: column;
   margin: 10px;
   border-radius: 10px;
-  background-color: #1A1A1A;
-  box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 24px;
-  border: 2px solid rgba(255, 255, 255, 0.075);
-  padding: 8px 0px;
+  /*background-color: #1A1A1A;*/
+  /*box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 24px;*/
+  /*border: 2px solid rgba(255, 255, 255, 0.075);*/
 }
 
 .item {
@@ -81,7 +80,7 @@ canvas {
 
 .sub-left {
   align-self: center;
-  padding: 0px 20px;
+  padding: 0px 10px;
   width: 125px;
 }
 .sub-left-disabled {
@@ -90,22 +89,23 @@ canvas {
 
 .sub-left-alt {
   align-self: center;
-  padding: 0px 0px 0px 20px;
+  padding: 0px 0px 0px 0px;
   color: #303030;
   font-weight: 400;
-  letter-spacing: 1px;
+  font-size: 75%;
+  letter-spacing: 4px;
 }
 
 .sub-right {
   flex-grow: 1;
-  padding: 0px 20px;
+  padding: 0px 10px;
 }
 
 .item-body {
   font-size: 85%;
   margin: 0px 0px;
   min-height: 30px;
-  padding: 10px 0px;
+  padding: 5px 0px;
 }
 
 .item-body-sunken {
@@ -189,7 +189,7 @@ select:disabled {
 }
 .new-slider-bar:hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
-  background-color: #00A6D8;
+  background-color: var(--prim-color-hover);
 }
 .new-slider-disabled {
   background-color: #242424;
@@ -241,7 +241,7 @@ select:disabled {
 }
 
 .h-div {
-  height: 3px;
+  height: 2px;
   border-radius: 2px;
   background-color: #252525;
 }
