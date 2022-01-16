@@ -3,7 +3,7 @@ A visual tool to convert .obj model files into Minecraft Schematics or [Litemati
 
 ![Preview](/resources/preview3.png)
 
-![Preview](/resources/preview2.jpg)
+![Preview](https://i.imgur.com/qXftbaa.gif)
 
 # Usage
 You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
