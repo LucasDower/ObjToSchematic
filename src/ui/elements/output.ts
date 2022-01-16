@@ -22,7 +22,7 @@ export class OutputElement {
 
         element.innerHTML = message;
         element.classList.remove("border-warning");
-        element.classList.remove("border-failure");
+        element.classList.remove("border-error");
         if (returnType === ActionReturnType.Warning) {
             element.classList.add("border-warning");
         } else if (returnType === ActionReturnType.Failure) {
