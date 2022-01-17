@@ -11,7 +11,6 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Navigate to `/ObjToSchematic-main`.
 * Run `npm install`.
 * Run `npm start`.
-* Note, for now, all .obj models **must** be triangulated before importing.
 
 Support for choosing the block palette is not yet supported. Instead, you can edit `/tools/default-ignore-list.txt` to include blocks you don't want to be used and then run `npm run-script atlas`. You can also place custom textures in `/tools/blocks/` for more accurate block-colour matching when building with resource packs.
 

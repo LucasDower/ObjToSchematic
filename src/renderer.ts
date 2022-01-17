@@ -195,6 +195,8 @@ export class Renderer {
     }
 
     public registerMesh(mesh: Mesh) {
+        this._gl.disable(this._gl.CULL_FACE);
+
         mesh.materials.forEach((material) => {
             const materialBuffer = new BottomlessBuffer([
                 { name: 'position', numComponents: 3 },

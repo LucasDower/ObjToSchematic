@@ -1,6 +1,6 @@
-import { BaseUIElement } from "../layout";
-import { assert } from "../../util";
-import { clamp } from "../../math";
+import { BaseUIElement } from '../layout';
+import { assert } from '../../util';
+import { clamp } from '../../math';
 
 export class SliderElement extends BaseUIElement {
     private _min: number;
@@ -36,13 +36,13 @@ export class SliderElement extends BaseUIElement {
             this._dragging = true;
         };
 
-        document.addEventListener("mousemove", (e: any) => {
+        document.addEventListener('mousemove', (e: any) => {
             if (this._dragging) {
                 this._updateValue(e);
             }
         });
 
-        document.addEventListener("mouseup", (e: any) => {
+        document.addEventListener('mouseup', (e: any) => {
             if (this._dragging) {
                 this._updateValue(e);
             }
@@ -56,7 +56,7 @@ export class SliderElement extends BaseUIElement {
         }
 
         const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + "-bar") as HTMLDivElement;
+        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         assert(element !== null && elementBar !== null);
 
         const mouseEvent = e as MouseEvent;
@@ -73,17 +73,17 @@ export class SliderElement extends BaseUIElement {
 
     protected _onEnabledChanged() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + "-bar") as HTMLDivElement;
+        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         assert(element !== null && elementBar !== null);
 
         if (this._isEnabled) {
-            //element.classList.add("button");
-            element.classList.remove("new-slider-disabled");
-            elementBar.classList.remove("new-slider-bar-disabled");
+            // element.classList.add("button");
+            element.classList.remove('new-slider-disabled');
+            elementBar.classList.remove('new-slider-bar-disabled');
         } else {
-            element.classList.add("new-slider-disabled");
-            elementBar.classList.add("new-slider-bar-disabled");
-            //element.classList.remove("button");
+            element.classList.add('new-slider-disabled');
+            elementBar.classList.add('new-slider-bar-disabled');
+            // element.classList.remove("button");
         }
     }
 }

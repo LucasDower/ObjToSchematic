@@ -13,6 +13,7 @@ import fs from 'fs';
 import { ButtonElement } from './ui/elements/button';
 import { LabelElement } from './ui/elements/label';
 import { OutputElement } from './ui/elements/output';
+import { CustomError } from './util';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -93,7 +94,8 @@ export class AppContext {
                 components: [
                     {
                         label: new LabelElement('label3', 'Ratio'),
-                        type: new SliderElement('ratio', 0.0, 1.0, 0.01, 0.5) },
+                        type: new SliderElement('ratio', 0.0, 1.0, 0.01, 0.5),
+                    },
                 ],
                 submitButton: new ButtonElement('simplifyMesh', 'Simplify mesh', () => { }),
                 output: new OutputElement('output2'),
@@ -103,7 +105,7 @@ export class AppContext {
                 components: [
                     {
                         label: new LabelElement('label4', 'Voxel size'),
-                        type: new SliderElement('voxelSize', 0.01, 0.5, 0.01, 0.1),
+                        type: new SliderElement('voxelSize', 0.01, 0.5, 0.01, 0.10001),
                     },
                     {
                         label: new LabelElement('label5', 'Ambient occlusion'),
@@ -182,9 +184,15 @@ export class AppContext {
     public do(action: Action) {
         const status = this._actionMap.get(action)!();
         if (status) {
-            this._ui[action].output.setMessage(status.message, status.type);
             if (status.error) {
-                console.error(status.error);
+                console.error('CAUGHT', status.error);
+                if (status.error instanceof CustomError) {
+                    this._ui[action].output.setMessage(status.error.message, status.type);
+                } else {
+                    this._ui[action].output.setMessage(status.message, status.type);
+                }
+            } else {
+                this._ui[action].output.setMessage(status.message, status.type);
             }
         }
     }
@@ -206,7 +214,7 @@ export class AppContext {
         }
 
         try {
-            this._loadedMesh = new Mesh(objPath, this._gl);
+            this._loadedMesh = new Mesh(objPath, mtlPath);
             this._loadedMesh.loadTextures(this._gl);
         } catch (err: unknown) {
             return { error: err, message: 'Could not load mesh', type: ActionReturnType.Failure };

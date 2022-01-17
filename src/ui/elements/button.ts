@@ -1,5 +1,5 @@
-import { BaseUIElement } from "../layout";
-import { assert } from "../../util";
+import { BaseUIElement } from '../layout';
+import { assert } from '../../util';
 
 export class ButtonElement extends BaseUIElement {
     private _label: string;
@@ -24,7 +24,7 @@ export class ButtonElement extends BaseUIElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         assert(element !== null);
 
-        element.addEventListener("click", () => {
+        element.addEventListener('click', () => {
             if (this._isEnabled) {
                 this._onClick();
             }
@@ -36,11 +36,11 @@ export class ButtonElement extends BaseUIElement {
         assert(element !== null);
 
         if (this._isEnabled) {
-            //element.classList.add("button");
-            element.classList.remove("button-disabled");
+            // element.classList.add("button");
+            element.classList.remove('button-disabled');
         } else {
-            element.classList.add("button-disabled");
-            //element.classList.remove("button");
+            element.classList.add('button-disabled');
+            // element.classList.remove("button");
         }
     }
 }

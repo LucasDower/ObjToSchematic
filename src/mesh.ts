@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { Triangle } from './triangle';
 import { Vector3 } from './vector';
-import { RGB, UV } from './util';
+import { RGB, UV, CustomError } from './util';
 import { TextureFormat } from './texture';
 import { triangleArea } from './math';
 
@@ -113,32 +113,26 @@ class Material {
 export class Mesh {
     public materials: Array<Material>;
 
-    constructor(objPathString: string, gl: WebGLRenderingContext) {
+    constructor(objPathString: string, mtlPathString: string) {
         // Parse .obj
         const wavefrontString = fs.readFileSync(objPathString).toString('utf8');
         const parsedOBJ = this._parseOBJFile(wavefrontString);
-
-        // TODO: Create blank .mtl when not found
-        if (!parsedOBJ.mtlPath) {
-            throw Error('No .mtl file found.');
-        }
-
         const objPath = path.parse(objPathString);
-        if (!path.isAbsolute(parsedOBJ.mtlPath)) {
-            parsedOBJ.mtlPath = path.join(objPath.dir, parsedOBJ.mtlPath);
-        }
-        parsedOBJ.mtlPath = parsedOBJ.mtlPath.trimEnd();
 
         // Parse .mtl
-        const materialString = fs.readFileSync(parsedOBJ.mtlPath).toString('utf8');
+        const materialString = fs.readFileSync(mtlPathString).toString('utf8');
         const parsedMTL = this._parseMaterial(materialString, objPath);
-
 
         this.materials = this._mergeMaterialData(parsedOBJ, parsedMTL);
         this._centreMesh();
         this._normaliseMesh();
 
-        console.log(this.materials);
+        // TODO: Throw at source
+        for (const material of this.materials) {
+            if (material.materialData === undefined) {
+                throw new CustomError('Could not link .obj with .mtl, possible mismatch?');
+            }
+        }
     }
 
     private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string, materialFormat: TextureFormat) {

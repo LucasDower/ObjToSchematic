@@ -1,6 +1,6 @@
-import { ButtonElement } from "./elements/button";
-import { LabelElement } from "./elements/label";
-import { OutputElement } from "./elements/output";
+import { ButtonElement } from './elements/button';
+import { LabelElement } from './elements/label';
+import { OutputElement } from './elements/output';
 
 export interface Group {
     label: string;
@@ -47,7 +47,7 @@ function buildSubcomp(subcomp: Component) {
 }
 
 function buildComponent(componentParams: Group) {
-    let innerHTML = "";
+    let innerHTML = '';
     for (const subcomp of componentParams.components) {
         innerHTML += buildSubcomp(subcomp);
     }
@@ -77,9 +77,9 @@ export function registerUI(uiGroups: Group[]) {
 }
 
 export function buildUI(myItems: Group[]) {
-    let itemHTML = "";
+    let itemHTML = '';
     for (const item of myItems) {
-      itemHTML += `
+        itemHTML += `
         <div class="item item-body">
             <div class="sub-right">
                 <div class="h-div">
@@ -94,10 +94,10 @@ export function buildUI(myItems: Group[]) {
             </div>
         </div>
       `;
-      itemHTML += buildComponent(item);
+        itemHTML += buildComponent(item);
     }
 
-    document.getElementById("properties")!.innerHTML = `<div class="menu"><div class="container">
+    document.getElementById('properties')!.innerHTML = `<div class="menu"><div class="container">
     ` + itemHTML + `</div></div>`;
 };
 

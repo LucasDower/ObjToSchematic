@@ -1,5 +1,5 @@
-import { BaseUIElement } from "../layout";
-import { assert } from "../../util";
+import { BaseUIElement } from '../layout';
+import { assert } from '../../util';
 
 export interface ComboBoxItem {
     id: string;
@@ -15,7 +15,7 @@ export class ComboBoxElement extends BaseUIElement {
     }
 
     public generateHTML() {
-        let itemsHTML = "";
+        let itemsHTML = '';
         for (const item of this._items) {
             itemsHTML += `<option value="${item.id}">${item.displayText}</option>`;
         }
@@ -34,7 +34,6 @@ export class ComboBoxElement extends BaseUIElement {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         assert(element !== null);
         return this._items[element.selectedIndex].id;
-        
     }
 
     protected _onEnabledChanged() {

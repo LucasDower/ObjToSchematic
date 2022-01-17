@@ -1,4 +1,4 @@
-import { assert } from "../../util";
+import { assert } from '../../util';
 
 export class LabelElement {
     private _id: string;
@@ -22,9 +22,9 @@ export class LabelElement {
         assert(element !== null);
 
         if (isEnabled) {
-            element.classList.remove("sub-left-disabled");
+            element.classList.remove('sub-left-disabled');
         } else {
-            element.classList.add("sub-left-disabled");
+            element.classList.add('sub-left-disabled');
         }
     }
 }

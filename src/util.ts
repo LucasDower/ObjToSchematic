@@ -54,3 +54,9 @@ export function assert(condition: boolean, errorMessage = 'Assertion Failed') {
         throw Error(errorMessage);
     }
 }
+export class CustomError extends Error {
+    constructor(msg: string) {
+        super(msg);
+        Object.setPrototypeOf(this, CustomError.prototype);
+    }
+}
