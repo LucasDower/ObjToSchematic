@@ -34,13 +34,11 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
   * PNG support, JPEG support
 * 🟢 **Convert to TypeScript**
 
-0.4
+[0.4](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.4-alpha)
 * 🟢 **Block choice exported**
   * Export to .litematic
 * 🟢 **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
-* 🟡 UI Redesign
-  * Block palette option (choose blocks to export with)
-  * Block assigner option
+* 🟢 **UI Redesign**
 * 🟢 **Optimised ambient occlusion**
 * 🟢 **Transition to ray-based voxelisation**
 * 🟢 **Dithering**
