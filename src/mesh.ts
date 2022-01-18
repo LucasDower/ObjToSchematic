@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { Triangle } from './triangle';
 import { Vector3 } from './vector';
-import { RGB, UV, CustomError } from './util';
+import { RGB, UV, CustomError, Bounds } from './util';
 import { TextureFormat } from './texture';
 import { triangleArea } from './math';
 
@@ -133,6 +133,29 @@ export class Mesh {
                 throw new CustomError('Could not link .obj with .mtl, possible mismatch?');
             }
         }
+    }
+
+    public getBounds() {
+        const bounds: Bounds = {
+            minX: Infinity,
+            minY: Infinity,
+            minZ: Infinity,
+            maxX: -Infinity,
+            maxY: -Infinity,
+            maxZ: -Infinity,
+        };
+        for (const material of this.materials) {
+            for (const face of material.faces) {
+                const faceBounds = face.getBounds();
+                bounds.minX = Math.min(faceBounds.minX, bounds.minX);
+                bounds.minY = Math.min(faceBounds.minY, bounds.minY);
+                bounds.minZ = Math.min(faceBounds.minZ, bounds.minZ);
+                bounds.maxX = Math.max(faceBounds.maxX, bounds.maxX);
+                bounds.maxY = Math.max(faceBounds.maxY, bounds.maxY);
+                bounds.maxZ = Math.max(faceBounds.maxZ, bounds.maxZ);
+            }
+        }
+        return bounds;
     }
 
     private _addMaterial(materialsJSON: Materials, materialName: string, materialDiffuseColour: RGB, materialDiffuseTexturePath: string, materialFormat: TextureFormat) {
@@ -374,7 +397,8 @@ export class Mesh {
         const size = Vector3.sub(b, a);
         console.log('size', size);
         const targetSize = 8.0;
-        const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
+        // const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
+        const scaleFactor = targetSize / size.z;
         console.log('scaleFactor', scaleFactor);
 
         // Scale each triangle

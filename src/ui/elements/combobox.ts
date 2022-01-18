@@ -1,4 +1,4 @@
-import { BaseUIElement } from '../layout';
+import { LabelledElement } from './labelled_element';
 import { assert } from '../../util';
 
 export interface ComboBoxItem {
@@ -6,7 +6,7 @@ export interface ComboBoxItem {
     displayText: string;
 }
 
-export class ComboBoxElement extends BaseUIElement {
+export class ComboBoxElement extends LabelledElement {
     private _items: ComboBoxItem[];
 
     public constructor(id: string, items: ComboBoxItem[]) {
@@ -14,16 +14,16 @@ export class ComboBoxElement extends BaseUIElement {
         this._items = items;
     }
 
-    public generateHTML() {
+    public generateInnerHTML() {
         let itemsHTML = '';
         for (const item of this._items) {
             itemsHTML += `<option value="${item.id}">${item.displayText}</option>`;
         }
 
         return `
-        <select name="${this._id}" id="${this._id}">
-            ${itemsHTML}
-        </select>
+            <select name="${this._id}" id="${this._id}">
+                ${itemsHTML}
+            </select>
         `;
     }
 
@@ -37,6 +37,8 @@ export class ComboBoxElement extends BaseUIElement {
     }
 
     protected _onEnabledChanged() {
+        super._onEnabledChanged();
+
         const element = document.getElementById(this._id) as HTMLSelectElement;
         assert(element !== null);
         element.disabled = !this._isEnabled;

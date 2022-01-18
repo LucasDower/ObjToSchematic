@@ -2,12 +2,10 @@ import { BaseUIElement } from '../layout';
 import { assert } from '../../util';
 
 export class ButtonElement extends BaseUIElement {
-    private _label: string;
     private _onClick: () => void;
 
-    public constructor(id: string, label: string, onClick: () => void) {
-        super(id);
-        this._label = label;
+    public constructor(label: string, onClick: () => void) {
+        super(label);
         this._onClick = onClick;
         this._isEnabled = true;
     }
@@ -36,11 +34,9 @@ export class ButtonElement extends BaseUIElement {
         assert(element !== null);
 
         if (this._isEnabled) {
-            // element.classList.add("button");
             element.classList.remove('button-disabled');
         } else {
             element.classList.add('button-disabled');
-            // element.classList.remove("button");
         }
     }
 }

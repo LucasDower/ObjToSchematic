@@ -4,8 +4,8 @@ import { ActionReturnType } from '../../app_context';
 export class OutputElement {
     private _id: string;
 
-    public constructor(id: string) {
-        this._id = id;
+    public constructor() {
+        this._id = '_' + Math.random().toString(16);
     }
 
     public generateHTML() {

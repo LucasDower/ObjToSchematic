@@ -11,7 +11,6 @@ import { FileInputElement } from './ui/elements/file_input';
 import { remote } from 'electron';
 import fs from 'fs';
 import { ButtonElement } from './ui/elements/button';
-import { LabelElement } from './ui/elements/label';
 import { OutputElement } from './ui/elements/output';
 import { CustomError } from './util';
 
@@ -74,96 +73,68 @@ export class AppContext {
         this._ui = [
             {
                 label: 'Input',
-                components: [
-                    {
-                        label: new LabelElement('label1', 'Wavefront .obj file'),
-                        type: new FileInputElement('objFile', 'obj'),
-                    },
-                    {
-                        label: new LabelElement('label2', 'Material .mtl file'),
-                        type: new FileInputElement('mtlFile', 'mtl'),
-                    },
+                elements: [
+                    new FileInputElement('Wavefront .obj file', 'obj'),
+                    new FileInputElement('Material .mtl file', 'mtl'),
                 ],
-                submitButton: new ButtonElement('loadMesh', 'Load mesh', () => {
+                submitButton: new ButtonElement('Load mesh', () => {
                     this.do(Action.Load);
                 }),
-                output: new OutputElement('output1'),
+                output: new OutputElement(),
             },
             {
                 label: 'Simplify',
-                components: [
-                    {
-                        label: new LabelElement('label3', 'Ratio'),
-                        type: new SliderElement('ratio', 0.0, 1.0, 0.01, 0.5),
-                    },
+                elements: [
+                    new SliderElement('Ratio', 0.0, 1.0, 0.01, 0.5),
                 ],
-                submitButton: new ButtonElement('simplifyMesh', 'Simplify mesh', () => { }),
-                output: new OutputElement('output2'),
+                submitButton: new ButtonElement('Simplify mesh', () => {}),
+                output: new OutputElement(),
             },
             {
                 label: 'Build',
-                components: [
-                    {
-                        label: new LabelElement('label4', 'Voxel size'),
-                        type: new SliderElement('voxelSize', 0.01, 0.5, 0.01, 0.10001),
-                    },
-                    {
-                        label: new LabelElement('label5', 'Ambient occlusion'),
-                        type: new ComboBoxElement('ambientOcclusion', [
-                            { id: 'on', displayText: 'On (recommended)' },
-                            { id: 'off', displayText: 'Off (faster)' },
-                        ]),
-                    },
+                elements: [
+                    new SliderElement('Voxel size', 0.01, 0.5, 0.01, 0.10001),
+                    new ComboBoxElement('Ambient occlusion', [
+                        { id: 'on', displayText: 'On (recommended)' },
+                        { id: 'off', displayText: 'Off (faster)' },
+                    ]),
                 ],
-                submitButton: new ButtonElement('voxeliseMesh', 'Voxelise mesh', () => {
+                submitButton: new ButtonElement('Voxelise mesh', () => {
                     this.do(Action.Voxelise);
                 }),
-                output: new OutputElement('output3'),
+                output: new OutputElement(),
             },
             {
                 label: 'Palette',
-                components: [
-                    {
-                        label: new LabelElement('label6', 'Block palette'),
-                        type: new ComboBoxElement('blockPalette', [
-                            { id: 'default', displayText: 'Default' },
-                        ]),
-                    },
-                    {
-                        label: new LabelElement('label7', 'Choice method'),
-                        type: new ComboBoxElement('choiceMethod', [
-                            { id: 'euclidian', displayText: 'Euclidian distance' },
-                        ]),
-                    },
-                    {
-                        label: new LabelElement('label8', 'Dithering'),
-                        type: new ComboBoxElement('dithering', [
-                            { id: 'on', displayText: 'On (recommended)' },
-                            { id: 'off', displayText: 'Off' },
-                        ]),
-                    },
+                elements: [
+                    new ComboBoxElement('Block palette', [
+                        { id: 'default', displayText: 'Default' },
+                    ]),
+                    new ComboBoxElement('Choice method', [
+                        { id: 'euclidian', displayText: 'Euclidian distance' },
+                    ]),
+                    new ComboBoxElement('Dithering', [
+                        { id: 'on', displayText: 'On (recommended)' },
+                        { id: 'off', displayText: 'Off' },
+                    ]),
                 ],
-                submitButton: new ButtonElement('assignBlocks', 'Assign blocks', () => {
+                submitButton: new ButtonElement('Assign blocks', () => {
                     this.do(Action.Palette);
                 }),
-                output: new OutputElement('output4'),
+                output: new OutputElement(),
             },
             {
                 label: 'Export',
-                components: [
-                    {
-                        label: new LabelElement('label9', 'File format'),
-                        type: new ComboBoxElement('fileFormat',
-                            [
-                                { id: 'litematic', displayText: 'Litematic' },
-                                { id: 'schematic', displayText: 'Schematic' },
-                            ]),
-                    },
+                elements: [
+                    new ComboBoxElement('File format', [
+                        { id: 'litematic', displayText: 'Litematic' },
+                        { id: 'schematic', displayText: 'Schematic' },
+                    ]),
                 ],
-                submitButton: new ButtonElement('exportStructure', 'Export structure', () => {
+                submitButton: new ButtonElement('Export structure', () => {
                     this.do(Action.Export);
                 }),
-                output: new OutputElement('output5'),
+                output: new OutputElement(),
             },
         ];
 
@@ -203,12 +174,12 @@ export class AppContext {
         setEnabled(this._ui[3], false);
         setEnabled(this._ui[4], false);
 
-        const objPath = (<FileInputElement> this._ui[0].components[0].type).getValue();
+        const objPath = (<FileInputElement> this._ui[0].elements[0]).getValue();
         if (!fs.existsSync(objPath)) {
             return { message: 'Selected .obj cannot be found', type: ActionReturnType.Failure };
         }
 
-        const mtlPath = (<FileInputElement> this._ui[0].components[1].type).getValue();
+        const mtlPath = (<FileInputElement> this._ui[0].elements[1]).getValue();
         if (!fs.existsSync(mtlPath)) {
             return { message: 'Selected .mtl cannot be found', type: ActionReturnType.Failure };
         }
@@ -229,6 +200,13 @@ export class AppContext {
             return { message: 'Could not render mesh', type: ActionReturnType.Failure };
         }
 
+        const bounds = this._loadedMesh.getBounds();
+        console.log('BOUNDS', {
+            x: bounds.maxX - bounds.minX,
+            y: bounds.maxY - bounds.minY,
+            z: bounds.maxZ - bounds.minZ,
+        });
+
         setEnabled(this._ui[2], true);
         return { message: 'Loaded successfully', type: ActionReturnType.Success };
     }
@@ -237,9 +215,10 @@ export class AppContext {
         setEnabled(this._ui[3], false);
         setEnabled(this._ui[4], false);
 
-        const voxelSize = (<SliderElement> this._ui[2].components[0].type).getValue();
-        const ambientOcclusion = (<ComboBoxElement> this._ui[2].components[1].type).getValue();
+        const voxelSize = (<SliderElement> this._ui[2].elements[0]).getValue();
+        const ambientOcclusion = (<ComboBoxElement> this._ui[2].elements[1]).getValue();
         this.ambientOcclusion = ambientOcclusion === 'on';
+        console.log(voxelSize, ambientOcclusion);
 
         try {
             const voxelManager = VoxelManager.Get;
@@ -261,7 +240,7 @@ export class AppContext {
     private _palette(): ReturnStatus {
         setEnabled(this._ui[4], false);
 
-        const dithering = (<ComboBoxElement> this._ui[3].components[2].type).getValue();
+        const dithering = (<ComboBoxElement> this._ui[3].elements[2]).getValue();
         this.dithering = dithering === 'on';
 
         try {
@@ -281,7 +260,7 @@ export class AppContext {
     }
 
     private _export(): ReturnStatus {
-        const exportFormat = (<ComboBoxElement> this._ui[4].components[0].type).getValue();
+        const exportFormat = (<ComboBoxElement> this._ui[4].elements[0]).getValue();
         let exporter: Exporter;
         if (exportFormat === 'schematic') {
             exporter = new Schematic();

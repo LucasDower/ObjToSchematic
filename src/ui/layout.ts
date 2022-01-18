@@ -1,25 +1,20 @@
 import { ButtonElement } from './elements/button';
-import { LabelElement } from './elements/label';
 import { OutputElement } from './elements/output';
 
 export interface Group {
     label: string;
-    components: Component[];
+    elements: BaseUIElement[];
     submitButton: ButtonElement;
     output: OutputElement;
 }
-
-export interface Component {
-    label: LabelElement;
-    type: BaseUIElement;
-}
-
 export abstract class BaseUIElement {
     protected _id: string;
+    protected _label: string;
     protected _isEnabled: boolean;
 
-    constructor(id: string) {
-        this._id = id;
+    constructor(label: string) {
+        this._id = '_' + Math.random().toString(16);
+        this._label = label;
         this._isEnabled = true;
     }
 
@@ -34,21 +29,17 @@ export abstract class BaseUIElement {
     protected abstract _onEnabledChanged(): void;
 }
 
-function buildSubcomp(subcomp: Component) {
+function buildSubcomp(element: BaseUIElement) {
     return `
         <div class="item item-body">
-            ${subcomp.label.generateHTML()}
-            <div class="divider"></div>
-            <div class="sub-right">
-                ${subcomp.type.generateHTML()}
-            </div>
+            ${element.generateHTML()}
         </div>
     `;
 }
 
 function buildComponent(componentParams: Group) {
     let innerHTML = '';
-    for (const subcomp of componentParams.components) {
+    for (const subcomp of componentParams.elements) {
         innerHTML += buildSubcomp(subcomp);
     }
 
@@ -69,8 +60,8 @@ function buildComponent(componentParams: Group) {
 
 export function registerUI(uiGroups: Group[]) {
     for (const group of uiGroups) {
-        for (const comp of group.components) {
-            comp.type.registerEvents();
+        for (const comp of group.elements) {
+            comp.registerEvents();
         }
         group.submitButton.registerEvents();
     }
@@ -102,9 +93,8 @@ export function buildUI(myItems: Group[]) {
 };
 
 export function setEnabled(group: Group, isEnabled: boolean) {
-    for (const comp of group.components) {
-        comp.type.setEnabled(isEnabled);
-        comp.label.setEnabled(isEnabled);
+    for (const comp of group.elements) {
+        comp.setEnabled(isEnabled);
     }
     group.submitButton.setEnabled(isEnabled);
 }

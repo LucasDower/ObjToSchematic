@@ -1,20 +1,20 @@
-import { BaseUIElement } from '../layout';
+import { LabelledElement } from './labelled_element';
 import { assert } from '../../util';
 
 import { remote } from 'electron';
 import * as path from 'path';
 
-export class FileInputElement extends BaseUIElement {
+export class FileInputElement extends LabelledElement {
     private _fileExtension: string;
     private _loadedFilePath: string;
 
-    public constructor(id: string, fileExtension: string) {
-        super(id);
+    public constructor(label: string, fileExtension: string) {
+        super(label);
         this._fileExtension = fileExtension;
         this._loadedFilePath = '';
     }
 
-    public generateHTML() {
+    public generateInnerHTML() {
         return `
             <div class="input-text" id="${this._id}">
                 ${this._loadedFilePath}
@@ -55,15 +55,15 @@ export class FileInputElement extends BaseUIElement {
     }
 
     protected _onEnabledChanged() {
+        super._onEnabledChanged();
+
         const element = document.getElementById(this._id) as HTMLDivElement;
         assert(element !== null);
 
         if (this._isEnabled) {
-            // element.classList.add("button");
             element.classList.remove('input-text-disabled');
         } else {
             element.classList.add('input-text-disabled');
-            // element.classList.remove("button");
         }
     }
 }
