@@ -172,6 +172,19 @@ select:disabled {
   border: 1px solid rgb(255, 255, 255, 0.1);
 }
 
+.slider-value {
+  align-self: center;
+  font-weight: 300;
+  font-size: 85%;
+  margin-right: 8px;
+  color: #A8A8A8;
+  width: 20px;
+  text-align: center;
+}
+.slider-value-disabled {
+  color: #535353;
+}
+
 .new-slider {
   border-radius: 5px;
   font-family: 'Lexend', sans-serif;

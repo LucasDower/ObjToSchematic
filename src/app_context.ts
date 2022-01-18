@@ -93,7 +93,7 @@ export class AppContext {
             {
                 label: 'Build',
                 elements: [
-                    new SliderElement('Voxel size', 0.01, 0.5, 0.01, 0.10001),
+                    new SliderElement('Desired height', 1, 320, 1, 80),
                     new ComboBoxElement('Ambient occlusion', [
                         { id: 'on', displayText: 'On (recommended)' },
                         { id: 'off', displayText: 'Off (faster)' },
@@ -218,11 +218,10 @@ export class AppContext {
         const voxelSize = (<SliderElement> this._ui[2].elements[0]).getValue();
         const ambientOcclusion = (<ComboBoxElement> this._ui[2].elements[1]).getValue();
         this.ambientOcclusion = ambientOcclusion === 'on';
-        console.log(voxelSize, ambientOcclusion);
 
         try {
             const voxelManager = VoxelManager.Get;
-            voxelManager.setVoxelSize(voxelSize);
+            voxelManager.setDesiredHeight(voxelSize);
             voxelManager.voxeliseMesh(this._loadedMesh!);
 
             const renderer = Renderer.Get;

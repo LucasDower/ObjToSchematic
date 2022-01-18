@@ -112,6 +112,7 @@ class Material {
 
 export class Mesh {
     public materials: Array<Material>;
+    public static desiredHeight = 8.0;
 
     constructor(objPathString: string, mtlPathString: string) {
         // Parse .obj
@@ -396,9 +397,8 @@ export class Mesh {
 
         const size = Vector3.sub(b, a);
         console.log('size', size);
-        const targetSize = 8.0;
         // const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
-        const scaleFactor = targetSize / size.z;
+        const scaleFactor = Mesh.desiredHeight / size.z;
         console.log('scaleFactor', scaleFactor);
 
         // Scale each triangle

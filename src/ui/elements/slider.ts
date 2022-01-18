@@ -21,8 +21,13 @@ export class SliderElement extends LabelledElement {
     public generateInnerHTML() {
         const norm = (this._value - this._min) / (this._max - this._min);
         return `
-            <div class="new-slider" id="${this._id}">
-                <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
+            <div style="display: flex; flex-direction: row;">
+                <div class="slider-value" id="${this._id + '-value'}">
+                    ${this._value}
+                </div>
+                <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
+                    <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
+                    </div>
                 </div>
             </div>
         `;
@@ -57,7 +62,9 @@ export class SliderElement extends LabelledElement {
 
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        assert(element !== null && elementBar !== null);
+        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
+        assert(element !== null && elementBar !== null && elementValue !== null);
+
 
         const mouseEvent = e as MouseEvent;
         const xOffset = mouseEvent.clientX - elementBar.getBoundingClientRect().x;
@@ -65,6 +72,8 @@ export class SliderElement extends LabelledElement {
         const norm = clamp(xOffset / width, 0.0, 1.0);
         this._value = (norm * (this._max - this._min)) + this._min;
         elementBar.style.width = `${norm * 100}%`;
+
+        elementValue.innerHTML = this._value.toFixed(0);
     }
 
     public getValue() {
@@ -76,14 +85,17 @@ export class SliderElement extends LabelledElement {
 
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        assert(element !== null && elementBar !== null);
+        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
+        assert(element !== null && elementBar !== null && elementValue !== null);
 
         if (this._isEnabled) {
             element.classList.remove('new-slider-disabled');
             elementBar.classList.remove('new-slider-bar-disabled');
+            elementValue.classList.remove('slider-value-disabled');
         } else {
             element.classList.add('new-slider-disabled');
             elementBar.classList.add('new-slider-bar-disabled');
+            elementValue.classList.add('slider-value-disabled');
         }
     }
 }
