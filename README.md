@@ -44,8 +44,12 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 * 🟢 **Dithering**
 
 0.5
+* ⚪ Support for simplifying complex meshes
+* ⚪ Load custom block palettes and texture atlases
+* 🟡 Optimise construction of voxel mesh vertex buffers
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
+  * Prevent UI hanging
 * ⚪ Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
 * ⚪ Node.js C++ addons
 * ⚪ Alpha support
