@@ -175,6 +175,8 @@ export class Renderer {
             }
         }
 
+        this._registerVoxels.add(data);
+        /*
         for (let i = 0; i < 6; ++i) {
             if (!VoxelManager.Get.isVoxelAt(Vector3.add(centre, Renderer._faceNormals[i]))) {
                 this._registerVoxels.add({
@@ -187,6 +189,7 @@ export class Renderer {
                 });
             }
         }
+        */
     }
 
     public registerTriangle(triangle: Triangle) {

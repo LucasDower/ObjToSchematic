@@ -396,10 +396,7 @@ export class Mesh {
         });
 
         const size = Vector3.sub(b, a);
-        console.log('size', size);
-        // const scaleFactor = targetSize / Math.max(size.x, size.y, size.z);
-        const scaleFactor = Mesh.desiredHeight / size.z;
-        console.log('scaleFactor', scaleFactor);
+        const scaleFactor = Mesh.desiredHeight / size.y;
 
         // Scale each triangle
         this.materials.forEach((material) => {

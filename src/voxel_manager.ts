@@ -46,7 +46,7 @@ export class VoxelManager {
     }
 
     public setDesiredHeight(desiredHeight: number) {
-        this.voxelSize = 8.0 / desiredHeight;
+        this.voxelSize = 8.0 / Math.round(desiredHeight);
     }
 
     private _clearVoxels() {
@@ -209,7 +209,5 @@ export class VoxelManager {
         });
 
         this.assignBlankBlocks();
-
-        console.log('VOXEL SIZE', VoxelManager.Get.voxelSize, 'BLOCK HEIGHT', this.max.z - this.min.z);
     }
 }
