@@ -33,13 +33,4 @@ export const roundToNearest = (value: number, base: number) => {
     return Math.round(value / base) * base;
 };
 
-export const triangleArea = (a: number, b: number, c: number) => {
-    const p = (a + b + c) / 2;
-    return Math.sqrt(p * (p - a) * (p - b) * (p - c));
-};
-
-export const xAxis = new Vector3(1.0, 0.0, 0.0);
-export const yAxis = new Vector3(0.0, 1.0, 0.0);
-export const zAxis = new Vector3(0.0, 0.0, 1.0);
-
 export const degreesToRadians = Math.PI / 180;

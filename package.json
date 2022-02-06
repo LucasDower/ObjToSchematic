@@ -8,6 +8,7 @@
   },
   "scripts": {
     "lint": "eslint --fix ./src/**/*.ts",
+    "debug": "tsc && electron ./dist/main.js --enable-logging",
     "build": "npm run lint && tsc",
     "start": "npm run build && electron ./dist/main.js --enable-logging",
     "atlas": "npx ts-node tools/build-atlas.ts",
@@ -25,6 +26,7 @@
   "homepage": "https://github.com/LucasDower/ObjToSchematic#readme",
   "devDependencies": {
     "@types/jquery": "^3.5.6",
+    "@types/obj-file-parser": "^0.5.0",
     "@types/pngjs": "^6.0.1",
     "@types/prompt": "^1.1.2",
     "@typescript-eslint/eslint-plugin": "^5.9.1",
@@ -44,6 +46,9 @@
     "eslint-config-google": "^0.14.0",
     "expand-vertex-data": "^1.1.2",
     "jpeg-js": "^0.4.3",
+    "mesh-simplify": "^2.0.0",
+    "mtltojs": "^0.2.1",
+    "obj-file-parser": "^0.5.3",
     "pngjs": "^6.0.0",
     "prismarine-nbt": "^1.6.0",
     "twgl.js": "^4.19.1",

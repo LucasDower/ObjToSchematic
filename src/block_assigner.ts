@@ -44,11 +44,11 @@ export class OrderedDitheringBlockAssigner implements BlockAssigner {
             Math.abs(voxelPosition.z % size),
         );
 
-        const newVoxelColour = {
-            r: ((255 * voxelColour.r) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            g: ((255 * voxelColour.g) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            b: ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-        };
+        const newVoxelColour = new RGB(
+            ((255 * voxelColour.r) + map * OrderedDitheringBlockAssigner._threshold) / 255,
+            ((255 * voxelColour.g) + map * OrderedDitheringBlockAssigner._threshold) / 255,
+            ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
+        );
 
         return BlockAtlas.Get.getBlock(newVoxelColour);
     }

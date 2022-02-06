@@ -1,8 +1,7 @@
 export abstract class Hashable {
     abstract hash(): number;
-    abstract equals(other: Hashable): boolean
+    abstract equals(other: Hashable): boolean;
 }
-
 
 export class HashSet<T extends Hashable> {
     private _numBins: number;

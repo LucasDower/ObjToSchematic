@@ -1,4 +1,5 @@
 import { Hashable } from './hash_map';
+import { assert } from './util';
 
 export class Vector3 extends Hashable {
     public x: number;
@@ -10,6 +11,11 @@ export class Vector3 extends Hashable {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    static fromArray(arr: number[]) {
+        assert(arr.length === 3);
+        return new Vector3(arr[0], arr[1], arr[2]);
     }
 
     toArray() {
@@ -181,17 +187,6 @@ export class Vector3 extends Hashable {
         );
     }
 
-    override hash() {
-        const p0 = 73856093;
-        const p1 = 19349663;
-        const p2 = 83492791;
-        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2);
-    }
-
-    equals(vec: Vector3) {
-        return this.x == vec.x && this.y == vec.y && this.z == vec.z;
-    }
-
     magnitude() {
         return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
     }
@@ -204,4 +199,29 @@ export class Vector3 extends Hashable {
 
         return this;
     }
+
+    public static get xAxis() {
+        return new Vector3(1.0, 0.0, 0.0);
+    }
+
+    public static get yAxis() {
+        return new Vector3(0.0, 1.0, 0.0);
+    }
+
+    public static get zAxis() {
+        return new Vector3(0.0, 0.0, 1.0);
+    }
+
+    // Begin IHashable interface
+    override hash() {
+        const p0 = 73856093;
+        const p1 = 19349663;
+        const p2 = 83492791;
+        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2);
+    }
+
+    override equals(other: Vector3) {
+        return this.x == other.x && this.y == other.y && this.z == other.z;
+    }
+    // End IHashable interface
 }

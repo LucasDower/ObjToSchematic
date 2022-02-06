@@ -5,15 +5,15 @@ import { LabelledElement } from './labelled_element';
 export class SliderElement extends LabelledElement {
     private _min: number;
     private _max: number;
-    private _step: number;
+    private _decimals: number;
     private _value: number;
     private _dragging: boolean;
 
-    public constructor(label: string, min: number, max: number, step: number, value: number) {
+    public constructor(label: string, min: number, max: number, decimals: number, value: number) {
         super(label);
         this._min = min;
         this._max = max;
-        this._step = step;
+        this._decimals = decimals;
         this._value = value;
         this._dragging = false;
     }
@@ -73,7 +73,8 @@ export class SliderElement extends LabelledElement {
         this._value = (norm * (this._max - this._min)) + this._min;
         elementBar.style.width = `${norm * 100}%`;
 
-        elementValue.innerHTML = this._value.toFixed(0);
+
+        elementValue.innerHTML = this._value.toFixed(this._decimals);
     }
 
     public getValue() {

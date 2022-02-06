@@ -1,7 +1,10 @@
+import { UV, assert, CustomError } from './util';
+import { RGB } from './util';
+
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
-import { UV, RGBA } from './util';
+import path from 'path';
 
 /* eslint-disable */
 export enum TextureFormat {
@@ -17,36 +20,37 @@ export class Texture {
         height: number
     };
 
-    constructor(filename: string, format: TextureFormat) {
+    constructor(filename: string) {
+        assert(path.isAbsolute(filename));
+        const filePath = path.parse(filename);
         try {
             const data = fs.readFileSync(filename);
-            if (format === TextureFormat.PNG) {
+            if (filePath.ext === '.png') {
                 this._image = PNG.sync.read(data);
-            } else {
+            } else if (['.jpg', '.jpeg'].includes(filePath.ext)) {
                 this._image = jpeg.decode(data);
+            } else {
+                throw new CustomError(`Failed to load: ${filename}`);
             }
             if (this._image.width * this._image.height * 4 !== this._image.data.length) {
-                throw Error();
+                throw new CustomError(`Unexpected image resolution mismatch: ${filename}`);
             }
         } catch (err) {
             throw Error(`Could not parse ${filename}`);
         }
     }
 
-    getRGBA(uv: UV): RGBA {
-        uv.v = 1 - uv.v;
-
+    getRGB(uv: UV): RGB {
         const x = Math.floor(uv.u * this._image.width);
-        const y = Math.floor(uv.v * this._image.height);
+        const y = Math.floor((1 - uv.v) * this._image.height);
 
         const index = 4 * (this._image.width * y + x);
         const rgba = this._image.data.slice(index, index + 4);
 
-        return {
-            r: rgba[0] / 255,
-            g: rgba[1] / 255,
-            b: rgba[2] / 255,
-            a: 1.0,
-        };
+        return new RGB(
+            rgba[0] / 255,
+            rgba[1] / 255,
+            rgba[2] / 255,
+        );
     }
 }

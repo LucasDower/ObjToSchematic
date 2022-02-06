@@ -1,54 +1,39 @@
 import * as twgl from 'twgl.js';
-import { Triangle } from './triangle';
+import { UVTriangle } from './triangle';
 import { Vector3 } from './vector';
 import { VoxelData } from './buffer';
-
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
 
-    static getTriangleBufferData(triangle: Triangle, debug: boolean): VoxelData {
-        const a = triangle.v0;
-        const b = triangle.v1;
-        const c = triangle.v2;
-        const n = triangle.normal;
-        // console.log(triangle);
+    static getTriangleBufferData(triangle: UVTriangle): VoxelData {
+        const n = triangle.getNormal();
 
-        if (debug) {
-            return {
-                position: new Float32Array([
-                    a.position.x, a.position.y, a.position.z,
-                    b.position.x, b.position.y, b.position.z,
-                    c.position.x, c.position.y, c.position.z,
-                ]),
-                indices: new Uint16Array([
-                    0, 1,
-                    1, 2,
-                    2, 0,
-                ]),
-            };
-        } else {
-            return {
-                position: new Float32Array([
-                    a.position.x, a.position.y, a.position.z,
-                    b.position.x, b.position.y, b.position.z,
-                    c.position.x, c.position.y, c.position.z,
-                ]),
-                texcoord: new Float32Array([
-                    a.texcoord.u, a.texcoord.v,
-                    b.texcoord.u, b.texcoord.v,
-                    c.texcoord.u, c.texcoord.v,
-                ]),
-                normal: new Float32Array([
-                    n.x, n.y, n.z,
-                    n.x, n.y, n.z,
-                    n.x, n.y, n.z,
-                ]),
-                indices: new Uint16Array([
-                    0, 1, 2,
-                ]),
-            };
+        const uv0u = triangle.uv0.u;
+        if (isNaN(uv0u)) {
+            throw Error('oh no');
         }
+
+        return {
+            position: new Float32Array([
+                triangle.v0.x, triangle.v0.y, triangle.v0.z,
+                triangle.v1.x, triangle.v1.y, triangle.v1.z,
+                triangle.v2.x, triangle.v2.y, triangle.v2.z,
+            ]),
+            texcoord: new Float32Array([
+                triangle.uv0.u, triangle.uv0.v,
+                triangle.uv1.u, triangle.uv1.v,
+                triangle.uv2.u, triangle.uv2.v,
+            ]),
+            normal: new Float32Array([
+                n.x, n.y, n.z,
+                n.x, n.y, n.z,
+                n.x, n.y, n.z,
+            ]),
+            indices: new Uint16Array([
+                0, 1, 2,
+            ]),
+        };
     }
 
     static getBoxBufferData(centre: Vector3, debug: boolean): VoxelData {

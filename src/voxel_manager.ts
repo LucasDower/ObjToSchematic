@@ -1,11 +1,10 @@
 import { Vector3 } from './vector.js';
 import { HashMap } from './hash_map';
 import { Texture } from './texture';
-import { BlockAtlas, BlockInfo, FaceInfo } from './block_atlas';
-import { RGB, getAverageColour } from './util';
-import { Triangle } from './triangle';
-import { Mesh, MaterialType } from './mesh';
-import { triangleArea } from './math';
+import { BlockInfo, FaceInfo } from './block_atlas';
+import { Bounds, UV, RGB } from './util';
+import { Triangle, UVTriangle } from './triangle';
+import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { Axes, generateRays, rayIntersectTriangle } from './ray';
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner.js';
 import { AppContext } from './app_context.js';
@@ -16,19 +15,16 @@ interface Block {
     colour?: RGB;
     block?: string
 }
-
 export class VoxelManager {
     public voxels: Array<Block>;
     public voxelTexcoords: Array<FaceInfo>;
     public voxelSize: number;
     public blockPalette: Array<string>;
-    public min = new Vector3( Infinity,  Infinity,  Infinity);
-    public max = new Vector3(-Infinity, -Infinity, -Infinity);
+    public bounds: Bounds;
+    public ambientOcclusionEnabled = true;
 
     private _voxelsHash: HashMap<Vector3, Block>;
-    private _blockMode!: MaterialType;
-    private _currentTexture!: Texture;
-    private _currentColour!: RGB;
+    private _loadedTextures: { [materialName: string]: Texture };
 
     private static _instance: VoxelManager;
 
@@ -40,6 +36,8 @@ export class VoxelManager {
         this.voxelSize = voxelSize;
         this.voxels = [];
         this.voxelTexcoords = [];
+        this._loadedTextures = {};
+        this.bounds = Bounds.getInfiniteBounds();
 
         this._voxelsHash = new HashMap(2048);
         this.blockPalette = [];
@@ -53,9 +51,8 @@ export class VoxelManager {
         this.voxels = [];
         this.voxelTexcoords = [];
         this.blockPalette = [];
-
-        this.min = new Vector3( Infinity,  Infinity,  Infinity);
-        this.max = new Vector3(-Infinity, -Infinity, -Infinity);
+        this._loadedTextures = {};
+        this.bounds = Bounds.getInfiniteBounds();
 
         this._voxelsHash = new HashMap(2048);
     }
@@ -73,92 +70,72 @@ export class VoxelManager {
         }
     }
 
-    public assignBlocks() {
+    public assignBlocks(ditheringEnabled: boolean) {
         this.blockPalette = [];
         this.voxelTexcoords = [];
-        let meanSquaredError = 0.0;
 
         for (let i = 0; i < this.voxels.length; ++i) {
             const voxel = this.voxels[i];
 
-            const averageColour = getAverageColour(voxel.colours!);
-
-            const ditheringEnabled = AppContext.Get.dithering;
+            const averageColour = RGB.averageFrom(voxel.colours!);
             const blockAssigner = ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
             const block = blockAssigner.assignBlock(averageColour, voxel.position);
 
-            const squaredError = Math.pow(255 * (block.colour.r - averageColour.r), 2) + Math.pow(255 * (block.colour.g - averageColour.g), 2) + Math.pow(255 * (block.colour.b - averageColour.b), 2);
-            meanSquaredError += squaredError;
-
             this._assignBlock(i, block);
         }
-
-        meanSquaredError /= this.voxels.length;
-        console.log('Mean Squared Error:', meanSquaredError);
     }
 
     public assignBlankBlocks() {
         this.blockPalette = [];
 
-        const whiteColour = { r: 1.0, g: 1.0, b: 1.0 };
-        const block = new BasicBlockAssigner().assignBlock(whiteColour, new Vector3(0, 0, 0));
+        const block = new BasicBlockAssigner().assignBlock(RGB.white, new Vector3(0, 0, 0));
 
         for (let i = 0; i < this.voxels.length; ++i) {
             this._assignBlock(i, block);
         }
     }
 
-    public addVoxel(pos: Vector3, block: BlockInfo) {
+    public addVoxel(pos: Vector3, colour: RGB) {
         // Is there already a voxel in this position?
         let voxel = this._voxelsHash.get(pos);
         if (voxel !== undefined) {
-            voxel.colours!.push(block.colour);
+            voxel.colours!.push(colour);
         } else {
-            voxel = {position: pos, colours: [block.colour]};
+            voxel = {position: pos, colours: [colour]};
             this.voxels.push(voxel);
             this._voxelsHash.add(pos, voxel);
         }
-
-        this.min = Vector3.min(this.min, pos);
-        this.max = Vector3.max(this.max, pos);
+        this.bounds.extendByPoint(pos);
     }
 
-    private _getVoxelColour(triangle: Triangle, centre: Vector3): RGB {
-        if (this._blockMode === MaterialType.Fill) {
-            return this._currentColour;
+    private _getVoxelColour(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, location: Vector3): RGB {
+        if (material.type == MaterialType.solid) {
+            return material.colour;
         }
 
-        // TODO: Could cache dist values
-        const dist01 = Vector3.sub(triangle.v0.position, triangle.v1.position).magnitude();
-        const dist12 = Vector3.sub(triangle.v1.position, triangle.v2.position).magnitude();
-        const dist20 = Vector3.sub(triangle.v2.position, triangle.v0.position).magnitude();
-
-        const k0 = Vector3.sub(triangle.v0.position, centre).magnitude();
-        const k1 = Vector3.sub(triangle.v1.position, centre).magnitude();
-        const k2 = Vector3.sub(triangle.v2.position, centre).magnitude();
-
-        const area01 = triangleArea(dist01, k0, k1);
-        const area12 = triangleArea(dist12, k1, k2);
-        const area20 = triangleArea(dist20, k2, k0);
+        const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
+        const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
+        const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();
         const total = area01 + area12 + area20;
 
         const w0 = area12 / total;
         const w1 = area20 / total;
         const w2 = area01 / total;
 
-        const uv = {
-            u: triangle.v0.texcoord.u * w0 + triangle.v1.texcoord.u * w1 + triangle.v2.texcoord.u * w2,
-            v: triangle.v0.texcoord.v * w0 + triangle.v1.texcoord.v * w1 + triangle.v2.texcoord.v * w2,
-        };
+        const uv = new UV(
+            triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
+            triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
+        );
 
-        return this._currentTexture.getRGBA(uv);
+        return this._loadedTextures[materialName].getRGB(uv);
     }
 
-    public voxeliseTriangle(triangle: Triangle) {
+    public voxeliseTriangle(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string) {
         const voxelSize = VoxelManager.Get.voxelSize;
-        const v0Scaled = Vector3.divScalar(triangle.v0.position, voxelSize);
-        const v1Scaled = Vector3.divScalar(triangle.v1.position, voxelSize);
-        const v2Scaled = Vector3.divScalar(triangle.v2.position, voxelSize);
+
+        const v0Scaled = Vector3.divScalar(triangle.v0, voxelSize);
+        const v1Scaled = Vector3.divScalar(triangle.v1, voxelSize);
+        const v2Scaled = Vector3.divScalar(triangle.v2, voxelSize);
 
         const rayList = generateRays(v0Scaled, v1Scaled, v2Scaled);
 
@@ -178,36 +155,29 @@ export class VoxelManager {
                     break;
                 }
 
-                const voxelColour = this._getVoxelColour(triangle, Vector3.mulScalar(voxelPosition, voxelSize));
-                const block = BlockAtlas.Get.getBlock(voxelColour);
-
-                this.addVoxel(voxelPosition, block);
+                const voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, voxelSize));
+                this.addVoxel(voxelPosition, voxelColour);
             }
         });
     }
 
-    public paintMesh() {
-        this.assignBlocks();
-    }
+    public voxeliseMesh(desiredHeight: number, ambientOcclusion: boolean) {
+        this.ambientOcclusionEnabled = ambientOcclusion;
 
-    voxeliseMesh(mesh: Mesh) {
+        this.setDesiredHeight(desiredHeight);
+
         this._clearVoxels();
 
-        mesh.materials.forEach((material) => {
-            // Setup material
-            if (material.materialData?.type === MaterialType.Texture) {
-                this._blockMode = MaterialType.Texture;
-                this._currentTexture = new Texture(material.materialData.texturePath, material.materialData.format);
-            } else {
-                this._currentColour = material.materialData!.diffuseColour;
-                this._blockMode = MaterialType.Fill;
+        const mesh = AppContext.Get.loadedMesh!;
+        mesh.tris.forEach((tri, index) => {
+            const material = mesh.materials[tri.material];
+            if (material.type == MaterialType.textured) {
+                if (!(tri.material in this._loadedTextures)) {
+                    this._loadedTextures[tri.material] = new Texture(material.path);
+                }
             }
-            // Handle triangles
-            material.faces.forEach((face) => {
-                this.voxeliseTriangle(face);
-            });
+            const uvTriangle = mesh.getUVTriangle(index);
+            this.voxeliseTriangle(uvTriangle, material, tri.material);
         });
-
-        this.assignBlankBlocks();
     }
 }

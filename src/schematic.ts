@@ -17,7 +17,7 @@ export abstract class Exporter {
     }
 
     export(filePath: string): boolean {
-        this._sizeVector = Vector3.sub(VoxelManager.Get.max, VoxelManager.Get.min).addScalar(1);
+        this._sizeVector = Vector3.sub(VoxelManager.Get.bounds.max, VoxelManager.Get.bounds.min).addScalar(1);
 
         const nbt = this.convertToNBT();
 
@@ -42,7 +42,7 @@ export class Schematic extends Exporter {
 
         const blocksData = Array<number>(bufferSize);
         VoxelManager.Get.voxels.forEach((voxel) => {
-            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
+            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.bounds.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
             blocksData[index] = Block.Stone;
         });
@@ -115,7 +115,7 @@ export class Litematic extends Exporter {
 
         const buffer = Array<BlockID>(bufferSize).fill(0);
         VoxelManager.Get.voxels.forEach((voxel) => {
-            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.min);
+            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.bounds.min);
             const index = this._getBufferIndex(indexVector);
             buffer[index] = blockMapping[voxel.block || 'air'];
         });

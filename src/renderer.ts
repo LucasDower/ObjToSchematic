@@ -6,36 +6,32 @@ import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
 import { BottomlessBuffer, SegmentedBuffer, VoxelData } from './buffer';
 import { GeometryTemplates } from './geometry';
-import { RGB, rgbToArray } from './util';
 import { VoxelManager } from './voxel_manager';
-import { Triangle } from './triangle';
-import { Mesh, FillMaterial, TextureMaterial, MaterialType } from './mesh';
+import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { FaceInfo, BlockAtlas } from './block_atlas';
 import { AppConfig } from './config';
 import { AppContext } from './app_context';
+import { RGB } from './util';
 
 export class Renderer {
     public _gl: WebGLRenderingContext;
 
-    private _backgroundColour: RGB = {r: 0.1, g: 0.1, b: 0.1};
-    private _strokeColour: RGB = {r: 1.0, g: 0.0, b: 0.0};
+    private _backgroundColour = new RGB(0.1, 0.1, 0.1);
     private _atlasTexture: WebGLTexture;
     private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
     private _debug: boolean = false;
     private _compiled: boolean = false;
 
-    private _registerDebug!: SegmentedBuffer;
     private _registerVoxels!: SegmentedBuffer;
     private _registerDefault!: SegmentedBuffer;
     private _materialBuffers: Array<{
         buffer: BottomlessBuffer,
-        material: (FillMaterial | TextureMaterial)
+        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
     private _atlasSize?: number;
 
     private static _instance: Renderer;
-
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
@@ -52,10 +48,6 @@ export class Renderer {
             src: path.join(__dirname, '../resources/blocks.png'),
             mag: this._gl.NEAREST,
         });
-    }
-
-    public set strokeColour(colour: RGB) {
-        this._strokeColour = colour;
     }
 
     public set debug(debug: boolean) {
@@ -146,9 +138,10 @@ export class Renderer {
         new Vector3(0,  0, -1),
     ];
 
-    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo) {
+    // TODO: Perform AO calculations on AddVoxel
+    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo, ambientOcclusionEnabled: boolean) {
         let occlusions: number[][];
-        if (AppContext.Get.ambientOcclusion) {
+        if (ambientOcclusionEnabled) {
             occlusions = this._calculateOcclusions(centre);
         } else {
             occlusions = Renderer._getBlankOcclusions();
@@ -174,6 +167,7 @@ export class Renderer {
                 data.blockTexcoord.push(texcoord.u, texcoord.v);
             }
         }
+        // data.blockTexcoord = new Array(48).fill(0.0);
 
         this._registerVoxels.add(data);
         /*
@@ -192,34 +186,58 @@ export class Renderer {
         */
     }
 
-    public registerTriangle(triangle: Triangle) {
-        const data = GeometryTemplates.getTriangleBufferData(triangle, this._debug);
-        this._registerData(data);
+    public useMesh() {
+        this.clear();
+        this.registerMesh(AppContext.Get.loadedMesh!);
+        this.compile();
     }
 
     public registerMesh(mesh: Mesh) {
+        this._materialBuffers = [];
         this._gl.disable(this._gl.CULL_FACE);
 
-        mesh.materials.forEach((material) => {
+        for (const materialName in mesh.materials) {
             const materialBuffer = new BottomlessBuffer([
                 { name: 'position', numComponents: 3 },
                 { name: 'texcoord', numComponents: 2 },
                 { name: 'normal', numComponents: 3 },
             ]);
 
-            material.faces.forEach((face) => {
-                const data = GeometryTemplates.getTriangleBufferData(face, false);
+            for (let triIndex = 0; triIndex < mesh.tris.length; ++triIndex) {
+                const uvTri = mesh.getUVTriangle(triIndex);
+                const data = GeometryTemplates.getTriangleBufferData(uvTri);
                 materialBuffer.add(data);
-            });
+            }
 
-            this._materialBuffers.push({
-                buffer: materialBuffer,
-                material: material.materialData,
-            });
-        });
+            const material = mesh.materials[materialName];
+            if (material.type == MaterialType.solid) {
+                this._materialBuffers.push({
+                    buffer: materialBuffer,
+                    material: material,
+                });
+            } else {
+                this._materialBuffers.push({
+                    buffer: materialBuffer,
+                    material: {
+                        type: MaterialType.textured,
+                        path: material.path,
+                        texture: twgl.createTexture(this._gl, {
+                            src: material.path,
+                            mag: this._gl.LINEAR,
+                        }),
+                    },
+                });
+            }
+        }
     }
 
-    registerVoxelMesh() {
+    public useVoxelMesh() {
+        this.clear();
+        this.registerVoxelMesh(VoxelManager.Get.ambientOcclusionEnabled);
+        this.compile();
+    }
+
+    registerVoxelMesh(ambientOcclusionEnabled: boolean) {
         this._gl.enable(this._gl.CULL_FACE);
 
         const voxelManager = VoxelManager.Get;
@@ -236,7 +254,7 @@ export class Renderer {
                 const voxel = voxelManager.voxels[i];
                 // const colour = voxelManager.voxelColours[i];
                 const texcoord = voxelManager.voxelTexcoords[i];
-                this._registerVoxel(voxel.position, texcoord);
+                this._registerVoxel(voxel.position, texcoord, ambientOcclusionEnabled);
             }
         }
     }
@@ -247,13 +265,11 @@ export class Renderer {
     }
 
     compile() {
-        this._registerDebug.compile(this._gl);
         this._registerVoxels.compile(this._gl);
 
         this._materialBuffers.forEach((materialBuffer) => {
             materialBuffer.buffer.compile(this._gl);
         });
-
 
         this._compiled = true;
     }
@@ -267,11 +283,6 @@ export class Renderer {
 
         this._setupScene();
 
-        // Draw debug register
-        this._drawRegister(this._registerDebug, this._gl.LINES, ShaderManager.Get.debugProgram, {
-            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-        });
-
         // Draw voxel register
         this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, ShaderManager.Get.aoProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
@@ -283,7 +294,7 @@ export class Renderer {
         // Draw material registers
         const camera = ArcballCamera.Get;
         this._materialBuffers.forEach((materialBuffer) => {
-            if (materialBuffer.material.type == MaterialType.Texture) {
+            if (materialBuffer.material.type == MaterialType.textured) {
                 this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, ShaderManager.Get.shadedTextureProgram, {
                     u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: camera.getWorldViewProjection(),
@@ -295,7 +306,7 @@ export class Renderer {
                     u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: camera.getWorldViewProjection(),
                     u_worldInverseTranspose: camera.getWorldInverseTranspose(),
-                    u_fillColour: rgbToArray(materialBuffer.material.diffuseColour),
+                    u_fillColour: materialBuffer.material.colour.toArray(),
                 });
             }
         });
@@ -369,17 +380,10 @@ export class Renderer {
             }
             this._occlusionNeighboursIndices.push(row);
         }
-        console.log(this._occlusionNeighboursIndices);
     }
 
     _registerData(data: VoxelData) {
-        if (this._debug) {
-            const numVertices = data.position.length / 3;
-            data.colour = [].concat(...new Array(numVertices).fill(rgbToArray(this._strokeColour)));
-            this._registerDebug.add(data);
-        } else {
-            this._registerDefault.add(data);
-        }
+        this._registerDefault.add(data);
     }
 
     _setupScene() {
@@ -403,10 +407,6 @@ export class Renderer {
 
     _getNewBuffers() {
         const bufferSize = 16384 * 16;
-        this._registerDebug = new SegmentedBuffer(bufferSize, [
-            { name: 'position', numComponents: 3, insertIndex: 0 },
-            { name: 'colour', numComponents: 3, insertIndex: 0 },
-        ]);
         this._registerVoxels = new SegmentedBuffer(bufferSize, [
             { name: 'position', numComponents: 3, insertIndex: 0 },
             { name: 'normal', numComponents: 3, insertIndex: 0 },
@@ -416,7 +416,6 @@ export class Renderer {
         ]);
         this._registerDefault = new SegmentedBuffer(bufferSize, [
             { name: 'position', numComponents: 3, insertIndex: 0 },
-            // {name: 'colour', numComponents: 3},
             { name: 'normal', numComponents: 3, insertIndex: 0 },
         ]);
     }

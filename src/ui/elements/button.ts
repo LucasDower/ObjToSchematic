@@ -1,4 +1,4 @@
-import { BaseUIElement } from '../layout';
+import { BaseUIElement } from './base';
 import { assert } from '../../util';
 
 export class ButtonElement extends BaseUIElement {

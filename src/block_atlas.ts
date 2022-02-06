@@ -1,6 +1,7 @@
-import { Vector3 } from './vector';
 import { HashMap } from './hash_map';
 import { UV, RGB } from './util';
+import { Vector3 } from './vector';
+
 import fs from 'fs';
 import path from 'path';
 
@@ -56,13 +57,18 @@ export class BlockAtlas {
         const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
         this._blocks = json.blocks;
+        for (const block of this._blocks) {
+            block.colour = new RGB(
+                block.colour.r,
+                block.colour.g,
+                block.colour.b,
+            );
+        }
     }
 
 
     public getBlock(voxelColour: RGB): BlockInfo {
-        const voxelColourVector = new Vector3(voxelColour.r, voxelColour.g, voxelColour.b);
-
-        const cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
+        const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
         if (cachedBlockIndex) {
             return this._blocks[cachedBlockIndex];
         }
@@ -72,21 +78,16 @@ export class BlockAtlas {
 
         for (let i = 0; i < this._blocks.length; ++i) {
             const block: BlockInfo = this._blocks[i];
-            const blockAvgColour = block.colour;
-            const blockAvgColourVector = new Vector3(
-                blockAvgColour.r,
-                blockAvgColour.g,
-                blockAvgColour.b,
-            );
+            const blockAvgColour = block.colour as RGB;
+            const distance = RGB.distance(blockAvgColour, voxelColour);
 
-            const distance = Vector3.sub(blockAvgColourVector, voxelColourVector).magnitude();
             if (distance < minDistance) {
                 minDistance = distance;
                 blockChoiceIndex = i;
             }
         }
 
-        this._cachedBlocks.add(voxelColourVector, blockChoiceIndex);
+        this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
         return this._blocks[blockChoiceIndex];
     }
 }
