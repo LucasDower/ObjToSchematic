@@ -4,11 +4,10 @@ import path from 'path';
 import { Vector3 } from './vector';
 import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
-import { BottomlessBuffer, SegmentedBuffer, VoxelData } from './buffer';
+import { RenderBuffer } from './buffer';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-import { FaceInfo, BlockAtlas } from './block_atlas';
-import { AppConfig } from './config';
+import { BlockAtlas } from './block_atlas';
 import { LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
@@ -32,9 +31,9 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
 
-    private _buffer: SegmentedBuffer;
+    private _buffer: RenderBuffer;
     private _materialBuffers: Array<{
-        buffer: BottomlessBuffer,
+        buffer: RenderBuffer,
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
 
@@ -45,10 +44,11 @@ export class Renderer {
 
     private constructor() {
         this._gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl')!;
+        twgl.addExtensionsToContext(this._gl);
 
         this._setupOcclusions();
 
-        this._buffer = new SegmentedBuffer(0, []);
+        this._buffer = new RenderBuffer([]);
         this._materialBuffers = [];
 
         this._atlasTexture = twgl.createTexture(this._gl, {
@@ -90,7 +90,7 @@ export class Renderer {
     public useMesh(mesh: Mesh) {
         LOG('Using mesh');
         for (const materialName in mesh.materials) {
-            const materialBuffer = new BottomlessBuffer([
+            const materialBuffer = new RenderBuffer([
                 { name: 'position', numComponents: 3 },
                 { name: 'texcoord', numComponents: 2 },
                 { name: 'normal', numComponents: 3 },
@@ -189,7 +189,7 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
-    private _drawRegister(register: (BottomlessBuffer | SegmentedBuffer), shaderProgram: twgl.ProgramInfo, uniforms: any) {
+    private _drawRegister(register: RenderBuffer, shaderProgram: twgl.ProgramInfo, uniforms: any) {
         for (const buffer of register.WebGLBuffers) {
             this._drawBuffer(this._gl.TRIANGLES, buffer, shaderProgram, uniforms);
         }
@@ -279,6 +279,6 @@ export class Renderer {
         this._gl.useProgram(shader.program);
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
-        this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_SHORT, 0);
+        this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_INT, 0);
     }
 }

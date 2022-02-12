@@ -1,4 +1,4 @@
-import { SegmentedBuffer, VoxelData } from './buffer';
+import { RenderBuffer, VoxelData } from './buffer';
 import { AppConfig } from './config';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
@@ -140,7 +140,7 @@ export class VoxelMesh {
     // //////////////////////////////////////////////////////////////////////////
 
     public createBuffer(ambientOcclusionEnabled: boolean) {
-        const buffer = new SegmentedBuffer(262144, [
+        const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
             { name: 'occlusion', numComponents: 4 },
@@ -159,13 +159,12 @@ export class VoxelMesh {
             }
 
             const data: VoxelData = GeometryTemplates.getBoxBufferData(voxel.position);
-            data.occlusion = occlusions;
+            data.custom.occlusion = occlusions;
 
-            data.colour = [];
+            data.custom.colour = [];
             for (let i = 0; i < 24; ++i) {
-                data.colour.push(voxel.colour.r, voxel.colour.g, voxel.colour.b);
+                data.custom.colour.push(voxel.colour.r, voxel.colour.g, voxel.colour.b);
             }
-
 
             const faceNormals = OcclusionManager.Get.getFaceNormals();
             if (AppConfig.FACE_CULLING) {
@@ -173,12 +172,14 @@ export class VoxelMesh {
                 for (let i = 0; i < 6; ++i) {
                     if (!this.isVoxelAt(Vector3.add(voxel.position, faceNormals[i]))) {
                         buffer.add({
-                            position: data.position.slice(i * 12, (i+1) * 12),
-                            occlusion: data.occlusion.slice(i * 16, (i+1) * 16),
-                            normal: data.normal.slice(i * 12, (i+1) * 12),
+                            custom: {
+                                position: data.custom.position.slice(i * 12, (i+1) * 12),
+                                occlusion: data.custom.occlusion.slice(i * 16, (i+1) * 16),
+                                normal: data.custom.normal.slice(i * 12, (i+1) * 12),
+                                texcoord: data.custom.texcoord.slice(i * 8, (i+1) * 8),
+                                colour: data.custom.colour.slice(i * 12, (i+1) * 12),
+                            },
                             indices: data.indices.slice(0, 6),
-                            texcoord: data.texcoord.slice(i * 8, (i+1) * 8),
-                            colour: data.colour.slice(i * 12, (i+1) * 12),
                         });
                     }
                 }

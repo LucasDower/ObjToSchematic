@@ -2,7 +2,7 @@ import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assig
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
 import { CustomError, LOG } from './util';
-import { SegmentedBuffer, VoxelData } from './buffer';
+import { RenderBuffer, VoxelData } from './buffer';
 import { OcclusionManager } from './occlusion';
 import { GeometryTemplates } from './geometry';
 import { AppConfig } from './config';
@@ -65,7 +65,7 @@ export class BlockMesh {
     }
 
     public createBuffer(ambientOcclusionEnabled: boolean) {
-        const buffer = new SegmentedBuffer(262144, [
+        const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3},
             { name: 'normal', numComponents: 3 },
             { name: 'occlusion', numComponents: 4 },
@@ -84,15 +84,15 @@ export class BlockMesh {
             }
 
             const data: VoxelData = GeometryTemplates.getBoxBufferData(block.voxel.position);
-            data.occlusion = occlusions;
+            data.custom.occlusion = occlusions;
 
             // Assign the textures to each face
-            data.blockTexcoord = [];
+            data.custom.blockTexcoord = [];
             const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
             for (const face of faceOrder) {
                 for (let i = 0; i < 4; ++i) {
                     const texcoord = block.blockInfo.faces[face].texcoord;
-                    data.blockTexcoord.push(texcoord.u, texcoord.v);
+                    data.custom.blockTexcoord.push(texcoord.u, texcoord.v);
                 }
             }
 
@@ -102,13 +102,15 @@ export class BlockMesh {
                 for (let i = 0; i < 6; ++i) {
                     if (!this.getVoxelMesh().isVoxelAt(Vector3.add(block.voxel.position, faceNormals[i]))) {
                         buffer.add({
-                            position: data.position.slice(i * 12, (i+1) * 12),
-                            occlusion: data.occlusion.slice(i * 16, (i+1) * 16),
-                            normal: data.normal.slice(i * 12, (i+1) * 12),
+                            custom: {
+                                position: data.custom.position.slice(i * 12, (i+1) * 12),
+                                occlusion: data.custom.occlusion.slice(i * 16, (i+1) * 16),
+                                normal: data.custom.normal.slice(i * 12, (i+1) * 12),
+                                texcoord: data.custom.texcoord.slice(i * 8, (i+1) * 8),
+                                colour: data.custom.colour.slice(i * 12, (i+1) * 12),
+                                blockTexcoord: data.custom.blockTexcoord.slice(i * 8, (i+1) * 8),
+                            },
                             indices: data.indices.slice(0, 6),
-                            texcoord: data.texcoord.slice(i * 8, (i+1) * 8),
-                            colour: data.colour.slice(i * 12, (i+1) * 12),
-                            blockTexcoord: data.blockTexcoord.slice(i * 8, (i+1) * 8),
                         });
                     }
                 }

@@ -50,8 +50,7 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
-* ⚪ Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
-* ⚪ Node.js C++ addons
+* 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 * ⚪ Alpha support
   * Alpha texture maps
   * Transparent blocks
@@ -59,6 +58,7 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 * ⚪ Import from .gltf
 
 0.6
+* ⚪ Node.js C++ addons
 * ⚪ Block painting
 * ⚪ Building guides
 * ⚪ Slice viewer
