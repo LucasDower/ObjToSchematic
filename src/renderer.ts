@@ -124,10 +124,6 @@ export class Renderer {
             }
         }
 
-        this._materialBuffers.forEach((materialBuffer) => {
-            materialBuffer.buffer.compile(Renderer.Get._gl);
-        });
-
         this._meshToUse = MeshType.TriangleMesh;
     }
     
@@ -135,7 +131,6 @@ export class Renderer {
         LOG('Using voxel mesh');
         LOG(voxelMesh);
         this._buffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
-        this._buffer.compile(this._gl);
         this._meshToUse = MeshType.VoxelMesh;
         this._voxelSize = voxelMesh?.getVoxelSize();
     }
@@ -144,7 +139,6 @@ export class Renderer {
         LOG('Using block mesh');
         LOG(blockMesh);
         this._buffer = blockMesh.createBuffer(ambientOcclusionEnabled);
-        this._buffer.compile(this._gl);
         this._meshToUse = MeshType.BlockMesh;
         this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
     }
@@ -190,9 +184,7 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawRegister(register: RenderBuffer, shaderProgram: twgl.ProgramInfo, uniforms: any) {
-        for (const buffer of register.WebGLBuffers) {
-            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderProgram, uniforms);
-        }
+        this._drawBuffer(this._gl.TRIANGLES, register.getWebGLBuffer(), shaderProgram, uniforms);
     }
 
     private _setupOcclusions() {
