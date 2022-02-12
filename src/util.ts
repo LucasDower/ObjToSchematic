@@ -36,7 +36,7 @@ export class RGB {
     }
 
     public static fromArray(array: number[]): RGB {
-        assert(array.length === 3);
+        ASSERT(array.length === 3);
         return new RGB(array[0], array[1], array[2]);
     }
 
@@ -56,6 +56,10 @@ export class RGB {
 
     public static get black(): RGB {
         return new RGB(0.0, 0.0, 0.0);
+    }
+
+    public static fromVector3(vec: Vector3): RGB {
+        return new RGB(vec.x, vec.y, vec.z);
     }
 
     public toVector3(): Vector3 {
@@ -101,11 +105,36 @@ export class Bounds {
     }
 }
 
-export function assert(condition: boolean, errorMessage = 'Assertion Failed') {
+export function ASSERT(condition: any, errorMessage = 'Assertion Failed'): asserts condition {
     if (AppConfig.ASSERTIONS_ENABLED && !condition) {
         throw Error(errorMessage);
     }
 }
+
+export function LOG(message: any) {
+    if (AppConfig.LOGGING_ENABLED) {
+        /* eslint-disable */
+        console.log(message);
+        /* eslint-enable */
+    }
+}
+
+export function LOG_WARN(message: any) {
+    if (AppConfig.LOGGING_ENABLED) {
+        /* eslint-disable */
+        console.warn(message);
+        /* eslint-enable */
+    }
+}
+
+export function LOG_ERROR(message: any) {
+    if (AppConfig.LOGGING_ENABLED) {
+        /* eslint-disable */
+        console.error(message);
+        /* eslint-enable */
+    }
+}
+
 export class CustomError extends Error {
     constructor(msg: string) {
         super(msg);

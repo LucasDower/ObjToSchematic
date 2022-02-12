@@ -6,12 +6,21 @@ import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
 import { BottomlessBuffer, SegmentedBuffer, VoxelData } from './buffer';
 import { GeometryTemplates } from './geometry';
-import { VoxelManager } from './voxel_manager';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { FaceInfo, BlockAtlas } from './block_atlas';
 import { AppConfig } from './config';
-import { AppContext } from './app_context';
-import { RGB } from './util';
+import { LOG, RGB } from './util';
+import { VoxelMesh } from './voxel_mesh';
+import { BlockMesh } from './block_mesh';
+
+/* eslint-disable */
+enum MeshType {
+    None,
+    TriangleMesh,
+    VoxelMesh,
+    BlockMesh
+}
+/* eslint-enable */
 
 export class Renderer {
     public _gl: WebGLRenderingContext;
@@ -20,16 +29,14 @@ export class Renderer {
     private _atlasTexture: WebGLTexture;
     private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
-    private _debug: boolean = false;
-    private _compiled: boolean = false;
+    private _meshToUse: MeshType = MeshType.None;
+    private _voxelSize: number = 1.0;
 
-    private _registerVoxels!: SegmentedBuffer;
-    private _registerDefault!: SegmentedBuffer;
+    private _buffer: SegmentedBuffer;
     private _materialBuffers: Array<{
         buffer: BottomlessBuffer,
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
-    private _atlasSize?: number;
 
     private static _instance: Renderer;
     public static get Get() {
@@ -39,9 +46,9 @@ export class Renderer {
     private constructor() {
         this._gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl')!;
 
-        this._getNewBuffers();
         this._setupOcclusions();
 
+        this._buffer = new SegmentedBuffer(0, []);
         this._materialBuffers = [];
 
         this._atlasTexture = twgl.createTexture(this._gl, {
@@ -50,152 +57,38 @@ export class Renderer {
         });
     }
 
-    public set debug(debug: boolean) {
-        this._debug = debug;
+    public update() {
+        ArcballCamera.Get.updateCamera();
     }
 
-    public registerBox(centre: Vector3) { // , size: Vector3) {
-        const data = GeometryTemplates.getBoxBufferData(centre, this._debug);
-        this._registerData(data);
+    public draw() {
+        this._setupScene();
+
+        switch (this._meshToUse) {
+        case MeshType.TriangleMesh:
+            this._drawMesh();
+            break;
+        case MeshType.VoxelMesh:
+            this._drawVoxelMesh();
+            break;
+        case MeshType.BlockMesh:
+            this._drawBlockMesh();
+            break;
+        };
     }
 
-    private static _getNeighbourIndex(neighbour: Vector3) {
-        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
-    }
+    // /////////////////////////////////////////////////////////////////////////
 
-    private static _faceNormal = [
+    private static _faceNormals = [
         new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
         new Vector3(0, 1, 0), new Vector3(0, -1, 0),
         new Vector3(0, 0, 1), new Vector3(0, 0, -1),
     ];
 
-    private _calculateOcclusions(centre: Vector3) {
-        const voxelManager = VoxelManager.Get;
+    // /////////////////////////////////////////////////////////////////////////
 
-        // Cache local neighbours
-        const localNeighbourhoodCache = Array<number>(27);
-        for (let i = -1; i <= 1; ++i) {
-            for (let j = -1; j <= 1; ++j) {
-                for (let k = -1; k <= 1; ++k) {
-                    const neighbour = new Vector3(i, j, k);
-                    const neighbourIndex = Renderer._getNeighbourIndex(neighbour);
-                    localNeighbourhoodCache[neighbourIndex] = voxelManager.isVoxelAt(Vector3.add(centre, neighbour)) ? 1 : 0;
-                }
-            }
-        }
-
-        const occlusions = new Array<Array<number>>(6);
-        // For each face
-        for (let f = 0; f < 6; ++f) {
-            occlusions[f] = [1, 1, 1, 1];
-
-            // Only compute ambient occlusion if this face is visible
-            const faceNormal = Renderer._faceNormal[f];
-            const faceNeighbourIndex = Renderer._getNeighbourIndex(faceNormal);
-            const faceVisible = localNeighbourhoodCache[faceNeighbourIndex] === 0;
-
-            if (faceVisible) {
-                for (let v = 0; v < 4; ++v) {
-                    let numNeighbours = 0;
-                    for (let i = 0; i < 2; ++i) {
-                        const neighbourIndex = this._occlusionNeighboursIndices[f][v][i];
-                        numNeighbours += localNeighbourhoodCache[neighbourIndex];
-                    }
-                    // If both edge blocks along this vertex exist,
-                    // assume corner exists (even if it doesnt)
-                    // (This is a stylistic choice)
-                    if (numNeighbours == 2 && AppConfig.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
-                        ++numNeighbours;
-                    } else {
-                        const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
-                        numNeighbours += localNeighbourhoodCache[neighbourIndex];
-                    }
-
-                    // Convert from occlusion denoting the occlusion factor to the
-                    // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-                    occlusions[f][v] = 1.0 - 0.2 * numNeighbours;
-                }
-            }
-        }
-
-        return occlusions;
-    }
-
-    private static _getBlankOcclusions() {
-        const blankOcclusions = new Array<Array<number>>(6);
-        for (let f = 0; f < 6; ++f) {
-            blankOcclusions[f] = [1, 1, 1, 1];
-        }
-        return blankOcclusions;
-    }
-
-    private static readonly _faceNormals  = [
-        new Vector3(1,  0,  0),
-        new Vector3(-1, 0,  0),
-        new Vector3(0,  1,  0),
-        new Vector3(0, -1,  0),
-        new Vector3(0,  0,  1),
-        new Vector3(0,  0, -1),
-    ];
-
-    // TODO: Perform AO calculations on AddVoxel
-    private _registerVoxel(centre: Vector3, blockTexcoord: FaceInfo, ambientOcclusionEnabled: boolean) {
-        let occlusions: number[][];
-        if (ambientOcclusionEnabled) {
-            occlusions = this._calculateOcclusions(centre);
-        } else {
-            occlusions = Renderer._getBlankOcclusions();
-        }
-
-        const data: VoxelData = GeometryTemplates.getBoxBufferData(centre, false);
-
-        // Each vertex of a face needs the occlusion data for the other 3 vertices
-        // in it's face, not just itself. Also flatten occlusion data.
-        data.occlusion = new Array(96);
-        data.blockTexcoord = [];
-        for (let j = 0; j < 6; ++j) {
-            for (let k = 0; k < 16; ++k) {
-                data.occlusion[j * 16 + k] = occlusions[j][k % 4];
-            }
-        }
-
-        // Assign the textures to each face
-        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
-        for (const face of faceOrder) {
-            for (let i = 0; i < 4; ++i) {
-                const texcoord = blockTexcoord[face].texcoord;
-                data.blockTexcoord.push(texcoord.u, texcoord.v);
-            }
-        }
-        // data.blockTexcoord = new Array(48).fill(0.0);
-
-        this._registerVoxels.add(data);
-        /*
-        for (let i = 0; i < 6; ++i) {
-            if (!VoxelManager.Get.isVoxelAt(Vector3.add(centre, Renderer._faceNormals[i]))) {
-                this._registerVoxels.add({
-                    position: data.position.slice(i * 12, (i+1) * 12),
-                    occlusion: data.occlusion.slice(i * 16, (i+1) * 16),
-                    normal: data.normal.slice(i * 12, (i+1) * 12),
-                    indices: data.indices.slice(0, 6),
-                    texcoord: data.texcoord.slice(i * 8, (i+1) * 8),
-                    blockTexcoord: data.blockTexcoord.slice(i * 8, (i+1) * 8),
-                });
-            }
-        }
-        */
-    }
-
-    public useMesh() {
-        this.clear();
-        this.registerMesh(AppContext.Get.loadedMesh!);
-        this.compile();
-    }
-
-    public registerMesh(mesh: Mesh) {
-        this._materialBuffers = [];
-        this._gl.disable(this._gl.CULL_FACE);
-
+    public useMesh(mesh: Mesh) {
+        LOG('Using mesh');
         for (const materialName in mesh.materials) {
             const materialBuffer = new BottomlessBuffer([
                 { name: 'position', numComponents: 3 },
@@ -205,12 +98,13 @@ export class Renderer {
 
             for (let triIndex = 0; triIndex < mesh.tris.length; ++triIndex) {
                 const uvTri = mesh.getUVTriangle(triIndex);
-                const data = GeometryTemplates.getTriangleBufferData(uvTri);
-                materialBuffer.add(data);
+                const triGeom = GeometryTemplates.getTriangleBufferData(uvTri);
+                materialBuffer.add(triGeom);
             }
 
             const material = mesh.materials[materialName];
-            if (material.type == MaterialType.solid) {
+            this._materialBuffers = [];
+            if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
                     buffer: materialBuffer,
                     material: material,
@@ -229,99 +123,82 @@ export class Renderer {
                 });
             }
         }
-    }
-
-    public useVoxelMesh() {
-        this.clear();
-        this.registerVoxelMesh(VoxelManager.Get.ambientOcclusionEnabled);
-        this.compile();
-    }
-
-    registerVoxelMesh(ambientOcclusionEnabled: boolean) {
-        this._gl.enable(this._gl.CULL_FACE);
-
-        const voxelManager = VoxelManager.Get;
-
-        this._atlasSize = BlockAtlas.Get._atlasSize;
-
-        if (this._debug) {
-            voxelManager.voxels.forEach((voxel) => {
-                this.registerBox(voxel.position);
-            });
-        } else {
-            // Setup arrays for calculating voxel ambient occlusion
-            for (let i = 0; i < voxelManager.voxels.length; ++i) {
-                const voxel = voxelManager.voxels[i];
-                // const colour = voxelManager.voxelColours[i];
-                const texcoord = voxelManager.voxelTexcoords[i];
-                this._registerVoxel(voxel.position, texcoord, ambientOcclusionEnabled);
-            }
-        }
-    }
-
-    clear() {
-        this._getNewBuffers();
-        this._materialBuffers = [];
-    }
-
-    compile() {
-        this._registerVoxels.compile(this._gl);
 
         this._materialBuffers.forEach((materialBuffer) => {
-            materialBuffer.buffer.compile(this._gl);
+            materialBuffer.buffer.compile(Renderer.Get._gl);
         });
 
-        this._compiled = true;
+        this._meshToUse = MeshType.TriangleMesh;
+    }
+    
+    public useVoxelMesh(voxelMesh: VoxelMesh, ambientOcclusionEnabled: boolean) {
+        LOG('Using voxel mesh');
+        LOG(voxelMesh);
+        this._buffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
+        this._buffer.compile(this._gl);
+        this._meshToUse = MeshType.VoxelMesh;
+        this._voxelSize = voxelMesh?.getVoxelSize();
+    }
+    
+    public useBlockMesh(blockMesh: BlockMesh, ambientOcclusionEnabled: boolean) {
+        LOG('Using block mesh');
+        LOG(blockMesh);
+        this._buffer = blockMesh.createBuffer(ambientOcclusionEnabled);
+        this._buffer.compile(this._gl);
+        this._meshToUse = MeshType.BlockMesh;
+        this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
     }
 
-    draw() {
-        ArcballCamera.Get.updateCamera();
+    // /////////////////////////////////////////////////////////////////////////
 
-        if (!this._compiled) {
-            return;
-        }
-
-        this._setupScene();
-
-        // Draw voxel register
-        this._drawRegister(this._registerVoxels, this._gl.TRIANGLES, ShaderManager.Get.aoProgram, {
-            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-            u_texture: this._atlasTexture,
-            u_voxelSize: VoxelManager.Get.voxelSize,
-            u_atlasSize: this._atlasSize,
-        });
-
-        // Draw material registers
-        const camera = ArcballCamera.Get;
-        this._materialBuffers.forEach((materialBuffer) => {
-            if (materialBuffer.material.type == MaterialType.textured) {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, ShaderManager.Get.shadedTextureProgram, {
-                    u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
-                    u_worldViewProjection: camera.getWorldViewProjection(),
-                    u_worldInverseTranspose: camera.getWorldInverseTranspose(),
+    private _drawMesh() {
+        for (const materialBuffer of this._materialBuffers) {
+            if (materialBuffer.material.type === MaterialType.textured) {
+                this._drawRegister(materialBuffer.buffer, ShaderManager.Get.textureTriProgram, {
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
                 });
             } else {
-                this._drawRegister(materialBuffer.buffer, this._gl.TRIANGLES, ShaderManager.Get.shadedFillProgram, {
-                    u_lightWorldPos: camera.getCameraPosition(0.0, 0.0),
-                    u_worldViewProjection: camera.getWorldViewProjection(),
-                    u_worldInverseTranspose: camera.getWorldInverseTranspose(),
+                this._drawRegister(materialBuffer.buffer, ShaderManager.Get.solidTriProgram, {
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
+                    u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_fillColour: materialBuffer.material.colour.toArray(),
                 });
             }
-        });
-    }
-
-    _drawRegister(register: (BottomlessBuffer | SegmentedBuffer), drawMode: number, shaderProgram: twgl.ProgramInfo, uniforms: any) {
-        for (const buffer of register.WebGLBuffers) {
-            this._drawBuffer(drawMode, buffer, shaderProgram, uniforms);
         }
     }
 
-    _setupOcclusions() {
+    private _drawVoxelMesh() {
+        this._drawRegister(this._buffer, ShaderManager.Get.voxelProgram, {
+            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+            u_voxelSize: this._voxelSize,
+        });
+    }
+
+    private _drawBlockMesh() {
+        this._drawRegister(this._buffer, ShaderManager.Get.blockProgram, {
+            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+            u_texture: this._atlasTexture,
+            u_voxelSize: this._voxelSize,
+            u_atlasSize: BlockAtlas.Get._atlasSize,
+        });
+    }
+
+    // /////////////////////////////////////////////////////////////////////////
+
+    private _drawRegister(register: (BottomlessBuffer | SegmentedBuffer), shaderProgram: twgl.ProgramInfo, uniforms: any) {
+        for (const buffer of register.WebGLBuffers) {
+            this._drawBuffer(this._gl.TRIANGLES, buffer, shaderProgram, uniforms);
+        }
+    }
+
+    private _setupOcclusions() {
         // TODO: Find some for-loop to clean this up
 
-        // [Edge, Edge, Corrner]
+        // [Edge, Edge, Corner]
         const occlusionNeighbours = [
             [
                 // +X
@@ -382,11 +259,11 @@ export class Renderer {
         }
     }
 
-    _registerData(data: VoxelData) {
-        this._registerDefault.add(data);
+    private static _getNeighbourIndex(neighbour: Vector3) {
+        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
     }
 
-    _setupScene() {
+    private _setupScene() {
         twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement> this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
         ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
@@ -398,27 +275,10 @@ export class Renderer {
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
     }
 
-    _drawBuffer(drawMode: number, buffer: { numElements: number, buffer: twgl.BufferInfo }, shader: twgl.ProgramInfo, uniforms: any) {
+    private _drawBuffer(drawMode: number, buffer: { numElements: number, buffer: twgl.BufferInfo }, shader: twgl.ProgramInfo, uniforms: any) {
         this._gl.useProgram(shader.program);
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
         this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_SHORT, 0);
     }
-
-    _getNewBuffers() {
-        const bufferSize = 16384 * 16;
-        this._registerVoxels = new SegmentedBuffer(bufferSize, [
-            { name: 'position', numComponents: 3, insertIndex: 0 },
-            { name: 'normal', numComponents: 3, insertIndex: 0 },
-            { name: 'occlusion', numComponents: 4, insertIndex: 0 },
-            { name: 'texcoord', numComponents: 2, insertIndex: 0 },
-            { name: 'blockTexcoord', numComponents: 2, insertIndex: 0 },
-        ]);
-        this._registerDefault = new SegmentedBuffer(bufferSize, [
-            { name: 'position', numComponents: 3, insertIndex: 0 },
-            { name: 'normal', numComponents: 3, insertIndex: 0 },
-        ]);
-    }
 }
-
-module.exports.Renderer = Renderer;

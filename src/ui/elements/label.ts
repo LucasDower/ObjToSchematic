@@ -1,4 +1,4 @@
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 
 export class LabelElement {
     private _id: string;
@@ -19,7 +19,7 @@ export class LabelElement {
 
     public setEnabled(isEnabled: boolean) {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         if (isEnabled) {
             element.classList.remove('sub-left-disabled');

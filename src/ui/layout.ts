@@ -4,7 +4,7 @@ import { ComboBoxElement } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { Action, AppContext } from '../app_context';
+import { Action, ActionReturnType, AppContext } from '../app_context';
 
 export interface Group {
     label: string;
@@ -200,5 +200,8 @@ export class UI {
             comp.setEnabled(isEnabled);
         }
         group.submitButton.setEnabled(isEnabled);
+        if (!isEnabled) {
+            group.output.setMessage('', ActionReturnType.Success);
+        }
     }
 }

@@ -36,48 +36,25 @@ export class GeometryTemplates {
         };
     }
 
-    static getBoxBufferData(centre: Vector3, debug: boolean): VoxelData {
-        const a = Vector3.subScalar(centre, 0.5);
-        const b = Vector3.addScalar(centre, 0.5);
+    static getBoxBufferData(centre: Vector3): VoxelData {
+        const cube = {
+            position: new Float32Array(72),
+            texcoord: new Float32Array(48),
+            normal: new Float32Array(72),
+            indices: new Uint16Array(72),
+        };
 
-        if (debug) {
-            return {
-                position: new Float32Array([
-                    a.x, a.y, a.z,
-                    b.x, a.y, a.z,
-                    b.x, b.y, a.z,
-                    a.x, b.y, a.z,
-                    a.x, a.y, b.z,
-                    b.x, a.y, b.z,
-                    b.x, b.y, b.z,
-                    a.x, b.y, b.z,
-                ]),
-                indices: new Uint16Array([
-                    0, 1, 1, 2, 2, 3, 3, 0,
-                    4, 5, 5, 6, 6, 7, 7, 4,
-                    0, 4, 1, 5, 2, 6, 3, 7,
-                ]),
-            };
-        } else {
-            const cube = {
-                position: new Float32Array(72),
-                texcoord: new Float32Array(48),
-                normal: new Float32Array(72),
-                indices: new Uint16Array(72),
-            };
+        cube.position.set(GeometryTemplates._default_cube.position);
+        cube.normal.set(GeometryTemplates._default_cube.normal);
+        cube.indices.set(GeometryTemplates._default_cube.indices);
+        cube.texcoord.set(GeometryTemplates._default_cube.texcoord);
 
-            cube.position.set(GeometryTemplates._default_cube.position);
-            cube.normal.set(GeometryTemplates._default_cube.normal);
-            cube.indices.set(GeometryTemplates._default_cube.indices);
-            cube.texcoord.set(GeometryTemplates._default_cube.texcoord);
-
-            for (let i = 0; i < 72; i += 3) {
-                cube.position[i + 0] += centre.x;
-                cube.position[i + 1] += centre.y;
-                cube.position[i + 2] += centre.z;
-            }
-
-            return cube;
+        for (let i = 0; i < 72; i += 3) {
+            cube.position[i + 0] += centre.x;
+            cube.position[i + 1] += centre.y;
+            cube.position[i + 2] += centre.z;
         }
+
+        return cube;
     }
 }

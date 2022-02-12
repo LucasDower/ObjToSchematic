@@ -4,7 +4,7 @@ import images from "images";
 import { RGB, UV } from "../src/util";
 import { log, LogStyle } from "./logging";
 import { PNG } from "pngjs";
-import { isDirSetup, assert, getAverageColour } from "./misc";
+import { isDirSetup, ASSERT, getAverageColour } from "./misc";
 import chalk from "chalk";
 import prompt from "prompt";
 const AdmZip = require("adm-zip");
@@ -80,10 +80,10 @@ const buildAtlas = () => {
     log(LogStyle.None, "Checking Minecraft assets are provided...");   
 
     const texturesDirSetup = isDirSetup("./models", "assets/minecraft/textures/block");
-    assert(texturesDirSetup, "/blocks is not setup correctly");
+    ASSERT(texturesDirSetup, "/blocks is not setup correctly");
     
     const modelsDirSetup = isDirSetup("./models", "assets/minecraft/models/block");
-    assert(modelsDirSetup, "/models is not setup correctly");
+    ASSERT(modelsDirSetup, "/models is not setup correctly");
 
     // Load the ignore list
     log(LogStyle.None, "Loading ignore list...")

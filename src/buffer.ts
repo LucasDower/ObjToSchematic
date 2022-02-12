@@ -58,9 +58,9 @@ export class SegmentedBuffer {
     private _indicesInsertIndex: number = 0;
     private _maxIndex: number = 0;
     private _compiled: boolean = false;
-    private _sanityCheck: boolean = false;
+    private _sanityCheck: boolean = true;
 
-    constructor(bufferSize: number, attributes: Array<IndexedAttributed>) {
+    constructor(bufferSize: number, attributes: Array<Attribute>) {
         this._bufferSize = bufferSize;
         this._completeBuffers = [];
         this.WebGLBuffers = [];

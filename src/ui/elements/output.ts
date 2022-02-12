@@ -1,4 +1,4 @@
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 import { ActionReturnType } from '../../app_context';
 
 export class OutputElement {
@@ -17,7 +17,7 @@ export class OutputElement {
 
     public setMessage(message: string, returnType: ActionReturnType) {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         element.innerHTML = message;
         element.classList.remove('border-warning');

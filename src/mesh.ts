@@ -1,11 +1,7 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, assert } from './util';
+import { UV, Bounds, ASSERT, LOG } from './util';
 import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
-// import { ReturnStatus } from './app_context';
-
-// const meshSimplify = require('mesh-simplify');
-const meshSimplify = require('./simplify');
 
 export interface Tri {
     iX: number;
@@ -33,6 +29,8 @@ export class Mesh {
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
+        LOG('New mesh');
+
         this.vertices = vertices;
         this.uvs = uvs;
         this.tris = tris;
@@ -111,8 +109,9 @@ export class Mesh {
         );
     }
 
+    /*
     public simplify(ratio: number) {
-        assert(ratio > 0.0 && ratio <= 1.0);
+        ASSERT(ratio > 0.0 && ratio <= 1.0);
         const cells: Array<number[]> = Array(this.tris.length);
         this.tris.forEach((tris, index) => {
             cells[index] = [tris.iX, tris.iY, tris.iZ];
@@ -122,7 +121,6 @@ export class Mesh {
             positions[index] = vertex.toArray();
         });
         const targetNumTris = positions.length * ratio;
-        console.log('target num tris', targetNumTris);
         const simplified = meshSimplify(cells, positions)(targetNumTris);
 
         const placeHolderMat = this.tris[0].material;
@@ -144,6 +142,7 @@ export class Mesh {
             this.vertices[index] = Vector3.fromArray(position);
         });
     }
+    */
 
     public copy(): Mesh {
         return new Mesh(this.vertices, this.uvs, this.tris, this.materials);

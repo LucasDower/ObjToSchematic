@@ -2,13 +2,13 @@ import * as zlib from 'zlib';
 import * as fs from 'fs';
 import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
 import { Vector3 } from './vector';
-import { VoxelManager } from './voxel_manager';
 import { Block } from './block_atlas';
+import { BlockMesh } from './block_mesh';
 
 export abstract class Exporter {
     protected _sizeVector!: Vector3;
 
-    public abstract convertToNBT(): NBT
+    public abstract convertToNBT(blockMesh: BlockMesh): NBT
     abstract getFormatFilter(): Electron.FileFilter;
     abstract getFormatName(): string;
 
@@ -16,10 +16,11 @@ export abstract class Exporter {
         return;
     }
 
-    export(filePath: string): boolean {
-        this._sizeVector = Vector3.sub(VoxelManager.Get.bounds.max, VoxelManager.Get.bounds.min).addScalar(1);
+    export(blockMesh: BlockMesh, filePath: string): boolean {
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        this._sizeVector = Vector3.sub(bounds.max, bounds.min).addScalar(1);
 
-        const nbt = this.convertToNBT();
+        const nbt = this.convertToNBT(blockMesh);
 
         const outBuffer = fs.createWriteStream(filePath);
         const newBuffer = writeUncompressed(nbt, 'big');
@@ -37,15 +38,18 @@ export abstract class Exporter {
 }
 
 export class Schematic extends Exporter {
-    convertToNBT() {
+    public override convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         const blocksData = Array<number>(bufferSize);
-        VoxelManager.Get.voxels.forEach((voxel) => {
-            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.bounds.min);
+        const bounds = blockMesh.getVoxelMesh().getBounds();
+
+        const blocks = blockMesh.getBlocks();
+        for (const block of blocks) {
+            const indexVector = Vector3.sub(block.voxel.position, bounds.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
             blocksData[index] = Block.Stone;
-        });
+        }
 
         const nbt: NBT = {
             type: TagType.Compound,
@@ -98,8 +102,8 @@ export class Litematic extends Exporter {
         return (this._sizeVector.z * this._sizeVector.x * vec.y) + (this._sizeVector.x * vec.z) + vec.x;
     }
 
-    _createBlockMapping(): BlockMapping {
-        const blockPalette = VoxelManager.Get.blockPalette;
+    _createBlockMapping(blockMesh: BlockMesh): BlockMapping {
+        const blockPalette = blockMesh.getBlockPalette();
 
         const blockMapping: BlockMapping = { 'air': 0 };
         for (let i = 0; i < blockPalette.length; ++i) {
@@ -110,21 +114,24 @@ export class Litematic extends Exporter {
         return blockMapping;
     }
 
-    _createBlockBuffer(blockMapping: BlockMapping): Array<BlockID> {
+    _createBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping): Array<BlockID> {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         const buffer = Array<BlockID>(bufferSize).fill(0);
-        VoxelManager.Get.voxels.forEach((voxel) => {
-            const indexVector = Vector3.sub(voxel.position, VoxelManager.Get.bounds.min);
+        const blocks = blockMesh.getBlocks();
+        const bounds = blockMesh.getVoxelMesh().getBounds();
+
+        for (const block of blocks) {
+            const indexVector = Vector3.sub(block.voxel.position, bounds.min);
             const index = this._getBufferIndex(indexVector);
-            buffer[index] = blockMapping[voxel.block || 'air'];
-        });
+            buffer[index] = blockMapping[block.blockInfo.name || 'air'];
+        }
 
         return buffer;
     }
 
-    _createBlockStates(blockMapping: BlockMapping) {
-        const blockEncoding = this._encodeBlockBuffer(blockMapping);
+    _createBlockStates(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+        const blockEncoding = this._encodeBlockBuffer(blockMesh, blockMapping);
 
         const blockStates = new Array<long>();
 
@@ -146,8 +153,8 @@ export class Litematic extends Exporter {
         return blockStates;
     }
 
-    _encodeBlockBuffer(blockMapping: BlockMapping) {
-        const blockBuffer = this._createBlockBuffer(blockMapping);
+    _encodeBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+        const blockBuffer = this._createBlockBuffer(blockMesh, blockMapping);
 
         const paletteSize = Object.keys(blockMapping).length;
         let stride = (paletteSize - 1).toString(2).length;
@@ -176,12 +183,13 @@ export class Litematic extends Exporter {
         return blockStatePalette;
     }
 
-    convertToNBT() {
+    convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
-        const blockMapping = this._createBlockMapping();
+        const blockMapping = this._createBlockMapping(blockMesh);
 
-        const blockStates = this._createBlockStates(blockMapping);
+        const blockStates = this._createBlockStates(blockMesh, blockMapping);
         const blockStatePalette = this._createBlockStatePalette(blockMapping);
+        const numBlocks = blockMesh.getBlocks().length;
 
         const nbt: NBT = {
             type: TagType.Compound,
@@ -202,7 +210,7 @@ export class Litematic extends Exporter {
                         RegionCount: { type: TagType.Int, value: 1 },
                         TimeCreated: { type: TagType.Long, value: [0, 0] },
                         TimeModified: { type: TagType.Long, value: [0, 0] },
-                        TotalBlocks: { type: TagType.Int, value: VoxelManager.Get.voxels.length },
+                        TotalBlocks: { type: TagType.Int, value: numBlocks },
                         TotalVolume: { type: TagType.Int, value: bufferSize },
                     },
                 },

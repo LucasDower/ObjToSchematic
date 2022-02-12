@@ -1,4 +1,4 @@
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 import { clamp } from '../../math';
 import { LabelledElement } from './labelled_element';
 
@@ -35,7 +35,7 @@ export class SliderElement extends LabelledElement {
 
     public registerEvents() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         element.onmousedown = () => {
             this._dragging = true;
@@ -63,7 +63,7 @@ export class SliderElement extends LabelledElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        assert(element !== null && elementBar !== null && elementValue !== null);
+        ASSERT(element !== null && elementBar !== null && elementValue !== null);
 
 
         const mouseEvent = e as MouseEvent;
@@ -87,7 +87,7 @@ export class SliderElement extends LabelledElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        assert(element !== null && elementBar !== null && elementValue !== null);
+        ASSERT(element !== null && elementBar !== null && elementValue !== null);
 
         if (this._isEnabled) {
             element.classList.remove('new-slider-disabled');

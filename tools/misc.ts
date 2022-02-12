@@ -3,7 +3,7 @@ import path from "path";
 import { PNG, PNGWithMetadata } from "pngjs";
 import { log, LogStyle } from "./logging";
 
-export const assert = (condition: boolean, onFailMessage: string) => { if (!condition) { log(LogStyle.Failure, onFailMessage); process.exit(0); } }
+export const ASSERT = (condition: boolean, onFailMessage: string) => { if (!condition) { log(LogStyle.Failure, onFailMessage); process.exit(0); } }
 
 export function isDirSetup(relativePath: string, jarAssetDir: string) {
     const dir = path.join(__dirname, relativePath)

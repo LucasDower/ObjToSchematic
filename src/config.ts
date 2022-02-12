@@ -8,4 +8,6 @@ export namespace AppConfig {
     export const LOGGING_ENABLED = true;
 
     export const ASSERTIONS_ENABLED = true;
+
+    export const FACE_CULLING = false;
 }

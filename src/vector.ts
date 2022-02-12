@@ -1,5 +1,5 @@
 import { Hashable } from './hash_map';
-import { assert } from './util';
+import { ASSERT } from './util';
 
 export class Vector3 extends Hashable {
     public x: number;
@@ -14,7 +14,7 @@ export class Vector3 extends Hashable {
     }
 
     static fromArray(arr: number[]) {
-        assert(arr.length === 3);
+        ASSERT(arr.length === 3);
         return new Vector3(arr[0], arr[1], arr[2]);
     }
 

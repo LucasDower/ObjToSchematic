@@ -120,6 +120,7 @@ canvas {
   min-height: 22px;
   border: 1.5px solid #141414;
   transition-duration: 1s;
+  overflow-wrap: anywhere;
 }
 
 .round-top {

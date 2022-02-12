@@ -1,4 +1,4 @@
-import { UV, assert, CustomError } from './util';
+import { UV, ASSERT, CustomError } from './util';
 import { RGB } from './util';
 
 import * as fs from 'fs';
@@ -21,7 +21,7 @@ export class Texture {
     };
 
     constructor(filename: string) {
-        assert(path.isAbsolute(filename));
+        ASSERT(path.isAbsolute(filename));
         const filePath = path.parse(filename);
         try {
             const data = fs.readFileSync(filename);
@@ -36,7 +36,7 @@ export class Texture {
                 throw new CustomError(`Unexpected image resolution mismatch: ${filename}`);
             }
         } catch (err) {
-            throw Error(`Could not parse ${filename}`);
+            throw new CustomError(`Could not read ${filename}`);
         }
     }
 

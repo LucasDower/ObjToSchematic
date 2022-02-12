@@ -6,7 +6,7 @@ const mtlParser = require('mtltojs');
 import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, assert, RGB } from '../util';
+import { UV, ASSERT, RGB, LOG_WARN } from '../util';
 
 export class ObjImporter extends IImporter {
     private _vertices!: Vector3[];
@@ -16,12 +16,12 @@ export class ObjImporter extends IImporter {
     private _mtlLibs!: string[];
 
     override createMesh(filePath: string): Mesh {
-        assert(path.isAbsolute(filePath));
+        ASSERT(path.isAbsolute(filePath));
         this._parseOBJ(filePath);
 
-        assert(this._mtlLibs.length > 0);
+        ASSERT(this._mtlLibs.length > 0);
         if (this._mtlLibs.length > 1) {
-            console.warn('Multiple mtl libs found, only the first will be used');
+            LOG_WARN('Multiple mtl libs found, only the first will be used');
         }
         let mtlPath = this._mtlLibs[0];
         if (!path.isAbsolute(mtlPath)) {
@@ -29,7 +29,7 @@ export class ObjImporter extends IImporter {
             mtlPath = path.join(objPath.dir, mtlPath);
         }
 
-        assert(path.isAbsolute(mtlPath));
+        ASSERT(path.isAbsolute(mtlPath));
         this._parseMTL(mtlPath);
 
         return new Mesh(this._vertices, this._uvs, this._tris, this._materials);
@@ -112,7 +112,7 @@ export class ObjImporter extends IImporter {
                 const rgb = material.diffuse.vals;
                 this._materials[material.name] = { type: MaterialType.solid, colour: RGB.fromArray(rgb) };
             } else {
-                assert(false);
+                ASSERT(false);
             }
         }
     }

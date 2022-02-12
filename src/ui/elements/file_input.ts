@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 
 import { remote } from 'electron';
 import * as path from 'path';
@@ -24,7 +24,7 @@ export class FileInputElement extends LabelledElement {
 
     public registerEvents(): void {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         element.onclick = () => {
             if (!this._isEnabled) {
@@ -58,7 +58,7 @@ export class FileInputElement extends LabelledElement {
         super._onEnabledChanged();
 
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         if (this._isEnabled) {
             element.classList.remove('input-text-disabled');
