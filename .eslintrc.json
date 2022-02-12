@@ -23,6 +23,10 @@
         "no-multi-spaces": "off",
         "no-array-constructor": "off",
         "guard-for-in": "off",
-        "func-call-spacing": "off"
+        "func-call-spacing": "off",
+        "no-trailing-spaces": "off",
+        "new-cap": "off",
+        "no-console": "error",
+        "no-unused-vars": "warn"
     }
 }
