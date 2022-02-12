@@ -2,11 +2,12 @@ import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assig
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
 import { CustomError, LOG } from './util';
-import { RenderBuffer, VoxelData } from './buffer';
+import { RenderBuffer, VoxelData, Attribute } from './buffer';
 import { OcclusionManager } from './occlusion';
 import { GeometryTemplates } from './geometry';
 import { AppConfig } from './config';
 import { Vector3 } from './vector';
+import { Renderer } from './renderer';
 
 interface Block {
     voxel: Voxel;
@@ -65,59 +66,21 @@ export class BlockMesh {
     }
 
     public createBuffer(ambientOcclusionEnabled: boolean) {
-        const buffer = new RenderBuffer([
-            { name: 'position', numComponents: 3},
-            { name: 'normal', numComponents: 3 },
-            { name: 'occlusion', numComponents: 4 },
-            { name: 'texcoord', numComponents: 2 },
-            { name: 'blockTexcoord', numComponents: 2 },
-        ]);
+        // const buffer = this.getVoxelMesh().createBuffer(ambientOcclusionEnabled);
+        const buffer = Renderer.Get._voxelBuffer.copy();
 
+        const blockTexcoords: number[] = [];
         for (const block of this._blocks) {
-            // Each vertex of a face needs the occlusion data for the other 3 vertices
-            // in it's face, not just itself. Also flatten occlusion data.
-            let occlusions: number[];
-            if (ambientOcclusionEnabled) {
-                occlusions = OcclusionManager.Get.getOcclusions(block.voxel.position, this.getVoxelMesh());
-            } else {
-                occlusions = OcclusionManager.Get.getBlankOcclusions();
-            }
-
-            const data: VoxelData = GeometryTemplates.getBoxBufferData(block.voxel.position);
-            data.custom.occlusion = occlusions;
-
-            // Assign the textures to each face
-            data.custom.blockTexcoord = [];
             const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
             for (const face of faceOrder) {
                 for (let i = 0; i < 4; ++i) {
                     const texcoord = block.blockInfo.faces[face].texcoord;
-                    data.custom.blockTexcoord.push(texcoord.u, texcoord.v);
+                    blockTexcoords.push(texcoord.u, texcoord.v);
                 }
-            }
-
-            const faceNormals = OcclusionManager.Get.getFaceNormals();
-            if (AppConfig.FACE_CULLING) {
-                // TODO: Optmise, enabling FACE_CULLING is slower than not bothering
-                for (let i = 0; i < 6; ++i) {
-                    if (!this.getVoxelMesh().isVoxelAt(Vector3.add(block.voxel.position, faceNormals[i]))) {
-                        buffer.add({
-                            custom: {
-                                position: data.custom.position.slice(i * 12, (i+1) * 12),
-                                occlusion: data.custom.occlusion.slice(i * 16, (i+1) * 16),
-                                normal: data.custom.normal.slice(i * 12, (i+1) * 12),
-                                texcoord: data.custom.texcoord.slice(i * 8, (i+1) * 8),
-                                colour: data.custom.colour.slice(i * 12, (i+1) * 12),
-                                blockTexcoord: data.custom.blockTexcoord.slice(i * 8, (i+1) * 8),
-                            },
-                            indices: data.indices.slice(0, 6),
-                        });
-                    }
-                }
-            } else {
-                buffer.add(data);
             }
         }
+        buffer.attachNewAttribute({ name: 'blockTexcoord', numComponents: 2 }, blockTexcoords);
+        buffer.removeAttribute('colour');
 
         return buffer;
     }

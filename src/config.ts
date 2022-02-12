@@ -10,4 +10,6 @@ export namespace AppConfig {
     export const ASSERTIONS_ENABLED = true;
 
     export const FACE_CULLING = false;
+
+    export const DEBUG_ENABLED = true;
 }

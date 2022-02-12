@@ -31,7 +31,8 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
 
-    private _buffer: RenderBuffer;
+    public _voxelBuffer: RenderBuffer;
+    private _blockBuffer: RenderBuffer;
     private _materialBuffers: Array<{
         buffer: RenderBuffer,
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
@@ -48,7 +49,8 @@ export class Renderer {
 
         this._setupOcclusions();
 
-        this._buffer = new RenderBuffer([]);
+        this._voxelBuffer = new RenderBuffer([]);
+        this._blockBuffer = new RenderBuffer([]);
         this._materialBuffers = [];
 
         this._atlasTexture = twgl.createTexture(this._gl, {
@@ -130,7 +132,7 @@ export class Renderer {
     public useVoxelMesh(voxelMesh: VoxelMesh, ambientOcclusionEnabled: boolean) {
         LOG('Using voxel mesh');
         LOG(voxelMesh);
-        this._buffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
+        this._voxelBuffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
         this._meshToUse = MeshType.VoxelMesh;
         this._voxelSize = voxelMesh?.getVoxelSize();
     }
@@ -138,7 +140,7 @@ export class Renderer {
     public useBlockMesh(blockMesh: BlockMesh, ambientOcclusionEnabled: boolean) {
         LOG('Using block mesh');
         LOG(blockMesh);
-        this._buffer = blockMesh.createBuffer(ambientOcclusionEnabled);
+        this._blockBuffer = blockMesh.createBuffer(ambientOcclusionEnabled);
         this._meshToUse = MeshType.BlockMesh;
         this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
     }
@@ -166,14 +168,14 @@ export class Renderer {
     }
 
     private _drawVoxelMesh() {
-        this._drawRegister(this._buffer, ShaderManager.Get.voxelProgram, {
+        this._drawRegister(this._voxelBuffer, ShaderManager.Get.voxelProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
         });
     }
 
     private _drawBlockMesh() {
-        this._drawRegister(this._buffer, ShaderManager.Get.blockProgram, {
+        this._drawRegister(this._blockBuffer, ShaderManager.Get.blockProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,

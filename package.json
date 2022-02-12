@@ -46,7 +46,6 @@
     "eslint-config-google": "^0.14.0",
     "expand-vertex-data": "^1.1.2",
     "jpeg-js": "^0.4.3",
-    "mesh-simplify": "^2.0.0",
     "mtltojs": "^0.2.1",
     "obj-file-parser": "^0.5.3",
     "pngjs": "^6.0.0",

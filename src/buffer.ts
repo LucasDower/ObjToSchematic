@@ -1,9 +1,10 @@
 import { Renderer } from './renderer';
+import { ASSERT, LOG } from './util';
+import { AppConfig } from './config';
 
 import * as twgl from 'twgl.js';
-import { ASSERT } from './util';
 
-interface Attribute {
+export interface Attribute {
     name: string,
     numComponents: number
 }
@@ -32,13 +33,11 @@ export class RenderBuffer {
     };
     private _buffer!: BottomlessBufferData;
     private _attributes: {[name: string]: Attribute};
-    private _maxIndex: number = 0;
-    private _compiled: boolean = false;
-    private _sanityCheck: boolean = false;
+    private _maxIndex: number;
+    private _compiled: boolean;
+    private _needsCompiling: boolean;
 
     public constructor(attributes: Array<Attribute>) {
-        this._compiled = false;
-
         this._attributes = {};
         for (const attr of attributes) {
             this._attributes[attr.name] = {
@@ -46,15 +45,19 @@ export class RenderBuffer {
                 numComponents: attr.numComponents,
             };
         }
-
+        
+        this._needsCompiling = false;
+        this._compiled = false;
         this._maxIndex = 0;
 
         this._getNewBuffer();
     }
 
     public add(data: VoxelData) {
-        if (this._sanityCheck) {
-            this._checkDataMatchesAttributes(data);
+        ASSERT(!this._compiled);
+
+        if (AppConfig.DEBUG_ENABLED) {
+            // this._checkDataMatchesAttributes(data);
         }
 
         const mappedIndicesToAdd = new Array<number>(data.indices.length);
@@ -70,14 +73,27 @@ export class RenderBuffer {
         for (const attr in this._attributes) {
             this._buffer[attr].data.push(...data.custom[attr]);
         }
+
+        this._needsCompiling = true;
     }
 
-    public attachNewAttribute(data: VoxelData) {
-
+    public attachNewAttribute(attribute: Attribute, data: Array<number>) {
+        ASSERT(this._buffer[attribute.name] === undefined, 'Attribute already exists in buffer');
+        ASSERT(this._attributes[attribute.name] === undefined, 'Attribute already exists in attributes');
+        const expectedDataLength = this._maxIndex * attribute.numComponents;
+        ASSERT(data.length === expectedDataLength, `Data length expected to be ${expectedDataLength}, got ${data.length}`);
+        this._buffer[attribute.name] = {
+            numComponents: attribute.numComponents,
+            data: data,
+        };
+        this._attributes[attribute.name] = attribute;
+        this._needsCompiling = true;
     }
 
-    public removeAttribute(attribute: string) {
-
+    public removeAttribute(attributeName: string) {
+        delete this._buffer[attributeName];
+        delete this._attributes[attributeName];
+        this._needsCompiling = true;
     }
 
     public getWebGLBuffer() {
@@ -87,7 +103,7 @@ export class RenderBuffer {
     }
 
     private _compile() {
-        if (this._compiled) {
+        if (this._compiled && !this._needsCompiling) {
             return;
         }
 
@@ -109,6 +125,7 @@ export class RenderBuffer {
         };
 
         this._compiled = true;
+        this._needsCompiling = false;
     }
 
     private _getNewBuffer() {
@@ -141,5 +158,30 @@ export class RenderBuffer {
                 throw Error(`Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data.custom[attr].length}`);
             }
         }
+    }
+
+    public copy(): RenderBuffer {
+        const copiedBuffer = new RenderBuffer([]);
+
+        copiedBuffer._buffer = {
+            indices: {
+                numComponents: this._buffer.indices.numComponents,
+                data: Array.from(this._buffer.indices.data),
+            },
+        };
+        for (const key in this._buffer) {
+            if (key !== 'indices') {
+                copiedBuffer._buffer[key] = {
+                    numComponents: this._buffer[key].numComponents,
+                    data: Array.from(this._buffer[key].data),
+                };
+            }
+        }
+
+        copiedBuffer._attributes = JSON.parse(JSON.stringify(this._attributes));
+        copiedBuffer._maxIndex = this._maxIndex;
+        copiedBuffer._compiled = false;
+        copiedBuffer._needsCompiling = true;
+        return copiedBuffer;
     }
 }
