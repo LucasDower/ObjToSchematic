@@ -144,23 +144,23 @@ export class AppContext {
     private _voxelise() {
         const desiredHeight = UI.Get.layout.build.elements.height.getValue();
         const ambientOcclusion = UI.Get.layout.build.elements.ambientOcclusion.getValue() === 'on';
+        const multisampleColouring = UI.Get.layout.build.elements.multisampleColouring.getValue() === 'on';
 
         ASSERT(this._loadedMesh);
-        this._loadedVoxelMesh = new VoxelMesh(desiredHeight, ambientOcclusion);
-        this._loadedVoxelMesh.voxelise(this._loadedMesh);
+        this._loadedVoxelMesh = new VoxelMesh(desiredHeight);
+        this._loadedVoxelMesh.voxelise(this._loadedMesh, multisampleColouring);
 
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusion);
     }
 
     private _palette() {
         const ditheringEnabled = UI.Get.layout.palette.elements.dithering.getValue() === 'on';
-        const ambientOcclusion = UI.Get.layout.build.elements.ambientOcclusion.getValue() === 'on';
 
         ASSERT(this._loadedVoxelMesh);
         this._loadedBlockMesh = new BlockMesh(ditheringEnabled);
         this._loadedBlockMesh.assignBlocks(this._loadedVoxelMesh);
 
-        Renderer.Get.useBlockMesh(this._loadedBlockMesh, ambientOcclusion);
+        Renderer.Get.useBlockMesh(this._loadedBlockMesh);
     }
 
     private _export() {

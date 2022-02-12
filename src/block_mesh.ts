@@ -60,8 +60,7 @@ export class BlockMesh {
         return this._voxelMesh;
     }
 
-    public createBuffer(ambientOcclusionEnabled: boolean) {
-        // const buffer = this.getVoxelMesh().createBuffer(ambientOcclusionEnabled);
+    public createBuffer() {
         const buffer = Renderer.Get._voxelBuffer.copy();
 
         const blockTexcoords: number[] = [];

@@ -137,10 +137,10 @@ export class Renderer {
         this._voxelSize = voxelMesh?.getVoxelSize();
     }
     
-    public useBlockMesh(blockMesh: BlockMesh, ambientOcclusionEnabled: boolean) {
+    public useBlockMesh(blockMesh: BlockMesh) {
         LOG('Using block mesh');
         LOG(blockMesh);
-        this._blockBuffer = blockMesh.createBuffer(ambientOcclusionEnabled);
+        this._blockBuffer = blockMesh.createBuffer();
         this._meshToUse = MeshType.BlockMesh;
         this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
     }

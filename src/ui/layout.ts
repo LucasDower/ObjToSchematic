@@ -46,8 +46,12 @@ export class UI {
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off (faster)' },
                 ]),
+                'multisampleColouring': new ComboBoxElement('Multisample Colouring', [
+                    { id: 'on', displayText: 'On (recommended)' },
+                    { id: 'off', displayText: 'Off (faster)' },
+                ]),
             },
-            elementsOrder: ['height', 'ambientOcclusion'],
+            elementsOrder: ['height', 'ambientOcclusion', 'multisampleColouring'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 AppContext.Get.do(Action.Voxelise);
             }),

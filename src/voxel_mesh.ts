@@ -18,17 +18,15 @@ export interface Voxel {
 
 export class VoxelMesh {
     private _voxelSize: number;
-    private _ambientOcclusionEnabled: boolean;
     private _voxels: Voxel[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _loadedTextures: { [materialName: string]: Texture };
     private _bounds: Bounds;
 
-    public constructor(desiredHeight: number, ambientOcclusionEnabled: boolean) {
+    public constructor(desiredHeight: number) {
         LOG('New voxel mesh');
 
         this._voxelSize = 8.0 / Math.round(desiredHeight);
-        this._ambientOcclusionEnabled = ambientOcclusionEnabled;
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._loadedTextures = {};
@@ -43,7 +41,7 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
-    public voxelise(mesh: Mesh) {
+    public voxelise(mesh: Mesh, multisampleColouring: boolean) {
         LOG('Voxelising');
 
         mesh.tris.forEach((tri, index) => {
@@ -54,11 +52,11 @@ export class VoxelMesh {
                 }
             }
             const uvTriangle = mesh.getUVTriangle(index);
-            this._voxeliseTri(uvTriangle, material, tri.material);
+            this._voxeliseTri(uvTriangle, material, tri.material, multisampleColouring);
         });
     }
 
-    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string) {
+    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, multisampleColouring: boolean) {
         const v0Scaled = Vector3.divScalar(triangle.v0, this._voxelSize);
         const v1Scaled = Vector3.divScalar(triangle.v1, this._voxelSize);
         const v2Scaled = Vector3.divScalar(triangle.v2, this._voxelSize);
@@ -80,7 +78,17 @@ export class VoxelMesh {
                     break;
                 }
 
-                const voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize));
+                let voxelColour: RGB;
+                if (multisampleColouring) {
+                    const samples: RGB[] = [];
+                    for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
+                        const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);
+                        samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition));
+                    }
+                    voxelColour = RGB.averageFrom(samples);
+                } else {
+                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize));
+                }
                 this._addVoxel(voxelPosition, voxelColour);
             }
         });

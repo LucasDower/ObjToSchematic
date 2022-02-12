@@ -30,6 +30,14 @@ export class Vector3 extends Hashable {
         );
     }
 
+    static random() {
+        return new Vector3(
+            Math.random(),
+            Math.random(),
+            Math.random(),
+        );
+    }
+
     static parse(line: string) {
         const regex = /[+-]?\d+(\.\d+)?/g;
         const floats = line.match(regex)!.map(function(v) {
