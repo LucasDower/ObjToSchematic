@@ -1,5 +1,5 @@
 import { Renderer } from './renderer';
-import { ASSERT, LOG } from './util';
+import { ASSERT } from './util';
 import { AppConfig } from './config';
 
 import * as twgl from 'twgl.js';

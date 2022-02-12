@@ -2,11 +2,6 @@ import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assig
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
 import { CustomError, LOG } from './util';
-import { RenderBuffer, VoxelData, Attribute } from './buffer';
-import { OcclusionManager } from './occlusion';
-import { GeometryTemplates } from './geometry';
-import { AppConfig } from './config';
-import { Vector3 } from './vector';
 import { Renderer } from './renderer';
 
 interface Block {
