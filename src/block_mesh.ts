@@ -76,11 +76,25 @@ export class BlockMesh {
         for (const block of this._blocks) {
             // Each vertex of a face needs the occlusion data for the other 3 vertices
             // in it's face, not just itself. Also flatten occlusion data.
-            const occlusions = OcclusionManager.Get.getBlankOcclusions();
+            let occlusions: number[];
+            if (ambientOcclusionEnabled) {
+                occlusions = OcclusionManager.Get.getOcclusions(block.voxel.position, this.getVoxelMesh());
+            } else {
+                occlusions = OcclusionManager.Get.getBlankOcclusions();
+            }
 
             const data: VoxelData = GeometryTemplates.getBoxBufferData(block.voxel.position);
-            data.occlusions = occlusions;
-            data.colour = new Array(72).fill(0.0);
+            data.occlusion = occlusions;
+
+            // Assign the textures to each face
+            data.blockTexcoord = [];
+            const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+            for (const face of faceOrder) {
+                for (let i = 0; i < 4; ++i) {
+                    const texcoord = block.blockInfo.faces[face].texcoord;
+                    data.blockTexcoord.push(texcoord.u, texcoord.v);
+                }
+            }
 
             const faceNormals = OcclusionManager.Get.getFaceNormals();
             if (AppConfig.FACE_CULLING) {
@@ -94,6 +108,7 @@ export class BlockMesh {
                             indices: data.indices.slice(0, 6),
                             texcoord: data.texcoord.slice(i * 8, (i+1) * 8),
                             colour: data.colour.slice(i * 12, (i+1) * 12),
+                            blockTexcoord: data.blockTexcoord.slice(i * 8, (i+1) * 8),
                         });
                     }
                 }
