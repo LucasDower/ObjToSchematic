@@ -79,7 +79,7 @@ export class VoxelMesh {
                 }
 
                 let voxelColour: RGB;
-                if (multisampleColouring) {
+                if (multisampleColouring && material.type === MaterialType.textured) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);

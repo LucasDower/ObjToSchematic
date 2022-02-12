@@ -301,6 +301,12 @@ select:disabled {
   color: orange;
 }
 
+.border-success {
+  border: 1.5px solid green;
+  transition-duration: 1s;
+  color: green;
+}
+
 .border-error {
   border: 1.5px solid rgb(156, 27, 27);
   transition-duration: 1s;

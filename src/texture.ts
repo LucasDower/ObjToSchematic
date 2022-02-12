@@ -25,9 +25,9 @@ export class Texture {
         const filePath = path.parse(filename);
         try {
             const data = fs.readFileSync(filename);
-            if (filePath.ext === '.png') {
+            if (filePath.ext.toLowerCase() === '.png') {
                 this._image = PNG.sync.read(data);
-            } else if (['.jpg', '.jpeg'].includes(filePath.ext)) {
+            } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
                 this._image = jpeg.decode(data);
             } else {
                 throw new CustomError(`Failed to load: ${filename}`);

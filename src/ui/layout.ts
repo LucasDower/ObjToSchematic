@@ -205,7 +205,7 @@ export class UI {
         }
         group.submitButton.setEnabled(isEnabled);
         if (!isEnabled) {
-            group.output.setMessage('', ActionReturnType.Success);
+            group.output.clearMessage();
         }
     }
 }

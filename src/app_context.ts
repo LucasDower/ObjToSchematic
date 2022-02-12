@@ -44,6 +44,7 @@ export class AppContext {
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
+    private _warnings: string[];
 
     private _actionMap = new Map<Action, {
         action: () => void;
@@ -61,6 +62,7 @@ export class AppContext {
             throw Error('Could not load WebGL context');
         }
 
+        this._warnings = [];
         this._actionMap.set(Action.Import, {
             action: () => {
                 return this._import();
@@ -104,6 +106,7 @@ export class AppContext {
 
     public do(action: Action) {
         UI.Get.disable(action + 1);
+        this._warnings = [];
         const groupName = UI.Get.uiOrder[action];
         LOG(`Doing ${action}`);
         const delegate = this._actionMap.get(action)!;
@@ -123,9 +126,17 @@ export class AppContext {
             }
             return;
         }
+
+        const successMessage = ReturnMessages.get(action)!.onSuccess;
+        if (this._warnings.length !== 0) {
+            const allWarnings = this._warnings.join('<br>');
+            UI.Get.layoutDull[groupName].output.setMessage(successMessage + ', with warnings:' + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
+        } else {
+            UI.Get.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
+        }
+
         LOG(`Finished ${action}`);
         UI.Get.enable(action + 1);
-        UI.Get.layoutDull[groupName].output.setMessage(ReturnMessages.get(action)!.onSuccess, ActionReturnType.Success);
     }
 
     private _import() {
@@ -166,6 +177,14 @@ export class AppContext {
     private _export() {
         const exportFormat = UI.Get.layout.export.elements.export.getValue();
         const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
+
+        if (exportFormat === 'schematic') {
+            this._warnings.push(`
+                The .schematic format does not support newer Minecraft blocks.
+                For now, all blocks are exported as Stone blocks until a block palette
+                is available that only uses supported blocks.
+            `);
+        }
 
         const filePath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
