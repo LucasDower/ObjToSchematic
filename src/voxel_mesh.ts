@@ -5,7 +5,7 @@ import { HashMap } from './hash_map';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial } from './mesh';
 import { OcclusionManager } from './occlusion';
 import { Axes, generateRays, rayIntersectTriangle } from './ray';
-import { Texture } from './texture';
+import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { Bounds, LOG, RGB, UV } from './util';
 import { Vector3 } from './vector';
@@ -41,7 +41,7 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
-    public voxelise(mesh: Mesh, multisampleColouring: boolean) {
+    public voxelise(mesh: Mesh, multisampleColouring: boolean, filtering: TextureFiltering) {
         LOG('Voxelising');
 
         mesh.tris.forEach((tri, index) => {
@@ -52,11 +52,11 @@ export class VoxelMesh {
                 }
             }
             const uvTriangle = mesh.getUVTriangle(index);
-            this._voxeliseTri(uvTriangle, material, tri.material, multisampleColouring);
+            this._voxeliseTri(uvTriangle, material, tri.material, multisampleColouring, filtering);
         });
     }
 
-    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, multisampleColouring: boolean) {
+    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, multisampleColouring: boolean, filtering: TextureFiltering) {
         const v0Scaled = Vector3.divScalar(triangle.v0, this._voxelSize);
         const v1Scaled = Vector3.divScalar(triangle.v1, this._voxelSize);
         const v2Scaled = Vector3.divScalar(triangle.v2, this._voxelSize);
@@ -83,18 +83,18 @@ export class VoxelMesh {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);
-                        samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition));
+                        samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition, filtering));
                     }
                     voxelColour = RGB.averageFrom(samples);
                 } else {
-                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize));
+                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize), filtering);
                 }
                 this._addVoxel(voxelPosition, voxelColour);
             }
         });
     }
 
-    private _getVoxelColour(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, location: Vector3): RGB {
+    private _getVoxelColour(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, location: Vector3, filtering: TextureFiltering): RGB {
         if (material.type == MaterialType.solid) {
             return material.colour;
         }
@@ -113,7 +113,7 @@ export class VoxelMesh {
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
 
-        return this._loadedTextures[materialName].getRGB(uv);
+        return this._loadedTextures[materialName].getRGB(uv, filtering);
     }
 
     private _addVoxel(pos: Vector3, colour: RGB) {

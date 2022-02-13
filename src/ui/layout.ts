@@ -46,12 +46,16 @@ export class UI {
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off (faster)' },
                 ]),
-                'multisampleColouring': new ComboBoxElement('Multisample Colouring', [
+                'multisampleColouring': new ComboBoxElement('Multisample colouring', [
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off (faster)' },
                 ]),
+                'textureFiltering': new ComboBoxElement('Texture filtering', [
+                    { id: 'linear', displayText: 'Linear (recommended)' },
+                    { id: 'nearest', displayText: 'Nearest (faster)' },
+                ]),
             },
-            elementsOrder: ['height', 'ambientOcclusion', 'multisampleColouring'],
+            elementsOrder: ['height', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 AppContext.Get.do(Action.Voxelise);
             }),

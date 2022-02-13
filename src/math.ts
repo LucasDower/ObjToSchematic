@@ -33,4 +33,9 @@ export const roundToNearest = (value: number, base: number) => {
     return Math.round(value / base) * base;
 };
 
+export const wayThrough = (value: number, min: number, max: number) => {
+    // ASSERT(value >= min && value <= max);
+    return (value - min) / (max - min);
+};
+
 export const degreesToRadians = Math.PI / 180;

@@ -8,6 +8,7 @@ import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR } from './util';
 import { remote } from 'electron';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
+import { TextureFiltering } from './texture';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -156,10 +157,11 @@ export class AppContext {
         const desiredHeight = UI.Get.layout.build.elements.height.getValue();
         const ambientOcclusion = UI.Get.layout.build.elements.ambientOcclusion.getValue() === 'on';
         const multisampleColouring = UI.Get.layout.build.elements.multisampleColouring.getValue() === 'on';
+        const textureFiltering = UI.Get.layout.build.elements.textureFiltering.getValue() === 'nearest' ? TextureFiltering.Nearest : TextureFiltering.Linear;
 
         ASSERT(this._loadedMesh);
         this._loadedVoxelMesh = new VoxelMesh(desiredHeight);
-        this._loadedVoxelMesh.voxelise(this._loadedMesh, multisampleColouring);
+        this._loadedVoxelMesh.voxelise(this._loadedMesh, multisampleColouring, textureFiltering);
 
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusion);
     }
