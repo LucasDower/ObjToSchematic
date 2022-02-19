@@ -8,7 +8,7 @@ import { RenderBuffer } from './buffer';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { LOG, RGB } from './util';
+import { ASSERT, fileExists, LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
@@ -53,8 +53,10 @@ export class Renderer {
         this._blockBuffer = new RenderBuffer([]);
         this._materialBuffers = [];
 
+        const texturePath = path.join(__dirname, '../resources/atlases/vanilla.png');
+        ASSERT(fileExists(texturePath), `Atlas cannot be found at ${texturePath}`);
         this._atlasTexture = twgl.createTexture(this._gl, {
-            src: path.join(__dirname, '../resources/blocks.png'),
+            src: texturePath,
             mag: this._gl.NEAREST,
         });
     }
@@ -179,7 +181,7 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,
-            u_atlasSize: BlockAtlas.Get._atlasSize,
+            u_atlasSize: BlockAtlas.Get.getAtlasSize(),
         });
     }
 

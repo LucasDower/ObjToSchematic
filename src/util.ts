@@ -1,6 +1,8 @@
 import { AppConfig } from './config';
 import { Vector3 } from './vector';
 
+import fs from 'fs';
+
 export class UV {
     public u: number;
     public v: number;
@@ -111,29 +113,12 @@ export function ASSERT(condition: any, errorMessage = 'Assertion Failed'): asser
     }
 }
 
-export function LOG(message: any) {
-    if (AppConfig.LOGGING_ENABLED) {
-        /* eslint-disable */
-        console.log(message);
-        /* eslint-enable */
-    }
-}
+/* eslint-disable */
+export const LOG = console.log;
+export const LOG_WARN = console.warn;
+export const LOG_ERROR = console.error;
 
-export function LOG_WARN(message: any) {
-    if (AppConfig.LOGGING_ENABLED) {
-        /* eslint-disable */
-        console.warn(message);
-        /* eslint-enable */
-    }
-}
-
-export function LOG_ERROR(message: any) {
-    if (AppConfig.LOGGING_ENABLED) {
-        /* eslint-disable */
-        console.error(message);
-        /* eslint-enable */
-    }
-}
+/* eslint-enable */
 
 export class CustomError extends Error {
     constructor(msg: string) {
@@ -147,4 +132,8 @@ export class CustomWarning extends Error {
         super(msg);
         Object.setPrototypeOf(this, CustomWarning.prototype);
     }
+}
+
+export function fileExists(absolutePath: string) {
+    return fs.existsSync(absolutePath);
 }

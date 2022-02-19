@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB } from './util';
+import { UV, RGB, ASSERT } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
@@ -36,22 +36,30 @@ export enum Block {
 /* eslint-enable */
 export class BlockAtlas {
     private _cachedBlocks: HashMap<Vector3, number>;
-    private readonly _blocks: Array<BlockInfo>;
-    public readonly _atlasSize: number;
+    private _blocks: Array<BlockInfo>;
+    private _atlasSize: number;
+    private _atlasLoaded: boolean;
 
     private static _instance: BlockAtlas;
-
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
 
     private constructor() {
+        this._cachedBlocks = new HashMap(0);
+        this._blocks = [];
+        this._atlasSize = 0;
+        this._atlasLoaded = false;
+
+        this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
+    }
+
+    public loadAtlas(absolutePath: string) {
         this._cachedBlocks = new HashMap(1024);
 
-        const _path = path.join(__dirname, '../resources/blocks.json');
-        const blocksString = fs.readFileSync(_path, 'utf-8');
+        const blocksString = fs.readFileSync(absolutePath, 'utf-8');
         if (!blocksString) {
-            throw Error('Could not load blocks.json');
+            throw Error('Could not load vanilla.atlas');
         }
 
         const json = JSON.parse(blocksString);
@@ -64,10 +72,13 @@ export class BlockAtlas {
                 block.colour.b,
             );
         }
+
+        this._atlasLoaded = true;
     }
 
-
     public getBlock(voxelColour: RGB): BlockInfo {
+        ASSERT(this._atlasLoaded);
+
         const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
         if (cachedBlockIndex) {
             return this._blocks[cachedBlockIndex];
@@ -89,5 +100,10 @@ export class BlockAtlas {
 
         this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
         return this._blocks[blockChoiceIndex];
+    }
+
+    public getAtlasSize() {
+        ASSERT(this._atlasLoaded);
+        return this._atlasSize;
     }
 }

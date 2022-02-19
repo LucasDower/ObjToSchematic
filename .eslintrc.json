@@ -26,7 +26,7 @@
         "func-call-spacing": "off",
         "no-trailing-spaces": "off",
         "new-cap": "off",
-        "no-console": "error",
+        "no-console": "warn",
         "no-unused-vars": "warn"
     }
 }

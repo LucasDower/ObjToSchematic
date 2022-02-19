@@ -7,11 +7,12 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "lint": "eslint --fix ./src/**/*.ts",
+    "lint": "eslint --fix ./src/**/*.ts && eslint --fix ./src/**/*.ts",
     "debug": "tsc && electron ./dist/main.js --enable-logging",
     "build": "npm run lint && tsc",
     "start": "npm run build && electron ./dist/main.js --enable-logging",
     "atlas": "npx ts-node tools/build-atlas.ts",
+    "palette": "npx ts-node tools/build-palette.ts",
     "export": "electron-packager . ObjToSchematic --platform=win32 --arch=x64"
   },
   "repository": {

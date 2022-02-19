@@ -8,7 +8,6 @@ import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR } from './util';
 import { remote } from 'electron';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
-import { TextureFiltering } from './texture';
 
 /* eslint-disable */
 export enum ActionReturnType {
