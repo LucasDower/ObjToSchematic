@@ -42,16 +42,14 @@ export class FileInputElement extends LabelledElement {
             if (files && files.length === 1) {
                 const filePath = files[0];
                 this._loadedFilePath = filePath;
+                this._value = filePath;
             } else {
                 this._loadedFilePath = '';
+                this._value = '';
             }
             const parsedPath = path.parse(this._loadedFilePath);
             element.innerHTML = parsedPath.name + parsedPath.ext;
         };
-    }
-
-    public getValue() {
-        return this._loadedFilePath;
     }
 
     protected _onEnabledChanged() {

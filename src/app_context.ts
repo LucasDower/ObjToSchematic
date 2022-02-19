@@ -110,6 +110,7 @@ export class AppContext {
         this._warnings = [];
         const groupName = UI.Get.uiOrder[action];
         LOG(`Doing ${action}`);
+        UI.Get.cacheValues(action);
         const delegate = this._actionMap.get(action)!;
         try {
             delegate.action();
@@ -141,12 +142,8 @@ export class AppContext {
     }
 
     private _import() {
-        const objPath = UI.Get.layout.import.elements.input.getValue();
-
-        this._loadedMesh = new ObjImporter().createMesh(objPath);
+        this._loadedMesh = new ObjImporter().createMesh();
         Renderer.Get.useMesh(this._loadedMesh);
-        LOG(this._loadedMesh);
-        LOG(Renderer.Get);
     }
 
     private _simplify() {
@@ -154,30 +151,23 @@ export class AppContext {
     }
 
     private _voxelise() {
-        const desiredHeight = UI.Get.layout.build.elements.height.getValue();
-        const ambientOcclusion = UI.Get.layout.build.elements.ambientOcclusion.getValue() === 'on';
-        const multisampleColouring = UI.Get.layout.build.elements.multisampleColouring.getValue() === 'on';
-        const textureFiltering = UI.Get.layout.build.elements.textureFiltering.getValue() === 'nearest' ? TextureFiltering.Nearest : TextureFiltering.Linear;
-
         ASSERT(this._loadedMesh);
-        this._loadedVoxelMesh = new VoxelMesh(desiredHeight);
-        this._loadedVoxelMesh.voxelise(this._loadedMesh, multisampleColouring, textureFiltering);
+        this._loadedVoxelMesh = new VoxelMesh();
+        this._loadedVoxelMesh.voxelise(this._loadedMesh);
 
-        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusion);
+        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
     }
 
     private _palette() {
-        const ditheringEnabled = UI.Get.layout.palette.elements.dithering.getValue() === 'on';
-
         ASSERT(this._loadedVoxelMesh);
-        this._loadedBlockMesh = new BlockMesh(ditheringEnabled);
+        this._loadedBlockMesh = new BlockMesh();
         this._loadedBlockMesh.assignBlocks(this._loadedVoxelMesh);
 
         Renderer.Get.useBlockMesh(this._loadedBlockMesh);
     }
 
     private _export() {
-        const exportFormat = UI.Get.layout.export.elements.export.getValue();
+        const exportFormat = UI.Get.layout.export.elements.export.getCachedValue() as string;
         const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
 
         if (exportFormat === 'schematic') {

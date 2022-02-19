@@ -129,10 +129,10 @@ export class Renderer {
         this._meshToUse = MeshType.TriangleMesh;
     }
     
-    public useVoxelMesh(voxelMesh: VoxelMesh, ambientOcclusionEnabled: boolean) {
+    public useVoxelMesh(voxelMesh: VoxelMesh) {
         LOG('Using voxel mesh');
         LOG(voxelMesh);
-        this._voxelBuffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
+        this._voxelBuffer = voxelMesh.createBuffer();
         this._meshToUse = MeshType.VoxelMesh;
         this._voxelSize = voxelMesh?.getVoxelSize();
     }

@@ -6,7 +6,6 @@ export class SliderElement extends LabelledElement {
     private _min: number;
     private _max: number;
     private _decimals: number;
-    private _value: number;
     private _dragging: boolean;
 
     public constructor(label: string, min: number, max: number, decimals: number, value: number) {
@@ -77,7 +76,7 @@ export class SliderElement extends LabelledElement {
         elementValue.innerHTML = this._value.toFixed(this._decimals);
     }
 
-    public getValue() {
+    protected getValue() {
         return this._value;
     }
 

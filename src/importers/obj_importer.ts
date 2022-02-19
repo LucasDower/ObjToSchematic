@@ -7,6 +7,7 @@ import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
 import { UV, ASSERT, RGB, LOG_WARN } from '../util';
+import { UI } from '../ui/layout';
 
 export class ObjImporter extends IImporter {
     private _vertices!: Vector3[];
@@ -15,7 +16,8 @@ export class ObjImporter extends IImporter {
     private _materials!: {[key: string]: (SolidMaterial | TexturedMaterial)};
     private _mtlLibs!: string[];
 
-    override createMesh(filePath: string): Mesh {
+    override createMesh(): Mesh {
+        const filePath = UI.Get.layout.import.elements.input.getCachedValue();
         ASSERT(path.isAbsolute(filePath));
         this._parseOBJ(filePath);
 

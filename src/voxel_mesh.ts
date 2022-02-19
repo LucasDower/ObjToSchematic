@@ -7,6 +7,7 @@ import { OcclusionManager } from './occlusion';
 import { Axes, generateRays, rayIntersectTriangle } from './ray';
 import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
+import { UI } from './ui/layout';
 import { Bounds, LOG, RGB, UV } from './util';
 import { Vector3 } from './vector';
 
@@ -23,9 +24,10 @@ export class VoxelMesh {
     private _loadedTextures: { [materialName: string]: Texture };
     private _bounds: Bounds;
 
-    public constructor(desiredHeight: number) {
+    public constructor() {
         LOG('New voxel mesh');
 
+        const desiredHeight = UI.Get.layout.build.elements.height.getCachedValue() as number;
         this._voxelSize = 8.0 / Math.round(desiredHeight);
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
@@ -41,7 +43,7 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
-    public voxelise(mesh: Mesh, multisampleColouring: boolean, filtering: TextureFiltering) {
+    public voxelise(mesh: Mesh) {
         LOG('Voxelising');
 
         mesh.tris.forEach((tri, index) => {
@@ -52,11 +54,11 @@ export class VoxelMesh {
                 }
             }
             const uvTriangle = mesh.getUVTriangle(index);
-            this._voxeliseTri(uvTriangle, material, tri.material, multisampleColouring, filtering);
+            this._voxeliseTri(uvTriangle, material, tri.material);
         });
     }
 
-    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, multisampleColouring: boolean, filtering: TextureFiltering) {
+    private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string) {
         const v0Scaled = Vector3.divScalar(triangle.v0, this._voxelSize);
         const v1Scaled = Vector3.divScalar(triangle.v1, this._voxelSize);
         const v2Scaled = Vector3.divScalar(triangle.v2, this._voxelSize);
@@ -79,22 +81,23 @@ export class VoxelMesh {
                 }
 
                 let voxelColour: RGB;
-                if (multisampleColouring && material.type === MaterialType.textured) {
+                const useMultisampleColouring = UI.Get.layout.build.elements.multisampleColouring.getCachedValue() as string === 'on';
+                if (useMultisampleColouring && material.type === MaterialType.textured) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);
-                        samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition, filtering));
+                        samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition));
                     }
                     voxelColour = RGB.averageFrom(samples);
                 } else {
-                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize), filtering);
+                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize));
                 }
                 this._addVoxel(voxelPosition, voxelColour);
             }
         });
     }
 
-    private _getVoxelColour(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, location: Vector3, filtering: TextureFiltering): RGB {
+    private _getVoxelColour(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string, location: Vector3): RGB {
         if (material.type == MaterialType.solid) {
             return material.colour;
         }
@@ -112,7 +115,8 @@ export class VoxelMesh {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
-
+            
+        const filtering = UI.Get.layout.build.elements.textureFiltering.getCachedValue() as string === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest;
         return this._loadedTextures[materialName].getRGB(uv, filtering);
     }
 
@@ -147,7 +151,7 @@ export class VoxelMesh {
 
     // //////////////////////////////////////////////////////////////////////////
 
-    public createBuffer(ambientOcclusionEnabled: boolean) {
+    public createBuffer() {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
@@ -156,6 +160,7 @@ export class VoxelMesh {
             { name: 'normal', numComponents: 3 },
         ]);
 
+        const ambientOcclusionEnabled = UI.Get.layout.build.elements.ambientOcclusion.getCachedValue() as string === 'on';
         for (const voxel of this._voxels) {
             // Each vertex of a face needs the occlusion data for the other 3 vertices
             // in it's face, not just itself. Also flatten occlusion data.

@@ -4,7 +4,8 @@ import { ComboBoxElement } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { Action, ActionReturnType, AppContext } from '../app_context';
+import { Action, AppContext } from '../app_context';
+import { LOG } from '../util';
 
 export interface Group {
     label: string;
@@ -13,6 +14,7 @@ export interface Group {
     submitButton: ButtonElement;
     output: OutputElement;
 }
+
 export class UI {
     public uiOrder = ['import', 'simplify', 'build', 'palette', 'export'];
     private _ui = {
@@ -138,6 +140,15 @@ export class UI {
         ` + itemHTML + `</div></div>`;
     }
 
+    public cacheValues(action: Action) {
+        const group = this._getActionGroup(action);
+        for (const elementName of group.elementsOrder) {
+            LOG(`Caching ${elementName}`);
+            const element = group.elements[elementName];
+            element.cacheValue();
+        }
+    }
+
     private _buildGroup(group: Group) {
         let groupHTML = '';
         for (const elementName of group.elementsOrder) {
@@ -211,5 +222,10 @@ export class UI {
         if (!isEnabled) {
             group.output.clearMessage();
         }
+    }
+
+    private _getActionGroup(action: Action): Group {
+        const key = this.uiOrder[action];
+        return this._uiDull[key];
     }
 }

@@ -30,7 +30,7 @@ export class ComboBoxElement extends LabelledElement {
     public registerEvents(): void {
     }
 
-    public getValue() {
+    protected getValue() {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         return this._items[element.selectedIndex].id;

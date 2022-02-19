@@ -3,6 +3,7 @@ import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
 import { CustomError, LOG } from './util';
 import { Renderer } from './renderer';
+import { UI } from './ui/layout';
 
 interface Block {
     voxel: Voxel;
@@ -15,10 +16,10 @@ export class BlockMesh {
     private _blocks: Block[];
     private _voxelMesh?: VoxelMesh;
 
-    public constructor(ditheringEnabled: boolean) {
+    public constructor() {
         LOG('New block mesh');
 
-        this._ditheringEnabled = ditheringEnabled;
+        this._ditheringEnabled = UI.Get.layout.palette.elements.dithering.getCachedValue() as string === 'on';
         this._blockPalette = [];
         this._blocks = [];
     }
