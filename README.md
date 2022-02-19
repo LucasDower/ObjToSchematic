@@ -12,8 +12,11 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Run `npm install`.
 * Run `npm start`.
 
-Support for choosing the block palette is not yet supported. Instead, you can edit `/tools/default-ignore-list.txt` to include blocks you don't want to be used and then run `npm run-script atlas`. You can also place custom textures in `/tools/blocks/` for more accurate block-colour matching when building with resource packs.
+### Advanced
 
+**Block Palettes** You can create your own block palettes to fit the build you desire. When you select this palette, the generated structure will only use the blocks defined in your palette. To create a palette, list every block you want to use in `/tools/new-palette-blocks`. A list of every supported block can be found in `/tools/all-supported-blocks`. When your list is complete, run `npm run palette`. If everything is successful, the next time you run the program you'll be able to select your new palette in the 'Block palette' dropdown.
+
+**Texture Atlases** If you play Minecraft with a resource pack, you will probably want to build your own texture atlas. This way the program will use the same resource pack for its visualisation and more accurate colour-to-block conversions can be made. To do this, open your resource pack and copy all block textures from `/assets/minecraft/textures/block` into `/tools/blocks/`. Also, copy all block models from `/assets/minecraft/models/block` into `/tools/models/`. Now run `npm run atlas`, and **make sure to say no to fetching textures and models**. If everything is successful, the next time you run the program you'll be able to select your resource pack in the 'Texture atlas' dropdown.
 # Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
 * 🟢 **.json model loading**
@@ -45,8 +48,8 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 
 0.5
 * ⚪ Support for simplifying complex meshes
-* ⚪ Load custom block palettes and texture atlases
-* 🟡 Optimise construction of voxel mesh vertex buffers
+* 🟡 Load custom block palettes and texture atlases
+* 🟢 Optimise construction of voxel mesh vertex buffers
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
