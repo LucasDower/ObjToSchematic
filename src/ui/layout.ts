@@ -1,11 +1,14 @@
 import { BaseUIElement } from './elements/base';
 import { SliderElement } from './elements/slider';
-import { ComboBoxElement } from './elements/combobox';
+import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { Action, AppContext } from '../app_context';
 import { LOG } from '../util';
+
+import fs from 'fs';
+import path from 'path';
 
 export interface Group {
     label: string;
@@ -66,18 +69,14 @@ export class UI {
         'palette': {
             label: 'Palette',
             elements: {
-                'blockPalette': new ComboBoxElement('Block palette', [
-                    { id: 'default', displayText: 'Default' },
-                ]),
-                'choiceMethod': new ComboBoxElement('Choice method', [
-                    { id: 'euclidian', displayText: 'Euclidian distance' },
-                ]),
+                'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
+                'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
                 'dithering': new ComboBoxElement('Dithering', [
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off' },
                 ]),
             },
-            elementsOrder: ['blockPalette', 'choiceMethod', 'dithering'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 AppContext.Get.do(Action.Palette);
             }),
@@ -227,5 +226,25 @@ export class UI {
     private _getActionGroup(action: Action): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
+    }
+
+    private _getTextureAtlases(): ComboBoxItem[] {
+        return [{ id: 'vanilla', displayText: 'Vanilla' }];
+    }
+
+    private _getBlockPalettes(): ComboBoxItem[] {
+        const blockPalettes: ComboBoxItem[] = [];
+        const palettesDir = path.join(__dirname, '../../resources/palettes');
+
+        fs.readdirSync(palettesDir).forEach((file) => {
+            if (file.endsWith('.palette')) {
+                const paletteID = file.split('.')[0];
+                let paletteName = paletteID.replace('-', ' ').toLowerCase();
+                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
+                blockPalettes.push({ id: paletteID, displayText: paletteName });
+            }
+        });
+
+        return blockPalettes;
     }
 }

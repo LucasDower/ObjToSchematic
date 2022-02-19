@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT } from './util';
+import { UV, RGB, ASSERT, fileExists } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
@@ -33,12 +33,19 @@ export enum Block {
     Dirt = 3.0,
     Cobblestone = 4.0
 }
+
+interface BlockPalette {
+    blocks: string[];
+}
+
 /* eslint-enable */
 export class BlockAtlas {
     private _cachedBlocks: HashMap<Vector3, number>;
     private _blocks: Array<BlockInfo>;
+    private _palette: string[];
     private _atlasSize: number;
     private _atlasLoaded: boolean;
+    private _paletteLoaded: boolean;
 
     private static _instance: BlockAtlas;
     public static get Get() {
@@ -50,6 +57,8 @@ export class BlockAtlas {
         this._blocks = [];
         this._atlasSize = 0;
         this._atlasLoaded = false;
+        this._palette = [];
+        this._paletteLoaded = false;
 
         this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
     }
@@ -76,8 +85,21 @@ export class BlockAtlas {
         this._atlasLoaded = true;
     }
 
+    public loadPalette(paletteID: string) {
+        this._cachedBlocks = new HashMap(1024);
+
+        const paletteDir = path.join(__dirname, '../resources/palettes', paletteID + '.palette');
+        ASSERT(fileExists(paletteDir), `Palette to load does not exist ${paletteDir}`);
+
+        const palette: BlockPalette = JSON.parse(fs.readFileSync(paletteDir, 'utf8'));
+        this._palette = palette.blocks;
+
+        this._paletteLoaded = true;
+    }
+
     public getBlock(voxelColour: RGB): BlockInfo {
-        ASSERT(this._atlasLoaded);
+        ASSERT(this._atlasLoaded, 'No atlas has been loaded');
+        ASSERT(this._paletteLoaded, 'No palette has been loaded');
 
         const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
         if (cachedBlockIndex) {
@@ -89,12 +111,14 @@ export class BlockAtlas {
 
         for (let i = 0; i < this._blocks.length; ++i) {
             const block: BlockInfo = this._blocks[i];
-            const blockAvgColour = block.colour as RGB;
-            const distance = RGB.distance(blockAvgColour, voxelColour);
+            if (this._palette.includes(block.name)) {
+                const blockAvgColour = block.colour as RGB;
+                const distance = RGB.distance(blockAvgColour, voxelColour);
 
-            if (distance < minDistance) {
-                minDistance = distance;
-                blockChoiceIndex = i;
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    blockChoiceIndex = i;
+                }
             }
         }
 

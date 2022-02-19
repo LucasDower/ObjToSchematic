@@ -1,6 +1,6 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
-import { BlockInfo } from './block_atlas';
+import { BlockAtlas, BlockInfo } from './block_atlas';
 import { CustomError, LOG } from './util';
 import { Renderer } from './renderer';
 import { UI } from './ui/layout';
@@ -11,7 +11,6 @@ interface Block {
 }
 
 export class BlockMesh {
-    private _ditheringEnabled: boolean;
     private _blockPalette: string[];
     private _blocks: Block[];
     private _voxelMesh?: VoxelMesh;
@@ -19,17 +18,20 @@ export class BlockMesh {
     public constructor() {
         LOG('New block mesh');
 
-        this._ditheringEnabled = UI.Get.layout.palette.elements.dithering.getCachedValue() as string === 'on';
         this._blockPalette = [];
         this._blocks = [];
     }
-
+    
     public assignBlocks(voxelMesh: VoxelMesh) {
         LOG('Assigning blocks');
+        
+        const blockPalette = UI.Get.layout.palette.elements.blockPalette.getCachedValue() as string;
+        BlockAtlas.Get.loadPalette(blockPalette);
 
+        const ditheringEnabled = UI.Get.layout.palette.elements.dithering.getCachedValue() as string === 'on';
+        const blockAssigner = ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
+        
         const voxels = voxelMesh.getVoxels();
-        const blockAssigner = this._ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
-
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
             const voxel = voxels[voxelIndex];
             const block = blockAssigner.assignBlock(voxel.colour, voxel.position);
