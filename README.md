@@ -1,7 +1,7 @@
 # ObjToSchematic
 A visual tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
 
-![Preview](/resources/preview3.png)
+![Preview](https://i.imgur.com/w1GWPvT.png)
 
 # Usage
 You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
@@ -73,7 +73,7 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
-![MinecraftPreview](/resources/minecraft.png)
+![MinecraftPreview](https://i.imgur.com/LhTZ4G9.png)
 
 # Contributing
 Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` and pass the CI build task.
