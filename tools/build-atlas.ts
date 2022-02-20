@@ -342,7 +342,6 @@ async function buildAtlas() {
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
         atlasSize: atlasSize,
-        atlasTexture: atlasDir,
         blocks: allModels,
     };
     fs.writeFileSync(path.join(__dirname, `../resources/atlases/${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
