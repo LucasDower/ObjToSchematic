@@ -1,6 +1,3 @@
-import * as twgl from 'twgl.js';
-import path from 'path';
-
 import { Vector3 } from './vector';
 import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
@@ -8,9 +5,11 @@ import { RenderBuffer } from './buffer';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { ASSERT, fileExists, LOG, RGB } from './util';
+import { LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
+
+import * as twgl from 'twgl.js';
 
 /* eslint-disable */
 enum MeshType {
@@ -25,7 +24,7 @@ export class Renderer {
     public _gl: WebGLRenderingContext;
 
     private _backgroundColour = new RGB(0.1, 0.1, 0.1);
-    private _atlasTexture: WebGLTexture;
+    private _atlasTexture?: WebGLTexture;
     private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
     private _meshToUse: MeshType = MeshType.None;
@@ -52,13 +51,6 @@ export class Renderer {
         this._voxelBuffer = new RenderBuffer([]);
         this._blockBuffer = new RenderBuffer([]);
         this._materialBuffers = [];
-
-        const texturePath = path.join(__dirname, '../resources/atlases/vanilla.png');
-        ASSERT(fileExists(texturePath), `Atlas cannot be found at ${texturePath}`);
-        this._atlasTexture = twgl.createTexture(this._gl, {
-            src: texturePath,
-            mag: this._gl.NEAREST,
-        });
     }
 
     public update() {
@@ -145,6 +137,11 @@ export class Renderer {
         this._blockBuffer = blockMesh.createBuffer();
         this._meshToUse = MeshType.BlockMesh;
         this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
+
+        this._atlasTexture = twgl.createTexture(this._gl, {
+            src: BlockAtlas.Get.getAtlasTexturePath(),
+            mag: this._gl.NEAREST,
+        });
     }
 
     // /////////////////////////////////////////////////////////////////////////

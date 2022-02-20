@@ -9,7 +9,7 @@ export enum LogStyle {
 }
 
 const LogStyleDetails: {[style: string]: {style: chalk.Chalk, prefix: string}} = {};
-LogStyleDetails[LogStyle.Info] = {style: chalk.white, prefix: chalk.white.inverse('INFO')};
+LogStyleDetails[LogStyle.Info] = {style: chalk.blue, prefix: chalk.blue.inverse('INFO')};
 LogStyleDetails[LogStyle.Warning] = {style: chalk.yellow, prefix: chalk.yellow.inverse('WARN')};
 LogStyleDetails[LogStyle.Failure] = {style: chalk.red, prefix: chalk.red.inverse('UHOH')};
 LogStyleDetails[LogStyle.Success] = {style: chalk.green, prefix: chalk.green.inverse(' OK ')};
@@ -25,4 +25,10 @@ export function log(style: LogStyle, message: string) {
         console.log(details.prefix + ' ' + details.style(message));
         /* eslint-enable */
     }
+}
+
+export function logBreak() {
+    /* eslint-disable */
+    console.log()
+    /* eslint-enable */
 }

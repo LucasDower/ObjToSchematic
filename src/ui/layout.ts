@@ -229,7 +229,19 @@ export class UI {
     }
 
     private _getTextureAtlases(): ComboBoxItem[] {
-        return [{ id: 'vanilla', displayText: 'Vanilla' }];
+        const textureAtlases: ComboBoxItem[] = [];
+        const palettesDir = path.join(__dirname, '../../resources/atlases');
+
+        fs.readdirSync(palettesDir).forEach((file) => {
+            if (file.endsWith('.atlas')) {
+                const paletteID = file.split('.')[0];
+                let paletteName = paletteID.replace('-', ' ').toLowerCase();
+                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
+                textureAtlases.push({ id: paletteID, displayText: paletteName });
+            }
+        });
+
+        return textureAtlases;
     }
 
     private _getBlockPalettes(): ComboBoxItem[] {

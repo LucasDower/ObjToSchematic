@@ -46,6 +46,7 @@ export class BlockAtlas {
     private _atlasSize: number;
     private _atlasLoaded: boolean;
     private _paletteLoaded: boolean;
+    private _atlasTexturePath?: string;
 
     private static _instance: BlockAtlas;
     public static get Get() {
@@ -60,19 +61,23 @@ export class BlockAtlas {
         this._palette = [];
         this._paletteLoaded = false;
 
-        this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
+        // this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
     }
 
-    public loadAtlas(absolutePath: string) {
+    public loadAtlas(atlasID: string) {
         this._cachedBlocks = new HashMap(1024);
 
-        const blocksString = fs.readFileSync(absolutePath, 'utf-8');
+        const atlasDir = path.join(__dirname, '../resources/atlases', atlasID + '.atlas');
+        ASSERT(fileExists(atlasDir), `Atlas to load does not exist ${atlasDir}`);
+
+        const blocksString = fs.readFileSync(atlasDir, 'utf-8');
         if (!blocksString) {
             throw Error('Could not load vanilla.atlas');
         }
 
         const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
+        this._atlasTexturePath = json.atlasTexture;
         this._blocks = json.blocks;
         for (const block of this._blocks) {
             block.colour = new RGB(
@@ -129,5 +134,11 @@ export class BlockAtlas {
     public getAtlasSize() {
         ASSERT(this._atlasLoaded);
         return this._atlasSize;
+    }
+
+    public getAtlasTexturePath() {
+        ASSERT(this._atlasLoaded, 'No atlas texture available');
+        ASSERT(this._atlasTexturePath, 'No atlas texture path available');
+        return this._atlasTexturePath;
     }
 }

@@ -1,4 +1,4 @@
-import { UV, ASSERT, CustomError, LOG } from './util';
+import { UV, ASSERT, CustomError } from './util';
 import { RGB } from './util';
 
 import * as fs from 'fs';
@@ -59,9 +59,6 @@ export class Texture {
 
     private _getLinearRGB(uv: UV): RGB {
         uv.v = 1.0 - uv.v;
-        if (uv.u === 0 || uv.u === 1 || uv.v === 0 || uv.v === 1) {
-            LOG('bad');
-        }
 
         const x = uv.u * this._image.width;
         const y = uv.v * this._image.height;
@@ -84,9 +81,6 @@ export class Texture {
         const midCD = Vector3.mulScalar(D, u).add(Vector3.mulScalar(C, 1.0-u));
 
         const mid = Vector3.mulScalar(midAB, v).add(Vector3.mulScalar(midCD, 1.0-v));
-        if (mid.equals(RGB.black.toVector3())) {
-            LOG('bad');
-        }
         return RGB.fromVector3(mid);
     }
 

@@ -4,6 +4,7 @@ import { RGB } from '../src/util';
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
+import prompt from 'prompt';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {
@@ -40,4 +41,23 @@ export function getAverageColour(image: PNG) {
     }
     const numPixels = image.width * image.height;
     return new RGB(r / (255 * numPixels), g / (255 * numPixels), b / (255 * numPixels));
+}
+
+export async function getPermission() {
+    const directory = path.join(process.env.APPDATA!, '.minecraft');
+    log(LogStyle.Info, `This script requires files inside of ${directory}`);
+    const { permission } = await prompt.get({
+        properties: {
+            permission: {
+                pattern: /^[YyNn]$/,
+                description: 'Do you give permission to access these files? (Y/n)',
+                message: 'Response must be Y or N',
+                required: true,
+            },
+        },
+    });
+    const responseYes = ['Y', 'y'].includes(permission as string);
+    if (!responseYes) {
+        process.exit(0);
+    }
 }

@@ -1,6 +1,6 @@
-import { RGB, UV } from '../src/util';
-import { log, LogStyle } from './logging';
-import { isDirSetup, ASSERT, getAverageColour } from './misc';
+import { LOG, RGB, UV } from '../src/util';
+import { log, logBreak, LogStyle } from './logging';
+import { isDirSetup, ASSERT, getAverageColour, getPermission } from './misc';
 
 import fs from 'fs';
 import path from 'path';
@@ -9,42 +9,51 @@ import { PNG } from 'pngjs';
 import chalk from 'chalk';
 import prompt from 'prompt';
 const AdmZip = require('adm-zip');
-
-const schemaFetch: prompt.Schema = {
-    properties: {
-        response: {
-            pattern: /^[YyNn]$/,
-            description: 'Do you want to fetch textures and models? (Y/n)',
-            message: 'Response must be Y or N',
-            required: true,
-        },
-        name: {
-            pattern: /^[a-zA-Z\-]+$/,
-            description: 'What do you want to call this texture atlas?',
-            message: 'Must be only letters or dash',
-            required: true,
-        },
-    },
-};
+const copydir = require('copy-dir');
 
 void async function main() {
-    const promptUser = await prompt.get(schemaFetch);
-    
-    const responseYes = ['Y', 'y'].includes(promptUser.response as string);
-    if (responseYes) {
-        fetchModelsAndTextures();
-    }
-
-    buildAtlas(promptUser.name as string);
+    await getPermission();
+    logBreak();
+    await fetchModelsAndTextures();
+    await buildAtlas();
 }();
 
-function fetchModelsAndTextures() {
-    const versionsDir = path.join(process.env.APPDATA!, './.minecraft/versions');
-    if (!fs.existsSync(versionsDir)) {
-        log(LogStyle.Failure, 'Could not fid .minecraft/versions\n');
+async function getResourcePack() {
+    const resourcePacksDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks');
+    if (!fs.existsSync(resourcePacksDir)) {
+        log(LogStyle.Failure, 'Could not find .minecraft/resourcepacks\n');
         process.exit(1);
     }
-    log(LogStyle.Success, '.minecraft/versions found successfully\n');
+
+    log(LogStyle.Info, 'Looking for resource packs...');
+    const resourcePacks = fs.readdirSync(resourcePacksDir);
+    log(LogStyle.None, `1) Vanilla`);
+    for (let i = 0; i < resourcePacks.length; ++i) {
+        log(LogStyle.None, `${i+2}) ${resourcePacks[i]}`);
+    }
+
+    const { packChoice } = await prompt.get({
+        properties: {
+            packChoice: {
+                description: `Which resource pack do you want to build an atlas for? (1-${resourcePacks.length+1})`,
+                message: `Response must be between 1 and ${resourcePacks.length+1}`,
+                required: true,
+                conform: (value) => {
+                    return value >= 1 && value <= resourcePacks.length + 1;
+                },
+            },
+        },
+    });
+    if (<number>packChoice == 1) {
+        return 'Vanilla';
+    }
+    return resourcePacks[(<number>packChoice) - 2];
+}
+
+function fetchVanillModelsAndTextures(fetchTextures: boolean) {
+    const versionsDir = path.join(process.env.APPDATA!, './.minecraft/versions');
+    ASSERT(fs.existsSync(versionsDir), 'Could not find .minecraft/versions');
+    log(LogStyle.Info, '.minecraft/versions found successfully');
 
     const versions = fs.readdirSync(versionsDir)
         .filter((file) => fs.lstatSync(path.join(versionsDir, file)).isDirectory())
@@ -68,7 +77,7 @@ function fetchModelsAndTextures() {
         const zip = new AdmZip(versionJarPath);
         const zipEntries = zip.getEntries();
         zipEntries.forEach((zipEntry: any) => {
-            if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
+            if (fetchTextures && zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
                 zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
             } else if (zipEntry.entryName.startsWith('assets/minecraft/models/block')) {
                 zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './models'), false, true);
@@ -79,27 +88,69 @@ function fetchModelsAndTextures() {
     }
 }
 
-function buildAtlas(atlasName: string) {
-// Check /blocks and /models is setup correctly
-    log(LogStyle.None, 'Checking Minecraft assets are provided...');   
+async function fetchModelsAndTextures() {
+    const resourcePack = await getResourcePack();
+    logBreak();
+    const fetchVanillaTextures = resourcePack === 'Vanilla';
+    await fetchVanillModelsAndTextures(fetchVanillaTextures);
+    if (resourcePack === 'Vanilla') {
+        return;
+    }
 
+    log(LogStyle.Warning, 'Non-16x16 texture packs are not supported');
+
+    const resourcePackDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks', resourcePack);
+    if (fs.lstatSync(resourcePackDir).isDirectory()) {
+        log(LogStyle.Info, `Resource pack '${resourcePack}' is a directory`);
+        const blockTexturesSrc = path.join(resourcePackDir, 'assets/minecraft/textures/block');
+        const blockTexturesDst = path.join(__dirname, '../tools/blocks');
+        log(LogStyle.Info, `Copying ${blockTexturesSrc} to ${blockTexturesDst}`);
+        copydir(blockTexturesSrc, blockTexturesDst, {
+            utimes: true,
+            mode: true,
+            cover: true,
+        });
+        log(LogStyle.Success, `Copied block textures successfully`);
+    } else {
+        log(LogStyle.Info, `Resource pack '${resourcePack}' is not a directory, expecting to be a .zip`);
+        
+        const zip = new AdmZip(resourcePackDir);
+        const zipEntries = zip.getEntries();
+        zipEntries.forEach((zipEntry: any) => {
+            if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
+                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
+            }
+        });
+        log(LogStyle.Success, `Copied block textures successfully`);
+        return;
+    }
+}
+
+async function buildAtlas() {
+    // Check /blocks and /models is setup correctly
+    logBreak();
+    log(LogStyle.Info, 'Checking assets are provided...');   
+    
     const texturesDirSetup = isDirSetup('./models', 'assets/minecraft/textures/block');
     ASSERT(texturesDirSetup, '/blocks is not setup correctly');
+    log(LogStyle.Success, '/tools/blocks/ setup correctly');   
     
     const modelsDirSetup = isDirSetup('./models', 'assets/minecraft/models/block');
     ASSERT(modelsDirSetup, '/models is not setup correctly');
+    log(LogStyle.Success, '/tools/models/ setup correctly');   
 
     // Load the ignore list
-    log(LogStyle.None, 'Loading ignore list...');
+    logBreak();
+    log(LogStyle.Info, 'Loading ignore list...');
     let ignoreList: Array<string> = [];
     const ignoreListPath = path.join(__dirname, './ignore-list.txt');
     if (fs.existsSync(ignoreListPath)) {
-        log(LogStyle.Success, 'Found custom ignore list');
+        log(LogStyle.Success, 'Found ignore list');
         ignoreList = fs.readFileSync(ignoreListPath, 'utf-8').replace(/\r/g, '').split('\n');
     } else {
         log(LogStyle.Warning, 'No ignore list found, looked for ignore-list.txt');
     }
-    log(LogStyle.Info, `${ignoreList.length} blocks found in ignore list\n`);
+    log(LogStyle.Success, `${ignoreList.length} blocks found in ignore list\n`);
 
     /* eslint-disable */
     enum parentModel {
@@ -126,7 +177,7 @@ function buildAtlas(atlasName: string) {
         colour?: RGB
     }
     
-    log(LogStyle.None, 'Loading block models...');
+    log(LogStyle.Info, 'Loading block models...');
     const faces = ['north', 'south', 'up', 'down', 'east', 'west'];
     const allModels: Array<Model> = [];
     const usedTextures: Set<string> = new Set();
@@ -210,6 +261,10 @@ function buildAtlas(atlasName: string) {
             faces: faceData,
         });
     });
+    if (allModels.length === 0) {
+        log(LogStyle.Failure, 'No blocks loaded');
+        process.exit(0);
+    }
     log(LogStyle.Success, `${allModels.length} blocks loaded\n`);
 
     const atlasSize = Math.ceil(Math.sqrt(usedTextures.size));
@@ -221,7 +276,18 @@ function buildAtlas(atlasName: string) {
 
     const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGB } } = {};
 
-    log(LogStyle.None, `Building ${atlasName}.png...`);
+    const { atlasName } = await prompt.get({
+        properties: {
+            atlasName: {
+                pattern: /^[a-zA-Z\-]+$/,
+                description: 'What do you want to call this texture atlas?',
+                message: 'Name must only be letters or dash',
+                required: true,
+            },
+        },
+    });
+
+    log(LogStyle.Info, `Building ${atlasName}.png...`);
     usedTextures.forEach((textureName) => {
         const shortName = textureName.split('/')[1]; // Eww
         const absolutePath = path.join(__dirname, './blocks', shortName + '.png');
@@ -252,7 +318,7 @@ function buildAtlas(atlasName: string) {
 
 
     // Build up the output JSON
-    log(LogStyle.None, `Building ${atlasName}.atlas...\n`);
+    log(LogStyle.Info, `Building ${atlasName}.atlas...\n`);
     for (const model of allModels) {
         const blockColour = new RGB(0, 0, 0);
         for (const face of faces) {
@@ -270,7 +336,7 @@ function buildAtlas(atlasName: string) {
     }
 
 
-    log(LogStyle.None, 'Exporting...');
+    log(LogStyle.Info, 'Exporting...');
     const atlasDir = path.join(__dirname, `../resources/atlases/${atlasName}.png`);
     outputImage.save(atlasDir);
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
@@ -283,6 +349,6 @@ function buildAtlas(atlasName: string) {
     log(LogStyle.Success, `${atlasName}.atlas exported to /resources/atlases/\n`);
 
     /* eslint-disable */
-    console.log(chalk.cyanBright(chalk.inverse('DONE') + ' Now run ' + chalk.inverse(' npm start ') + ' and the new blocks will be used'));
+    console.log(chalk.cyanBright(chalk.inverse('DONE') + ' Now run ' + chalk.inverse(' npm start ') + ' and the new texture atlas can be used'));
     /* eslint-enable */
 }

@@ -25,6 +25,9 @@ export class BlockMesh {
     public assignBlocks(voxelMesh: VoxelMesh) {
         LOG('Assigning blocks');
         
+        const textureAtlas = UI.Get.layout.palette.elements.textureAtlas.getCachedValue() as string;
+        BlockAtlas.Get.loadAtlas(textureAtlas);
+
         const blockPalette = UI.Get.layout.palette.elements.blockPalette.getCachedValue() as string;
         BlockAtlas.Get.loadPalette(blockPalette);
 
