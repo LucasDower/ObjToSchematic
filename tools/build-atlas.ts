@@ -14,9 +14,16 @@ const copydir = require('copy-dir');
 void async function main() {
     await getPermission();
     logBreak();
+    cleanupDirectories();
     await fetchModelsAndTextures();
     await buildAtlas();
+    cleanupDirectories();
 }();
+
+function cleanupDirectories() {
+    fs.rmSync(path.join(__dirname, '/blocks'), { recursive: true, force: true });
+    fs.rmSync(path.join(__dirname, '/models'), { recursive: true, force: true });
+}
 
 async function getResourcePack() {
     const resourcePacksDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks');
@@ -91,8 +98,7 @@ function fetchVanillModelsAndTextures(fetchTextures: boolean) {
 async function fetchModelsAndTextures() {
     const resourcePack = await getResourcePack();
     logBreak();
-    const fetchVanillaTextures = resourcePack === 'Vanilla';
-    await fetchVanillModelsAndTextures(fetchVanillaTextures);
+    await fetchVanillModelsAndTextures(true);
     if (resourcePack === 'Vanilla') {
         return;
     }

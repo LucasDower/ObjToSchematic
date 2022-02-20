@@ -31,7 +31,6 @@
         "iron_block",
         "light_gray_concrete",
         "light_gray_concrete_powder",
-        "light_gray_terracotta",
         "light_gray_wool",
         "netherite_block",
         "polished_andesite",
@@ -50,7 +49,6 @@
         "stone_bricks",
         "white_concrete",
         "white_concrete_powder",
-        "white_terracotta",
         "white_wool"
     ]
 }
