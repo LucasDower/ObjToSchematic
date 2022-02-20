@@ -48,8 +48,8 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 
 0.5
 * ⚪ Support for simplifying complex meshes
-* 🟡 Load custom block palettes and texture atlases
-* 🟢 Optimise construction of voxel mesh vertex buffers
+* 🟢 **Load custom block palettes and texture atlases**
+* 🟢 **Optimise construction of voxel mesh vertex buffers**
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
@@ -75,5 +75,12 @@ This is an non-commercial **unofficial** tool that is neither approved, endorsed
 
 ![MinecraftPreview](/resources/minecraft.png)
 
-# Debugging
+# Contributing
+Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` and pass the CI build task.
+
+Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_simplify()`, `_voxelise()`, `_palette()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. If you have any questions or need help getting started then feel free to message me.
+
+Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also. 
+
+### Debugging
 To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in VSCode. Use `Ctrl+Shift+D`, and run "*Debug Main Process*" and once the Electron window has initialised, run "*Attach to Render Process*".
