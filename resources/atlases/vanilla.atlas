@@ -1,6 +1,5 @@
 {
     "atlasSize": 17,
-    "atlasTexture": "C:\\Users\\lucas\\ObjToSchematic\\resources\\atlases\\vanilla.png",
     "blocks": [
         {
             "name": "acacia_log",

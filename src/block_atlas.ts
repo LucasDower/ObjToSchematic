@@ -46,7 +46,7 @@ export class BlockAtlas {
     private _atlasSize: number;
     private _atlasLoaded: boolean;
     private _paletteLoaded: boolean;
-    private _atlasTexturePath?: string;
+    private _atlasTextureID?: string;
 
     private static _instance: BlockAtlas;
     public static get Get() {
@@ -77,7 +77,7 @@ export class BlockAtlas {
 
         const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
-        this._atlasTexturePath = json.atlasTexture;
+        this._atlasTextureID = atlasID;
         this._blocks = json.blocks;
         for (const block of this._blocks) {
             block.colour = new RGB(
@@ -138,7 +138,7 @@ export class BlockAtlas {
 
     public getAtlasTexturePath() {
         ASSERT(this._atlasLoaded, 'No atlas texture available');
-        ASSERT(this._atlasTexturePath, 'No atlas texture path available');
-        return this._atlasTexturePath;
+        ASSERT(this._atlasTextureID, 'No atlas texture ID available');
+        return path.join(__dirname, '../resources/atlases', this._atlasTextureID + '.png');
     }
 }
