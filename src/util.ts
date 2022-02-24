@@ -1,7 +1,10 @@
 import { AppConfig } from './config';
 import { Vector3 } from './vector';
 
+const convert = require('color-convert');
+
 import fs from 'fs';
+import { UI } from './ui/layout';
 
 export class UV {
     public u: number;
@@ -47,9 +50,18 @@ export class RGB {
     }
 
     public static distance(a: RGB, b: RGB): number {
-        const _a = a.toVector3();
-        const _b = b.toVector3();
-        return _a.sub(_b).magnitude();
+        const useLAB = UI.Get.layout.palette.elements.colourSpace.getCachedValue() === 'lab';
+        if (useLAB) {
+            const aLAB = convert.rgb.lab(a.r * 255, a.g * 255, a.b * 255);
+            const bLAB = convert.rgb.lab(b.r * 255, b.g * 255, b.b * 255);
+            const _a = Vector3.fromArray(aLAB);
+            const _b = Vector3.fromArray(bLAB);
+            return _a.sub(_b).magnitude();
+        } else {
+            const _a = a.toVector3();
+            const _b = b.toVector3();
+            return _a.sub(_b).magnitude();
+        }
     }
 
     public static get white(): RGB {

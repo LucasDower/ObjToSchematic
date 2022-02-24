@@ -75,8 +75,12 @@ export class UI {
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off' },
                 ]),
+                'colourSpace': new ComboBoxElement('Colour space', [
+                    { id: 'lab', displayText: 'LAB (recommended)' },
+                    { id: 'rgb', displayText: 'RGB' },
+                ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 AppContext.Get.do(Action.Palette);
             }),
