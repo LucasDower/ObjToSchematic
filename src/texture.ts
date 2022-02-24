@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
+import { clamp } from './math';
 import { UV, RGBA } from './util';
 
 /* eslint-disable */
@@ -36,8 +37,11 @@ export class Texture {
     getRGBA(uv: UV): RGBA {
         uv.v = 1 - uv.v;
 
-        const x = Math.floor(uv.u * this._image.width);
-        const y = Math.floor(uv.v * this._image.height);
+        let x = Math.floor(uv.u * this._image.width);
+        let y = Math.floor(uv.v * this._image.height);
+
+        x = clamp(x, 0, this._image.width - 1);
+        y = clamp(y, 0, this._image.height - 1);
 
         const index = 4 * (this._image.width * y + x);
         const rgba = this._image.data.slice(index, index + 4);
