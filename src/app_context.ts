@@ -3,7 +3,7 @@ import { Litematic, Schematic } from './schematic';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR } from './util';
+import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
 
 import { remote } from 'electron';
 import { VoxelMesh } from './voxel_mesh';
@@ -131,7 +131,7 @@ export class AppContext {
         const successMessage = ReturnMessages.get(action)!.onSuccess;
         if (this._warnings.length !== 0) {
             const allWarnings = this._warnings.join('<br>');
-            UI.Get.layoutDull[groupName].output.setMessage(successMessage + ', with warnings:' + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
+            UI.Get.layoutDull[groupName].output.setMessage(successMessage + `, with ${this._warnings.length} warning(s):` + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
         } else {
             UI.Get.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
         }
@@ -196,5 +196,10 @@ export class AppContext {
 
     public getLoadedMesh() {
         return this._loadedMesh;
+    }
+
+    public addWarning(warning: string) {
+        LOG_WARN(warning);
+        this._warnings.push(warning);
     }
 }

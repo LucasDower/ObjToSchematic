@@ -9,11 +9,6 @@ export class GeometryTemplates {
     static getTriangleBufferData(triangle: UVTriangle): VoxelData {
         const n = triangle.getNormal();
 
-        const uv0u = triangle.uv0.u;
-        if (isNaN(uv0u)) {
-            throw Error('oh no');
-        }
-
         return {
             custom: {
                 position: [

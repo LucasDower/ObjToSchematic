@@ -1,4 +1,4 @@
-import { LOG, RGB, UV } from '../src/util';
+import { RGB, UV } from '../src/util';
 import { log, logBreak, LogStyle } from './logging';
 import { isDirSetup, ASSERT, getAverageColour, getPermission } from './misc';
 

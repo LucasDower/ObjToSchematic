@@ -220,6 +220,10 @@ export class Vector3 extends Hashable {
         return new Vector3(0.0, 0.0, 1.0);
     }
 
+    public isNumber() {
+        return !isNaN(this.x) && !isNaN(this.y) && !isNaN(this.z);
+    }
+
     // Begin IHashable interface
     override hash() {
         const p0 = 73856093;

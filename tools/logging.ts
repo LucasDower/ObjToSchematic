@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 
+/* eslint-disable */
 export enum LogStyle {
     None = 'None',
     Info = 'Info',
@@ -7,6 +8,7 @@ export enum LogStyle {
     Failure = 'Failure',
     Success = 'Success'
 }
+/* eslint-enable */
 
 const LogStyleDetails: {[style: string]: {style: chalk.Chalk, prefix: string}} = {};
 LogStyleDetails[LogStyle.Info] = {style: chalk.blue, prefix: chalk.blue.inverse('INFO')};

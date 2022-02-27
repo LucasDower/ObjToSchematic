@@ -77,7 +77,7 @@ export class UI {
                 ]),
                 'colourSpace': new ComboBoxElement('Colour space', [
                     { id: 'lab', displayText: 'LAB (recommended)' },
-                    { id: 'rgb', displayText: 'RGB' },
+                    { id: 'rgb', displayText: 'RGB (faster)' },
                 ]),
             },
             elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],

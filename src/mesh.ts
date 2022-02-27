@@ -1,7 +1,11 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, LOG } from './util';
+import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN } from './util';
 import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
+import { AppContext } from './app_context';
+
+import path from 'path';
+import fs from 'fs';
 
 export interface Tri {
     iX: number;
@@ -36,8 +40,13 @@ export class Mesh {
         this.tris = tris;
         this.materials = materials;
 
+        this._checkMesh();
+        this._checkMaterials();
+
         this._centreMesh();
         this._scaleMesh();
+
+        LOG('Loaded mesh', this);
     }
 
     public getBounds() {
@@ -46,6 +55,57 @@ export class Mesh {
             bounds.extendByPoint(vertex);
         }
         return bounds;
+    }
+
+    private _checkMesh() {
+        // Check UVs are inside [0, 1]
+        for (const uv of this.uvs) {
+            if (uv.u < 0.0 || uv.u > 1.0) {
+                uv.u = Math.abs(uv.u % 1);
+            }
+            if (uv.v < 0.0 || uv.v > 1.0) {
+                uv.v = Math.abs(uv.v % 1);
+            }
+        }
+    }
+
+    private _checkMaterials() {
+        // Check used materials exist
+        let wasRemapped = false;
+        let debugName = (Math.random() + 1).toString(36).substring(7);
+        while (debugName in this.materials) {
+            debugName = (Math.random() + 1).toString(36).substring(7);
+        }
+
+        for (const tri of this.tris) {
+            if (!(tri.material in this.materials)) {
+                wasRemapped = true;
+                tri.material = debugName;
+            }
+        }
+        if (wasRemapped) {
+            AppContext.Get.addWarning('Some materials were not loaded correctly');
+            this.materials[debugName] = {
+                type: MaterialType.solid,
+                colour: RGB.white,
+            };
+        }
+        
+        // Check texture paths are absolute and exist
+        for (const materialName in this.materials) {
+            const material = this.materials[materialName];
+            if (material.type === MaterialType.textured) {
+                ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
+                if (!fs.existsSync(material.path)) {
+                    AppContext.Get.addWarning(`Could not find ${material.path}`);
+                    LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
+                    this.materials[materialName] = {
+                        type: MaterialType.solid,
+                        colour: RGB.white,
+                    };
+                }
+            }
+        }
     }
 
     private _centreMesh() {
@@ -63,6 +123,11 @@ export class Mesh {
         });
         centre.divScalar(totalWeight);
 
+        if (!centre.isNumber()) {
+            throw new CustomError('Could not find centre of mesh');
+        }
+        LOG('Centre', centre);
+
         // Translate each triangle
         this.vertices.forEach((vertex) => {
             vertex.sub(centre);
@@ -74,9 +139,13 @@ export class Mesh {
         const size = Vector3.sub(bounds.max, bounds.min);
         const scaleFactor = Mesh.desiredHeight / size.y;
 
-        this.vertices.forEach((vertex) => {
-            vertex.mulScalar(scaleFactor);
-        });
+        if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
+            throw new CustomError('<b>Could not scale mesh correctly</b>: Mesh is likely 2D, rotate it so that it has a non-zero height');
+        } else {
+            this.vertices.forEach((vertex) => {
+                vertex.mulScalar(scaleFactor);
+            });
+        }
     }
 
     public getVertices(triIndex: number) {
@@ -103,9 +172,9 @@ export class Mesh {
             this.vertices[tri.iX],
             this.vertices[tri.iY],
             this.vertices[tri.iZ],
-            this.uvs[tri.iXUV],
-            this.uvs[tri.iYUV],
-            this.uvs[tri.iZUV],
+            this.uvs[tri.iXUV] || 0.0,
+            this.uvs[tri.iYUV] || 0.0,
+            this.uvs[tri.iZUV] || 0.0,
         );
     }
 

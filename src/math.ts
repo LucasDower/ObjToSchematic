@@ -1,3 +1,4 @@
+import { CustomError, LOG_ERROR } from './util';
 import { Vector3 } from './vector';
 
 
@@ -36,6 +37,31 @@ export const roundToNearest = (value: number, base: number) => {
 export const wayThrough = (value: number, min: number, max: number) => {
     // ASSERT(value >= min && value <= max);
     return (value - min) / (max - min);
+};
+
+/**
+ * Throws is any number in args is NaN
+ */
+export const checkNaN = (...args: number[]) => {
+    const existsNaN = args.some((arg) => {
+        return isNaN(arg);
+    });
+    if (existsNaN) {
+        LOG_ERROR(args);
+        throw new CustomError('Found NaN');
+    }
+};
+
+/**
+ * Throws if any number in not within [0, 1]
+ */
+export const checkFractional = (...args: number[]) => {
+    const existsOutside = args.some((arg) => {
+        return arg > 1.0 || arg < 0.0;
+    });
+    if (existsOutside) {
+        throw new CustomError('Found value outside of [0, 1]');
+    }
 };
 
 export const degreesToRadians = Math.PI / 180;
