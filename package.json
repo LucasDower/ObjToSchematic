@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.9.3",
+    "color-convert": "^2.0.1",
     "eslint-config-google": "^0.14.0",
     "expand-vertex-data": "^1.1.2",
     "jpeg-js": "^0.4.3",
