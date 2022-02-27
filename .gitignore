@@ -3,6 +3,10 @@ package-lock.json
 ObjToSchematic-win32-x64
 /resources/*.obj
 /resources/*.mtl
+/resources/atlases/*.atlas
+!/resources/atlases/vanilla.atlas
+/resources/atlases/*.png
+!/resources/atlases/vanilla.png
 /dist
 /tools/blocks
 /tools/models

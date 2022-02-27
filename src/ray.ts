@@ -16,14 +16,18 @@ interface Ray {
 }
 
 export function generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> {
-    const bounds: Bounds = {
-        minX: Math.floor(Math.min(v0.x, v1.x, v2.x)),
-        minY: Math.floor(Math.min(v0.y, v1.y, v2.y)),
-        minZ: Math.floor(Math.min(v0.z, v1.z, v2.z)),
-        maxX: Math.ceil(Math.max(v0.x, v1.x, v2.x)),
-        maxY: Math.ceil(Math.max(v0.y, v1.y, v2.y)),
-        maxZ: Math.ceil(Math.max(v0.z, v1.z, v2.z)),
-    };
+    const bounds: Bounds = new Bounds(
+        new Vector3(
+            Math.floor(Math.min(v0.x, v1.x, v2.x)),
+            Math.floor(Math.min(v0.y, v1.y, v2.y)),
+            Math.floor(Math.min(v0.z, v1.z, v2.z)),
+        ),
+        new Vector3(
+            Math.ceil(Math.max(v0.x, v1.x, v2.x)),
+            Math.ceil(Math.max(v0.y, v1.y, v2.y)),
+            Math.ceil(Math.max(v0.z, v1.z, v2.z)),
+        ),
+    );
 
     const rayList: Array<Ray> = [];
     traverseX(rayList, bounds);
@@ -33,10 +37,10 @@ export function generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> 
 }
 
 function traverseX(rayList: Array<Ray>, bounds: Bounds) {
-    for (let y = bounds.minY; y <= bounds.maxY; ++y) {
-        for (let z = bounds.minZ; z <= bounds.maxZ; ++z) {
+    for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
+        for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
             rayList.push({
-                origin: new Vector3(bounds.minX, y, z),
+                origin: new Vector3(bounds.min.x, y, z),
                 direction: new Vector3(1, 0, 0),
                 axis: Axes.x,
             });
@@ -45,10 +49,10 @@ function traverseX(rayList: Array<Ray>, bounds: Bounds) {
 }
 
 function traverseY(rayList: Array<Ray>, bounds: Bounds) {
-    for (let x = bounds.minX; x <= bounds.maxX; ++x) {
-        for (let z = bounds.minZ; z <= bounds.maxZ; ++z) {
+    for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
+        for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
             rayList.push({
-                origin: new Vector3(x, bounds.minY, z),
+                origin: new Vector3(x, bounds.min.y, z),
                 direction: new Vector3(0, 1, 0),
                 axis: Axes.y,
             });
@@ -57,10 +61,10 @@ function traverseY(rayList: Array<Ray>, bounds: Bounds) {
 }
 
 function traverseZ(rayList: Array<Ray>, bounds: Bounds) {
-    for (let x = bounds.minX; x <= bounds.maxX; ++x) {
-        for (let y = bounds.minY; y <= bounds.maxY; ++y) {
+    for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
+        for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
             rayList.push({
-                origin: new Vector3(x, y, bounds.minZ),
+                origin: new Vector3(x, y, bounds.min.z),
                 direction: new Vector3(0, 0, 1),
                 axis: Axes.z,
             });

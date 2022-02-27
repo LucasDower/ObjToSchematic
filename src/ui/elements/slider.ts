@@ -1,19 +1,18 @@
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 import { clamp } from '../../math';
 import { LabelledElement } from './labelled_element';
 
 export class SliderElement extends LabelledElement {
     private _min: number;
     private _max: number;
-    private _step: number;
-    private _value: number;
+    private _decimals: number;
     private _dragging: boolean;
 
-    public constructor(label: string, min: number, max: number, step: number, value: number) {
+    public constructor(label: string, min: number, max: number, decimals: number, value: number) {
         super(label);
         this._min = min;
         this._max = max;
-        this._step = step;
+        this._decimals = decimals;
         this._value = value;
         this._dragging = false;
     }
@@ -35,7 +34,7 @@ export class SliderElement extends LabelledElement {
 
     public registerEvents() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         element.onmousedown = () => {
             this._dragging = true;
@@ -63,7 +62,7 @@ export class SliderElement extends LabelledElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        assert(element !== null && elementBar !== null && elementValue !== null);
+        ASSERT(element !== null && elementBar !== null && elementValue !== null);
 
 
         const mouseEvent = e as MouseEvent;
@@ -73,10 +72,11 @@ export class SliderElement extends LabelledElement {
         this._value = (norm * (this._max - this._min)) + this._min;
         elementBar.style.width = `${norm * 100}%`;
 
-        elementValue.innerHTML = this._value.toFixed(0);
+
+        elementValue.innerHTML = this._value.toFixed(this._decimals);
     }
 
-    public getValue() {
+    protected getValue() {
         return this._value;
     }
 
@@ -86,7 +86,7 @@ export class SliderElement extends LabelledElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        assert(element !== null && elementBar !== null && elementValue !== null);
+        ASSERT(element !== null && elementBar !== null && elementValue !== null);
 
         if (this._isEnabled) {
             element.classList.remove('new-slider-disabled');

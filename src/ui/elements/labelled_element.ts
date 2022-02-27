@@ -1,4 +1,4 @@
-import { BaseUIElement } from '../layout';
+import { BaseUIElement } from './base';
 import { LabelElement } from './label';
 
 export abstract class LabelledElement extends BaseUIElement {

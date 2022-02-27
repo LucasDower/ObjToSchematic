@@ -1,6 +1,7 @@
-import { Vector3 } from './vector';
 import { HashMap } from './hash_map';
-import { UV, RGB } from './util';
+import { UV, RGB, ASSERT, fileExists } from './util';
+import { Vector3 } from './vector';
+
 import fs from 'fs';
 import path from 'path';
 
@@ -32,37 +33,80 @@ export enum Block {
     Dirt = 3.0,
     Cobblestone = 4.0
 }
+
+interface BlockPalette {
+    blocks: string[];
+}
+
 /* eslint-enable */
 export class BlockAtlas {
     private _cachedBlocks: HashMap<Vector3, number>;
-    private readonly _blocks: Array<BlockInfo>;
-    public readonly _atlasSize: number;
+    private _blocks: Array<BlockInfo>;
+    private _palette: string[];
+    private _atlasSize: number;
+    private _atlasLoaded: boolean;
+    private _paletteLoaded: boolean;
+    private _atlasTextureID?: string;
 
     private static _instance: BlockAtlas;
-
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
 
     private constructor() {
+        this._cachedBlocks = new HashMap(0);
+        this._blocks = [];
+        this._atlasSize = 0;
+        this._atlasLoaded = false;
+        this._palette = [];
+        this._paletteLoaded = false;
+
+        // this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
+    }
+
+    public loadAtlas(atlasID: string) {
         this._cachedBlocks = new HashMap(1024);
 
-        const _path = path.join(__dirname, '../resources/blocks.json');
-        const blocksString = fs.readFileSync(_path, 'utf-8');
+        const atlasDir = path.join(__dirname, '../resources/atlases', atlasID + '.atlas');
+        ASSERT(fileExists(atlasDir), `Atlas to load does not exist ${atlasDir}`);
+
+        const blocksString = fs.readFileSync(atlasDir, 'utf-8');
         if (!blocksString) {
-            throw Error('Could not load blocks.json');
+            throw Error('Could not load vanilla.atlas');
         }
 
         const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
+        this._atlasTextureID = atlasID;
         this._blocks = json.blocks;
+        for (const block of this._blocks) {
+            block.colour = new RGB(
+                block.colour.r,
+                block.colour.g,
+                block.colour.b,
+            );
+        }
+
+        this._atlasLoaded = true;
     }
 
+    public loadPalette(paletteID: string) {
+        this._cachedBlocks = new HashMap(1024);
+
+        const paletteDir = path.join(__dirname, '../resources/palettes', paletteID + '.palette');
+        ASSERT(fileExists(paletteDir), `Palette to load does not exist ${paletteDir}`);
+
+        const palette: BlockPalette = JSON.parse(fs.readFileSync(paletteDir, 'utf8'));
+        this._palette = palette.blocks;
+
+        this._paletteLoaded = true;
+    }
 
     public getBlock(voxelColour: RGB): BlockInfo {
-        const voxelColourVector = new Vector3(voxelColour.r, voxelColour.g, voxelColour.b);
+        ASSERT(this._atlasLoaded, 'No atlas has been loaded');
+        ASSERT(this._paletteLoaded, 'No palette has been loaded');
 
-        const cachedBlockIndex = this._cachedBlocks.get(voxelColourVector);
+        const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
         if (cachedBlockIndex) {
             return this._blocks[cachedBlockIndex];
         }
@@ -72,21 +116,29 @@ export class BlockAtlas {
 
         for (let i = 0; i < this._blocks.length; ++i) {
             const block: BlockInfo = this._blocks[i];
-            const blockAvgColour = block.colour;
-            const blockAvgColourVector = new Vector3(
-                blockAvgColour.r,
-                blockAvgColour.g,
-                blockAvgColour.b,
-            );
+            if (this._palette.includes(block.name)) {
+                const blockAvgColour = block.colour as RGB;
+                const distance = RGB.distance(blockAvgColour, voxelColour);
 
-            const distance = Vector3.sub(blockAvgColourVector, voxelColourVector).magnitude();
-            if (distance < minDistance) {
-                minDistance = distance;
-                blockChoiceIndex = i;
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    blockChoiceIndex = i;
+                }
             }
         }
 
-        this._cachedBlocks.add(voxelColourVector, blockChoiceIndex);
+        this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
         return this._blocks[blockChoiceIndex];
+    }
+
+    public getAtlasSize() {
+        ASSERT(this._atlasLoaded);
+        return this._atlasSize;
+    }
+
+    public getAtlasTexturePath() {
+        ASSERT(this._atlasLoaded, 'No atlas texture available');
+        ASSERT(this._atlasTextureID, 'No atlas texture ID available');
+        return path.join(__dirname, '../resources/atlases', this._atlasTextureID + '.png');
     }
 }

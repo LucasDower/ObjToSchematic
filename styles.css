@@ -92,7 +92,7 @@ canvas {
   padding: 0px 0px 0px 0px;
   color: #303030;
   font-weight: 400;
-  font-size: 75%;
+  font-size: 85%;
   letter-spacing: 4px;
 }
 
@@ -118,6 +118,9 @@ canvas {
   padding: 12px 18px;
   line-height: 180%;
   min-height: 22px;
+  border: 1.5px solid #141414;
+  transition-duration: 1s;
+  overflow-wrap: anywhere;
 }
 
 .round-top {
@@ -250,7 +253,7 @@ select:disabled {
   cursor: pointer;
 }
 .input-text-disabled {
-  background-color: red !important;
+  background-color: rgb(156, 27, 27) !important;
 }
 
 .h-div {
@@ -294,8 +297,18 @@ select:disabled {
 
 .border-warning {
   border: 1.5px solid orange;
+  transition-duration: 1s;
+  color: orange;
+}
+
+.border-success {
+  border: 1.5px solid green;
+  transition-duration: 1s;
+  color: green;
 }
 
 .border-error {
-  border: 1.5px solid red;
+  border: 1.5px solid rgb(156, 27, 27);
+  transition-duration: 1s;
+  color: rgb(156, 27, 27);
 }

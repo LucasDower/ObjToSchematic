@@ -1,7 +1,7 @@
 # ObjToSchematic
 A visual tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
 
-![Preview](/resources/preview3.png)
+![Preview](https://i.imgur.com/w1GWPvT.png)
 <sub>"Homo erectus georgicus" (https://skfb.ly/6ADT8) by Geoffrey Marchal is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
 
 # Usage
@@ -13,8 +13,11 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 * Run `npm install`.
 * Run `npm start`.
 
-Support for choosing the block palette is not yet supported. Instead, you can edit `/tools/default-ignore-list.txt` to include blocks you don't want to be used and then run `npm run-script atlas`. You can also place custom textures in `/tools/blocks/` for more accurate block-colour matching when building with resource packs.
+### Advanced
 
+**Block Palettes** You can create your own block palettes to fit the build you desire. When you select this palette, the generated structure will only use the blocks defined in your palette. To create a palette, list every block you want to use in `/tools/new-palette-blocks`. A list of every supported block can be found in `/tools/all-supported-blocks`. When your list is complete, run `npm run palette`. If everything is successful, the next time you run the program you'll be able to select your new palette in the 'Block palette' dropdown.
+
+**Texture Atlases** If you play Minecraft with a resource pack, you will probably want to build your own texture atlas. This way the program will use the same resource pack for its visualisation and more accurate colour-to-block conversions can be made. To do this, run `npm run atlas` and follow the instructions. If everything is successful, the next time you run the program you'll be able to select your resource pack in the 'Texture atlas' dropdown.
 # Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
 * 🟢 **.json model loading**
@@ -46,13 +49,12 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 
 0.5
 * ⚪ Support for simplifying complex meshes
-* ⚪ Load custom block palettes and texture atlases
-* 🟡 Optimise construction of voxel mesh vertex buffers
+* 🟢 **Load custom block palettes and texture atlases**
+* 🟢 **Optimise construction of voxel mesh vertex buffers**
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
-* ⚪ Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)
-* ⚪ Node.js C++ addons
+* 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 * ⚪ Alpha support
   * Alpha texture maps
   * Transparent blocks
@@ -60,6 +62,7 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 * ⚪ Import from .gltf
 
 0.6
+* ⚪ Node.js C++ addons
 * ⚪ Block painting
 * ⚪ Building guides
 * ⚪ Slice viewer
@@ -71,7 +74,14 @@ Support for choosing the block palette is not yet supported. Instead, you can ed
 
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
-![MinecraftPreview](/resources/minecraft.png)
+![MinecraftPreview](https://i.imgur.com/LhTZ4G9.png)
 
-# Debugging
+# Contributing
+Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` and pass the CI build task.
+
+Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_simplify()`, `_voxelise()`, `_palette()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. If you have any questions or need help getting started then feel free to message me.
+
+Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also. 
+
+### Debugging
 To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in VSCode. Use `Ctrl+Shift+D`, and run "*Debug Main Process*" and once the Electron window has initialised, run "*Attach to Render Process*".

@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 
 export interface ComboBoxItem {
     id: string;
@@ -30,9 +30,9 @@ export class ComboBoxElement extends LabelledElement {
     public registerEvents(): void {
     }
 
-    public getValue() {
+    protected getValue() {
         const element = document.getElementById(this._id) as HTMLSelectElement;
-        assert(element !== null);
+        ASSERT(element !== null);
         return this._items[element.selectedIndex].id;
     }
 
@@ -40,7 +40,7 @@ export class ComboBoxElement extends LabelledElement {
         super._onEnabledChanged();
 
         const element = document.getElementById(this._id) as HTMLSelectElement;
-        assert(element !== null);
+        ASSERT(element !== null);
         element.disabled = !this._isEnabled;
     }
 }

@@ -1,4 +1,4 @@
-import { assert } from '../../util';
+import { ASSERT } from '../../util';
 import { ActionReturnType } from '../../app_context';
 
 export class OutputElement {
@@ -15,14 +15,25 @@ export class OutputElement {
         `;
     }
 
-    public setMessage(message: string, returnType: ActionReturnType) {
+    public clearMessage() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
-
-        element.innerHTML = message;
+        ASSERT(element !== null);
+        
+        element.innerHTML = '';
+        element.classList.remove('border-success');
         element.classList.remove('border-warning');
         element.classList.remove('border-error');
-        if (returnType === ActionReturnType.Warning) {
+    }
+
+    public setMessage(message: string, returnType: ActionReturnType) {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null);
+
+        this.clearMessage();
+        element.innerHTML = message;
+        if (returnType === ActionReturnType.Success) {
+            element.classList.add('border-success');
+        } else if (returnType === ActionReturnType.Warning) {
             element.classList.add('border-warning');
         } else if (returnType === ActionReturnType.Failure) {
             element.classList.add('border-error');

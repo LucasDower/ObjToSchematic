@@ -1,18 +1,13 @@
-import { buildUI, registerUI, Group, setEnabled } from './ui/layout';
-import { Exporter, Litematic, Schematic } from './schematic';
-import { VoxelManager } from './voxel_manager';
+import { UI } from './ui/layout';
+import { Litematic, Schematic } from './schematic';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
-
-import { SliderElement } from './ui/elements/slider';
-import { ComboBoxElement } from './ui/elements/combobox';
-import { FileInputElement } from './ui/elements/file_input';
+import { ObjImporter } from './importers/obj_importer';
+import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
 
 import { remote } from 'electron';
-import fs from 'fs';
-import { ButtonElement } from './ui/elements/button';
-import { OutputElement } from './ui/elements/output';
-import { CustomError } from './util';
+import { VoxelMesh } from './voxel_mesh';
+import { BlockMesh } from './block_mesh';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -21,7 +16,7 @@ export enum ActionReturnType {
     Failure
 }
 /* eslint-enable */
-interface ReturnStatus {
+export interface ReturnStatus {
     message: string,
     type: ActionReturnType,
     error?: unknown
@@ -29,242 +24,157 @@ interface ReturnStatus {
 
 /* eslint-disable */
 export enum Action {
-    Load = 0,
+    Import = 0,
     Simplify = 1,
     Voxelise = 2,
     Palette = 3,
     Export = 4,
+    MAX = 5,
 }
 /* eslint-enable */
 
-export class AppContext {
-    public ambientOcclusion: boolean;
-    public dithering: boolean;
+const ReturnMessages = new Map<Action, { onSuccess: string, onFailure: string }>();
+ReturnMessages.set(Action.Import,   { onSuccess: 'Loaded mesh successfully',        onFailure: 'Failed to load mesh' });
+ReturnMessages.set(Action.Simplify, { onSuccess: 'Simplified mesh successfully',    onFailure: 'Failed to simplify mesh' });
+ReturnMessages.set(Action.Voxelise, { onSuccess: 'Voxelised mesh successfully',     onFailure: 'Failed to voxelise mesh' });
+ReturnMessages.set(Action.Palette,  { onSuccess: 'Assigned blocks successfully',    onFailure: 'Failed to assign blocks' });
+ReturnMessages.set(Action.Export,   { onSuccess: 'Exported structure successfully', onFailure: 'Failed to export structure' });
 
-    private _gl: WebGLRenderingContext;
+export class AppContext {
     private _loadedMesh?: Mesh;
-    private _ui: Group[];
-    private _actionMap = new Map<Action, () => (ReturnStatus | void)>();
+    private _loadedVoxelMesh?: VoxelMesh;
+    private _loadedBlockMesh?: BlockMesh;
+    private _warnings: string[];
+
+    private _actionMap = new Map<Action, {
+        action: () => void;
+        onFailure?: () => void
+    }>();
 
     private static _instance: AppContext;
-
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
 
     private constructor() {
-        this.ambientOcclusion = true;
-        this.dithering = true;
-
-        this._actionMap.set(Action.Load,     () => {
-            return this._load();
-        });
-        this._actionMap.set(Action.Simplify, () => {});
-        this._actionMap.set(Action.Voxelise, () => {
-            return this._voxelise();
-        });
-        this._actionMap.set(Action.Palette,  () => {
-            return this._palette();
-        } );
-        this._actionMap.set(Action.Export,   () => {
-            return this._export();
-        });
-
-        this._ui = [
-            {
-                label: 'Input',
-                elements: [
-                    new FileInputElement('Wavefront .obj file', 'obj'),
-                    new FileInputElement('Material .mtl file', 'mtl'),
-                ],
-                submitButton: new ButtonElement('Load mesh', () => {
-                    this.do(Action.Load);
-                }),
-                output: new OutputElement(),
-            },
-            {
-                label: 'Simplify',
-                elements: [
-                    new SliderElement('Ratio', 0.0, 1.0, 0.01, 0.5),
-                ],
-                submitButton: new ButtonElement('Simplify mesh', () => {}),
-                output: new OutputElement(),
-            },
-            {
-                label: 'Build',
-                elements: [
-                    new SliderElement('Desired height', 1, 320, 1, 80),
-                    new ComboBoxElement('Ambient occlusion', [
-                        { id: 'on', displayText: 'On (recommended)' },
-                        { id: 'off', displayText: 'Off (faster)' },
-                    ]),
-                ],
-                submitButton: new ButtonElement('Voxelise mesh', () => {
-                    this.do(Action.Voxelise);
-                }),
-                output: new OutputElement(),
-            },
-            {
-                label: 'Palette',
-                elements: [
-                    new ComboBoxElement('Block palette', [
-                        { id: 'default', displayText: 'Default' },
-                    ]),
-                    new ComboBoxElement('Choice method', [
-                        { id: 'euclidian', displayText: 'Euclidian distance' },
-                    ]),
-                    new ComboBoxElement('Dithering', [
-                        { id: 'on', displayText: 'On (recommended)' },
-                        { id: 'off', displayText: 'Off' },
-                    ]),
-                ],
-                submitButton: new ButtonElement('Assign blocks', () => {
-                    this.do(Action.Palette);
-                }),
-                output: new OutputElement(),
-            },
-            {
-                label: 'Export',
-                elements: [
-                    new ComboBoxElement('File format', [
-                        { id: 'litematic', displayText: 'Litematic' },
-                        { id: 'schematic', displayText: 'Schematic' },
-                    ]),
-                ],
-                submitButton: new ButtonElement('Export structure', () => {
-                    this.do(Action.Export);
-                }),
-                output: new OutputElement(),
-            },
-        ];
-
-        buildUI(this._ui);
-        registerUI(this._ui);
-        setEnabled(this._ui[1], false);
-        setEnabled(this._ui[2], false);
-        setEnabled(this._ui[3], false);
-        setEnabled(this._ui[4], false);
-
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
         }
-        this._gl = gl;
+
+        this._warnings = [];
+        this._actionMap.set(Action.Import, {
+            action: () => {
+                return this._import();
+            },
+            onFailure: () => {
+                this._loadedMesh = undefined;
+            },
+        });
+        this._actionMap.set(Action.Simplify, {
+            action: () => {
+                return this._simplify();
+            },
+        });
+        this._actionMap.set(Action.Voxelise, {
+            action: () => {
+                return this._voxelise();
+            },
+            onFailure: () => {
+                this._loadedVoxelMesh = undefined;
+            },
+        });
+        this._actionMap.set(Action.Palette, {
+            action: () => {
+                return this._palette();
+            },
+            onFailure: () => {
+                this._loadedBlockMesh = undefined;
+            },
+        });
+        this._actionMap.set(Action.Export, {
+            action: () => {
+                return this._export();
+            },
+        });
+
+        UI.Get.build();
+        UI.Get.registerEvents();
+
+        UI.Get.disable(Action.Simplify);
     }
 
     public do(action: Action) {
-        const status = this._actionMap.get(action)!();
-        if (status) {
-            if (status.error) {
-                console.error('CAUGHT', status.error);
-                if (status.error instanceof CustomError) {
-                    this._ui[action].output.setMessage(status.error.message, status.type);
-                } else {
-                    this._ui[action].output.setMessage(status.message, status.type);
-                }
+        UI.Get.disable(action + 1);
+        this._warnings = [];
+        const groupName = UI.Get.uiOrder[action];
+        LOG(`Doing ${action}`);
+        UI.Get.cacheValues(action);
+        const delegate = this._actionMap.get(action)!;
+        try {
+            delegate.action();
+        } catch (err: any) {
+            LOG_ERROR(err);
+            if (err instanceof CustomError) {
+                UI.Get.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Failure);
+            } else if (err instanceof CustomWarning) {
+                UI.Get.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Warning);
             } else {
-                this._ui[action].output.setMessage(status.message, status.type);
+                UI.Get.layoutDull[groupName].output.setMessage(ReturnMessages.get(action)!.onFailure, ActionReturnType.Failure);
             }
-        }
-    }
-
-    private _load(): ReturnStatus {
-        setEnabled(this._ui[1], false);
-        setEnabled(this._ui[2], false);
-        setEnabled(this._ui[3], false);
-        setEnabled(this._ui[4], false);
-
-        const objPath = (<FileInputElement> this._ui[0].elements[0]).getValue();
-        if (!fs.existsSync(objPath)) {
-            return { message: 'Selected .obj cannot be found', type: ActionReturnType.Failure };
+            if (delegate.onFailure) {
+                delegate.onFailure();
+            }
+            return;
         }
 
-        const mtlPath = (<FileInputElement> this._ui[0].elements[1]).getValue();
-        if (!fs.existsSync(mtlPath)) {
-            return { message: 'Selected .mtl cannot be found', type: ActionReturnType.Failure };
-        }
-
-        try {
-            this._loadedMesh = new Mesh(objPath, mtlPath);
-            this._loadedMesh.loadTextures(this._gl);
-        } catch (err: unknown) {
-            return { error: err, message: 'Could not load mesh', type: ActionReturnType.Failure };
-        }
-
-        try {
-            const renderer = Renderer.Get;
-            renderer.clear();
-            renderer.registerMesh(this._loadedMesh);
-            renderer.compile();
-        } catch (err: unknown) {
-            return { message: 'Could not render mesh', type: ActionReturnType.Failure };
-        }
-
-        const bounds = this._loadedMesh.getBounds();
-        console.log('BOUNDS', {
-            x: bounds.maxX - bounds.minX,
-            y: bounds.maxY - bounds.minY,
-            z: bounds.maxZ - bounds.minZ,
-        });
-
-        setEnabled(this._ui[2], true);
-        return { message: 'Loaded successfully', type: ActionReturnType.Success };
-    }
-
-    private _voxelise(): ReturnStatus {
-        setEnabled(this._ui[3], false);
-        setEnabled(this._ui[4], false);
-
-        const voxelSize = (<SliderElement> this._ui[2].elements[0]).getValue();
-        const ambientOcclusion = (<ComboBoxElement> this._ui[2].elements[1]).getValue();
-        this.ambientOcclusion = ambientOcclusion === 'on';
-
-        try {
-            const voxelManager = VoxelManager.Get;
-            voxelManager.setDesiredHeight(voxelSize);
-            voxelManager.voxeliseMesh(this._loadedMesh!);
-
-            const renderer = Renderer.Get;
-            renderer.clear();
-            renderer.registerVoxelMesh();
-            renderer.compile();
-        } catch (err: any) {
-            return { error: err, message: 'Could not register voxel mesh', type: ActionReturnType.Failure };
-        }
-
-        setEnabled(this._ui[3], true);
-        return { message: 'Voxelised successfully', type: ActionReturnType.Success };
-    }
-
-    private _palette(): ReturnStatus {
-        setEnabled(this._ui[4], false);
-
-        const dithering = (<ComboBoxElement> this._ui[3].elements[2]).getValue();
-        this.dithering = dithering === 'on';
-
-        try {
-            const voxelManager = VoxelManager.Get;
-            voxelManager.assignBlocks();
-
-            const renderer = Renderer.Get;
-            renderer.clear();
-            renderer.registerVoxelMesh();
-            renderer.compile();
-        } catch (err: any) {
-            return { error: err, message: 'Could not register voxel mesh', type: ActionReturnType.Failure };
-        }
-
-        setEnabled(this._ui[4], true);
-        return { message: 'Blocks assigned successfully', type: ActionReturnType.Success };
-    }
-
-    private _export(): ReturnStatus {
-        const exportFormat = (<ComboBoxElement> this._ui[4].elements[0]).getValue();
-        let exporter: Exporter;
-        if (exportFormat === 'schematic') {
-            exporter = new Schematic();
+        const successMessage = ReturnMessages.get(action)!.onSuccess;
+        if (this._warnings.length !== 0) {
+            const allWarnings = this._warnings.join('<br>');
+            UI.Get.layoutDull[groupName].output.setMessage(successMessage + `, with ${this._warnings.length} warning(s):` + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
         } else {
-            exporter = new Litematic();
+            UI.Get.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
+        }
+
+        LOG(`Finished ${action}`);
+        UI.Get.enable(action + 1);
+    }
+
+    private _import() {
+        this._loadedMesh = new ObjImporter().createMesh();
+        Renderer.Get.useMesh(this._loadedMesh);
+    }
+
+    private _simplify() {
+        ASSERT(false);
+    }
+
+    private _voxelise() {
+        ASSERT(this._loadedMesh);
+        this._loadedVoxelMesh = new VoxelMesh();
+        this._loadedVoxelMesh.voxelise(this._loadedMesh);
+
+        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
+    }
+
+    private _palette() {
+        ASSERT(this._loadedVoxelMesh);
+        this._loadedBlockMesh = new BlockMesh();
+        this._loadedBlockMesh.assignBlocks(this._loadedVoxelMesh);
+
+        Renderer.Get.useBlockMesh(this._loadedBlockMesh);
+    }
+
+    private _export() {
+        const exportFormat = UI.Get.layout.export.elements.export.getCachedValue() as string;
+        const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
+
+        if (exportFormat === 'schematic') {
+            this._warnings.push(`
+                The .schematic format does not support newer Minecraft blocks.
+                For now, all blocks are exported as Stone blocks until a block palette
+                is available that only uses supported blocks.
+            `);
         }
 
         const filePath = remote.dialog.showSaveDialogSync({
@@ -273,20 +183,23 @@ export class AppContext {
             filters: [exporter.getFormatFilter()],
         });
 
-        if (filePath === undefined) {
-            return { message: 'Output cancelled', type: ActionReturnType.Warning };
+        ASSERT(this._loadedBlockMesh);
+        if (filePath) {
+            exporter.export(this._loadedBlockMesh, filePath);
         }
-
-        try {
-            exporter.export(filePath);
-        } catch (err: unknown) {
-            return { error: err, message: 'Failed to export', type: ActionReturnType.Failure };
-        }
-
-        return { message: 'Successfully exported', type: ActionReturnType.Success };
     }
 
     public draw() {
+        Renderer.Get.update();
         Renderer.Get.draw();
+    }
+
+    public getLoadedMesh() {
+        return this._loadedMesh;
+    }
+
+    public addWarning(warning: string) {
+        LOG_WARN(warning);
+        this._warnings.push(warning);
     }
 }

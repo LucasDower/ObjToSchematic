@@ -1,5 +1,5 @@
-import { BaseUIElement } from '../layout';
-import { assert } from '../../util';
+import { BaseUIElement } from './base';
+import { ASSERT } from '../../util';
 
 export class ButtonElement extends BaseUIElement {
     private _onClick: () => void;
@@ -20,7 +20,7 @@ export class ButtonElement extends BaseUIElement {
 
     public registerEvents(): void {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         element.addEventListener('click', () => {
             if (this._isEnabled) {
@@ -31,7 +31,7 @@ export class ButtonElement extends BaseUIElement {
 
     protected _onEnabledChanged() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        assert(element !== null);
+        ASSERT(element !== null);
 
         if (this._isEnabled) {
             element.classList.remove('button-disabled');
