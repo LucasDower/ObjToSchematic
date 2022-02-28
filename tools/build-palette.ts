@@ -5,10 +5,6 @@ import path from 'path';
 import prompt from 'prompt';
 
 void async function main() {
-    test();
-}();
-
-async function test() {
     log(LogStyle.Info, 'Creating a new palette...');
     
     const paletteBlocksDir = path.join(__dirname, './new-palette-blocks.txt');
@@ -48,4 +44,4 @@ async function test() {
 
     fs.writeFileSync(path.join(__dirname, `../resources/palettes/${promptUser.paletteName}.palette`), JSON.stringify(paletteJSON, null, 4));
     log(LogStyle.Success, `Successfully created ${promptUser.paletteName}.palette in /resources/palettes/`);
-}
+}();

@@ -169,14 +169,6 @@ export class AppContext {
         const exportFormat = UI.Get.layout.export.elements.export.getCachedValue() as string;
         const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
 
-        if (exportFormat === 'schematic') {
-            this._warnings.push(`
-                The .schematic format does not support newer Minecraft blocks.
-                For now, all blocks are exported as Stone blocks until a block palette
-                is available that only uses supported blocks.
-            `);
-        }
-
         const filePath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',

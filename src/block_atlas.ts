@@ -26,14 +26,6 @@ export interface BlockInfo {
     faces: FaceInfo
 }
 
-// https://minecraft.fandom.com/wiki/Java_Edition_data_values/Pre-flattening/Block_IDs
-/* eslint-disable */
-export enum Block {
-    Stone = 1.0,
-    Dirt = 3.0,
-    Cobblestone = 4.0
-}
-
 interface BlockPalette {
     blocks: string[];
 }

@@ -1,9 +1,11 @@
 import * as zlib from 'zlib';
 import * as fs from 'fs';
+import path from 'path';
 import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
 import { Vector3 } from './vector';
-import { Block } from './block_atlas';
 import { BlockMesh } from './block_mesh';
+import { LOG } from './util';
+import { AppContext } from './app_context';
 
 export abstract class Exporter {
     protected _sizeVector!: Vector3;
@@ -42,13 +44,32 @@ export class Schematic extends Exporter {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         const blocksData = Array<number>(bufferSize);
+        const metaData = Array<number>(bufferSize);
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
+        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(fs.readFileSync(path.join(__dirname, '../resources/block_ids.json'), 'utf8'));
+
         const blocks = blockMesh.getBlocks();
+        const unsupportedBlocks = new Set<string>();
+        let numBlocksUnsupported = 0;
         for (const block of blocks) {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
-            blocksData[index] = Block.Stone;
+            if (block.blockInfo.name in schematicBlocks) {
+                const schematicBlock = schematicBlocks[block.blockInfo.name];
+                blocksData[index] = new Int8Array([schematicBlock.id])[0];
+                metaData[index] = new Int8Array([schematicBlock.meta])[0];
+            } else {
+                blocksData[index] = 1; // Default to a Stone block
+                metaData[index] = 0;
+                unsupportedBlocks.add(block.blockInfo.name);
+                ++numBlocksUnsupported;
+            }
+        }
+
+        if (unsupportedBlocks.size > 0) {
+            AppContext.Get.addWarning(`${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`);
+            LOG('Unsupported blocks', unsupportedBlocks);
         }
 
         const nbt: NBT = {
@@ -60,7 +81,7 @@ export class Schematic extends Exporter {
                 Length: { type: TagType.Short, value: this._sizeVector.z },
                 Materials: { type: TagType.String, value: 'Alpha' },
                 Blocks: { type: TagType.ByteArray, value: blocksData },
-                Data: { type: TagType.ByteArray, value: new Array<number>(bufferSize).fill(0) },
+                Data: { type: TagType.ByteArray, value: metaData },
                 Entities: { type: TagType.List, value: { type: TagType.Int, value: Array(0) } },
                 TileEntities: { type: TagType.List, value: { type: TagType.Int, value: Array(0) } },
             },
@@ -136,8 +157,8 @@ export class Litematic extends Exporter {
         const blockStates = new Array<long>();
 
         for (let i = blockEncoding.length; i > 0; i -= 64) {
-            let right = parseInt(blockEncoding.substring(i-32, i), 2);
-            let left = parseInt(blockEncoding.substring(i-64, i-32), 2);
+            let right = parseInt(blockEncoding.substring(i - 32, i), 2);
+            let left = parseInt(blockEncoding.substring(i - 64, i - 32), 2);
 
             // TODO: Cleanup, UINT32 -> INT32
             if (right > 2147483647) {
