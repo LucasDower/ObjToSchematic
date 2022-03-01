@@ -117,6 +117,11 @@ export class Bounds {
     public get max() {
         return this._max;
     }
+
+    public getCentre() {
+        const extents = Vector3.sub(this._max, this._min).divScalar(2);
+        return Vector3.add(this.min, extents);
+    }
 }
 
 export function ASSERT(condition: any, errorMessage = 'Assertion Failed'): asserts condition {

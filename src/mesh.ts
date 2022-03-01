@@ -1,6 +1,6 @@
 import { Vector3 } from './vector';
 import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN } from './util';
-import { Triangle, UVTriangle } from './triangle';
+import { UVTriangle } from './triangle';
 import { RGB } from './util';
 import { AppContext } from './app_context';
 
@@ -126,6 +126,7 @@ export class Mesh {
     }
 
     private _centreMesh() {
+        /*
         const centre = new Vector3(0, 0, 0);
         let totalWeight = 0.0;
 
@@ -139,7 +140,9 @@ export class Mesh {
             centre.add(triangle.getCentre().mulScalar(weight));
         });
         centre.divScalar(totalWeight);
-
+        */
+        const centre = this.getBounds().getCentre();
+        
         if (!centre.isNumber()) {
             throw new CustomError('Could not find centre of mesh');
         }
