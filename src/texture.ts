@@ -64,13 +64,13 @@ export class Texture {
         const y = uv.v * this._image.height;
 
         const xL = Math.floor(x);
-        const xU = Math.ceil(x);
+        const xU = xL + 1;
         const yL = Math.floor(y);
-        const yU = Math.ceil(y);
+        const yU = yL + 1;
 
         const u = wayThrough(x, xL, xU);
         const v = wayThrough(y, yL, yU);
-        ASSERT(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0);
+        ASSERT(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0, `UV out of range (${u}, ${v})`);
 
         const A = this._getFromXY(xL, yU).toVector3();
         const B = this._getFromXY(xU, yU).toVector3();

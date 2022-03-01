@@ -58,6 +58,16 @@ export class Mesh {
     }
 
     private _checkMesh() {
+        // TODO: Check indices exist
+
+        if (this.vertices.length === 0) {
+            throw new CustomError('Loaded mesh has no vertices');
+        }
+
+        if (this.tris.length === 0) {
+            throw new CustomError('Loaded mesh has no triangles');
+        }
+
         // Check UVs are inside [0, 1]
         for (const uv of this.uvs) {
             if (uv.u < 0.0 || uv.u > 1.0) {
@@ -70,6 +80,10 @@ export class Mesh {
     }
 
     private _checkMaterials() {
+        if (Object.keys(this.materials).length === 0) {
+            throw new CustomError('Loaded mesh has no materials');
+        }
+
         // Check used materials exist
         let wasRemapped = false;
         let debugName = (Math.random() + 1).toString(36).substring(7);
@@ -77,13 +91,16 @@ export class Mesh {
             debugName = (Math.random() + 1).toString(36).substring(7);
         }
 
+        const missingMaterials = new Set<string>();
         for (const tri of this.tris) {
             if (!(tri.material in this.materials)) {
+                missingMaterials.add(tri.material);
                 wasRemapped = true;
                 tri.material = debugName;
             }
         }
         if (wasRemapped) {
+            LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
             AppContext.Get.addWarning('Some materials were not loaded correctly');
             this.materials[debugName] = {
                 type: MaterialType.solid,

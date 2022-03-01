@@ -1,7 +1,7 @@
 import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, RGB, CustomError, LOG } from '../util';
+import { UV, ASSERT, RGB, CustomError, LOG, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
 import { UI } from '../ui/layout';
 import { checkFractional, checkNaN } from '../math';
 
@@ -20,19 +20,31 @@ export class ObjImporter extends IImporter {
     private _objPath?: path.ParsedPath;
     private _objParsers = [
         {
-            regex: /mtllib (?<path>.*\.mtl)/,
+            // e.g. 'mtllib my_file.mtl'
+            regex: new RegExpBuilder().add(/mtllib/).add(/ /).add(REGEX_NZ_ANY, 'path').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                this._mtlLibs.push(match.path);
+                this._mtlLibs.push(match.path.trim());
             },
         },
         {
-            regex: /usemtl (?<name>.*)/,
+            // e.g. 'usemtl my_material'
+            regex: new RegExpBuilder().add(/usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                this._currentMaterialName = match.name;
+                this._currentMaterialName = match.name.trim();
+                ASSERT(this._currentMaterialName);
             },
         },
         {
-            regex: /v (?<x>.*) (?<y>.*) (?<z>.*)/,
+            // e.g. 'v 0.123 0.456 0.789'
+            regex: new RegExpBuilder()
+                .add(/v/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'x')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'y')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'z')
+                .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 const x = parseFloat(match.x);
                 const y = parseFloat(match.y);
@@ -42,7 +54,14 @@ export class ObjImporter extends IImporter {
             },
         },
         {
-            regex: /vt (?<u>.*) (?<v>.*)/,
+            // e.g. 'vt 0.123 0.456'
+            regex: new RegExpBuilder()
+                .add(/vt/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'u')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'v')
+                .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 const u = parseFloat(match.u);
                 const v = parseFloat(match.v);
@@ -51,16 +70,27 @@ export class ObjImporter extends IImporter {
             },
         },
         {
-            regex: /f (?<ix>.*)\/(?<iuvx>.*)\/.* (?<iy>.*)\/(?<iuvy>.*)\/.* (?<iz>.*)\/(?<iuvz>.*)\/.* (?<iw>.*)\/(?<iuvw>.*)\//,
+            // e.g. 'f 1/2/3 4/5/6 7/8/9 10/11/12' or 'f 1/2 3/4 5/6 7/8'
+            regex: new RegExpBuilder()
+                .add(/f/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'xIndex').addMany(['/'], true).add(REGEX_NUMBER, 'xtIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'yIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ytIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'zIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ztIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'wIndex').addMany(['/'], true).add(REGEX_NUMBER, 'wtIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                const iX = parseInt(match.ix) - 1;
-                const iY = parseInt(match.iy) - 1;
-                const iZ = parseInt(match.iz) - 1;
-                const iW = parseInt(match.iw) - 1;
-                const iUVx = parseInt(match.iuvx) - 1;
-                const iUVy = parseInt(match.iuvy) - 1;
-                const iUVz = parseInt(match.iuvz) - 1;
-                const iUVw = parseInt(match.iuvw) - 1;
+                const iX = parseInt(match.xIndex) - 1;
+                const iY = parseInt(match.yIndex) - 1;
+                const iZ = parseInt(match.zIndex) - 1;
+                const iW = parseInt(match.wIndex) - 1;
+                const iUVx = parseInt(match.xtIndex) - 1;
+                const iUVy = parseInt(match.ytIndex) - 1;
+                const iUVz = parseInt(match.ztIndex) - 1;
+                const iUVw = parseInt(match.wtIndex) - 1;
                 checkNaN(iX, iY, iZ, iW);
                 ASSERT(this._currentMaterialName);
                 this._tris.push({
@@ -84,14 +114,23 @@ export class ObjImporter extends IImporter {
             },
         },
         {
-            regex: /f (?<ix>.*)\/(?<iuvx>.*)\/.* (?<iy>.*)\/(?<iuvy>.*)\/.* (?<iz>.*)\/(?<iuvz>.*)\//,
+            // e.g. f 1/2/3 4/5/6 7/8/9 or 1/2 3/4 5/6
+            regex: new RegExpBuilder()
+                .add(/f/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'xIndex').addMany(['/'], true).add(REGEX_NUMBER, 'xtIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'yIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ytIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'zIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ztIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                const iX = parseInt(match.ix) - 1;
-                const iY = parseInt(match.iy) - 1;
-                const iZ = parseInt(match.iz) - 1;
-                const iUVx = parseInt(match.iuvx) - 1;
-                const iUVy = parseInt(match.iuvy) - 1;
-                const iUVz = parseInt(match.iuvz) - 1;
+                const iX = parseInt(match.xIndex) - 1;
+                const iY = parseInt(match.yIndex) - 1;
+                const iZ = parseInt(match.zIndex) - 1;
+                const iUVx = parseInt(match.xtIndex) - 1;
+                const iUVy = parseInt(match.ytIndex) - 1;
+                const iUVz = parseInt(match.ztIndex) - 1;
                 checkNaN(iX, iY, iZ);
                 ASSERT(this._currentMaterialName);
                 this._tris.push({
@@ -105,25 +144,6 @@ export class ObjImporter extends IImporter {
                 });
             },
         },
-        {
-            regex: /f (?<ix>.*) (?<iy>.*) (?<iz>.*)/,
-            delegate: (match: { [key: string]: string }) => {
-                const iX = parseInt(match.ix) - 1;
-                const iY = parseInt(match.iy) - 1;
-                const iZ = parseInt(match.iz) - 1;
-                checkNaN(iX, iY, iZ);
-                ASSERT(this._currentMaterialName);
-                this._tris.push({
-                    iX: iX,
-                    iY: iY,
-                    iZ: iZ,
-                    iXUV: iX,
-                    iYUV: iY,
-                    iZUV: iZ,
-                    material: this._currentMaterialName,
-                });
-            },
-        },
     ];
     
     private _currentColour: RGB = RGB.black;
@@ -131,16 +151,26 @@ export class ObjImporter extends IImporter {
     private _materialReady: boolean = false;
     private _mtlParsers = [
         {
-            regex: /newmtl (?<name>.*)/,
+            // e.g. 'newmtl my_material'
+            regex: new RegExpBuilder().add(/newmtl/).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._addCurrentMaterial();
-                this._currentMaterialName = match.name;
+                this._currentMaterialName = match.name.trim();
                 this._currentTexture = '';
                 this._materialReady = false;
             },
         },
         {
-            regex: /Kd (?<r>.*) (?<g>.*) (?<b>.*)/,
+            // e.g. 'Kd 0.123 0.456 0.789'
+            regex: new RegExpBuilder()
+                .add(/Kd/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'r')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'g')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'b')
+                .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 const r = parseFloat(match.r);
                 const g = parseFloat(match.g);
@@ -152,9 +182,10 @@ export class ObjImporter extends IImporter {
             },
         },
         {
-            regex: /map_Kd (?<path>.*)/,
+            // e.g. 'map_Kd my/path/to/file.png'
+            regex: new RegExpBuilder().add(/map_Kd/).add(REGEX_NZ_ANY, 'path').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                let mtlPath = match.path;
+                let mtlPath = match.path.trim();
                 if (!path.isAbsolute(mtlPath)) {
                     ASSERT(this._objPath);
                     mtlPath = path.join(this._objPath.dir, mtlPath);
@@ -208,7 +239,7 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseOBJLine(line: string) {
-        const essentialTokens = ['mtllib ', 'uselib ', 'v ', 'vt ', 'f '];
+        const essentialTokens = ['mtllib ', 'usemtl ', 'v ', 'vt ', 'f '];
 
         for (const parser of this._objParsers) {
             const match = parser.regex.exec(line);
@@ -216,6 +247,7 @@ export class ObjImporter extends IImporter {
                 try {
                     parser.delegate(match.groups);
                 } catch (error) {
+                    LOG_ERROR('Caught', error);
                     if (error instanceof CustomError) {
                         throw new CustomError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
@@ -228,7 +260,7 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new CustomError(`Failed to parse essential token for ${line}`);
+            throw new CustomError(`Failed to parse essential token for <b>${line}</b>`);
         }
     }
 
