@@ -24,7 +24,7 @@ addEvent('canvas', 'mousemove', (e) => {
 
 
 // Begin draw loop
-const context = AppContext.Get;
+const context = new AppContext();
 function render() {
     context.draw();
     requestAnimationFrame(render);

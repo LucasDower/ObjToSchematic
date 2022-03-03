@@ -3,11 +3,12 @@ import { Litematic, Schematic } from './schematic';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
+import { ASSERT, ColourSpace, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
 
 import { remote } from 'electron';
-import { VoxelMesh } from './voxel_mesh';
-import { BlockMesh } from './block_mesh';
+import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
+import { BlockMesh, BlockMeshParams } from './block_mesh';
+import { TextureFiltering } from './texture';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -45,18 +46,14 @@ export class AppContext {
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
     private _warnings: string[];
+    private _ui: UI;
 
     private _actionMap = new Map<Action, {
         action: () => void;
         onFailure?: () => void
     }>();
 
-    private static _instance: AppContext;
-    public static get Get() {
-        return this._instance || (this._instance = new this());
-    }
-
-    private constructor() {
+    public constructor() {
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
@@ -98,29 +95,29 @@ export class AppContext {
             },
         });
 
-        UI.Get.build();
-        UI.Get.registerEvents();
-
-        UI.Get.disable(Action.Simplify);
+        this._ui = new UI(this);
+        this._ui.build();
+        this._ui.registerEvents();
+        this._ui.disable(Action.Simplify);
     }
 
     public do(action: Action) {
-        UI.Get.disable(action + 1);
+        this._ui.disable(action + 1);
         this._warnings = [];
-        const groupName = UI.Get.uiOrder[action];
+        const groupName = this._ui.uiOrder[action];
         LOG(`Doing ${action}`);
-        UI.Get.cacheValues(action);
+        this._ui.cacheValues(action);
         const delegate = this._actionMap.get(action)!;
         try {
             delegate.action();
         } catch (err: any) {
             LOG_ERROR(err);
             if (err instanceof CustomError) {
-                UI.Get.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Failure);
+                this._ui.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Failure);
             } else if (err instanceof CustomWarning) {
-                UI.Get.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Warning);
+                this._ui.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Warning);
             } else {
-                UI.Get.layoutDull[groupName].output.setMessage(ReturnMessages.get(action)!.onFailure, ActionReturnType.Failure);
+                this._ui.layoutDull[groupName].output.setMessage(ReturnMessages.get(action)!.onFailure, ActionReturnType.Failure);
             }
             if (delegate.onFailure) {
                 delegate.onFailure();
@@ -131,17 +128,20 @@ export class AppContext {
         const successMessage = ReturnMessages.get(action)!.onSuccess;
         if (this._warnings.length !== 0) {
             const allWarnings = this._warnings.join('<br>');
-            UI.Get.layoutDull[groupName].output.setMessage(successMessage + `, with ${this._warnings.length} warning(s):` + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
+            this._ui.layoutDull[groupName].output.setMessage(successMessage + `, with ${this._warnings.length} warning(s):` + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
         } else {
-            UI.Get.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
+            this._ui.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
         }
 
         LOG(`Finished ${action}`);
-        UI.Get.enable(action + 1);
+        this._ui.enable(action + 1);
     }
 
     private _import() {
-        this._loadedMesh = new ObjImporter().createMesh();
+        const uiElements = this._ui.layout.import.elements;
+        const filePath = uiElements.input.getCachedValue();
+
+        this._loadedMesh = new ObjImporter().createMesh(filePath);
         Renderer.Get.useMesh(this._loadedMesh);
     }
 
@@ -151,22 +151,36 @@ export class AppContext {
 
     private _voxelise() {
         ASSERT(this._loadedMesh);
-        this._loadedVoxelMesh = new VoxelMesh();
-        this._loadedVoxelMesh.voxelise(this._loadedMesh);
 
+        const uiElements = this._ui.layout.build.elements;
+        const voxelMeshParams: VoxelMeshParams = {
+            desiredHeight: uiElements.height.getCachedValue() as number,
+            useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
+            textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+            ambientOcclusionEnabled: uiElements.ambientOcclusion.getCachedValue() === 'on',
+        };
+
+        this._loadedVoxelMesh = VoxelMesh.createFromMesh(this._loadedMesh, voxelMeshParams);
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
     }
 
     private _palette() {
         ASSERT(this._loadedVoxelMesh);
-        this._loadedBlockMesh = new BlockMesh();
-        this._loadedBlockMesh.assignBlocks(this._loadedVoxelMesh);
 
+        const uiElements = this._ui.layout.palette.elements;
+        const blockMeshParams: BlockMeshParams = {
+            textureAtlas: uiElements.textureAtlas.getCachedValue(),
+            blockPalette: uiElements.blockPalette.getCachedValue(),
+            ditheringEnabled: uiElements.dithering.getCachedValue() === 'on',
+            colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+        };
+
+        this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, blockMeshParams);
         Renderer.Get.useBlockMesh(this._loadedBlockMesh);
     }
 
     private _export() {
-        const exportFormat = UI.Get.layout.export.elements.export.getCachedValue() as string;
+        const exportFormat = this._ui.layout.export.elements.export.getCachedValue() as string;
         const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
 
         const filePath = remote.dialog.showSaveDialogSync({

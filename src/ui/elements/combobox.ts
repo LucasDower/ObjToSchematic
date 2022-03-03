@@ -6,7 +6,7 @@ export interface ComboBoxItem {
     displayText: string;
 }
 
-export class ComboBoxElement extends LabelledElement {
+export class ComboBoxElement extends LabelledElement<string> {
     private _items: ComboBoxItem[];
 
     public constructor(id: string, items: ComboBoxItem[]) {

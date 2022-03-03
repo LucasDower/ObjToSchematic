@@ -5,7 +5,7 @@ import { RenderBuffer } from './buffer';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { LOG, RGB } from './util';
+import { ASSERT, LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 

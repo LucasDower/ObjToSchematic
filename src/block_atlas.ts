@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT, fileExists } from './util';
+import { UV, RGB, ASSERT, fileExists, ColourSpace } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
@@ -94,7 +94,7 @@ export class BlockAtlas {
         this._paletteLoaded = true;
     }
 
-    public getBlock(voxelColour: RGB): BlockInfo {
+    public getBlock(voxelColour: RGB, colourSpace: ColourSpace): BlockInfo {
         ASSERT(this._atlasLoaded, 'No atlas has been loaded');
         ASSERT(this._paletteLoaded, 'No palette has been loaded');
 
@@ -110,7 +110,7 @@ export class BlockAtlas {
             const block: BlockInfo = this._blocks[i];
             if (this._palette.includes(block.name)) {
                 const blockAvgColour = block.colour as RGB;
-                const distance = RGB.distance(blockAvgColour, voxelColour);
+                const distance = RGB.distance(blockAvgColour, voxelColour, colourSpace);
 
                 if (distance < minDistance) {
                     minDistance = distance;

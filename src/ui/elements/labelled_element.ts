@@ -1,7 +1,7 @@
 import { BaseUIElement } from './base';
 import { LabelElement } from './label';
 
-export abstract class LabelledElement extends BaseUIElement {
+export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
     private _labelElement: LabelElement;
 
     public constructor(label: string) {

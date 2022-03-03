@@ -4,7 +4,6 @@ import { Vector3 } from './vector';
 const convert = require('color-convert');
 
 import fs from 'fs';
-import { UI } from './ui/layout';
 
 export class UV {
     public u: number;
@@ -15,6 +14,14 @@ export class UV {
         this.v = v;
     }
 }
+
+/* eslint-disable */
+export enum ColourSpace {
+    RGB,
+    LAB
+}
+/* eslint-enable */
+
 export class RGB {
     public r: number;
     public g: number;
@@ -49,15 +56,15 @@ export class RGB {
         return [this.r, this.g, this.b];
     }
 
-    public static distance(a: RGB, b: RGB): number {
-        const useLAB = UI.Get.layout.palette.elements.colourSpace.getCachedValue() === 'lab';
-        if (useLAB) {
+    public static distance(a: RGB, b: RGB, colourSpace: ColourSpace): number {
+        if (colourSpace === ColourSpace.LAB) {
             const aLAB = convert.rgb.lab(a.r * 255, a.g * 255, a.b * 255);
             const bLAB = convert.rgb.lab(b.r * 255, b.g * 255, b.b * 255);
             const _a = Vector3.fromArray(aLAB);
             const _b = Vector3.fromArray(bLAB);
             return _a.sub(_b).magnitude();
         } else {
+            ASSERT(colourSpace === ColourSpace.RGB);
             const _a = a.toVector3();
             const _b = b.toVector3();
             return _a.sub(_b).magnitude();
@@ -224,4 +231,24 @@ export class RegExpBuilder {
     public toRegExp(): RegExp {
         return new RegExp(this._components.join(''));
     }
+}
+
+export class Warnable {
+    private _warnings: string[];
+
+    constructor() {
+        this._warnings = [];
+    }
+
+    public addWarning(warning: string) {
+        this._warnings.push(warning);
+    }
+
+    public getWarnings() {
+        return this._warnings;
+    }
+}
+
+export function getRandomID(): string {
+    return (Math.random() + 1).toString(36).substring(7);
 }

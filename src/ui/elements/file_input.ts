@@ -4,7 +4,7 @@ import { ASSERT } from '../../util';
 import { remote } from 'electron';
 import * as path from 'path';
 
-export class FileInputElement extends LabelledElement {
+export class FileInputElement extends LabelledElement<string> {
     private _fileExtension: string;
     private _loadedFilePath: string;
 

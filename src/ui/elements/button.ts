@@ -1,7 +1,7 @@
 import { BaseUIElement } from './base';
 import { ASSERT } from '../../util';
 
-export class ButtonElement extends BaseUIElement {
+export class ButtonElement extends BaseUIElement<any> {
     private _onClick: () => void;
 
     public constructor(label: string, onClick: () => void) {

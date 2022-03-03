@@ -1,8 +1,7 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN } from './util';
+import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
 import { UVTriangle } from './triangle';
 import { RGB } from './util';
-import { AppContext } from './app_context';
 
 import path from 'path';
 import fs from 'fs';
@@ -24,21 +23,24 @@ export interface SolidMaterial { colour: RGB; type: MaterialType.solid }
 export interface TexturedMaterial { path: string; type: MaterialType.textured }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
-export class Mesh {
+export class Mesh extends Warnable {
     public vertices!: Vector3[];
     public uvs!: UV[];
     public tris!: Tri[];
     public materials!: MaterialMap;
+    public readonly id: string;
 
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
+        super();
         LOG('New mesh');
 
         this.vertices = vertices;
         this.uvs = uvs;
         this.tris = tris;
         this.materials = materials;
+        this.id = getRandomID();
 
         this._checkMesh();
         this._checkMaterials();
@@ -101,7 +103,7 @@ export class Mesh {
         }
         if (wasRemapped) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            AppContext.Get.addWarning('Some materials were not loaded correctly');
+            this.addWarning('Some materials were not loaded correctly');
             this.materials[debugName] = {
                 type: MaterialType.solid,
                 colour: RGB.white,
@@ -114,7 +116,7 @@ export class Mesh {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    AppContext.Get.addWarning(`Could not find ${material.path}`);
+                    this.addWarning(`Could not find ${material.path}`);
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this.materials[materialName] = {
                         type: MaterialType.solid,

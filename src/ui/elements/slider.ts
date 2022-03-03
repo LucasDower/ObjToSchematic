@@ -2,7 +2,7 @@ import { ASSERT } from '../../util';
 import { clamp } from '../../math';
 import { LabelledElement } from './labelled_element';
 
-export class SliderElement extends LabelledElement {
+export class SliderElement extends LabelledElement<number> {
     private _min: number;
     private _max: number;
     private _decimals: number;
@@ -18,7 +18,7 @@ export class SliderElement extends LabelledElement {
     }
 
     public generateInnerHTML() {
-        const norm = (this._value - this._min) / (this._max - this._min);
+        const norm = (this.getValue() - this._min) / (this._max - this._min);
         return `
             <div style="display: flex; flex-direction: row;">
                 <div class="slider-value" id="${this._id + '-value'}">
@@ -74,10 +74,6 @@ export class SliderElement extends LabelledElement {
 
 
         elementValue.innerHTML = this._value.toFixed(this._decimals);
-    }
-
-    protected getValue() {
-        return this._value;
     }
 
     protected _onEnabledChanged() {

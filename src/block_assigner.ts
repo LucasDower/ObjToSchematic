@@ -1,14 +1,14 @@
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ASSERT, RGB } from './util';
+import { ASSERT, ColourSpace, RGB } from './util';
 import { Vector3 } from './vector';
 
 interface BlockAssigner {
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3): BlockInfo;
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo;
 }
 
 export class BasicBlockAssigner implements BlockAssigner {
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3): BlockInfo {
-        return BlockAtlas.Get.getBlock(voxelColour);
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo {
+        return BlockAtlas.Get.getBlock(voxelColour, colourSpace);
     }
 }
 
@@ -36,7 +36,7 @@ export class OrderedDitheringBlockAssigner implements BlockAssigner {
         return (OrderedDitheringBlockAssigner._mapMatrix[index] / (size * size * size)) - 0.5;
     }
 
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3): BlockInfo {
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo {
         const size = OrderedDitheringBlockAssigner._size;
         const map = this._getThresholdValue(
             Math.abs(voxelPosition.x % size),
@@ -50,6 +50,6 @@ export class OrderedDitheringBlockAssigner implements BlockAssigner {
             ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
         );
 
-        return BlockAtlas.Get.getBlock(newVoxelColour);
+        return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace);
     }
 }

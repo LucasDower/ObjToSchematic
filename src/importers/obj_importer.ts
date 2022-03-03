@@ -2,12 +2,10 @@ import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
 import { UV, ASSERT, RGB, CustomError, LOG, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
-import { UI } from '../ui/layout';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
 import path from 'path';
-import { AppContext } from '../app_context';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
@@ -196,8 +194,7 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    override createMesh(): Mesh {
-        const filePath = UI.Get.layout.import.elements.input.getCachedValue();
+    override createMesh(filePath: string): Mesh {
         ASSERT(path.isAbsolute(filePath));
 
         this._objPath = path.parse(filePath);
@@ -205,7 +202,7 @@ export class ObjImporter extends IImporter {
         this._parseOBJ(filePath);
 
         if (this._mtlLibs.length === 0) {
-            AppContext.Get.addWarning('Could not find associated .mtl file');
+            this.addWarning('Could not find associated .mtl file');
         }
         for (let i = 0; i < this._mtlLibs.length; ++i) {
             const mtlLib = this._mtlLibs[i];

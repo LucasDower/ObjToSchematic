@@ -7,7 +7,6 @@ import { OcclusionManager } from './occlusion';
 import { Axes, generateRays, rayIntersectTriangle } from './ray';
 import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
-import { UI } from './ui/layout';
 import { Bounds, LOG, RGB, UV } from './util';
 import { Vector3 } from './vector';
 
@@ -15,20 +14,38 @@ export interface Voxel {
     position: Vector3;
     colour: RGB;
     collisions: number;
+
+}
+export interface VoxelMeshParams {
+    desiredHeight: number,
+    useMultisampleColouring: boolean,
+    textureFiltering: TextureFiltering,
+    ambientOcclusionEnabled: boolean,
 }
 
 export class VoxelMesh {
+    private _mesh: Mesh;
+    private _voxelMeshParams: VoxelMeshParams;
+
     private _voxelSize: number;
     private _voxels: Voxel[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _loadedTextures: { [materialName: string]: Texture };
     private _bounds: Bounds;
 
-    public constructor() {
-        LOG('New voxel mesh');
+    public static createFromMesh(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
+        const voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
+        voxelMesh._voxelise();
+        return voxelMesh;
+    }
 
-        const desiredHeight = UI.Get.layout.build.elements.height.getCachedValue() as number;
-        this._voxelSize = 8.0 / Math.round(desiredHeight);
+    private constructor(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
+        LOG('New voxel mesh');
+        
+        this._mesh = mesh;
+        this._voxelMeshParams = voxelMeshParams;
+
+        this._voxelSize = 8.0 / Math.round(voxelMeshParams.desiredHeight);
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._loadedTextures = {};
@@ -43,17 +60,17 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
-    public voxelise(mesh: Mesh) {
+    private _voxelise() {
         LOG('Voxelising');
 
-        mesh.tris.forEach((tri, index) => {
-            const material = mesh.materials[tri.material];
+        this._mesh.tris.forEach((tri, index) => {
+            const material = this._mesh.materials[tri.material];
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
                     this._loadedTextures[tri.material] = new Texture(material.path);
                 }
             }
-            const uvTriangle = mesh.getUVTriangle(index);
+            const uvTriangle = this._mesh.getUVTriangle(index);
             this._voxeliseTri(uvTriangle, material, tri.material);
         });
     }
@@ -81,8 +98,7 @@ export class VoxelMesh {
                 }
 
                 let voxelColour: RGB;
-                const useMultisampleColouring = UI.Get.layout.build.elements.multisampleColouring.getCachedValue() as string === 'on';
-                if (useMultisampleColouring && material.type === MaterialType.textured) {
+                if (this._voxelMeshParams.useMultisampleColouring && material.type === MaterialType.textured) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);
@@ -116,8 +132,7 @@ export class VoxelMesh {
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
             
-        const filtering = UI.Get.layout.build.elements.textureFiltering.getCachedValue() as string === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest;
-        return this._loadedTextures[materialName].getRGB(uv, filtering);
+        return this._loadedTextures[materialName].getRGB(uv, this._voxelMeshParams.textureFiltering);
     }
 
     private _addVoxel(pos: Vector3, colour: RGB) {
@@ -160,12 +175,11 @@ export class VoxelMesh {
             { name: 'normal', numComponents: 3 },
         ]);
 
-        const ambientOcclusionEnabled = UI.Get.layout.build.elements.ambientOcclusion.getCachedValue() as string === 'on';
         for (const voxel of this._voxels) {
             // Each vertex of a face needs the occlusion data for the other 3 vertices
             // in it's face, not just itself. Also flatten occlusion data.
             let occlusions: number[];
-            if (ambientOcclusionEnabled) {
+            if (this._voxelMeshParams.ambientOcclusionEnabled) {
                 occlusions = OcclusionManager.Get.getOcclusions(voxel.position, this);
             } else {
                 occlusions = OcclusionManager.Get.getBlankOcclusions();

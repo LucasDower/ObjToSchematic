@@ -12,7 +12,7 @@ import path from 'path';
 
 export interface Group {
     label: string;
-    elements: { [key: string]: BaseUIElement };
+    elements: { [key: string]: BaseUIElement<any> };
     elementsOrder: string[];
     submitButton: ButtonElement;
     output: OutputElement;
@@ -28,7 +28,7 @@ export class UI {
             },
             elementsOrder: ['input'],
             submitButton: new ButtonElement('Load mesh', () => {
-                AppContext.Get.do(Action.Import);
+                this._appContext.do(Action.Import);
             }),
             output: new OutputElement(),
         },
@@ -39,7 +39,7 @@ export class UI {
             },
             elementsOrder: ['ratio'],
             submitButton: new ButtonElement('Simplify mesh', () => {
-                AppContext.Get.do(Action.Simplify);
+                this._appContext.do(Action.Simplify);
             }),
             output: new OutputElement(),
         },
@@ -62,7 +62,7 @@ export class UI {
             },
             elementsOrder: ['height', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
-                AppContext.Get.do(Action.Voxelise);
+                this._appContext.do(Action.Voxelise);
             }),
             output: new OutputElement(),
         },
@@ -82,7 +82,7 @@ export class UI {
             },
             elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],
             submitButton: new ButtonElement('Assign blocks', () => {
-                AppContext.Get.do(Action.Palette);
+                this._appContext.do(Action.Palette);
             }),
             output: new OutputElement(),
         },
@@ -96,20 +96,16 @@ export class UI {
             },
             elementsOrder: ['export'],
             submitButton: new ButtonElement('Export structure', () => {
-                AppContext.Get.do(Action.Export);
+                this._appContext.do(Action.Export);
             }),
             output: new OutputElement(),
         },
     };
     private _uiDull: { [key: string]: Group } = this._ui;
+    private _appContext: AppContext;
 
-    private static _instance: UI;
-    public static get Get() {
-        return this._instance || (this._instance = new this());
-    }
-
-    constructor() {
-
+    constructor(appContext: AppContext) {
+        this._appContext = appContext;
     }
 
     public build() {
@@ -174,7 +170,7 @@ export class UI {
         `;
     }
 
-    private _buildSubcomponent(element: BaseUIElement) {
+    private _buildSubcomponent(element: BaseUIElement<any>) {
         return `
             <div class="item item-body">
                 ${element.generateHTML()}

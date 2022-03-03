@@ -1,10 +1,10 @@
 import { ASSERT } from '../../util';
 
-export abstract class BaseUIElement {
+export abstract class BaseUIElement<Type> {
     protected _id: string;
     protected _label: string;
     protected _isEnabled: boolean;
-    protected _value: any;
+    protected _value?: Type;
     protected _cachedValue?: any;
 
     constructor(label: string) {
@@ -18,12 +18,13 @@ export abstract class BaseUIElement {
         this._onEnabledChanged();
     }
 
-    public getCachedValue() {
+    public getCachedValue(): Type {
         ASSERT(this._cachedValue !== undefined, 'Attempting to access value before cached');
-        return this._cachedValue;
+        return this._cachedValue as Type;
     }
 
     protected getValue() {
+        ASSERT(this._value);
         return this._value;
     }
 
