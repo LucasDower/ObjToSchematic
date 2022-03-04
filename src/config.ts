@@ -12,5 +12,5 @@ export namespace AppConfig {
 
     export const DEBUG_ENABLED = true;
 
-    export const MULTISAMPLE_COUNT = 4;
+    export const MULTISAMPLE_COUNT = 16;
 }
