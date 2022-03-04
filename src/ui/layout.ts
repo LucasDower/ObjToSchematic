@@ -220,11 +220,9 @@ export class UI {
         LOG('enabling', action);
 
         // TODO: Remove once Simplify has been implemented
-        /*
         if (action === Action.Simplify) {
             action = Action.Voxelise;
         }
-        */
         const group = this._getActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);
