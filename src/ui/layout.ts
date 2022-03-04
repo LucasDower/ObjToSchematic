@@ -5,7 +5,7 @@ import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { Action, AppContext } from '../app_context';
-import { LOG } from '../util';
+import { ASSERT, LOG } from '../util';
 
 import fs from 'fs';
 import path from 'path';
@@ -16,6 +16,8 @@ export interface Group {
     elementsOrder: string[];
     submitButton: ButtonElement;
     output: OutputElement;
+    postElements?: { [key: string]: BaseUIElement<any> };
+    postElementsOrder?: string[];
 }
 
 export class UI {
@@ -155,6 +157,15 @@ export class UI {
             groupHTML += this._buildSubcomponent(element);
         }
 
+        let postGroupHTML = '';
+        if (group.postElements) {
+            ASSERT(group.postElementsOrder, 'No post elements order');
+            for (const elementName of group.postElementsOrder) {
+                const element = group.postElements[elementName];
+                postGroupHTML += this._buildSubcomponent(element);
+            }
+        }
+
         return `
             ${groupHTML}
             <div class="item item-body">
@@ -167,6 +178,7 @@ export class UI {
                     ${group.output.generateHTML()}
                 </div>
             </div>
+            ${postGroupHTML}
         `;
     }
 
@@ -186,6 +198,13 @@ export class UI {
                 element.registerEvents();
             }
             group.submitButton.registerEvents();
+            if (group.postElements) {
+                ASSERT(group.postElementsOrder);
+                for (const elementName in group.postElements) {
+                    const element = group.postElements[elementName];
+                    element.registerEvents();
+                }
+            }
         }
     }
 
@@ -197,29 +216,55 @@ export class UI {
         return this._uiDull;
     }
 
-    public disable(action: Action) {
-        for (let i = action; i < Action.MAX; ++i) {
-            const key = this.uiOrder[i];
-            this._setGroupEnabled(this._uiDull[key], false);
-        }
-    }
-
     public enable(action: Action) {
+        LOG('enabling', action);
+
+        // TODO: Remove once Simplify has been implemented
+        /*
         if (action === Action.Simplify) {
             action = Action.Voxelise;
         }
-        const key = this.uiOrder[action];
-        this._setGroupEnabled(this._uiDull[key], true);
+        */
+        const group = this._getActionGroup(action);
+        for (const compName in group.elements) {
+            group.elements[compName].setEnabled(true);
+        }
+        group.submitButton.setEnabled(true);
+        // Enable the post elements of the previous group
+        const prevGroup = this._getActionGroup(action - 1);
+        if (prevGroup && prevGroup.postElements) {
+            ASSERT(prevGroup.postElementsOrder);
+            for (const postElementName in prevGroup.postElements) {
+                prevGroup.postElements[postElementName].setEnabled(true);
+            }
+        }
     }
 
-    private _setGroupEnabled(group: Group, isEnabled: boolean) {
-        for (const compName in group.elements) {
-            const comp = group.elements[compName];
-            comp.setEnabled(isEnabled);
-        }
-        group.submitButton.setEnabled(isEnabled);
-        if (!isEnabled) {
+    public disable(action: Action) {
+        for (let i = action; i < Action.MAX; ++i) {
+            const group = this._getActionGroup(i);
+            LOG('disabling', group.label);
+            for (const compName in group.elements) {
+                group.elements[compName].setEnabled(false);
+            }
+            group.submitButton.setEnabled(false);
             group.output.clearMessage();
+            if (group.postElements) {
+                LOG(group.label, 'has post-element');
+                ASSERT(group.postElementsOrder);
+                for (const postElementName in group.postElements) {
+                    LOG('disabling post-element', postElementName, 'for', group.label);
+                    group.postElements[postElementName].setEnabled(false);
+                }
+            }
+        }
+        // Disable the post elements of the previous group
+        const prevGroup = this._getActionGroup(action - 1);
+        if (prevGroup && prevGroup.postElements) {
+            ASSERT(prevGroup.postElementsOrder);
+            for (const postElementName in prevGroup.postElements) {
+                prevGroup.postElements[postElementName].setEnabled(false);
+            }
         }
     }
 

@@ -6,7 +6,7 @@ export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
 
     public constructor(label: string) {
         super(label);
-        this._labelElement = new LabelElement(label, label);
+        this._labelElement = new LabelElement(label);
     }
 
     public generateHTML() {

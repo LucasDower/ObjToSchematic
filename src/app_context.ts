@@ -98,6 +98,8 @@ export class AppContext {
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
+
+        // this._ui.disablePost(Action.Import);
         this._ui.disable(Action.Simplify);
     }
 

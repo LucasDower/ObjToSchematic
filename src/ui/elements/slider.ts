@@ -34,7 +34,20 @@ export class SliderElement extends LabelledElement<number> {
 
     public registerEvents() {
         const element = document.getElementById(this._id) as HTMLDivElement;
+        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         ASSERT(element !== null);
+
+        element.onmouseenter = () => {
+            if (this._isEnabled) {
+                element.classList.add('new-slider-hover');
+                elementBar.classList.add('new-slider-bar-hover');
+            }
+        };
+
+        element.onmouseleave = () => {
+            element.classList.remove('new-slider-hover');
+            elementBar.classList.remove('new-slider-bar-hover');
+        };
 
         element.onmousedown = () => {
             this._dragging = true;

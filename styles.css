@@ -74,7 +74,7 @@ canvas {
 .item-header {
   background-color: #2F2F2F;
   color: #C6C6C6;
-  font-weight: 500;
+  font-weight: 400;
   padding: 10px 20px;
 }
 
@@ -150,10 +150,12 @@ select {
   font-weight: 300;
   color: #A8A8A8;
   background-color: #2F2F2F;
+  border: 1px solid rgb(255, 255, 255, 0.0);
 }
-select:hover {
+select:hover:enabled {
   color: #C6C6C6;
   background-color: #383838;
+  border: 1px solid rgb(255, 255, 255, 0.1);
 }
 select:disabled {
   background-color: #282828 !important;
@@ -188,6 +190,8 @@ select:disabled {
   color: #535353;
 }
 
+
+
 .new-slider {
   border-radius: 5px;
   font-family: 'Lexend', sans-serif;
@@ -196,26 +200,36 @@ select:disabled {
   cursor: ew-resize;
   height: 30px;
   font-size: 90%;
+  border: 1px solid #1A1A1A;
 }
+.new-slider-hover {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #383838 !important;
+}
+.new-slider-disabled {
+  background-color: #242424 !important;
+  cursor: default !important;
+}
+
+
+
 .new-slider-bar {
   border-radius: 5px;
   height: 28px;
   background-color: var(--prim-color);
   border: 1px solid rgb(255, 255, 255, 0.0);
 }
-.new-slider-bar:hover {
-  border: 1px solid rgb(255, 255, 255, 0.2);
-  background-color: var(--prim-color-hover);
-}
-.new-slider-disabled {
-  background-color: #242424;
-  cursor: default !important;
+.new-slider-bar-hover {
+  border: 1px solid rgb(255, 255, 255, 0.2) !important;
+  background-color: var(--prim-color-hover) !important;
 }
 .new-slider-bar-disabled {
   background-color: var(--prim-color-disabled) !important;
   cursor: default !important;
   border: 1px solid rgb(255, 255, 255, 0.0) !important;
 }
+
+
 
 .button {
   background-color: var(--prim-color);
@@ -311,4 +325,53 @@ select:disabled {
   border: 1.5px solid rgb(156, 27, 27);
   transition-duration: 1s;
   color: rgb(156, 27, 27);
+}
+
+.spinbox-key {
+  border-radius: 5px 0px 0px 5px;
+  height: calc(32px - 8.5px);
+  color: #ffffffb9;
+  padding: 8.5px 8px 0px 8px;
+  font-size: 85%;
+  font-weight: 400;
+  border-width: 1px 0px 1px 1px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.0);
+}
+.spinbox-key-hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  filter: brightness(1.5);
+  cursor: ew-resize;
+}
+.spinbox-key-disabled {
+  filter: brightness(0.4);
+}
+
+.spinbox-value {
+  background-color: #2F2F2F;
+  border-radius: 0px 5px 5px 0px;
+  flex-grow: 1;
+  height: calc(32px - 8.5px);
+  padding: 8.5px 0px 0px 0px;
+  font-weight: 300;
+  border-width: 1px 1px 1px 0px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.0);
+  
+  color: #A8A8A8;
+  align-self: center;
+  text-align: center;
+}
+.spinbox-value-hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: #383838 !important;
+  cursor: ew-resize;
+}
+.spinbox-value-disabled {
+  color: #535353;
+  background-color: #242424 !important;
+}
+
+.invis-divider {
+  width: 6px;
 }

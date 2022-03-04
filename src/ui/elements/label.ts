@@ -1,11 +1,11 @@
-import { ASSERT } from '../../util';
+import { ASSERT, getRandomID } from '../../util';
 
 export class LabelElement {
     private _id: string;
     private _text: string;
 
-    constructor(id: string, text: string) {
-        this._id = id;
+    constructor(text: string) {
+        this._id = getRandomID();
         this._text = text;
     }
 
