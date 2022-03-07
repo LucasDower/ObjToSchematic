@@ -1,6 +1,5 @@
 import { Renderer } from './renderer';
 import { ASSERT } from './util';
-import { AppConfig } from './config';
 
 import * as twgl from 'twgl.js';
 
@@ -19,7 +18,7 @@ interface BottomlessAttributeData {
     data: Array<number>
 }
 
-export interface VoxelData {
+export interface AttributeData {
     indices: Uint32Array
     custom: {
         [name: string]: Array<number>
@@ -53,13 +52,7 @@ export class RenderBuffer {
         this._getNewBuffer();
     }
 
-    public add(data: VoxelData) {
-        ASSERT(!this._compiled);
-
-        if (AppConfig.DEBUG_ENABLED) {
-            // this._checkDataMatchesAttributes(data);
-        }
-
+    public add(data: AttributeData) {
         const mappedIndicesToAdd = new Array<number>(data.indices.length);
         let maxMapped = -1;
         data.indices.forEach((index, i) => {
@@ -140,7 +133,7 @@ export class RenderBuffer {
         }
     }
 
-    private _checkDataMatchesAttributes(data: VoxelData) {
+    private _checkDataMatchesAttributes(data: AttributeData) {
         if (!('indices' in data)) {
             throw Error('Given data does not have indices data');
         }

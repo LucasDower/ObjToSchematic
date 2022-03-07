@@ -236,7 +236,39 @@ export class Mesh extends Warnable {
     */
 
     public copy(): Mesh {
-        return new Mesh(this.vertices, this.uvs, this.tris, this.materials);
+        const newVertices = new Array<Vector3>(this.vertices.length);
+        for (let i = 0; i < this.vertices.length; ++i) {
+            newVertices[i] = this.vertices[i].copy();
+        }
+
+        const newUVs = new Array<UV>(this.uvs.length);
+        for (let i = 0; i < this.uvs.length; ++i) {
+            newUVs[i] = this.uvs[i].copy();
+        }
+
+        const newTris = new Array<Tri>(this.tris.length);
+        for (let i = 0; i < this.tris.length; ++i) {
+            // FIXME: Replace
+            newTris[i] = JSON.parse(JSON.stringify(this.tris[i]));
+        }
+
+        const materials: { [materialName: string]: (SolidMaterial | TexturedMaterial) } = {}; // JSON.parse(JSON.stringify(this.materials));
+        for (const materialName in this.materials) {
+            const material = this.materials[materialName];
+            if (material.type === MaterialType.solid) {
+                materials[materialName] = {
+                    type: MaterialType.solid,
+                    colour: material.colour.copy(),
+                };
+            } else {
+                materials[materialName] = {
+                    type: MaterialType.textured,
+                    path: material.path,
+                };
+            };
+        }
+
+        return new Mesh(newVertices, newUVs, newTris, materials);
     }
 
     public getTriangleCount(): number {

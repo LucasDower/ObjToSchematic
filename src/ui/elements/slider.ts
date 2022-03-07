@@ -82,11 +82,12 @@ export class SliderElement extends LabelledElement<number> {
         const xOffset = mouseEvent.clientX - elementBar.getBoundingClientRect().x;
         const width = element.clientWidth;
         const norm = clamp(xOffset / width, 0.0, 1.0);
-        this._value = (norm * (this._max - this._min)) + this._min;
         elementBar.style.width = `${norm * 100}%`;
-
-
-        elementValue.innerHTML = this._value.toFixed(this._decimals);
+        
+        const value = (norm * (this._max - this._min)) + this._min;
+        const displayValue = value.toFixed(this._decimals);
+        elementValue.innerHTML = displayValue;
+        this._value = parseFloat(displayValue);
     }
 
     protected _onEnabledChanged() {

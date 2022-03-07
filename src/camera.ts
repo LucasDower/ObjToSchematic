@@ -15,10 +15,12 @@ export class ArcballCamera {
     private actualDistance = 18.0;
     private actualAzimuth = -1.0;
     private actualElevation = 1.3;
+    private actualHeight = 0.0;
 
     private targetDistance: number;
     private targetAzimuth: number;
     private targetElevation: number;
+    public targetHeight: number;
 
     private readonly target: v3.Vec3 = [0, 0, 0];
     private readonly up: v3.Vec3 = [0, 1, 0];
@@ -33,7 +35,6 @@ export class ArcballCamera {
     private gl: WebGLRenderingContext;
 
     private static _instance: ArcballCamera;
-
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
@@ -48,6 +49,7 @@ export class ArcballCamera {
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
         this.targetElevation = this.actualElevation;
+        this.targetHeight = this.actualHeight;
     }
 
     public updateCamera() {
@@ -68,6 +70,7 @@ export class ArcballCamera {
         this.actualDistance  += (this.targetDistance  - this.actualDistance ) * this.cameraSmoothing;
         this.actualAzimuth   += (this.targetAzimuth   - this.actualAzimuth  ) * this.cameraSmoothing;
         this.actualElevation += (this.targetElevation - this.actualElevation) * this.cameraSmoothing;
+        this.actualHeight    += (this.targetHeight    - this.actualHeight   ) * this.cameraSmoothing; 
 
         this.eye = [
             this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation),
@@ -104,7 +107,7 @@ export class ArcballCamera {
     }
 
     public getCameraMatrix() {
-        return m4.lookAt(this.eye, this.target, this.up);
+        return m4.lookAt(v3.add(this.eye, [0, this.actualHeight, 0]), v3.add(this.target, [0, this.actualHeight, 0]), this.up);
     }
 
     public getViewMatrix() {

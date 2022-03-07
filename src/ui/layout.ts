@@ -48,7 +48,7 @@ export class UI {
         'build': {
             label: 'Build',
             elements: {
-                'height': new SliderElement('Desired height', 1, 320, 0, 80),
+                'height': new SliderElement('Desired height', 5, 320, 0, 80),
                 'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off (faster)' },
@@ -220,11 +220,9 @@ export class UI {
         LOG('enabling', action);
 
         // TODO: Remove once Simplify has been implemented
-        /*
         if (action === Action.Simplify) {
             action = Action.Voxelise;
         }
-        */
         const group = this._getActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);

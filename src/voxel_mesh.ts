@@ -1,4 +1,4 @@
-import { RenderBuffer, VoxelData } from './buffer';
+import { RenderBuffer, AttributeData } from './buffer';
 import { AppConfig } from './config';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
@@ -28,10 +28,12 @@ export class VoxelMesh {
     private _voxelMeshParams: VoxelMeshParams;
 
     private _voxelSize: number;
+    private _desiredHeight: number;
     private _voxels: Voxel[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _loadedTextures: { [materialName: string]: Texture };
     private _bounds: Bounds;
+
 
     public static createFromMesh(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
         const voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
@@ -46,6 +48,7 @@ export class VoxelMesh {
         this._voxelMeshParams = voxelMeshParams;
 
         this._voxelSize = 8.0 / Math.round(voxelMeshParams.desiredHeight);
+        this._desiredHeight = this._voxelMeshParams.desiredHeight;
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._loadedTextures = {};
@@ -60,29 +63,37 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
+    public getMesh() {
+        return this._mesh;
+    }
+
     private _voxelise() {
         LOG('Voxelising');
 
-        this._mesh.tris.forEach((tri, index) => {
-            const material = this._mesh.materials[tri.material];
+        const scale = (this._desiredHeight - 1) / Mesh.desiredHeight;
+        const offset = (this._desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        const useMesh = this._mesh.copy();
+        for (let i = 0; i < useMesh.vertices.length; ++i) {
+            useMesh.vertices[i].mulScalar(scale).add(offset);
+        }
+
+        useMesh.tris.forEach((tri, index) => {
+            const material = useMesh.materials[tri.material];
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
                     this._loadedTextures[tri.material] = new Texture(material.path);
                 }
             }
-            const uvTriangle = this._mesh.getUVTriangle(index);
+            const uvTriangle = useMesh.getUVTriangle(index);
             this._voxeliseTri(uvTriangle, material, tri.material);
         });
     }
 
     private _voxeliseTri(triangle: UVTriangle, material: (SolidMaterial | TexturedMaterial), materialName: string) {
-        const v0Scaled = Vector3.divScalar(triangle.v0, this._voxelSize);
-        const v1Scaled = Vector3.divScalar(triangle.v1, this._voxelSize);
-        const v2Scaled = Vector3.divScalar(triangle.v2, this._voxelSize);
-        const rayList = generateRays(v0Scaled, v1Scaled, v2Scaled);
+        const rayList = generateRays(triangle.v0, triangle.v1, triangle.v2);
 
         rayList.forEach((ray) => {
-            const intersection = rayIntersectTriangle(ray, v0Scaled, v1Scaled, v2Scaled);
+            const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
@@ -185,7 +196,7 @@ export class VoxelMesh {
                 occlusions = OcclusionManager.Get.getBlankOcclusions();
             }
 
-            const data: VoxelData = GeometryTemplates.getBoxBufferData(voxel.position);
+            const data: AttributeData = GeometryTemplates.getBoxBufferData(voxel.position);
             data.custom.occlusion = occlusions;
 
             data.custom.colour = [];

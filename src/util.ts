@@ -13,6 +13,10 @@ export class UV {
         this.u = u;
         this.v = v;
     }
+
+    public copy() {
+        return new UV(this.u, this.v);
+    }
 }
 
 /* eslint-disable */
@@ -75,6 +79,10 @@ export class RGB {
         return new RGB(1.0, 1.0, 1.0);
     }
 
+    public static get yellow(): RGB {
+        return new RGB(1.0, 1.0, 0.0);
+    }
+
     public static get black(): RGB {
         return new RGB(0.0, 0.0, 0.0);
     }
@@ -85,6 +93,10 @@ export class RGB {
 
     public toVector3(): Vector3 {
         return new Vector3(this.r, this.g, this.b);
+    }
+
+    public copy() {
+        return new RGB(this.r, this.g, this.b);
     }
 }
 
@@ -128,6 +140,10 @@ export class Bounds {
     public getCentre() {
         const extents = Vector3.sub(this._max, this._min).divScalar(2);
         return Vector3.add(this.min, extents);
+    }
+
+    public getDimensions() {
+        return Vector3.sub(this._max, this._min);
     }
 }
 

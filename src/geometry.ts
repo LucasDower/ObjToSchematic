@@ -1,12 +1,13 @@
 import * as twgl from 'twgl.js';
 import { UVTriangle } from './triangle';
 import { Vector3 } from './vector';
-import { VoxelData } from './buffer';
+import { AttributeData } from './buffer';
+import { Bounds, RGB } from './util';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
 
-    static getTriangleBufferData(triangle: UVTriangle): VoxelData {
+    static getTriangleBufferData(triangle: UVTriangle): AttributeData {
         const n = triangle.getNormal();
 
         return {
@@ -33,8 +34,8 @@ export class GeometryTemplates {
         };
     }
 
-    static getBoxBufferData(centre: Vector3): VoxelData {
-        const cube: VoxelData = {
+    static getBoxBufferData(centre: Vector3): AttributeData {
+        const cube: AttributeData = {
             custom: {
                 position: new Array<number>(72),
                 texcoord: new Array<number>(48),
@@ -55,5 +56,88 @@ export class GeometryTemplates {
         }
 
         return cube;
+    }
+}
+
+export class DebugGeometryTemplates {
+    public static cross(centre: Vector3, radius: number, colour: RGB) {
+        return {
+            indices: new Uint32Array([0, 1, 2, 3, 4, 5]),
+            custom: {
+                position: [
+                    centre.x + radius, centre.y, centre.z,
+                    centre.x - radius, centre.y, centre.z,
+                    centre.x, centre.y + radius, centre.z,
+                    centre.x, centre.y - radius, centre.z,
+                    centre.x, centre.y, centre.z + radius,
+                    centre.x, centre.y, centre.z - radius,
+                ],
+                colour: [
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                ],
+            },
+        };
+    }
+
+    public static line(start: Vector3, end: Vector3, colour: RGB) {
+        return {
+            indices: new Uint32Array([0, 1]),
+            custom: {
+                position: [
+                    start.x, start.y, start.z,
+                    end.x, end.y, end.z,
+                ],
+                colour: [
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                ],
+            },
+        };
+    }
+
+    public static bounds(bounds: Bounds, colour: RGB, translate: Vector3 = new Vector3(0, 0, 0)) {
+        return {
+            indices: new Uint32Array([
+                0, 1,
+                1, 2,
+                2, 3,
+                3, 0,
+                4, 5,
+                5, 6,
+                6, 7,
+                7, 4,
+                0, 4,
+                1, 5,
+                2, 6,
+                3, 7,
+            ]),
+            custom: {
+                position: [
+                    bounds.min.x + translate.x, bounds.min.y + translate.y, bounds.min.z + translate.z,
+                    bounds.max.x + translate.x, bounds.min.y + translate.y, bounds.min.z + translate.z,
+                    bounds.max.x + translate.x, bounds.min.y + translate.y, bounds.max.z + translate.z,
+                    bounds.min.x + translate.x, bounds.min.y + translate.y, bounds.max.z + translate.z,
+                    bounds.min.x + translate.x, bounds.max.y + translate.y, bounds.min.z + translate.z,
+                    bounds.max.x + translate.x, bounds.max.y + translate.y, bounds.min.z + translate.z,
+                    bounds.max.x + translate.x, bounds.max.y + translate.y, bounds.max.z + translate.z,
+                    bounds.min.x + translate.x, bounds.max.y + translate.y, bounds.max.z + translate.z,
+                ],
+                colour: [
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b,
+                ],
+            },
+        };
     }
 }
