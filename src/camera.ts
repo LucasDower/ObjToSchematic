@@ -5,6 +5,7 @@ import { Renderer } from './renderer';
 
 export class ArcballCamera {
     public isUserRotating = false;
+    public isUserTranslating = false;
 
     private readonly fov: number;
     private readonly zNear: number;
@@ -54,14 +55,29 @@ export class ArcballCamera {
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
         // Update target location if user is rotating camera
+        const mouseDelta = MouseManager.Get.getMouseDelta();
         if (this.isUserRotating) {
-            const mouseDelta = MouseManager.Get.getMouseDelta();
             this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
             this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
 
             // Prevent the camera going upside-down
             const eps = 0.01;
             this.targetElevation = Math.max(Math.min(Math.PI - eps, this.targetElevation), eps);
+        }
+        if (this.isUserTranslating) {
+            const my = mouseDelta.dy * this.mouseSensitivity;
+            const mx = mouseDelta.dx * this.mouseSensitivity;
+            // Up-down
+            const dy = -Math.cos(this.targetElevation - Math.PI/2);
+            const df = Math.sin(this.targetElevation - Math.PI/2);
+            this.target[0] += -Math.sin(this.targetAzimuth - Math.PI/2) * my * df;
+            this.target[1] += dy * my;
+            this.target[2] += Math.cos(this.targetAzimuth - Math.PI/2) * my * df;
+            // Left-right
+            const dx =  Math.sin(this.targetAzimuth);
+            const dz = -Math.cos(this.targetAzimuth);
+            this.target[0] += dx * mx;
+            this.target[2] += dz * mx;
         }
 
         // Move camera towards target location
@@ -70,9 +86,9 @@ export class ArcballCamera {
         this.actualElevation += (this.targetElevation - this.actualElevation) * this.cameraSmoothing;
 
         this.eye = [
-            this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation),
-            this.actualDistance * Math.cos(this.actualElevation),
-            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation),
+            this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.target[0],
+            this.actualDistance * Math.cos(this.actualElevation) + this.target[1],
+            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.target[2],
         ];
     }
 
@@ -87,11 +103,16 @@ export class ArcballCamera {
     }
 
     public onMouseDown(e: MouseEvent) {
-        this.isUserRotating = true;
+        if (e.buttons === 1) {
+            this.isUserRotating = true;
+        } else if (e.buttons === 2) {
+            this.isUserTranslating = true;
+        }
     }
-
+    
     public onMouseUp(e: MouseEvent) {
         this.isUserRotating = false;
+        this.isUserTranslating = false;
     }
 
     public onWheelScroll(e: WheelEvent) {
