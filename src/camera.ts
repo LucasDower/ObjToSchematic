@@ -134,6 +134,14 @@ export class ArcballCamera {
         return m4.inverse(this.getWorldViewProjection());
     }
 
+    public onZoomOut() {
+        this.targetDistance = clamp(this.targetDistance + 1, this.zoomDistMin, this.zoomDistMax);
+    }
+    
+    public onZoomIn() {
+        this.targetDistance = clamp(this.targetDistance - 1, this.zoomDistMin, this.zoomDistMax);
+    }
+
     /*
     public getMouseRay() {
         const mousePos = this.mouseManager.getMousePosNorm();

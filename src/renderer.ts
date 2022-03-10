@@ -10,9 +10,10 @@ import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
 import * as twgl from 'twgl.js';
+import { EAppEvent, EventManager } from './event';
 
 /* eslint-disable */
-enum MeshType {
+export enum MeshType {
     None,
     TriangleMesh,
     VoxelMesh,
@@ -40,14 +41,17 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _translate: Vector3;
+    private _modelsAvailable: number;
 
-    public _voxelBuffer: RenderBuffer;
-    private _blockBuffer: RenderBuffer;
-    private _debugBuffer: RenderBuffer;
     private _materialBuffers: Array<{
         buffer: RenderBuffer,
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
+    public _voxelBuffer: RenderBuffer;
+    private _blockBuffer: RenderBuffer;
+    private _debugBuffer: RenderBuffer;
+
+    private _isGridEnabled: boolean;
 
     private static _instance: Renderer;
     public static get Get() {
@@ -62,6 +66,7 @@ export class Renderer {
 
         this._setupOcclusions();
 
+        this._modelsAvailable = 0;
         this._translate = new Vector3(0, 0, 0);
         this._voxelBuffer = new RenderBuffer([]);
         this._blockBuffer = new RenderBuffer([]);
@@ -73,6 +78,8 @@ export class Renderer {
             },
         });
         this._materialBuffers = [];
+
+        this._isGridEnabled = false;
     }
 
     public update() {
@@ -82,7 +89,9 @@ export class Renderer {
     public draw() {
         this._setupScene();
 
-        this._drawDebug();
+        if (this._isGridEnabled) {
+            this._drawDebug();
+        }
 
         switch (this._meshToUse) {
         case MeshType.TriangleMesh:
@@ -107,7 +116,16 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
+    public toggleIsGridEnabled() {
+        this._isGridEnabled = !this._isGridEnabled;
+        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, this._isGridEnabled);
+    }
+
     public useMesh(mesh: Mesh) {
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
+        
         LOG('Using mesh');
         this._materialBuffers = [];
         
@@ -117,7 +135,7 @@ export class Renderer {
                 { name: 'texcoord', numComponents: 2 },
                 { name: 'normal', numComponents: 3 },
             ]);
-
+            
             mesh.tris.forEach((tri, triIndex) => {
                 if (tri.material === materialName) {
                     if (tri.material === materialName) {
@@ -151,7 +169,7 @@ export class Renderer {
         
         this._translate = new Vector3(0, mesh.getBounds().getDimensions().y/2, 0);
         ArcballCamera.Get.targetHeight = this._translate.y;
-
+        
         this._debugBuffer = this._setupDebugBuffer({
             axis: true,
             bounds: true,
@@ -161,10 +179,16 @@ export class Renderer {
         });
         // this._debugBuffer.add(DebugGeometryTemplates.bounds(mesh.getBounds(), RGB.white, this._translate));
 
-        this._meshToUse = MeshType.TriangleMesh;
+        this._modelsAvailable = 1;
+        this.setModelToUse(MeshType.TriangleMesh);
+
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
     
     public useVoxelMesh(voxelMesh: VoxelMesh) {
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
+
         LOG('Using voxel mesh');
         LOG(voxelMesh);
         this._voxelBuffer = voxelMesh.createBuffer();
@@ -172,7 +196,7 @@ export class Renderer {
         
         this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
         ArcballCamera.Get.targetHeight = this._translate.y;
-
+        
         this._debugBuffer = this._setupDebugBuffer({
             axis: true,
             bounds: true,
@@ -181,11 +205,16 @@ export class Renderer {
             },
         });
         // this._debugBuffer.add(DebugGeometryTemplates.bounds(voxelMesh.getMesh().getBounds(), RGB.white, this._translate));
+        
+        this._modelsAvailable = 2;
+        this.setModelToUse(MeshType.VoxelMesh);
 
-        this._meshToUse = MeshType.VoxelMesh;
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, true);
     }
     
     public useBlockMesh(blockMesh: BlockMesh) {
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
+
         LOG('Using block mesh');
         LOG(blockMesh);
         this._blockBuffer = blockMesh.createBuffer();
@@ -195,7 +224,7 @@ export class Renderer {
             src: BlockAtlas.Get.getAtlasTexturePath(),
             mag: this._gl.NEAREST,
         });
-
+        
         this._debugBuffer = this._setupDebugBuffer({
             axis: true,
             bounds: true,
@@ -204,8 +233,11 @@ export class Renderer {
             },
         });
         // this._debugBuffer.add(DebugGeometryTemplates.bounds(blockMesh.getVoxelMesh().getMesh().getBounds(), RGB.white, this._translate));
+        
+        this._modelsAvailable = 3;
+        this.setModelToUse(MeshType.BlockMesh);
 
-        this._meshToUse = MeshType.BlockMesh;
+        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, true);
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -323,6 +355,14 @@ export class Renderer {
                 row.push(occlusionNeighbours[i][j].map((x) => Renderer._getNeighbourIndex(x)));
             }
             this._occlusionNeighboursIndices.push(row);
+        }
+    }
+
+    public setModelToUse(meshType: MeshType) {
+        const isModelAvailable = this._modelsAvailable >= meshType;
+        if (isModelAvailable) {
+            this._meshToUse = meshType;
+            EventManager.Get.broadcast(EAppEvent.onModelActiveChanged, meshType);
         }
     }
 

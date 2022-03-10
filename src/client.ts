@@ -13,11 +13,9 @@ function addDocumentEvent(event: string, delegate: (e: any) => void) {
 
 const camera = ArcballCamera.Get;
 addEvent('canvas', 'mousedown', (e) => {
-    LOG('mousedown');
     camera.onMouseDown(e);
 });
 addDocumentEvent('mouseup',   (e) => {
-    LOG('mouseup');
     camera.onMouseUp(e);
 });
 addEvent('canvas', 'wheel',     (e) => {

@@ -1,6 +1,6 @@
 import { UI } from './ui/layout';
 import { Litematic, Schematic } from './schematic';
-import { Renderer } from './renderer';
+import { MeshType, Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
 import { ASSERT, ColourSpace, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
@@ -9,6 +9,7 @@ import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams } from './block_mesh';
 import { TextureFiltering } from './texture';
+import { EAppEvent, EventManager } from './event';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -101,6 +102,8 @@ export class AppContext {
 
         // this._ui.disablePost(Action.Import);
         this._ui.disable(Action.Simplify);
+
+        Renderer.Get.toggleIsGridEnabled();
     }
 
     public do(action: Action) {
@@ -153,7 +156,7 @@ export class AppContext {
 
     private _voxelise() {
         ASSERT(this._loadedMesh);
-
+        
         const uiElements = this._ui.layout.build.elements;
         const voxelMeshParams: VoxelMeshParams = {
             desiredHeight: uiElements.height.getCachedValue() as number,

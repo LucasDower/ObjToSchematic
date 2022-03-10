@@ -9,6 +9,10 @@ import { ASSERT, LOG } from '../util';
 
 import fs from 'fs';
 import path from 'path';
+import { ToolbarItemElement } from './elements/toolbar_item';
+import { EAppEvent } from '../event';
+import { MeshType, Renderer } from '../renderer';
+import { ArcballCamera } from '../camera';
 
 export interface Group {
     label: string;
@@ -18,6 +22,11 @@ export interface Group {
     output: OutputElement;
     postElements?: { [key: string]: BaseUIElement<any> };
     postElementsOrder?: string[];
+}
+
+export interface ToolbarGroup {
+    elements: { [key: string]: ToolbarItemElement };
+    elementsOrder: string[];
 }
 
 export class UI {
@@ -103,7 +112,94 @@ export class UI {
             output: new OutputElement(),
         },
     };
+
+    private _toolbar = {
+        groups: {
+            'viewmode': {
+                elements: {
+                    'mesh': new ToolbarItemElement('mesh', () => {
+                        Renderer.Get.setModelToUse(MeshType.TriangleMesh);
+                    }, 
+                    EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        return modelUsed === MeshType.TriangleMesh;
+                    },
+                    EAppEvent.onModelAvailableChanged, (...args: any[]) => {
+                        const modelType = args[0][0][0] as MeshType;
+                        const isCached = args[0][0][1] as boolean;
+                        return modelType >= MeshType.TriangleMesh && isCached;
+                    }),
+                    
+                    'voxelMesh': new ToolbarItemElement('voxel', () => {
+                        Renderer.Get.setModelToUse(MeshType.VoxelMesh);
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        return modelUsed === MeshType.VoxelMesh;
+                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
+                        const modelType = args[0][0][0] as MeshType;
+                        const isCached = args[0][0][1] as boolean;
+                        return modelType >= MeshType.VoxelMesh && isCached;
+                    }),
+
+                    'blockMesh': new ToolbarItemElement('block', () => {
+                        Renderer.Get.setModelToUse(MeshType.BlockMesh);
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        return modelUsed === MeshType.BlockMesh;
+                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
+                        const modelType = args[0][0][0] as MeshType;
+                        const isCached = args[0][0][1] as boolean;
+                        return modelType >= MeshType.BlockMesh && isCached;
+                    }),
+                },
+                elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
+            },
+            'zoom': {
+                elements: {
+                    'zoomOut': new ToolbarItemElement('minus', () => {
+                        ArcballCamera.Get.onZoomOut();
+                    }),
+                    'zoomIn': new ToolbarItemElement('plus', () => {
+                        ArcballCamera.Get.onZoomIn();
+                    }),
+                },
+                elementsOrder: ['zoomOut', 'zoomIn'],
+            },
+            /*
+            'camera': {
+                elements: {
+                    'translate': new ToolbarItemElement('translate', () => {
+                        // ArcballCamera.Get.onZoomOut();
+                    }),
+                    'rotate': new ToolbarItemElement('rotate', () => {
+                        // ArcballCamera.Get.onZoomIn();
+                    }),
+                },
+                elementsOrder: ['translate', 'rotate'],
+            },
+            */
+            'debug': {
+                elements: {
+                    'grid': new ToolbarItemElement('grid', () => {
+                        Renderer.Get.toggleIsGridEnabled();
+                    }, EAppEvent.onGridEnabledChanged, (...args: any[]) => {
+                        const isEnabled = args[0][0][0] as boolean;
+                        return isEnabled;
+                    }),
+                    /*
+                    'bounds': new ToolbarItemElement('bounds', () => {
+                    }),
+                    */
+                },
+                elementsOrder: ['grid'], // ['grid', 'bounds'],
+            },
+        },
+        groupsOrder: ['viewmode', 'zoom', 'debug'],
+    };
+
     private _uiDull: { [key: string]: Group } = this._ui;
+    private _toolbarDull: { [key: string]: ToolbarGroup } = this._toolbar.groups;
+
     private _appContext: AppContext;
 
     constructor(appContext: AppContext) {
@@ -116,14 +212,14 @@ export class UI {
             const group = this._uiDull[groupName];
             groupHTML[groupName] = `
             <div class="item item-body">
-                <div class="sub-right">
+                <div class="prop-right">
                     <div class="h-div">
                     </div>
                 </div>
-                <div class="sub-left-alt">
+                <div class="group-heading">
                     ${group.label.toUpperCase()}
                 </div>
-                <div class="sub-right">
+                <div class="prop-right">
                     <div class="h-div">
                     </div>
                 </div>
@@ -137,8 +233,22 @@ export class UI {
             itemHTML += groupHTML[groupName];
         }
 
-        document.getElementById('properties')!.innerHTML = `<div class="menu"><div class="container">
-        ` + itemHTML + `</div></div>`;
+        document.getElementById('properties')!.innerHTML = `<div class="container">
+        ` + itemHTML + `</div>`;
+        
+        // Build toolbar
+        let toolbarHTML = '';
+        for (const toolbarGroupName of this._toolbar.groupsOrder) {
+            toolbarHTML += '<div class="toolbar-group">';
+            const toolbarGroup = this._toolbarDull[toolbarGroupName];
+            for (const groupElementName of toolbarGroup.elementsOrder) {
+                const groupElement = toolbarGroup.elements[groupElementName];
+                toolbarHTML += groupElement.generateHTML();
+            }
+            toolbarHTML += '</div>';
+        }
+
+        document.getElementById('toolbar')!.innerHTML = toolbarHTML;
     }
 
     public cacheValues(action: Action) {
@@ -169,12 +279,12 @@ export class UI {
         return `
             ${groupHTML}
             <div class="item item-body">
-                <div class="sub-right">
+                <div class="prop-right">
                     ${group.submitButton.generateHTML()}
                 </div>
             </div>
             <div class="item item-body">
-                <div class="sub-right">
+                <div class="prop-right">
                     ${group.output.generateHTML()}
                 </div>
             </div>
@@ -206,6 +316,14 @@ export class UI {
                 }
             }
         }
+
+        // Register toolbar
+        for (const toolbarGroupName of this._toolbar.groupsOrder) {
+            const toolbarGroup = this._toolbarDull[toolbarGroupName];
+            for (const groupElementName of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[groupElementName].registerEvents();
+            }
+        } 
     }
 
     public get layout() {
@@ -214,6 +332,10 @@ export class UI {
 
     public get layoutDull() {
         return this._uiDull;
+    }
+
+    public get toolbar() {
+        return this._toolbar;
     }
 
     public enable(action: Action) {

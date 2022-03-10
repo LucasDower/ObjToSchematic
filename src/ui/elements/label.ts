@@ -11,7 +11,7 @@ export class LabelElement {
 
     public generateHTML(): string {
         return `
-            <div class="sub-left" id="${this._id}">
+            <div class="prop-left" id="${this._id}">
                 ${this._text}
             </div>
         `;
@@ -22,9 +22,9 @@ export class LabelElement {
         ASSERT(element !== null);
 
         if (isEnabled) {
-            element.classList.remove('sub-left-disabled');
+            element.classList.remove('prop-left-disabled');
         } else {
-            element.classList.add('sub-left-disabled');
+            element.classList.add('prop-left-disabled');
         }
     }
 }
