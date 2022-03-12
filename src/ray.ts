@@ -1,5 +1,5 @@
 import { Vector3 } from './vector';
-import { Bounds } from './util';
+import { ASSERT, Bounds } from './util';
 
 const EPSILON = 0.0000001;
 
@@ -9,9 +9,21 @@ export enum Axes {
 }
 /* eslint-enable */
 
-interface Ray {
+export function axesToDirection(axis: Axes) {
+    if (axis === Axes.x) {
+        return new Vector3(1, 0, 0);
+    }
+    if (axis === Axes.y) {
+        return new Vector3(0, 1, 0);
+    }
+    if (axis === Axes.z) {
+        return new Vector3(0, 0, 1);
+    }
+    ASSERT(false);
+}
+
+export interface Ray {
     origin: Vector3,
-    direction: Vector3,
     axis: Axes
 }
 
@@ -40,8 +52,7 @@ function traverseX(rayList: Array<Ray>, bounds: Bounds) {
     for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
         for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
             rayList.push({
-                origin: new Vector3(bounds.min.x, y, z),
-                direction: new Vector3(1, 0, 0),
+                origin: new Vector3(bounds.min.x - 1, y, z),
                 axis: Axes.x,
             });
         }
@@ -52,8 +63,7 @@ function traverseY(rayList: Array<Ray>, bounds: Bounds) {
     for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
         for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
             rayList.push({
-                origin: new Vector3(x, bounds.min.y, z),
-                direction: new Vector3(0, 1, 0),
+                origin: new Vector3(x, bounds.min.y - 1, z),
                 axis: Axes.y,
             });
         }
@@ -64,19 +74,19 @@ function traverseZ(rayList: Array<Ray>, bounds: Bounds) {
     for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
         for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
             rayList.push({
-                origin: new Vector3(x, y, bounds.min.z),
-                direction: new Vector3(0, 0, 1),
+                origin: new Vector3(x, y, bounds.min.z - 1),
                 axis: Axes.z,
             });
         }
     }
 }
 
-export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vector3): (Vector3 | void) {
+export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vector3): (Vector3 | undefined) {
     const edge1 = Vector3.sub(v1, v0);
     const edge2 = Vector3.sub(v2, v0);
 
-    const h = Vector3.cross(ray.direction, edge2);
+    const rayDirection = axesToDirection(ray.axis);
+    const h = Vector3.cross(rayDirection, edge2);
     const a = Vector3.dot(edge1, h);
 
     if (a > -EPSILON && a < EPSILON) {
@@ -92,7 +102,7 @@ export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vec
     }
 
     const q = Vector3.cross(s, edge1);
-    const v = f * Vector3.dot(ray.direction, q);
+    const v = f * Vector3.dot(rayDirection, q);
 
     if (v < 0.0 || u + v > 1.0) {
         return;
@@ -101,6 +111,6 @@ export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vec
     const t = f * Vector3.dot(edge2, q);
 
     if (t > EPSILON) {
-        return Vector3.add(ray.origin, Vector3.mulScalar(ray.direction, t));
+        return Vector3.add(ray.origin, Vector3.mulScalar(rayDirection, t));
     }
 }
