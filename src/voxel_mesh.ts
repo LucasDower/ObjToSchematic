@@ -112,12 +112,12 @@ export class VoxelMesh {
                 if (this._voxelMeshParams.useMultisampleColouring && material.type === MaterialType.textured) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
-                        const samplePosition = Vector3.mulScalar(Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5)), this._voxelSize);
+                        const samplePosition = Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5));
                         samples.push(this._getVoxelColour(triangle, material, materialName, samplePosition));
                     }
                     voxelColour = RGB.averageFrom(samples);
                 } else {
-                    voxelColour = this._getVoxelColour(triangle, material, materialName, Vector3.mulScalar(voxelPosition, this._voxelSize));
+                    voxelColour = this._getVoxelColour(triangle, material, materialName, voxelPosition);
                 }
                 this._addVoxel(voxelPosition, voxelColour);
             }
