@@ -1,7 +1,6 @@
 import { AppContext } from './app_context';
 import { ArcballCamera } from './camera';
 import { MouseManager } from './mouse';
-import { LOG } from './util';
 
 function addEvent(htmlElementID: string, event: string, delegate: (e: any) => void) {
     document.getElementById(htmlElementID)?.addEventListener(event, delegate);
