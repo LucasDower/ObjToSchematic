@@ -20,8 +20,9 @@ export class ArcballCamera {
     private targetDistance: number;
     private targetAzimuth: number;
     private targetElevation: number;
+    private targetTarget: v3.Vec3;
 
-    private readonly target: v3.Vec3 = [0, 0, 0];
+    private readonly actualTarget: v3.Vec3 = [0, 0, 0];
     private readonly up: v3.Vec3 = [0, 1, 0];
     private eye: v3.Vec3 = [0, 0, 0];
 
@@ -49,6 +50,7 @@ export class ArcballCamera {
         this.targetDistance = this.actualDistance;
         this.targetAzimuth = this.actualAzimuth;
         this.targetElevation = this.actualElevation;
+        this.targetTarget = [0, 0, 0];
     }
 
     public updateCamera() {
@@ -70,14 +72,14 @@ export class ArcballCamera {
             // Up-down
             const dy = -Math.cos(this.targetElevation - Math.PI/2);
             const df = Math.sin(this.targetElevation - Math.PI/2);
-            this.target[0] += -Math.sin(this.targetAzimuth - Math.PI/2) * my * df;
-            this.target[1] += dy * my;
-            this.target[2] += Math.cos(this.targetAzimuth - Math.PI/2) * my * df;
+            this.targetTarget[0] += -Math.sin(this.targetAzimuth - Math.PI/2) * my * df;
+            this.targetTarget[1] += dy * my;
+            this.targetTarget[2] += Math.cos(this.targetAzimuth - Math.PI/2) * my * df;
             // Left-right
             const dx =  Math.sin(this.targetAzimuth);
             const dz = -Math.cos(this.targetAzimuth);
-            this.target[0] += dx * mx;
-            this.target[2] += dz * mx;
+            this.targetTarget[0] += dx * mx;
+            this.targetTarget[2] += dz * mx;
         }
 
         // Move camera towards target location
@@ -85,10 +87,14 @@ export class ArcballCamera {
         this.actualAzimuth   += (this.targetAzimuth   - this.actualAzimuth  ) * this.cameraSmoothing;
         this.actualElevation += (this.targetElevation - this.actualElevation) * this.cameraSmoothing;
 
+        this.actualTarget[0] += (this.targetTarget[0] - this.actualTarget[0]) * this.cameraSmoothing;
+        this.actualTarget[1] += (this.targetTarget[1] - this.actualTarget[1]) * this.cameraSmoothing;
+        this.actualTarget[2] += (this.targetTarget[2] - this.actualTarget[2]) * this.cameraSmoothing;
+
         this.eye = [
-            this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.target[0],
-            this.actualDistance * Math.cos(this.actualElevation) + this.target[1],
-            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.target[2],
+            this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.actualTarget[0],
+            this.actualDistance * Math.cos(this.actualElevation) + this.actualTarget[1],
+            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.actualTarget[2],
         ];
     }
 
@@ -125,7 +131,7 @@ export class ArcballCamera {
     }
 
     public getCameraMatrix() {
-        return m4.lookAt(this.eye, this.target, this.up);
+        return m4.lookAt(this.eye, this.actualTarget, this.up);
     }
 
     public getViewMatrix() {
