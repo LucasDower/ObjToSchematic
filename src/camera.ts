@@ -1,7 +1,9 @@
 import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
-import { degreesToRadians, clamp } from './math';
+import { degreesToRadians } from './math';
 import { Renderer } from './renderer';
+import { SmoothVariable, SmoothVectorVariable } from './util';
+import { Vector3 } from './vector';
 
 export class ArcballCamera {
     public isUserRotating = false;
@@ -10,27 +12,18 @@ export class ArcballCamera {
     private readonly fov: number;
     private readonly zNear: number;
     private readonly zFar: number;
-    private readonly cameraSmoothing = 0.025;
-
     public aspect: number;
-    private actualDistance = 18.0;
-    private actualAzimuth = -1.0;
-    private actualElevation = 1.3;
+    
+    private _distance = new SmoothVariable(18.0, 0.025);
+    private _azimuth = new SmoothVariable(-1.0, 0.025);
+    private _elevation = new SmoothVariable(1.3, 0.025);
+    private _target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
 
-    private targetDistance: number;
-    private targetAzimuth: number;
-    private targetElevation: number;
-    private targetTarget: v3.Vec3;
-
-    private readonly actualTarget: v3.Vec3 = [0, 0, 0];
     private readonly up: v3.Vec3 = [0, 1, 0];
     private eye: v3.Vec3 = [0, 0, 0];
 
     private mouseSensitivity = 0.005;
     private scrollSensitivity = 0.005;
-
-    private zoomDistMin = 1.0;
-    private zoomDistMax = 100.0;
 
     private gl: WebGLRenderingContext;
 
@@ -47,64 +40,56 @@ export class ArcballCamera {
         this.gl = Renderer.Get._gl;
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
-        this.targetDistance = this.actualDistance;
-        this.targetAzimuth = this.actualAzimuth;
-        this.targetElevation = this.actualElevation;
-        this.targetTarget = [0, 0, 0];
+        this._elevation.setClamp(0.01, Math.PI - 0.01);
+        this._distance.setClamp(1.0, 100.0);
     }
 
     public updateCamera() {
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
-        // Update target location if user is rotating camera
         const mouseDelta = MouseManager.Get.getMouseDelta();
         if (this.isUserRotating) {
-            this.targetAzimuth += mouseDelta.dx * this.mouseSensitivity;
-            this.targetElevation += mouseDelta.dy * this.mouseSensitivity;
-
-            // Prevent the camera going upside-down
-            const eps = 0.01;
-            this.targetElevation = Math.max(Math.min(Math.PI - eps, this.targetElevation), eps);
+            this._azimuth.addToTarget(mouseDelta.dx * this.mouseSensitivity);
+            this._elevation.addToTarget(mouseDelta.dy * this.mouseSensitivity);
         }
         if (this.isUserTranslating) {
             const my = mouseDelta.dy * this.mouseSensitivity;
             const mx = mouseDelta.dx * this.mouseSensitivity;
             // Up-down
-            const dy = -Math.cos(this.targetElevation - Math.PI/2);
-            const df = Math.sin(this.targetElevation - Math.PI/2);
-            this.targetTarget[0] += -Math.sin(this.targetAzimuth - Math.PI/2) * my * df;
-            this.targetTarget[1] += dy * my;
-            this.targetTarget[2] += Math.cos(this.targetAzimuth - Math.PI/2) * my * df;
+            const dy = -Math.cos(this._elevation.getTarget() - Math.PI/2);
+            const df = Math.sin(this._elevation.getTarget() - Math.PI/2);
+            this._target.addToTarget(new Vector3(
+                -Math.sin(this._azimuth.getTarget() - Math.PI/2) * my * df,
+                dy * my,
+                Math.cos(this._azimuth.getTarget() - Math.PI/2) * my * df,
+            ));
             // Left-right
-            const dx =  Math.sin(this.targetAzimuth);
-            const dz = -Math.cos(this.targetAzimuth);
-            this.targetTarget[0] += dx * mx;
-            this.targetTarget[2] += dz * mx;
+            const dx =  Math.sin(this._azimuth.getTarget());
+            const dz = -Math.cos(this._azimuth.getTarget());
+            this._target.addToTarget(new Vector3(dx * mx, 0.0, dz * mx));
         }
 
         // Move camera towards target location
-        this.actualDistance  += (this.targetDistance  - this.actualDistance ) * this.cameraSmoothing;
-        this.actualAzimuth   += (this.targetAzimuth   - this.actualAzimuth  ) * this.cameraSmoothing;
-        this.actualElevation += (this.targetElevation - this.actualElevation) * this.cameraSmoothing;
+        this._distance.tick();
+        this._azimuth.tick();
+        this._elevation.tick();
+        this._target.tick();
 
-        this.actualTarget[0] += (this.targetTarget[0] - this.actualTarget[0]) * this.cameraSmoothing;
-        this.actualTarget[1] += (this.targetTarget[1] - this.actualTarget[1]) * this.cameraSmoothing;
-        this.actualTarget[2] += (this.targetTarget[2] - this.actualTarget[2]) * this.cameraSmoothing;
-
+        const target = this._target.getActual().toArray();
         this.eye = [
-            this.actualDistance * Math.cos(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.actualTarget[0],
-            this.actualDistance * Math.cos(this.actualElevation) + this.actualTarget[1],
-            this.actualDistance * Math.sin(this.actualAzimuth) * -Math.sin(this.actualElevation) + this.actualTarget[2],
+            this._distance.getActual() * Math.cos(this._azimuth.getActual()) * -Math.sin(this._elevation.getActual()) + target[0],
+            this._distance.getActual() * Math.cos(this._elevation.getActual()) + target[1],
+            this._distance.getActual() * Math.sin(this._azimuth.getActual()) * -Math.sin(this._elevation.getActual()) + target[2],
         ];
     }
 
     getCameraPosition(azimuthOffset: number, elevationOffset: number) {
-        const azimuth = this.actualAzimuth + azimuthOffset;
-        const elevation = this.actualElevation + elevationOffset;
+        const azimuth = this._azimuth.getActual() + azimuthOffset;
+        const elevation = this._elevation.getActual() + elevationOffset;
         return [
-            this.actualDistance * Math.cos(azimuth ) * -Math.sin(elevation),
-            this.actualDistance * Math.cos(elevation),
-            this.actualDistance * Math.sin(azimuth) * -Math.sin(elevation),
+            this._distance.getActual() * Math.cos(azimuth ) * -Math.sin(elevation),
+            this._distance.getActual() * Math.cos(elevation),
+            this._distance.getActual() * Math.sin(azimuth) * -Math.sin(elevation),
         ];
     }
 
@@ -122,8 +107,7 @@ export class ArcballCamera {
     }
 
     public onWheelScroll(e: WheelEvent) {
-        this.targetDistance += e.deltaY * this.scrollSensitivity;
-        this.targetDistance = clamp(this.targetDistance, this.zoomDistMin, this.zoomDistMax);
+        this._distance.addToTarget(e.deltaY * this.scrollSensitivity);
     }
 
     public getProjectionMatrix() {
@@ -131,7 +115,7 @@ export class ArcballCamera {
     }
 
     public getCameraMatrix() {
-        return m4.lookAt(this.eye, this.actualTarget, this.up);
+        return m4.lookAt(this.eye, this._target.getActual().toArray(), this.up);
     }
 
     public getViewMatrix() {
