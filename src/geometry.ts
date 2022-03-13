@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 import { UVTriangle } from './triangle';
 import { Vector3 } from './vector';
-import { AttributeData } from './buffer';
+import { AttributeData, RenderBuffer } from './buffer';
 import { Bounds, RGB } from './util';
 
 export class GeometryTemplates {
@@ -60,7 +60,7 @@ export class GeometryTemplates {
 }
 
 export class DebugGeometryTemplates {
-    public static cross(centre: Vector3, radius: number, colour: RGB) {
+    public static cross(centre: Vector3, radius: number, colour: RGB): AttributeData {
         return {
             indices: new Uint32Array([0, 1, 2, 3, 4, 5]),
             custom: {
@@ -84,7 +84,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static line(start: Vector3, end: Vector3, colour: RGB) {
+    public static line(start: Vector3, end: Vector3, colour: RGB): AttributeData {
         return {
             indices: new Uint32Array([0, 1]),
             custom: {
@@ -100,7 +100,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static bounds(bounds: Bounds, colour: RGB, translate: Vector3 = new Vector3(0, 0, 0)) {
+    public static bounds(bounds: Bounds, colour: RGB, translate: Vector3 = new Vector3(0, 0, 0)): AttributeData {
         return {
             indices: new Uint32Array([
                 0, 1,
@@ -139,5 +139,94 @@ export class DebugGeometryTemplates {
                 ],
             },
         };
+    }
+
+    public static circle(centre: Vector3, normal: Vector3, radius: number, colour: RGB, steps: number = 8): AttributeData {
+        const indices = [];
+        const positions = [];
+        const colours = [];
+
+        const circlePoints = DebugGeometryTemplates._generateCirclePoints(centre, normal, radius, steps);
+        for (let i = 0; i < steps; ++i) {
+            const point = circlePoints[i];
+            positions.push(point.x, point.y, point.z);
+            indices.push(i, (i+1) % steps);
+            colours.push(colour.r, colour.g, colour.b);
+        }
+
+        return {
+            indices: new Uint32Array(indices),
+            custom: {
+                position: positions,
+                colour: colours,
+            },
+        };
+    }
+
+    public static cone(tipCentre: Vector3, tipHeight: number, normal: Vector3, radius: number, colour: RGB, quarterSteps: number) {
+        const indices = [];
+        const positions = [];
+        const colours = [];
+
+        const steps = quarterSteps * 4;
+        const circleCentre = Vector3.add(tipCentre, Vector3.mulScalar(normal.copy().normalise(), -tipHeight));
+        const circlePoints = DebugGeometryTemplates._generateCirclePoints(circleCentre, normal, radius, steps);
+
+        // Add circle data
+        for (let i = 0; i < steps; ++i) {
+            const point = circlePoints[i];
+            positions.push(point.x, point.y, point.z);
+            indices.push(i, (i+1) % steps);
+            colours.push(colour.r, colour.g, colour.b);
+        }
+        // Add cone tip
+        positions.push(tipCentre.x, tipCentre.y, tipCentre.z);
+        colours.push(colour.r, colour.g, colour.b);
+        const tipIndex = steps;
+        // Add cone lines
+        for (let i = 0; i < 4; ++i) {
+            const coneIndex = i * quarterSteps;
+            indices.push(tipIndex, coneIndex);
+        }
+
+        return {
+            indices: new Uint32Array(indices),
+            custom: {
+                position: positions,
+                colour: colours,
+            },
+        };
+    }
+
+    static _generateCirclePoints(centre: Vector3, normal: Vector3, radius: number, steps: number): Vector3[] {
+        normal = normal.copy().normalise();
+
+        const c = [{ i: 0, v: normal.x }, { i: 1, v: normal.y }, { i: 2, v: normal.z }];
+        {
+            let comps = c.sort((a, b) => {
+                return b.v - a.v;
+            }); // largest -> smallest
+            comps[2].v = 0;
+            const temp = comps[0].v;
+            comps[0].v = comps[1].v;
+            comps[1].v = temp;
+            comps = c.sort((a, b) => {
+                return a.i - b.i;
+            });
+        }
+        const aVec = new Vector3(c[0].v, c[1].v, c[2].v);
+        const bVec = Vector3.cross(normal, aVec);
+        aVec.normalise();
+        bVec.normalise();
+
+        const circlePoints: Vector3[] = [];
+        for (let i = 0; i < steps; ++i) {
+            const t = i / steps * Math.PI * 2;
+            const point = centre.copy()
+                .add(Vector3.mulScalar(aVec, radius * Math.cos(t)))
+                .add(Vector3.mulScalar(bVec, radius * Math.sin(t)));
+            circlePoints.push(point);
+        }
+        return circlePoints;
     }
 }

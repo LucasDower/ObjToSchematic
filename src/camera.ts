@@ -2,6 +2,7 @@ import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
 import { degreesToRadians, clamp } from './math';
 import { Renderer } from './renderer';
+import { Vector3 } from './vector';
 
 export class ArcballCamera {
     public isUserRotating = false;

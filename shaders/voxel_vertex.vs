@@ -1,6 +1,6 @@
 uniform mat4 u_worldViewProjection;
 uniform float u_voxelSize;
-uniform vec3 u_translate;
+uniform vec3 u_gridOffset;
 
 attribute vec3 position;
 attribute vec3 normal;
@@ -21,5 +21,5 @@ void main() {
     v_texcoord = texcoord;
     v_colour = colour;
 
-    gl_Position = u_worldViewProjection * vec4((position.xyz + vec3(0.5)) * u_voxelSize + u_translate, 1.0);
+    gl_Position = u_worldViewProjection * vec4((position.xyz + u_gridOffset) * u_voxelSize, 1.0);
 }

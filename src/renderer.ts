@@ -41,6 +41,8 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _translate: Vector3;
+    private _gridOffset: Vector3 = new Vector3(0, 0, 0);
+
     private _modelsAvailable: number;
 
     private _materialBuffers: Array<{
@@ -168,7 +170,6 @@ export class Renderer {
         }
         
         this._translate = new Vector3(0, mesh.getBounds().getDimensions().y/2, 0);
-        ArcballCamera.Get.targetHeight = this._translate.y;
         
         this._debugBuffer = this._setupDebugBuffer({
             axis: true,
@@ -194,9 +195,14 @@ export class Renderer {
         this._voxelBuffer = voxelMesh.createBuffer();
         this._voxelSize = voxelMesh?.getVoxelSize();
         
-        this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
-        ArcballCamera.Get.targetHeight = this._translate.y;
-        
+        // this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
+        const dimensions = voxelMesh.getBounds().getDimensions();
+        this._gridOffset = new Vector3(
+            dimensions.x % 2 === 0 ? 0.5 : 0,
+            dimensions.y % 2 === 0 ? 0.5 : 0,
+            dimensions.z % 2 === 0 ? 0.5 : 0,
+        );
+
         this._debugBuffer = this._setupDebugBuffer({
             axis: true,
             bounds: true,
@@ -256,7 +262,6 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
-                    u_translate: this._translate.toArray(),
                 });
             } else {
                 this._drawRegister(materialBuffer.buffer, ShaderManager.Get.solidTriProgram, {
@@ -264,7 +269,6 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_fillColour: materialBuffer.material.colour.toArray(),
-                    u_translate: this._translate.toArray(),
                 });
             }
         }
@@ -274,7 +278,7 @@ export class Renderer {
         this._drawRegister(this._voxelBuffer, ShaderManager.Get.voxelProgram, {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
-            u_translate: this._translate.toArray(),
+            u_gridOffset: this._gridOffset.toArray(),
         });
     }
 
@@ -284,7 +288,7 @@ export class Renderer {
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,
             u_atlasSize: BlockAtlas.Get.getAtlasSize(),
-            u_translate: this._translate.toArray(),
+            u_gridOffset: this._gridOffset.toArray(),
         });
     }
 
@@ -403,13 +407,29 @@ export class Renderer {
             buffer.add(DebugGeometryTemplates.line(
                 new Vector3(-gridRadius, 0, 0),
                 new Vector3(gridRadius, 0, 0),
-                (new RGB(0.44, 0.64, 0.11)),
+                new RGB(0.44, 0.64, 0.11),
+            ));
+            buffer.add(DebugGeometryTemplates.cone(
+                new Vector3(gridRadius, 0, 0),
+                0.5,
+                new Vector3(1, 0, 0),
+                0.1,
+                new RGB(0.44, 0.64, 0.11),
+                8,
             ));
             buffer.add(DebugGeometryTemplates.line(
                 new Vector3(0, 0, -gridRadius),
                 new Vector3(0, 0, gridRadius),
                 new RGB(0.96, 0.21, 0.32)),
             );
+            buffer.add(DebugGeometryTemplates.cone(
+                new Vector3(0, 0, gridRadius),
+                0.5,
+                new Vector3(0, 0, 1),
+                0.1,
+                new RGB(0.96, 0.21, 0.32),
+                8,
+            ));
         }
 
         if (settings.bounds) {
