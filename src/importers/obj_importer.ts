@@ -11,10 +11,13 @@ export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
-    private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {};
-    
+
+    private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {
+        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGB.white },
+    };
     private _mtlLibs: string[] = [];
-    private _currentMaterialName: string = '';
+    private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
+
     private _objPath?: path.ParsedPath;
     private _objParsers = [
         {
@@ -29,7 +32,7 @@ export class ObjImporter extends IImporter {
             regex: new RegExpBuilder().add(/usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._currentMaterialName = match.name.trim();
-                ASSERT(this._currentMaterialName);
+                ASSERT(this._currentMaterialName, 'invalid material name');
             },
         },
         {
@@ -90,7 +93,7 @@ export class ObjImporter extends IImporter {
                 const iUVz = parseInt(match.ztIndex) - 1;
                 const iUVw = parseInt(match.wtIndex) - 1;
                 checkNaN(iX, iY, iZ, iW);
-                ASSERT(this._currentMaterialName);
+                ASSERT(this._currentMaterialName, 'unassigned material');
                 this._tris.push({
                     iX: iW,
                     iY: iY,
@@ -130,7 +133,7 @@ export class ObjImporter extends IImporter {
                 const iUVy = parseInt(match.ytIndex) - 1;
                 const iUVz = parseInt(match.ztIndex) - 1;
                 checkNaN(iX, iY, iZ);
-                ASSERT(this._currentMaterialName);
+                ASSERT(this._currentMaterialName, 'unassigned material');
                 this._tris.push({
                     iX: iX,
                     iY: iY,
@@ -185,7 +188,7 @@ export class ObjImporter extends IImporter {
             delegate: (match: { [key: string]: string }) => {
                 let mtlPath = match.path.trim();
                 if (!path.isAbsolute(mtlPath)) {
-                    ASSERT(this._objPath);
+                    ASSERT(this._objPath, 'no obj path');
                     mtlPath = path.join(this._objPath.dir, mtlPath);
                 }
                 this._currentTexture = mtlPath;
@@ -195,8 +198,8 @@ export class ObjImporter extends IImporter {
     ];
 
     override createMesh(filePath: string): Mesh {
-        ASSERT(path.isAbsolute(filePath));
-
+        ASSERT(path.isAbsolute(filePath), 'path not absolute');
+        
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
@@ -209,7 +212,7 @@ export class ObjImporter extends IImporter {
             if (!path.isAbsolute(mtlLib)) {
                 this._mtlLibs[i] = path.join(this._objPath.dir, mtlLib);
             }
-            ASSERT(path.isAbsolute(this._mtlLibs[i]));
+            ASSERT(path.isAbsolute(this._mtlLibs[i]), 'path not absolute');
         }
 
         this._parseMTL();
