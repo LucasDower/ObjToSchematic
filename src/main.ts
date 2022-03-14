@@ -16,6 +16,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
+        icon: path.join(__dirname, process.platform === 'win32' ?
+            '../resources/static/icon.ico' : '../resources/static/icon.png'),
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
