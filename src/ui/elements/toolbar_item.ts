@@ -12,7 +12,10 @@ export class ToolbarItemElement {
     private _isActive: boolean;
     private _onClick: () => void;
     
-    public constructor(iconName: string, onClick: () => void, _enableChangedEvent?: EAppEvent, _enableChangedDelegate?: (...args: any[]) => boolean, _activeChangedEvent?: EAppEvent, _activeChangedDelegate?: (...args: any[]) => boolean) {
+    public constructor(iconName: string, onClick: () => void,
+        _activeChangedEvent?: EAppEvent, _activeChangedDelegate?: (...args: any[]) => boolean,
+        _enableChangedEvent?: EAppEvent, _enableChangedDelegate?: (...args: any[]) => boolean,
+    ) {
         this._id = getRandomID();
         this._iconName = iconName;
         this._iconPath = path.join(__dirname, '../../../resources/static/', iconName + '.svg');
@@ -20,20 +23,22 @@ export class ToolbarItemElement {
         this._isActive = false;
         this._onClick = onClick;
 
+        // Enabled/Disabled Event 
         if (_enableChangedEvent !== undefined && _enableChangedDelegate) {
             EventManager.Get.add(_enableChangedEvent, (...args: any[]) => {
-                const isActive = _enableChangedDelegate(args);
-                this.setActive(isActive);
-            });
-        }
-        
-        if (_activeChangedEvent !== undefined && _activeChangedDelegate) {
-            EventManager.Get.add(_activeChangedEvent, (...args: any[]) => {
-                const isEnabled = _activeChangedDelegate(args);
+                const isEnabled = _enableChangedDelegate(args);
                 this.setEnabled(isEnabled);
             });
         } else {
             this._isEnabled = true;
+        }
+        
+        // Active/Inactive Event
+        if (_activeChangedEvent !== undefined && _activeChangedDelegate) {
+            EventManager.Get.add(_activeChangedEvent, (...args: any[]) => {
+                const isActive = _activeChangedDelegate(args);
+                this.setActive(isActive);
+            });
         }
     }
 
@@ -68,49 +73,37 @@ export class ToolbarItemElement {
             }
         });
 
-
-        this._onEnabledChanged();
-        this._onActiveChanged();
+        this._updateElements();
     }
 
-    private _onEnabledChanged() {
+    private _updateElements() {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const svgElement = document.getElementById(this._iconName + '-svg') as HTMLDivElement;
         ASSERT(element !== null && svgElement !== null);
 
+        element.classList.remove('toolbar-item-disabled');
+        element.classList.remove('toolbar-item-active');
+        svgElement.classList.remove('icon-disabled');
+        svgElement.classList.remove('icon-active');
+
         if (this._isEnabled) {
-            element.classList.remove('toolbar-item-disabled');
-            svgElement.classList.remove('icon-disabled');
+            if (this._isActive) {
+                element.classList.add('toolbar-item-active');
+                svgElement.classList.add('icon-active');
+            }
         } else {
             element.classList.add('toolbar-item-disabled');
             svgElement.classList.add('icon-disabled');
         }
     }
 
-    private _onActiveChanged() {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        const svgElement = document.getElementById(this._iconName + '-svg') as HTMLDivElement;
-        ASSERT(element !== null && svgElement !== null);
-
-        element.classList.remove('toolbar-item-active');
-        svgElement.classList.remove('icon-active');
-
-        if (this._isActive) {
-            element.classList.add('toolbar-item-active');
-            svgElement.classList.add('icon-active');
-        } else {
-            element.classList.remove('toolbar-item-active');
-            svgElement.classList.remove('icon-active');
-        }
-    }
-
     public setEnabled(isEnabled: boolean) {
         this._isEnabled = isEnabled;
-        this._onEnabledChanged();
+        this._updateElements();
     }
 
     public setActive(isActive: boolean) {
         this._isActive = isActive;
-        this._onActiveChanged();
+        this._updateElements();
     }
 }

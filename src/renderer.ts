@@ -5,7 +5,7 @@ import { RenderBuffer } from './buffer';
 import { DebugGeometryTemplates, GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { LOG, RGB } from './util';
+import { ASSERT, LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
@@ -21,15 +21,13 @@ export enum MeshType {
 }
 /* eslint-enable */
 
-interface DebugSettings {
-    axis: boolean;
-    bounds: boolean;
-    grid?: DebugGridSettings;
+/* eslint-disable */
+enum EDebugBufferComponents {
+    Grid,
+    Wireframe,
+    Bounds,
 }
-
-interface DebugGridSettings {
-    size: number,
-}
+/* eslint-enable */
 
 export class Renderer {
     public _gl: WebGLRenderingContext;
@@ -40,7 +38,6 @@ export class Renderer {
 
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
-    private _translate: Vector3;
     private _gridOffset: Vector3 = new Vector3(0, 0, 0);
 
     private _modelsAvailable: number;
@@ -51,9 +48,9 @@ export class Renderer {
     }>;
     public _voxelBuffer: RenderBuffer;
     private _blockBuffer: RenderBuffer;
-    private _debugBuffer: RenderBuffer;
+    private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
 
-    private _isGridEnabled: boolean;
+    private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
 
     private static _instance: Renderer;
     public static get Get() {
@@ -69,19 +66,19 @@ export class Renderer {
         this._setupOcclusions();
 
         this._modelsAvailable = 0;
-        this._translate = new Vector3(0, 0, 0);
+        this._materialBuffers = [];
         this._voxelBuffer = new RenderBuffer([]);
         this._blockBuffer = new RenderBuffer([]);
-        this._debugBuffer = this._setupDebugBuffer({
-            axis: true,
-            bounds: true,
-            grid: {
-                size: 0.25,
-            },
-        });
-        this._materialBuffers = [];
 
-        this._isGridEnabled = false;
+        this._debugBuffers = {};
+        this._debugBuffers[MeshType.None] = {};
+        this._debugBuffers[MeshType.TriangleMesh] = {};
+        this._debugBuffers[MeshType.VoxelMesh] = {};
+        this._debugBuffers[MeshType.BlockMesh] = {};
+        this._debugBuffers[MeshType.None][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, 0.25);
+
+        this._isGridComponentEnabled = {};
+        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
     }
 
     public update() {
@@ -91,9 +88,7 @@ export class Renderer {
     public draw() {
         this._setupScene();
 
-        if (this._isGridEnabled) {
-            this._drawDebug();
-        }
+        this._drawDebug();
 
         switch (this._meshToUse) {
         case MeshType.TriangleMesh:
@@ -110,17 +105,16 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
-    private static _faceNormals = [
-        new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
-        new Vector3(0, 1, 0), new Vector3(0, -1, 0),
-        new Vector3(0, 0, 1), new Vector3(0, 0, -1),
-    ];
-
-    // /////////////////////////////////////////////////////////////////////////
-
     public toggleIsGridEnabled() {
-        this._isGridEnabled = !this._isGridEnabled;
-        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, this._isGridEnabled);
+        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Grid];
+        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = isEnabled;
+        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, isEnabled);
+    }
+
+    public toggleIsWireframeEnabled() {
+        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Wireframe];
+        this._isGridComponentEnabled[EDebugBufferComponents.Wireframe] = isEnabled;
+        EventManager.Get.broadcast(EAppEvent.onWireframeEnabledChanged, isEnabled);
     }
 
     public useMesh(mesh: Mesh) {
@@ -169,16 +163,8 @@ export class Renderer {
             }
         }
         
-        this._translate = new Vector3(0, mesh.getBounds().getDimensions().y/2, 0);
-        
-        this._debugBuffer = this._setupDebugBuffer({
-            axis: true,
-            bounds: true,
-            grid: {
-                size: 0.25,
-            },
-        });
-        // this._debugBuffer.add(DebugGeometryTemplates.bounds(mesh.getBounds(), RGB.white, this._translate));
+        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, 0.25);
+        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89));
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
@@ -203,14 +189,7 @@ export class Renderer {
             dimensions.z % 2 === 0 ? 0.5 : 0,
         );
 
-        this._debugBuffer = this._setupDebugBuffer({
-            axis: true,
-            bounds: true,
-            grid: {
-                size: voxelMesh.getVoxelSize(),
-            },
-        });
-        // this._debugBuffer.add(DebugGeometryTemplates.bounds(voxelMesh.getMesh().getBounds(), RGB.white, this._translate));
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, voxelMesh.getVoxelSize());
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
@@ -231,14 +210,7 @@ export class Renderer {
             mag: this._gl.NEAREST,
         });
         
-        this._debugBuffer = this._setupDebugBuffer({
-            axis: true,
-            bounds: true,
-            grid: {
-                size: 0.25,
-            },
-        });
-        // this._debugBuffer.add(DebugGeometryTemplates.bounds(blockMesh.getVoxelMesh().getMesh().getBounds(), RGB.white, this._translate));
+        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, blockMesh.getVoxelMesh().getVoxelSize());
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
@@ -249,9 +221,18 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        this._drawBuffer(this._gl.LINES, this._debugBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
-            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-        });
+        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe];
+        for (const debugComp of debugComponents) {
+            if (this._isGridComponentEnabled[debugComp]) {
+                ASSERT(this._debugBuffers[this._meshToUse]);
+                const buffer = this._debugBuffers[this._meshToUse][debugComp];
+                if (buffer) {
+                    this._drawBuffer(this._gl.LINES, buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            }
+        }
     }
 
     private _drawMesh() {
@@ -391,101 +372,5 @@ export class Renderer {
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
         this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_INT, 0);
-    }
-
-    private _setupDebugBuffer(settings: DebugSettings): RenderBuffer {
-        const buffer = new RenderBuffer([
-            { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
-        ]);
-        
-        const gridRadius = 9.5;
-        const gridColourMinor = new RGB(0.15, 0.15, 0.15);
-        const gridColourMajor = new RGB(0.3, 0.3, 0.3);
-
-        if (settings.axis) {
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(-gridRadius, 0, 0),
-                new Vector3(gridRadius, 0, 0),
-                new RGB(0.44, 0.64, 0.11),
-            ));
-            buffer.add(DebugGeometryTemplates.cone(
-                new Vector3(gridRadius, 0, 0),
-                0.5,
-                new Vector3(1, 0, 0),
-                0.1,
-                new RGB(0.44, 0.64, 0.11),
-                8,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(0, 0, -gridRadius),
-                new Vector3(0, 0, gridRadius),
-                new RGB(0.96, 0.21, 0.32)),
-            );
-            buffer.add(DebugGeometryTemplates.cone(
-                new Vector3(0, 0, gridRadius),
-                0.5,
-                new Vector3(0, 0, 1),
-                0.1,
-                new RGB(0.96, 0.21, 0.32),
-                8,
-            ));
-        }
-
-        if (settings.bounds) {
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(-gridRadius, 0, -gridRadius),
-                new Vector3(gridRadius, 0, -gridRadius),
-                gridColourMajor,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(gridRadius, 0, -gridRadius),
-                new Vector3(gridRadius, 0, gridRadius),
-                gridColourMajor,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(gridRadius, 0, gridRadius),
-                new Vector3(-gridRadius, 0, gridRadius),
-                gridColourMajor,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(-gridRadius, 0, gridRadius),
-                new Vector3(-gridRadius, 0, -gridRadius),
-                gridColourMajor,
-            ));
-        }
-
-        if (settings.grid) {
-            let count = 1;
-            for (let i = 0; i < gridRadius; i += settings.grid.size) {
-                buffer.add(DebugGeometryTemplates.line(
-                    new Vector3(i, 0, gridRadius),
-                    new Vector3(i, 0, -gridRadius),
-                    count % 10 === 0 ? gridColourMajor : gridColourMinor,
-                ));
-                buffer.add(DebugGeometryTemplates.line(
-                    new Vector3(gridRadius, 0, i),
-                    new Vector3(-gridRadius, 0, i),
-                    count % 10 === 0 ? gridColourMajor : gridColourMinor,
-                ));
-                ++count;
-            }
-            count = 1;
-            for (let i = 0; i > -gridRadius; i -= settings.grid.size) {
-                buffer.add(DebugGeometryTemplates.line(
-                    new Vector3(i, 0, gridRadius),
-                    new Vector3(i, 0, -gridRadius),
-                    count % 10 === 0 ? gridColourMajor : gridColourMinor,
-                ));
-                buffer.add(DebugGeometryTemplates.line(
-                    new Vector3(gridRadius, 0, i),
-                    new Vector3(-gridRadius, 0, i),
-                    count % 10 === 0 ? gridColourMajor : gridColourMinor,
-                ));
-                ++count;
-            }
-        }
-
-        return buffer;
     }
 }

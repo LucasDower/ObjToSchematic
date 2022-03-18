@@ -119,7 +119,7 @@ export class UI {
                 elements: {
                     'mesh': new ToolbarItemElement('mesh', () => {
                         Renderer.Get.setModelToUse(MeshType.TriangleMesh);
-                    }, 
+                    },
                     EAppEvent.onModelActiveChanged, (...args: any[]) => {
                         const modelUsed = args[0][0][0] as MeshType;
                         return modelUsed === MeshType.TriangleMesh;
@@ -186,12 +186,21 @@ export class UI {
                         const isEnabled = args[0][0][0] as boolean;
                         return isEnabled;
                     }),
+                    'wireframe': new ToolbarItemElement('wireframe', () => {
+                        Renderer.Get.toggleIsWireframeEnabled();
+                    }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
+                        const isEnabled = args[0][0][0] as boolean;
+                        return isEnabled;
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        return modelUsed === MeshType.TriangleMesh;
+                    }),
                     /*
                     'bounds': new ToolbarItemElement('bounds', () => {
                     }),
                     */
                 },
-                elementsOrder: ['grid'], // ['grid', 'bounds'],
+                elementsOrder: ['grid', 'wireframe'], // ['grid', 'bounds'],
             },
         },
         groupsOrder: ['viewmode', 'zoom', 'debug'],

@@ -3,6 +3,7 @@ import { UVTriangle } from './triangle';
 import { Vector3 } from './vector';
 import { AttributeData, RenderBuffer } from './buffer';
 import { Bounds, RGB } from './util';
+import { Mesh } from './mesh';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
@@ -163,7 +164,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static cone(tipCentre: Vector3, tipHeight: number, normal: Vector3, radius: number, colour: RGB, quarterSteps: number) {
+    public static cone(tipCentre: Vector3, tipHeight: number, normal: Vector3, radius: number, colour: RGB, quarterSteps: number): AttributeData {
         const indices = [];
         const positions = [];
         const colours = [];
@@ -196,6 +197,124 @@ export class DebugGeometryTemplates {
                 colour: colours,
             },
         };
+    }
+
+    public static grid(axes: boolean, bounds: boolean, gridSize: number): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+        
+        const gridRadius = 9.5;
+        const gridColourMinor = new RGB(0.15, 0.15, 0.15);
+        const gridColourMajor = new RGB(0.3, 0.3, 0.3);
+
+        if (axes) {
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(-gridRadius, 0, 0),
+                new Vector3(gridRadius, 0, 0),
+                new RGB(0.44, 0.64, 0.11),
+            ));
+            buffer.add(DebugGeometryTemplates.cone(
+                new Vector3(gridRadius, 0, 0),
+                0.5,
+                new Vector3(1, 0, 0),
+                0.1,
+                new RGB(0.44, 0.64, 0.11),
+                8,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(0, 0, -gridRadius),
+                new Vector3(0, 0, gridRadius),
+                new RGB(0.96, 0.21, 0.32)),
+            );
+            buffer.add(DebugGeometryTemplates.cone(
+                new Vector3(0, 0, gridRadius),
+                0.5,
+                new Vector3(0, 0, 1),
+                0.1,
+                new RGB(0.96, 0.21, 0.32),
+                8,
+            ));
+        }
+
+        if (bounds) {
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(-gridRadius, 0, -gridRadius),
+                new Vector3(gridRadius, 0, -gridRadius),
+                gridColourMajor,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(gridRadius, 0, -gridRadius),
+                new Vector3(gridRadius, 0, gridRadius),
+                gridColourMajor,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(gridRadius, 0, gridRadius),
+                new Vector3(-gridRadius, 0, gridRadius),
+                gridColourMajor,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(-gridRadius, 0, gridRadius),
+                new Vector3(-gridRadius, 0, -gridRadius),
+                gridColourMajor,
+            ));
+        }
+
+        let count = 1;
+        for (let i = 0; i < gridRadius; i += gridSize) {
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(i, 0, gridRadius),
+                new Vector3(i, 0, -gridRadius),
+                count % 10 === 0 ? gridColourMajor : gridColourMinor,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(gridRadius, 0, i),
+                new Vector3(-gridRadius, 0, i),
+                count % 10 === 0 ? gridColourMajor : gridColourMinor,
+            ));
+            ++count;
+        }
+        count = 1;
+        for (let i = 0; i > -gridRadius; i -= gridSize) {
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(i, 0, gridRadius),
+                new Vector3(i, 0, -gridRadius),
+                count % 10 === 0 ? gridColourMajor : gridColourMinor,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                new Vector3(gridRadius, 0, i),
+                new Vector3(-gridRadius, 0, i),
+                count % 10 === 0 ? gridColourMajor : gridColourMinor,
+            ));
+            ++count;
+        }
+
+        return buffer;
+    }
+
+    public static meshWireframe(mesh: Mesh, colour: RGB): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+
+        for (const tri of mesh.tris) {
+            const v0 = mesh.vertices[tri.iX];
+            const v1 = mesh.vertices[tri.iY];
+            const v2 = mesh.vertices[tri.iZ];
+            buffer.add(DebugGeometryTemplates.line(
+                v0, v1, colour,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                v1, v2, colour,
+            ));
+            buffer.add(DebugGeometryTemplates.line(
+                v2, v0, colour,
+            ));
+        }
+
+        return buffer;
     }
 
     static _generateCirclePoints(centre: Vector3, normal: Vector3, radius: number, steps: number): Vector3[] {

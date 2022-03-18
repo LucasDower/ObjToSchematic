@@ -83,6 +83,18 @@ export class RGB {
         return new RGB(1.0, 1.0, 0.0);
     }
 
+    public static get red(): RGB {
+        return new RGB(1.0, 0.0, 0.0);
+    }
+
+    public static get green(): RGB {
+        return new RGB(0.0, 1.0, 0.0);
+    }
+
+    public static get blue(): RGB {
+        return new RGB(0.0, 0.0, 1.0);
+    }
+
     public static get black(): RGB {
         return new RGB(0.0, 0.0, 0.0);
     }
