@@ -28,26 +28,26 @@ export interface TexturedMaterial { path: string; type: MaterialType.textured }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
 export class Mesh extends Warnable {
-    public vertices: Vector3[];
-    public normals!: Vector3[];
-    public uvs!: UV[];
-    public tris!: Tri[];
-    public materials!: MaterialMap;
     public readonly id: string;
-    
+
+    private _vertices: Vector3[];
+    private _normals!: Vector3[];
+    private _uvs!: UV[];
+    private _tris!: Tri[];
+    private _materials!: MaterialMap;
     private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
         super();
-
-        this.vertices = vertices;
-        this.normals = normals;
-        this.uvs = uvs;
-        this.tris = tris;
-        this.materials = materials;
-        this._loadedTextures = {};
         this.id = getRandomID();
+
+        this._vertices = vertices;
+        this._normals = normals;
+        this._uvs = uvs;
+        this._tris = tris;
+        this._materials = materials;
+        this._loadedTextures = {};
     }
 
     public processMesh() {
@@ -55,58 +55,58 @@ export class Mesh extends Warnable {
         this._checkMaterials();
 
         this._centreMesh();
-        this._scaleMesh();
+        this._normaliseMesh();
 
         this._loadTextures();
     }
 
     public getBounds() {
         const bounds = Bounds.getInfiniteBounds();
-        for (const vertex of this.vertices) {
+        for (const vertex of this._vertices) {
             bounds.extendByPoint(vertex);
         }
         return bounds;
     }
 
+    public translateMesh(offset: Vector3) {
+        this._vertices.forEach((vertex) => {
+            vertex.add(offset);
+        });
+    }
+
+    public scaleMesh(scaleFactor: number) {
+        this._vertices.forEach((vertex) => {
+            vertex.mulScalar(scaleFactor);
+        });
+    }
+
     private _checkMesh() {
         // TODO: Check indices exist
 
-        if (this.vertices.length === 0) {
-            throw new CustomError('Loaded mesh has no vertices');
+        if (this._vertices.length === 0) {
+            throw new CustomError('No verticies were loaded');
         }
 
-        if (this.tris.length === 0) {
-            throw new CustomError('Loaded mesh has no triangles');
+        if (this._tris.length === 0) {
+            throw new CustomError('No triangles were loaded');
         }
-
-        // Check UVs are inside [0, 1]
-        /*
-        for (const uv of this.uvs) {
-            if (uv.u < 0.0 || uv.u > 1.0) {
-                uv.u = Math.abs(uv.u % 1);
-            }
-            if (uv.v < 0.0 || uv.v > 1.0) {
-                uv.v = Math.abs(uv.v % 1);
-            }
-        }
-        */
     }
 
     private _checkMaterials() {
-        if (Object.keys(this.materials).length === 0) {
+        if (Object.keys(this._materials).length === 0) {
             throw new CustomError('Loaded mesh has no materials');
         }
 
         // Check used materials exist
         let wasRemapped = false;
         let debugName = (Math.random() + 1).toString(36).substring(7);
-        while (debugName in this.materials) {
+        while (debugName in this._materials) {
             debugName = (Math.random() + 1).toString(36).substring(7);
         }
 
         const missingMaterials = new Set<string>();
-        for (const tri of this.tris) {
-            if (!(tri.material in this.materials)) {
+        for (const tri of this._tris) {
+            if (!(tri.material in this._materials)) {
                 missingMaterials.add(tri.material);
                 wasRemapped = true;
                 tri.material = debugName;
@@ -115,21 +115,21 @@ export class Mesh extends Warnable {
         if (wasRemapped) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
             this.addWarning('Some materials were not loaded correctly');
-            this.materials[debugName] = {
+            this._materials[debugName] = {
                 type: MaterialType.solid,
                 colour: RGB.white,
             };
         }
         
         // Check texture paths are absolute and exist
-        for (const materialName in this.materials) {
-            const material = this.materials[materialName];
+        for (const materialName in this._materials) {
+            const material = this._materials[materialName];
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
                     this.addWarning(`Could not find ${material.path}`);
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
-                    this.materials[materialName] = {
+                    this._materials[materialName] = {
                         type: MaterialType.solid,
                         colour: RGB.white,
                     };
@@ -162,12 +162,10 @@ export class Mesh extends Warnable {
         LOG('Centre', centre);
 
         // Translate each triangle
-        this.vertices.forEach((vertex) => {
-            vertex.sub(centre);
-        });
+        this.translateMesh(centre.negate());
     }
 
-    private _scaleMesh() {
+    private _normaliseMesh() {
         const bounds = this.getBounds();
         const size = Vector3.sub(bounds.max, bounds.min);
         const scaleFactor = Mesh.desiredHeight / size.y;
@@ -175,16 +173,14 @@ export class Mesh extends Warnable {
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
             throw new CustomError('<b>Could not scale mesh correctly</b>: Mesh is likely 2D, rotate it so that it has a non-zero height');
         } else {
-            this.vertices.forEach((vertex) => {
-                vertex.mulScalar(scaleFactor);
-            });
+            this.scaleMesh(scaleFactor);
         }
     }
 
     private _loadTextures() {
         this._loadedTextures = {};
-        for (const tri of this.tris) {
-            const material = this.materials[tri.material];
+        for (const tri of this._tris) {
+            const material = this._materials[tri.material];
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
                     this._loadedTextures[tri.material] = new Texture(material.path);
@@ -194,21 +190,21 @@ export class Mesh extends Warnable {
     }
 
     public getVertices(triIndex: number) {
-        const tri = this.tris[triIndex];
+        const tri = this._tris[triIndex];
         return {
-            v0: this.vertices[tri.positionIndices.x],
-            v1: this.vertices[tri.positionIndices.y],
-            v2: this.vertices[tri.positionIndices.z],
+            v0: this._vertices[tri.positionIndices.x],
+            v1: this._vertices[tri.positionIndices.y],
+            v2: this._vertices[tri.positionIndices.z],
         };
     }
 
     public getUVs(triIndex: number) {
-        const tri = this.tris[triIndex];
+        const tri = this._tris[triIndex];
         if (tri.texcoordIndices) {
             return {
-                uv0: this.uvs[tri.texcoordIndices.x] || new UV(0.0, 0.0),
-                uv1: this.uvs[tri.texcoordIndices.y] || new UV(0.0, 0.0),
-                uv2: this.uvs[tri.texcoordIndices.z] || new UV(0.0, 0.0),
+                uv0: this._uvs[tri.texcoordIndices.x] || new UV(0.0, 0.0),
+                uv1: this._uvs[tri.texcoordIndices.y] || new UV(0.0, 0.0),
+                uv2: this._uvs[tri.texcoordIndices.z] || new UV(0.0, 0.0),
             };
         }
         return {
@@ -221,12 +217,12 @@ export class Mesh extends Warnable {
     public getNormals(triIndex: number) {
         const vertexData = this.getVertices(triIndex);
         const faceNormal = new Triangle(vertexData.v0, vertexData.v1, vertexData.v2).getNormal();
-        const tri = this.tris[triIndex];
+        const tri = this._tris[triIndex];
         if (tri.normalIndices) {
             return {
-                v0: this.normals[tri.normalIndices.x] || faceNormal,
-                v1: this.normals[tri.normalIndices.y] || faceNormal,
-                v2: this.normals[tri.normalIndices.z] || faceNormal,
+                v0: this._normals[tri.normalIndices.x] || faceNormal,
+                v1: this._normals[tri.normalIndices.y] || faceNormal,
+                v2: this._normals[tri.normalIndices.z] || faceNormal,
             };
         }
         return {
@@ -249,9 +245,21 @@ export class Mesh extends Warnable {
         );
     }
 
+    public getMaterialByTriangle(triIndex: number) {
+        return this._tris[triIndex].material;
+    }
+
+    public getMaterialByName(materialName: string) {
+        return this._materials[materialName];
+    }
+
+    public getMaterials() {
+        return this._materials;
+    }
+
     public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
-        ASSERT(materialName in this.materials, 'Sampling material that does not exist');
-        const material = this.materials[materialName];
+        ASSERT(materialName in this._materials, 'Sampling material that does not exist');
+        const material = this._materials[materialName];
         if (material.type === MaterialType.solid) {
             return material.colour;
         } else {
@@ -296,30 +304,30 @@ export class Mesh extends Warnable {
     */
 
     public copy(): Mesh {
-        const newVertices = new Array<Vector3>(this.vertices.length);
-        for (let i = 0; i < this.vertices.length; ++i) {
-            newVertices[i] = this.vertices[i].copy();
+        const newVertices = new Array<Vector3>(this._vertices.length);
+        for (let i = 0; i < this._vertices.length; ++i) {
+            newVertices[i] = this._vertices[i].copy();
         }
 
-        const newNormals = new Array<Vector3>(this.normals.length);
-        for (let i = 0; i < this.normals.length; ++i) {
-            newNormals[i] = this.normals[i].copy();
+        const newNormals = new Array<Vector3>(this._normals.length);
+        for (let i = 0; i < this._normals.length; ++i) {
+            newNormals[i] = this._normals[i].copy();
         }
 
-        const newUVs = new Array<UV>(this.uvs.length);
-        for (let i = 0; i < this.uvs.length; ++i) {
-            newUVs[i] = this.uvs[i].copy();
+        const newUVs = new Array<UV>(this._uvs.length);
+        for (let i = 0; i < this._uvs.length; ++i) {
+            newUVs[i] = this._uvs[i].copy();
         }
 
-        const newTris = new Array<Tri>(this.tris.length);
-        for (let i = 0; i < this.tris.length; ++i) {
+        const newTris = new Array<Tri>(this._tris.length);
+        for (let i = 0; i < this._tris.length; ++i) {
             // FIXME: Replace
-            newTris[i] = JSON.parse(JSON.stringify(this.tris[i]));
+            newTris[i] = JSON.parse(JSON.stringify(this._tris[i]));
         }
 
         const materials: { [materialName: string]: (SolidMaterial | TexturedMaterial) } = {}; // JSON.parse(JSON.stringify(this.materials));
-        for (const materialName in this.materials) {
-            const material = this.materials[materialName];
+        for (const materialName in this._materials) {
+            const material = this._materials[materialName];
             if (material.type === MaterialType.solid) {
                 materials[materialName] = {
                     type: MaterialType.solid,
@@ -337,6 +345,6 @@ export class Mesh extends Warnable {
     }
 
     public getTriangleCount(): number {
-        return this.tris.length;
+        return this._tris.length;
     }
 }

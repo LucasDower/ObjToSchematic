@@ -125,24 +125,23 @@ export class Renderer {
         LOG('Using mesh');
         this._materialBuffers = [];
         
-        for (const materialName in mesh.materials) {
+        for (const materialName in mesh.getMaterials()) {
             const materialBuffer = new RenderBuffer([
                 { name: 'position', numComponents: 3 },
                 { name: 'texcoord', numComponents: 2 },
                 { name: 'normal', numComponents: 3 },
             ]);
             
-            mesh.tris.forEach((tri, triIndex) => {
-                if (tri.material === materialName) {
-                    if (tri.material === materialName) {
-                        const uvTri = mesh.getUVTriangle(triIndex);
-                        const triGeom = GeometryTemplates.getTriangleBufferData(uvTri);
-                        materialBuffer.add(triGeom);
-                    }
+            for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+                const material = mesh.getMaterialByTriangle(triIndex);
+                if (material === materialName) {
+                    const uvTri = mesh.getUVTriangle(triIndex);
+                    const triGeom = GeometryTemplates.getTriangleBufferData(uvTri);
+                    materialBuffer.add(triGeom);
                 }
-            });
+            }
 
-            const material = mesh.materials[materialName];
+            const material = mesh.getMaterialByName(materialName);
             if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
                     buffer: materialBuffer,

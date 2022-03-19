@@ -299,10 +299,11 @@ export class DebugGeometryTemplates {
             { name: 'colour', numComponents: 3 },
         ]);
 
-        for (const tri of mesh.tris) {
-            const v0 = mesh.vertices[tri.positionIndices.x];
-            const v1 = mesh.vertices[tri.positionIndices.y];
-            const v2 = mesh.vertices[tri.positionIndices.z];
+        let v0: Vector3 = new Vector3(0, 0, 0);
+        let v1: Vector3 = new Vector3(0, 0, 0);
+        let v2: Vector3 = new Vector3(0, 0, 0);
+        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+            ({ v0, v1, v2 } = mesh.getVertices(triIndex));
             buffer.add(DebugGeometryTemplates.line(
                 v0, v1, colour,
             ));

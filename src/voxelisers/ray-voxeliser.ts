@@ -7,6 +7,10 @@ import { RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
 
+/**
+ * This voxeliser works by projecting rays onto each triangle
+ * on each of the principle angles and testing for intersections
+ */
 export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
@@ -20,14 +24,15 @@ export class RayVoxeliser extends IVoxeliser {
         const scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
         const useMesh = mesh.copy();
-        for (let i = 0; i < useMesh.vertices.length; ++i) {
-            useMesh.vertices[i].mulScalar(scale).add(offset);
-        }
 
-        useMesh.tris.forEach((tri, index) => {
-            const uvTriangle = useMesh.getUVTriangle(index);
-            this._voxeliseTri(uvTriangle, tri.material);
-        });
+        useMesh.scaleMesh(scale);
+        useMesh.translateMesh(offset);
+
+        for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
+            const uvTriangle = useMesh.getUVTriangle(triIndex);
+            const material = useMesh.getMaterialByTriangle(triIndex);
+            this._voxeliseTri(uvTriangle, material);
+        }
 
         return this._voxelMesh;
     }
