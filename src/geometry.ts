@@ -1,5 +1,5 @@
 import * as twgl from 'twgl.js';
-import { UVTriangle } from './triangle';
+import { Triangle, UVTriangle } from './triangle';
 import { Vector3 } from './vector';
 import { AttributeData, RenderBuffer } from './buffer';
 import { Bounds, RGB } from './util';
@@ -312,6 +312,30 @@ export class DebugGeometryTemplates {
             ));
             buffer.add(DebugGeometryTemplates.line(
                 v2, v0, colour,
+            ));
+        }
+
+        return buffer;
+    }
+
+    public static meshNormals(mesh: Mesh, colour: RGB): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+
+        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+            const normalLength = 0.1;
+            const vertices = mesh.getVertices(triIndex);
+            const normals = mesh.getNormals(triIndex);
+            const avgNormal = Vector3.add(normals.v0, normals.v1).add(normals.v2).divScalar(3.0);
+            const tri = new Triangle(vertices.v0, vertices.v1, vertices.v2);
+            const start = tri.getCentre();
+            const end = Vector3.add(start, Vector3.mulScalar(avgNormal, normalLength));
+            buffer.add(DebugGeometryTemplates.line(
+                start,
+                end,
+                colour,
             ));
         }
 

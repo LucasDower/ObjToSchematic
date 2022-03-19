@@ -6,6 +6,7 @@ export enum EAppEvent {
     onModelAvailableChanged,
     onGridEnabledChanged,
     onWireframeEnabledChanged,
+    onNormalsEnabledChanged,
 }
 /* eslint-enable */
 

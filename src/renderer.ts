@@ -25,6 +25,7 @@ export enum MeshType {
 enum EDebugBufferComponents {
     Grid,
     Wireframe,
+    Normals,
     Bounds,
 }
 /* eslint-enable */
@@ -117,6 +118,12 @@ export class Renderer {
         EventManager.Get.broadcast(EAppEvent.onWireframeEnabledChanged, isEnabled);
     }
 
+    public toggleIsNormalsEnabled() {
+        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
+        this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
+        EventManager.Get.broadcast(EAppEvent.onNormalsEnabledChanged, isEnabled);
+    }
+
     public useMesh(mesh: Mesh) {
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
@@ -164,6 +171,7 @@ export class Renderer {
         
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, 0.25);
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89));
+        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18));
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
@@ -220,7 +228,7 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe];
+        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe, EDebugBufferComponents.Normals];
         for (const debugComp of debugComponents) {
             if (this._isGridComponentEnabled[debugComp]) {
                 ASSERT(this._debugBuffers[this._meshToUse]);

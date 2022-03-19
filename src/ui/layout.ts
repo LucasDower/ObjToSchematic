@@ -195,12 +195,21 @@ export class UI {
                         const modelUsed = args[0][0][0] as MeshType;
                         return modelUsed === MeshType.TriangleMesh;
                     }),
+                    'normals': new ToolbarItemElement('normal', () => {
+                        Renderer.Get.toggleIsNormalsEnabled();
+                    }, EAppEvent.onNormalsEnabledChanged, (...args: any[]) => {
+                        const isEnabled = args[0][0][0] as boolean;
+                        return isEnabled;
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        return modelUsed === MeshType.TriangleMesh;
+                    }),
                     /*
                     'bounds': new ToolbarItemElement('bounds', () => {
                     }),
                     */
                 },
-                elementsOrder: ['grid', 'wireframe'], // ['grid', 'bounds'],
+                elementsOrder: ['grid', 'wireframe', 'normals'], // ['grid', 'bounds'],
             },
         },
         groupsOrder: ['viewmode', 'zoom', 'debug'],
