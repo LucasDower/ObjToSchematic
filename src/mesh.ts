@@ -5,6 +5,7 @@ import { RGB } from './util';
 
 import path from 'path';
 import fs from 'fs';
+import { Texture, TextureFiltering } from './texture';
 
 interface VertexIndices {
     x: number;
@@ -33,7 +34,8 @@ export class Mesh extends Warnable {
     public tris!: Tri[];
     public materials!: MaterialMap;
     public readonly id: string;
-
+    
+    private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
@@ -44,6 +46,7 @@ export class Mesh extends Warnable {
         this.uvs = uvs;
         this.tris = tris;
         this.materials = materials;
+        this._loadedTextures = {};
         this.id = getRandomID();
     }
 
@@ -53,6 +56,8 @@ export class Mesh extends Warnable {
 
         this._centreMesh();
         this._scaleMesh();
+
+        this._loadTextures();
     }
 
     public getBounds() {
@@ -176,6 +181,18 @@ export class Mesh extends Warnable {
         }
     }
 
+    private _loadTextures() {
+        this._loadedTextures = {};
+        for (const tri of this.tris) {
+            const material = this.materials[tri.material];
+            if (material.type == MaterialType.textured) {
+                if (!(tri.material in this._loadedTextures)) {
+                    this._loadedTextures[tri.material] = new Texture(material.path);
+                }
+            }
+        }
+    }
+
     public getVertices(triIndex: number) {
         const tri = this.tris[triIndex];
         return {
@@ -230,6 +247,17 @@ export class Mesh extends Warnable {
             texcoords.uv1,
             texcoords.uv2,
         );
+    }
+
+    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
+        ASSERT(materialName in this.materials, 'Sampling material that does not exist');
+        const material = this.materials[materialName];
+        if (material.type === MaterialType.solid) {
+            return material.colour;
+        } else {
+            ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
+            return this._loadedTextures[materialName].getRGB(uv, textureFiltering);
+        }
     }
 
     /*

@@ -9,6 +9,7 @@ import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams } from './block_mesh';
 import { TextureFiltering } from './texture';
+import { RayVoxeliser } from './voxelisers/ray-voxeliser';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -167,7 +168,7 @@ export class AppContext {
             ambientOcclusionEnabled: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
 
-        this._loadedVoxelMesh = VoxelMesh.createFromMesh(this._loadedMesh, voxelMeshParams);
+        this._loadedVoxelMesh = new RayVoxeliser().voxelise(this._loadedMesh, voxelMeshParams);
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
     }
 
