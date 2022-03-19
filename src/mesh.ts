@@ -1,18 +1,21 @@
 import { Vector3 } from './vector';
 import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
-import { UVTriangle } from './triangle';
+import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
 
 import path from 'path';
 import fs from 'fs';
 
+interface VertexIndices {
+    x: number;
+    y: number;
+    z: number;
+}
+
 export interface Tri {
-    iX: number;
-    iY: number;
-    iZ: number;
-    iXUV: number;
-    iYUV: number;
-    iZUV: number;
+    positionIndices: VertexIndices;
+    texcoordIndices?: VertexIndices;
+    normalIndices?: VertexIndices;
     material: string;
 }
 
@@ -24,7 +27,8 @@ export interface TexturedMaterial { path: string; type: MaterialType.textured }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
 export class Mesh extends Warnable {
-    public vertices!: Vector3[];
+    public vertices: Vector3[];
+    public normals!: Vector3[];
     public uvs!: UV[];
     public tris!: Tri[];
     public materials!: MaterialMap;
@@ -32,23 +36,23 @@ export class Mesh extends Warnable {
 
     public static desiredHeight = 8.0;
 
-    constructor(vertices: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
+    constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
         super();
-        LOG('New mesh');
 
         this.vertices = vertices;
+        this.normals = normals;
         this.uvs = uvs;
         this.tris = tris;
         this.materials = materials;
         this.id = getRandomID();
+    }
 
+    public processMesh() {
         this._checkMesh();
         this._checkMaterials();
 
         this._centreMesh();
         this._scaleMesh();
-
-        LOG('Loaded mesh', this);
     }
 
     public getBounds() {
@@ -71,6 +75,7 @@ export class Mesh extends Warnable {
         }
 
         // Check UVs are inside [0, 1]
+        /*
         for (const uv of this.uvs) {
             if (uv.u < 0.0 || uv.u > 1.0) {
                 uv.u = Math.abs(uv.u % 1);
@@ -79,6 +84,7 @@ export class Mesh extends Warnable {
                 uv.v = Math.abs(uv.v % 1);
             }
         }
+        */
     }
 
     private _checkMaterials() {
@@ -173,30 +179,56 @@ export class Mesh extends Warnable {
     public getVertices(triIndex: number) {
         const tri = this.tris[triIndex];
         return {
-            v0: this.vertices[tri.iX],
-            v1: this.vertices[tri.iY],
-            v2: this.vertices[tri.iZ],
+            v0: this.vertices[tri.positionIndices.x],
+            v1: this.vertices[tri.positionIndices.y],
+            v2: this.vertices[tri.positionIndices.z],
         };
     }
 
     public getUVs(triIndex: number) {
         const tri = this.tris[triIndex];
+        if (tri.texcoordIndices) {
+            return {
+                uv0: this.uvs[tri.texcoordIndices.x] || new UV(0.0, 0.0),
+                uv1: this.uvs[tri.texcoordIndices.y] || new UV(0.0, 0.0),
+                uv2: this.uvs[tri.texcoordIndices.z] || new UV(0.0, 0.0),
+            };
+        }
         return {
-            uv0: this.uvs[tri.iXUV],
-            uv1: this.uvs[tri.iYUV],
-            uv2: this.uvs[tri.iZUV],
+            uv0: new UV(0.0, 0.0),
+            uv1: new UV(0.0, 0.0),
+            uv2: new UV(0.0, 0.0),
+        };
+    }
+
+    public getNormals(triIndex: number) {
+        const vertexData = this.getVertices(triIndex);
+        const faceNormal = new Triangle(vertexData.v0, vertexData.v1, vertexData.v2).getNormal();
+        const tri = this.tris[triIndex];
+        if (tri.normalIndices) {
+            return {
+                v0: this.normals[tri.normalIndices.x] || faceNormal,
+                v1: this.normals[tri.normalIndices.y] || faceNormal,
+                v2: this.normals[tri.normalIndices.z] || faceNormal,
+            };
+        }
+        return {
+            v0: faceNormal,
+            v1: faceNormal,
+            v2: faceNormal,
         };
     }
 
     public getUVTriangle(triIndex: number): UVTriangle {
-        const tri = this.tris[triIndex];
+        const vertices = this.getVertices(triIndex);
+        const texcoords = this.getUVs(triIndex);
         return new UVTriangle(
-            this.vertices[tri.iX],
-            this.vertices[tri.iY],
-            this.vertices[tri.iZ],
-            this.uvs[tri.iXUV] || 0.0,
-            this.uvs[tri.iYUV] || 0.0,
-            this.uvs[tri.iZUV] || 0.0,
+            vertices.v0,
+            vertices.v1,
+            vertices.v2,
+            texcoords.uv0,
+            texcoords.uv1,
+            texcoords.uv2,
         );
     }
 
@@ -241,6 +273,11 @@ export class Mesh extends Warnable {
             newVertices[i] = this.vertices[i].copy();
         }
 
+        const newNormals = new Array<Vector3>(this.normals.length);
+        for (let i = 0; i < this.normals.length; ++i) {
+            newNormals[i] = this.normals[i].copy();
+        }
+
         const newUVs = new Array<UV>(this.uvs.length);
         for (let i = 0; i < this.uvs.length; ++i) {
             newUVs[i] = this.uvs[i].copy();
@@ -268,7 +305,7 @@ export class Mesh extends Warnable {
             };
         }
 
-        return new Mesh(newVertices, newUVs, newTris, materials);
+        return new Mesh(newVertices, newNormals, newUVs, newTris, materials);
     }
 
     public getTriangleCount(): number {
