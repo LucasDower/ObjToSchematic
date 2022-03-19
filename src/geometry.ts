@@ -4,6 +4,7 @@ import { Vector3 } from './vector';
 import { AttributeData, RenderBuffer } from './buffer';
 import { Bounds, RGB } from './util';
 import { Mesh } from './mesh';
+import { VoxelMesh } from './voxel_mesh';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
@@ -101,7 +102,14 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static bounds(bounds: Bounds, colour: RGB, translate: Vector3 = new Vector3(0, 0, 0)): AttributeData {
+    public static cube(centre: Vector3, size: number, colour: RGB): AttributeData {
+        const min = Vector3.subScalar(centre, size/2);
+        const max = Vector3.addScalar(centre, size/2);
+        const bounds = new Bounds(min, max);
+        return this.bounds(bounds, colour);
+    }
+
+    public static bounds(bounds: Bounds, colour: RGB): AttributeData {
         return {
             indices: new Uint32Array([
                 0, 1,
@@ -119,14 +127,14 @@ export class DebugGeometryTemplates {
             ]),
             custom: {
                 position: [
-                    bounds.min.x + translate.x, bounds.min.y + translate.y, bounds.min.z + translate.z,
-                    bounds.max.x + translate.x, bounds.min.y + translate.y, bounds.min.z + translate.z,
-                    bounds.max.x + translate.x, bounds.min.y + translate.y, bounds.max.z + translate.z,
-                    bounds.min.x + translate.x, bounds.min.y + translate.y, bounds.max.z + translate.z,
-                    bounds.min.x + translate.x, bounds.max.y + translate.y, bounds.min.z + translate.z,
-                    bounds.max.x + translate.x, bounds.max.y + translate.y, bounds.min.z + translate.z,
-                    bounds.max.x + translate.x, bounds.max.y + translate.y, bounds.max.z + translate.z,
-                    bounds.min.x + translate.x, bounds.max.y + translate.y, bounds.max.z + translate.z,
+                    bounds.min.x, bounds.min.y, bounds.min.z,
+                    bounds.max.x, bounds.min.y, bounds.min.z,
+                    bounds.max.x, bounds.min.y, bounds.max.z,
+                    bounds.min.x, bounds.min.y, bounds.max.z,
+                    bounds.min.x, bounds.max.y, bounds.min.z,
+                    bounds.max.x, bounds.max.y, bounds.min.z,
+                    bounds.max.x, bounds.max.y, bounds.max.z,
+                    bounds.min.x, bounds.max.y, bounds.max.z,
                 ],
                 colour: [
                     colour.r, colour.g, colour.b,
@@ -312,6 +320,28 @@ export class DebugGeometryTemplates {
             ));
             buffer.add(DebugGeometryTemplates.line(
                 v2, v0, colour,
+            ));
+        }
+
+        return buffer;
+    }
+
+    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGB): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+
+        const dimensions = voxelMesh.getBounds().getDimensions();
+        const gridOffset = new Vector3(
+            dimensions.x % 2 === 0 ? 0.5 : 0,
+            dimensions.y % 2 === 0 ? 0.5 : 0,
+            dimensions.z % 2 === 0 ? 0.5 : 0,
+        );
+        const voxelSize = voxelMesh.getVoxelSize();
+        for (const voxel of voxelMesh.getVoxels()) {
+            buffer.add(DebugGeometryTemplates.cube(
+                Vector3.mulScalar(Vector3.add(voxel.position, gridOffset), voxelSize), voxelSize, colour,
             ));
         }
 

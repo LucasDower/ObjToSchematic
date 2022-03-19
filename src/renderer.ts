@@ -197,6 +197,7 @@ export class Renderer {
         );
 
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, voxelMesh.getVoxelSize());
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89));
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);

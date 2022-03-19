@@ -196,7 +196,7 @@ export class UI {
                         return isEnabled;
                     }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
                         const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
+                        return modelUsed === MeshType.TriangleMesh || modelUsed === MeshType.VoxelMesh;
                     }),
                     'normals': new ToolbarItemElement('normal', () => {
                         Renderer.Get.toggleIsNormalsEnabled();
