@@ -162,8 +162,11 @@ export class UI {
                     'zoomIn': new ToolbarItemElement('plus', () => {
                         ArcballCamera.Get.onZoomIn();
                     }),
+                    'centre': new ToolbarItemElement('centre', () => {
+                        ArcballCamera.Get.reset();
+                    }),
                 },
-                elementsOrder: ['zoomOut', 'zoomIn'],
+                elementsOrder: ['zoomOut', 'zoomIn', 'centre'],
             },
             /*
             'camera': {

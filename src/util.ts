@@ -306,6 +306,10 @@ export class SmoothVariable {
         this._target = clamp(this._target + delta, this._min, this._max);
     }
 
+    public setTarget(target: number) {
+        this._target = target;
+    }
+
     public tick() {
         this._actual += (this._target - this._actual) * this._smoothing;
     }
@@ -332,6 +336,10 @@ export class SmoothVectorVariable {
 
     public addToTarget(delta: Vector3) {
         this._target = Vector3.add(this._target, delta);
+    }
+
+    public setTarget(target: Vector3) {
+        this._target = target;
     }
 
     public tick() {

@@ -149,6 +149,13 @@ export class ArcballCamera {
         this._distance.addToTarget(-1);
     }
 
+    public reset() {
+        this._target.setTarget(new Vector3(0, 0, 0));
+        this._distance.setTarget(18.0);
+        this._azimuth.setTarget(-1.0);
+        this._elevation.setTarget(1.3);
+    }
+
     /*
     public getMouseRay() {
         const mousePos = this.mouseManager.getMousePosNorm();
