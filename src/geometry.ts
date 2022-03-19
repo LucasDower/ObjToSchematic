@@ -300,9 +300,9 @@ export class DebugGeometryTemplates {
         ]);
 
         for (const tri of mesh.tris) {
-            const v0 = mesh.vertices[tri.iX];
-            const v1 = mesh.vertices[tri.iY];
-            const v2 = mesh.vertices[tri.iZ];
+            const v0 = mesh.vertices[tri.positionIndices.x];
+            const v1 = mesh.vertices[tri.positionIndices.y];
+            const v2 = mesh.vertices[tri.positionIndices.z];
             buffer.add(DebugGeometryTemplates.line(
                 v0, v1, colour,
             ));
