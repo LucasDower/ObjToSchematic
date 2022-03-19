@@ -60,6 +60,9 @@ export class Texture {
     private _getLinearRGB(uv: UV): RGB {
         uv.v = 1.0 - uv.v;
 
+        uv.u = uv.u % 1.0;
+        uv.v = uv.v % 1.0;
+
         const x = uv.u * this._image.width;
         const y = uv.v * this._image.height;
 
