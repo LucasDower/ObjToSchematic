@@ -145,7 +145,10 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
         const filePath = uiElements.input.getCachedValue();
 
-        this._loadedMesh = new ObjImporter().createMesh(filePath);
+        const importer = new ObjImporter();
+        importer.parseFile(filePath);
+        this._loadedMesh = importer.toMesh();
+        this._loadedMesh.processMesh();
         Renderer.Get.useMesh(this._loadedMesh);
     }
 
