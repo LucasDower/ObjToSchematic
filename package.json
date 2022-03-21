@@ -12,8 +12,8 @@
     "build": "npm run lint && tsc",
     "test": "jest --config jestconfig.json",
     "start": "npm run build && electron ./dist/main.js --enable-logging",
-    "atlas": "npx ts-node tools/build-atlas.ts",
-    "palette": "npx ts-node tools/build-palette.ts",
+    "atlas": "node ./dist/tools/build-atlas.js",
+    "palette": "node ./dist/tools/build-palette.js",
     "export": "electron-packager . ObjToSchematic --platform=win32 --arch=x64"
   },
   "repository": {
