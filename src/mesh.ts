@@ -85,11 +85,33 @@ export class Mesh extends Warnable {
         // TODO: Check indices exist
 
         if (this._vertices.length === 0) {
-            throw new CustomError('No verticies were loaded');
+            throw new CustomError('No vertices were loaded');
         }
 
         if (this._tris.length === 0) {
             throw new CustomError('No triangles were loaded');
+        }
+
+        // Give warning if normals are not defined
+        let giveNormalsWarning = false;
+        for (let triIndex = 0; triIndex < this.getTriangleCount(); ++triIndex) {
+            const tri = this._tris[triIndex];
+            if (tri.normalIndices) {
+                const xWellDefined = tri.normalIndices.x < this._normals.length;
+                const yWellDefined = tri.normalIndices.y < this._normals.length;
+                const zWellDefined = tri.normalIndices.z < this._normals.length;
+                if (!xWellDefined || !yWellDefined || !zWellDefined) {
+                    giveNormalsWarning = true;
+                    break;
+                }
+            }
+            if (!tri.normalIndices) {
+                giveNormalsWarning = true;
+                break;
+            }
+        }
+        if (giveNormalsWarning) {
+            this.addWarning('Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly');
         }
     }
 

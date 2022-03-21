@@ -151,6 +151,8 @@ export class AppContext {
         this._loadedMesh = importer.toMesh();
         this._loadedMesh.processMesh();
         Renderer.Get.useMesh(this._loadedMesh);
+
+        this._warnings = this._loadedMesh.getWarnings();
     }
 
     private _simplify() {
@@ -201,6 +203,8 @@ export class AppContext {
         if (filePath) {
             exporter.export(this._loadedBlockMesh, filePath);
         }
+
+        this._warnings = exporter.getWarnings();
     }
 
     public draw() {
