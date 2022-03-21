@@ -207,12 +207,22 @@ export class UI {
                         const modelUsed = args[0][0][0] as MeshType;
                         return modelUsed === MeshType.TriangleMesh;
                     }),
+                    'dev': new ToolbarItemElement('debug', () => {
+                        Renderer.Get.toggleIsDevDebugEnabled();
+                    }, EAppEvent.onDevViewEnabledChanged, (...args: any[]) => {
+                        const isEnabled = args[0][0][0] as boolean;
+                        return isEnabled;
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        const modelUsed = args[0][0][0] as MeshType;
+                        const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
+                        return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
+                    }),
                     /*
                     'bounds': new ToolbarItemElement('bounds', () => {
                     }),
                     */
                 },
-                elementsOrder: ['grid', 'wireframe', 'normals'], // ['grid', 'bounds'],
+                elementsOrder: ['grid', 'wireframe', 'normals', 'dev'], // ['grid', 'bounds'],
             },
         },
         groupsOrder: ['viewmode', 'zoom', 'debug'],

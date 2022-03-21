@@ -105,7 +105,8 @@ export class ObjImporter extends IImporter {
                 });
                 
                 if (vertices.length < 3) {
-                    throw new CustomError('Face data should have at least 3 vertices');
+                    // this.addWarning('')
+                    // throw new CustomError('Face data should have at least 3 vertices');
                 }
                 
                 const points: {

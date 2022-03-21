@@ -27,6 +27,7 @@ enum EDebugBufferComponents {
     Wireframe,
     Normals,
     Bounds,
+    Dev,
 }
 /* eslint-enable */
 
@@ -89,8 +90,6 @@ export class Renderer {
     public draw() {
         this._setupScene();
 
-        this._drawDebug();
-
         switch (this._meshToUse) {
         case MeshType.TriangleMesh:
             this._drawMesh();
@@ -102,6 +101,8 @@ export class Renderer {
             this._drawBlockMesh();
             break;
         };
+
+        this._drawDebug();
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -122,6 +123,12 @@ export class Renderer {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
         this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
         EventManager.Get.broadcast(EAppEvent.onNormalsEnabledChanged, isEnabled);
+    }
+
+    public toggleIsDevDebugEnabled() {
+        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Dev];
+        this._isGridComponentEnabled[EDebugBufferComponents.Dev] = isEnabled;
+        EventManager.Get.broadcast(EAppEvent.onDevViewEnabledChanged, isEnabled);
     }
 
     public useMesh(mesh: Mesh) {
@@ -198,6 +205,7 @@ export class Renderer {
 
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, voxelMesh.getVoxelSize());
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89));
+        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev] = voxelMesh.debugBuffer;
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
@@ -229,15 +237,19 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe, EDebugBufferComponents.Normals];
+        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe, EDebugBufferComponents.Normals, EDebugBufferComponents.Dev];
         for (const debugComp of debugComponents) {
             if (this._isGridComponentEnabled[debugComp]) {
                 ASSERT(this._debugBuffers[this._meshToUse]);
                 const buffer = this._debugBuffers[this._meshToUse][debugComp];
                 if (buffer) {
+                    if (debugComp === EDebugBufferComponents.Dev) {
+                        this._gl.disable(this._gl.DEPTH_TEST);
+                    }
                     this._drawBuffer(this._gl.LINES, buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
+                    this._gl.enable(this._gl.DEPTH_TEST);
                 }
             }
         }
@@ -380,5 +392,9 @@ export class Renderer {
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
         this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+    }
+
+    public getModelsAvailable() {
+        return this._modelsAvailable;
     }
 }

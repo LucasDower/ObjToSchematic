@@ -22,6 +22,8 @@ export interface VoxelMeshParams {
 }
 
 export class VoxelMesh {
+    public debugBuffer: RenderBuffer;
+
     private _mesh: Mesh;
     private _voxelMeshParams: VoxelMeshParams;
 
@@ -31,6 +33,11 @@ export class VoxelMesh {
     private _bounds: Bounds;
 
     public constructor(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
+        this.debugBuffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+
         this._mesh = mesh;
         this._voxelMeshParams = voxelMeshParams;
 

@@ -6,6 +6,7 @@ import { Triangle, UVTriangle } from '../triangle';
 import { RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
+import { DebugGeometryTemplates } from '../geometry';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -15,18 +16,20 @@ export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
     private _voxelMeshParams?: VoxelMeshParams;
+    private _scale!: number;
+    private _offset!: Vector3;
 
     public override voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         this._voxelMeshParams = voxelMeshParams;
-        
-        const scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+
+        this._scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
+        this._offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
         const useMesh = mesh.copy();
 
-        useMesh.scaleMesh(scale);
-        useMesh.translateMesh(offset);
+        useMesh.scaleMesh(this._scale);
+        useMesh.translateMesh(this._offset);
 
         for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
             const uvTriangle = useMesh.getUVTriangle(triIndex);
@@ -41,8 +44,20 @@ export class RayVoxeliser extends IVoxeliser {
         const rayList = generateRays(triangle.v0, triangle.v1, triangle.v2);
         
         rayList.forEach((ray) => {
+            const rayOriginWorld = Vector3.divScalar(ray.origin, this._scale).sub(this._offset);
+            this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.cross(
+                rayOriginWorld,
+                0.1,
+                ray.axis === Axes.x ? RGB.red : (ray.axis === Axes.y ? RGB.green : RGB.blue),
+            ));
+
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
+                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.arrow(
+                    rayOriginWorld,
+                    Vector3.divScalar(intersection, this._scale).sub(this._offset),
+                    ray.axis === Axes.x ? RGB.red : (ray.axis === Axes.y ? RGB.green : RGB.blue),
+                ));
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
                 case Axes.x:

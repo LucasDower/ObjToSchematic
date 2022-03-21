@@ -30,10 +30,11 @@ export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 export class Mesh extends Warnable {
     public readonly id: string;
 
-    private _vertices: Vector3[];
-    private _normals!: Vector3[];
-    private _uvs!: UV[];
-    private _tris!: Tri[];
+    public _vertices: Vector3[];
+    public _normals!: Vector3[];
+    public _uvs!: UV[];
+    public _tris!: Tri[];
+    
     private _materials!: MaterialMap;
     private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
