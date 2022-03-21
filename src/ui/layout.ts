@@ -5,7 +5,7 @@ import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { Action, AppContext } from '../app_context';
-import { ASSERT, LOG } from '../util';
+import { ASSERT, ATLASES_DIR, LOG } from '../util';
 
 import fs from 'fs';
 import path from 'path';
@@ -113,7 +113,7 @@ export class UI {
         },
     };
 
-    private _toolbar = {
+    private _toolbarLeft = {
         groups: {
             'viewmode': {
                 elements: {
@@ -168,19 +168,6 @@ export class UI {
                 },
                 elementsOrder: ['zoomOut', 'zoomIn', 'centre'],
             },
-            /*
-            'camera': {
-                elements: {
-                    'translate': new ToolbarItemElement('translate', () => {
-                        // ArcballCamera.Get.onZoomOut();
-                    }),
-                    'rotate': new ToolbarItemElement('rotate', () => {
-                        // ArcballCamera.Get.onZoomIn();
-                    }),
-                },
-                elementsOrder: ['translate', 'rotate'],
-            },
-            */
             'debug': {
                 elements: {
                     'grid': new ToolbarItemElement('grid', () => {
@@ -189,6 +176,17 @@ export class UI {
                         const isEnabled = args[0][0][0] as boolean;
                         return isEnabled;
                     }),
+                },
+                elementsOrder: ['grid'],
+            },
+        },
+        groupsOrder: ['viewmode', 'zoom', 'debug'],
+    };
+
+    private _toolbarRight = {
+        groups: {
+            'debug': {
+                elements: {
                     'wireframe': new ToolbarItemElement('wireframe', () => {
                         Renderer.Get.toggleIsWireframeEnabled();
                     }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
@@ -217,19 +215,16 @@ export class UI {
                         const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
                         return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
                     }),
-                    /*
-                    'bounds': new ToolbarItemElement('bounds', () => {
-                    }),
-                    */
                 },
-                elementsOrder: ['grid', 'wireframe', 'normals', 'dev'], // ['grid', 'bounds'],
+                elementsOrder: ['wireframe', 'normals', 'dev'],
             },
         },
-        groupsOrder: ['viewmode', 'zoom', 'debug'],
+        groupsOrder: ['debug'],
     };
 
     private _uiDull: { [key: string]: Group } = this._ui;
-    private _toolbarDull: { [key: string]: ToolbarGroup } = this._toolbar.groups;
+    private _toolbarLeftDull: { [key: string]: ToolbarGroup } = this._toolbarLeft.groups;
+    private _toolbarRightDull: { [key: string]: ToolbarGroup } = this._toolbarRight.groups;
 
     private _appContext: AppContext;
 
@@ -269,15 +264,30 @@ export class UI {
         
         // Build toolbar
         let toolbarHTML = '';
-        for (const toolbarGroupName of this._toolbar.groupsOrder) {
+        // Left
+        toolbarHTML += '<div class="toolbar-column">';
+        for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
             toolbarHTML += '<div class="toolbar-group">';
-            const toolbarGroup = this._toolbarDull[toolbarGroupName];
+            const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
             for (const groupElementName of toolbarGroup.elementsOrder) {
                 const groupElement = toolbarGroup.elements[groupElementName];
                 toolbarHTML += groupElement.generateHTML();
             }
             toolbarHTML += '</div>';
         }
+        toolbarHTML += '</div>';
+        // Right
+        toolbarHTML += '<div class="toolbar-column">';
+        for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
+            toolbarHTML += '<div class="toolbar-group">';
+            const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
+            for (const groupElementName of toolbarGroup.elementsOrder) {
+                const groupElement = toolbarGroup.elements[groupElementName];
+                toolbarHTML += groupElement.generateHTML();
+            }
+            toolbarHTML += '</div>';
+        }
+        toolbarHTML += '</div>';
 
         document.getElementById('toolbar')!.innerHTML = toolbarHTML;
     }
@@ -348,9 +358,16 @@ export class UI {
             }
         }
 
-        // Register toolbar
-        for (const toolbarGroupName of this._toolbar.groupsOrder) {
-            const toolbarGroup = this._toolbarDull[toolbarGroupName];
+        // Register toolbar left
+        for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
+            const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
+            for (const groupElementName of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[groupElementName].registerEvents();
+            }
+        } 
+        // Register toolbar right
+        for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
+            const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
             for (const groupElementName of toolbarGroup.elementsOrder) {
                 toolbarGroup.elements[groupElementName].registerEvents();
             }
@@ -363,10 +380,6 @@ export class UI {
 
     public get layoutDull() {
         return this._uiDull;
-    }
-
-    public get toolbar() {
-        return this._toolbar;
     }
 
     public enable(action: Action) {
@@ -426,9 +439,8 @@ export class UI {
 
     private _getTextureAtlases(): ComboBoxItem[] {
         const textureAtlases: ComboBoxItem[] = [];
-        const palettesDir = path.join(__dirname, '../../resources/atlases');
 
-        fs.readdirSync(palettesDir).forEach((file) => {
+        fs.readdirSync(ATLASES_DIR).forEach((file) => {
             if (file.endsWith('.atlas')) {
                 const paletteID = file.split('.')[0];
                 let paletteName = paletteID.replace('-', ' ').toLowerCase();
@@ -442,7 +454,7 @@ export class UI {
 
     private _getBlockPalettes(): ComboBoxItem[] {
         const blockPalettes: ComboBoxItem[] = [];
-        const palettesDir = path.join(__dirname, '../../resources/palettes');
+        const palettesDir = path.join(__dirname, '../../../resources/palettes');
 
         fs.readdirSync(palettesDir).forEach((file) => {
             if (file.endsWith('.palette')) {

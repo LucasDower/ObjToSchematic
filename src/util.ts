@@ -2,6 +2,8 @@ import { AppConfig } from './config';
 import { Vector3 } from './vector';
 import { clamp } from './math';
 
+import path from 'path';
+
 const convert = require('color-convert');
 
 import fs from 'fs';
@@ -277,6 +279,13 @@ export class Warnable {
         return this._warnings;
     }
 }
+
+export const BASE_DIR = path.join(__dirname, '/../../');
+export const RESOURCES_DIR = path.join(BASE_DIR, './resources/');
+export const ATLASES_DIR = path.join(RESOURCES_DIR, './atlases');
+export const PALETTES_DIR = path.join(RESOURCES_DIR, './palettes/');
+export const STATIC_DIR = path.join(RESOURCES_DIR, './static/');
+export const SHADERS_DIR = path.join(RESOURCES_DIR, './shaders/');
 
 export function getRandomID(): string {
     return (Math.random() + 1).toString(36).substring(7);

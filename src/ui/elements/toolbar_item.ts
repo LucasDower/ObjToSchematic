@@ -1,4 +1,4 @@
-import { ASSERT, getRandomID } from '../../util';
+import { ASSERT, getRandomID, STATIC_DIR } from '../../util';
 
 import path from 'path';
 import fs from 'fs';
@@ -18,7 +18,7 @@ export class ToolbarItemElement {
     ) {
         this._id = getRandomID();
         this._iconName = iconName;
-        this._iconPath = path.join(__dirname, '../../../resources/static/', iconName + '.svg');
+        this._iconPath = path.join(STATIC_DIR, iconName + '.svg');
         this._isEnabled = false;
         this._isActive = false;
         this._onClick = onClick;

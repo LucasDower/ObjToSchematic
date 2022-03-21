@@ -2,6 +2,7 @@ import * as twgl from 'twgl.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Renderer } from './renderer';
+import { SHADERS_DIR } from './util';
 
 export class ShaderManager {
     public readonly textureTriProgram: twgl.ProgramInfo;
@@ -40,7 +41,7 @@ export class ShaderManager {
     }
 
     private _getShader(filename: string) {
-        const absPath = path.join(__dirname, '../shaders/' + filename);
+        const absPath = path.join(SHADERS_DIR, filename);
         return fs.readFileSync(absPath, 'utf8');
     }
 }

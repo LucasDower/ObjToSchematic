@@ -42,14 +42,13 @@ canvas {
   position: absolute;
   width: var(--properties-width);
   height: 100%;
-  border-right: 2px solid var(--prop-dark);
   overflow: auto;
 }
 
 .column-canvas {
   position: absolute;
   margin-left: var(--properties-width);
-  width: 80%;
+  width: calc(100% - var(--properties-width));
   height: 100%;
 }
 
@@ -371,16 +370,26 @@ select:disabled {
   display: flex;
   position: inherit;
   flex-direction: row;
-  width: 90%;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.toolbar-column {
+  display: flex;
+  flex-direction: row;
+  margin: 20px 10px;
+}
+.toolbar-column:last-child {
+  flex-direction: row-reverse !important;
 }
 
 .toolbar-group {
   display: flex;
   flex-direction: row;
-  margin-left: 20px;
-  margin-top: 20px;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 16px;
   border-radius: 5px;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 .toolbar-item {
