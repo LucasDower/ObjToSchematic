@@ -76,7 +76,7 @@ export class Renderer {
         this._debugBuffers[MeshType.TriangleMesh] = {};
         this._debugBuffers[MeshType.VoxelMesh] = {};
         this._debugBuffers[MeshType.BlockMesh] = {};
-        this._debugBuffers[MeshType.None][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, 0.25);
+        this._debugBuffers[MeshType.None][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, false, 0.25);
 
         this._isGridComponentEnabled = {};
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
@@ -169,7 +169,7 @@ export class Renderer {
             }
         }
         
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, 0.25);
+        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, false, 0.25);
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89));
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18));
 
@@ -191,12 +191,12 @@ export class Renderer {
         // this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
         const dimensions = voxelMesh.getBounds().getDimensions();
         this._gridOffset = new Vector3(
-            dimensions.x % 2 === 0 ? 0.5 : 0,
-            dimensions.y % 2 === 0 ? 0.5 : 0,
-            dimensions.z % 2 === 0 ? 0.5 : 0,
+            dimensions.x % 2 === 0 ? 0 : -0.5,
+            dimensions.y % 2 === 0 ? 0 : -0.5,
+            dimensions.z % 2 === 0 ? 0 : -0.5,
         );
 
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, voxelMesh.getVoxelSize());
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, voxelMesh.getVoxelSize());
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89));
         
         this._modelsAvailable = 2;
@@ -218,7 +218,7 @@ export class Renderer {
             mag: this._gl.NEAREST,
         });
         
-        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, blockMesh.getVoxelMesh().getVoxelSize());
+        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, blockMesh.getVoxelMesh().getVoxelSize());
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);

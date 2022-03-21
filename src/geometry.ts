@@ -207,7 +207,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static grid(axes: boolean, bounds: boolean, gridSize: number): RenderBuffer {
+    public static grid(axes: boolean, bounds: boolean, gridLines: boolean, gridSize: number, xOffset: boolean = true, zOffset: boolean = true): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
@@ -269,33 +269,38 @@ export class DebugGeometryTemplates {
             ));
         }
 
-        let count = 1;
-        for (let i = 0; i < gridRadius; i += gridSize) {
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(i, 0, gridRadius),
-                new Vector3(i, 0, -gridRadius),
-                count % 10 === 0 ? gridColourMajor : gridColourMinor,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(gridRadius, 0, i),
-                new Vector3(-gridRadius, 0, i),
-                count % 10 === 0 ? gridColourMajor : gridColourMinor,
-            ));
-            ++count;
-        }
-        count = 1;
-        for (let i = 0; i > -gridRadius; i -= gridSize) {
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(i, 0, gridRadius),
-                new Vector3(i, 0, -gridRadius),
-                count % 10 === 0 ? gridColourMajor : gridColourMinor,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(gridRadius, 0, i),
-                new Vector3(-gridRadius, 0, i),
-                count % 10 === 0 ? gridColourMajor : gridColourMinor,
-            ));
-            ++count;
+        if (gridLines) {
+            // X
+            for (let i = (xOffset ? gridSize/2 : 0.0); i < gridRadius; i += gridSize) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(i, 0, gridRadius),
+                    new Vector3(i, 0, -gridRadius),
+                    gridColourMinor,
+                ));
+            }
+            for (let i = (xOffset ? gridSize/2 : 0.0); i > -gridRadius; i -= gridSize) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(i, 0, gridRadius),
+                    new Vector3(i, 0, -gridRadius),
+                    gridColourMinor,
+                ));
+            }
+
+            // Z
+            for (let i = (zOffset ? gridSize/2 : 0.0); i < gridRadius; i += gridSize) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(gridRadius, 0, i),
+                    new Vector3(-gridRadius, 0, i),
+                    gridColourMinor,
+                ));
+            }
+            for (let i = (zOffset ? gridSize/2 : 0.0); i > -gridRadius; i -= gridSize) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(gridRadius, 0, i),
+                    new Vector3(-gridRadius, 0, i),
+                    gridColourMinor,
+                ));
+            }
         }
 
         return buffer;
@@ -334,9 +339,9 @@ export class DebugGeometryTemplates {
 
         const dimensions = voxelMesh.getBounds().getDimensions();
         const gridOffset = new Vector3(
-            dimensions.x % 2 === 0 ? 0.5 : 0,
-            dimensions.y % 2 === 0 ? 0.5 : 0,
-            dimensions.z % 2 === 0 ? 0.5 : 0,
+            dimensions.x % 2 === 0 ? 0 : -0.5,
+            dimensions.y % 2 === 0 ? 0 : -0.5,
+            dimensions.z % 2 === 0 ? 0 : -0.5,
         );
         const voxelSize = voxelMesh.getVoxelSize();
         for (const voxel of voxelMesh.getVoxels()) {
