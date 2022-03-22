@@ -3,9 +3,9 @@ export const headlessConfig = {
         absoluteFilePathLoad: 'C:/Users/<Username>/Desktop/MyModel.obj', // Must be an absolute path to the file (can be anywhere)
     },
     voxelise: {
-        voxeliser: 'rb', // 'raybased' / 'ncrb'
+        voxeliser: 'raybased', // 'raybased' / 'ncrb'
         voxelMeshParams: {
-            desiredHeight: 105, // 5-320 inclusive
+            desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
             textureFiltering: 'linear', // 'linear' / 'nearest'
         },

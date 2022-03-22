@@ -4,6 +4,7 @@ import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
 import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams } from '../src/block_mesh';
 import { Exporter, Litematic, Schematic } from '../src/schematic';
+import { RayVoxeliser } from '../src/voxelisers/ray-voxeliser';
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
@@ -15,7 +16,7 @@ void async function main() {
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: new NormalCorrectedRayVoxeliser(),
+        voxeliser: headlessConfig.voxelise.voxeliser === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser(),
         voxelMeshParams: {
             desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
             useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
