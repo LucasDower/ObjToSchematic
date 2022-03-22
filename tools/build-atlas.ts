@@ -343,14 +343,14 @@ async function buildAtlas() {
 
 
     log(LogStyle.Info, 'Exporting...');
-    const atlasDir = path.join(__dirname, `../resources/atlases/${atlasName}.png`);
+    const atlasDir = path.join(__dirname, `../../resources/atlases/${atlasName}.png`);
     outputImage.save(atlasDir);
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
         atlasSize: atlasSize,
         blocks: allModels,
     };
-    fs.writeFileSync(path.join(__dirname, `../resources/atlases/${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
+    fs.writeFileSync(path.join(__dirname, `../../resources/atlases/${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
     log(LogStyle.Success, `${atlasName}.atlas exported to /resources/atlases/\n`);
 
     /* eslint-disable */

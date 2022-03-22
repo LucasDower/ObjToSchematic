@@ -7,7 +7,7 @@ import prompt from 'prompt';
 void async function main() {
     log(LogStyle.Info, 'Creating a new palette...');
     
-    const paletteBlocksDir = path.join(__dirname, './new-palette-blocks.txt');
+    const paletteBlocksDir = path.join(__dirname, '../../tools/new-palette-blocks.txt');
     if (!fs.existsSync(paletteBlocksDir)) {
         log(LogStyle.Failure, 'Could not find /tools/new-palette-blocks.txt');
         return;
