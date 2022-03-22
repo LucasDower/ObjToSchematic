@@ -9,6 +9,9 @@ import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams } from './block_mesh';
 import { TextureFiltering } from './texture';
+import { RayVoxeliser } from './voxelisers/ray-voxeliser';
+import { IVoxeliser } from './voxelisers/base-voxeliser';
+import { NormalCorrectedRayVoxeliser } from './voxelisers/normal-corrected-ray-voxeliser';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -101,6 +104,8 @@ export class AppContext {
 
         // this._ui.disablePost(Action.Import);
         this._ui.disable(Action.Simplify);
+
+        Renderer.Get.toggleIsGridEnabled();
     }
 
     public do(action: Action) {
@@ -143,8 +148,13 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
         const filePath = uiElements.input.getCachedValue();
 
-        this._loadedMesh = new ObjImporter().createMesh(filePath);
+        const importer = new ObjImporter();
+        importer.parseFile(filePath);
+        this._loadedMesh = importer.toMesh();
+        this._loadedMesh.processMesh();
         Renderer.Get.useMesh(this._loadedMesh);
+
+        this._warnings = this._loadedMesh.getWarnings();
     }
 
     private _simplify() {
@@ -153,7 +163,7 @@ export class AppContext {
 
     private _voxelise() {
         ASSERT(this._loadedMesh);
-
+        
         const uiElements = this._ui.layout.build.elements;
         const voxelMeshParams: VoxelMeshParams = {
             desiredHeight: uiElements.height.getCachedValue() as number,
@@ -162,7 +172,8 @@ export class AppContext {
             ambientOcclusionEnabled: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
 
-        this._loadedVoxelMesh = VoxelMesh.createFromMesh(this._loadedMesh, voxelMeshParams);
+        const voxeliser: IVoxeliser = (uiElements.voxeliser.getCachedValue() === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser());
+        this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
     }
 
@@ -195,6 +206,8 @@ export class AppContext {
         if (filePath) {
             exporter.export(this._loadedBlockMesh, filePath);
         }
+
+        this._warnings = exporter.getWarnings();
     }
 
     public draw() {

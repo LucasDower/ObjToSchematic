@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import url from 'url';
+import { BASE_DIR, STATIC_DIR } from './util';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -16,6 +17,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
+        icon: path.join(STATIC_DIR, process.platform === 'win32' ? './icon.ico' : './icon.png'),
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
@@ -29,7 +31,7 @@ function createWindow() {
 
     // Load index.html
     mainWindow.loadURL(url.format({
-        pathname: path.join(__dirname, '../index.html'),
+        pathname: path.join(BASE_DIR, './index.html'),
         protocol: 'file:',
         slashes: true,
     }));

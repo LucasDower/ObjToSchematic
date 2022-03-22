@@ -224,6 +224,13 @@ export class Vector3 extends Hashable {
         return !isNaN(this.x) && !isNaN(this.y) && !isNaN(this.z);
     }
 
+    public negate() {
+        this.x = -this.x;
+        this.y = -this.y;
+        this.z = -this.z;
+        return this;
+    }
+
     // Begin IHashable interface
     override hash() {
         const p0 = 73856093;

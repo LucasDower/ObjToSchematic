@@ -1,5 +1,8 @@
 import { AppConfig } from './config';
 import { Vector3 } from './vector';
+import { clamp } from './math';
+
+import path from 'path';
 
 const convert = require('color-convert');
 
@@ -12,6 +15,10 @@ export class UV {
     constructor(u: number, v: number) {
         this.u = u;
         this.v = v;
+    }
+
+    public copy() {
+        return new UV(this.u, this.v);
     }
 }
 
@@ -75,6 +82,30 @@ export class RGB {
         return new RGB(1.0, 1.0, 1.0);
     }
 
+    public static get red(): RGB {
+        return new RGB(1.0, 0.0, 0.0);
+    }
+
+    public static get green(): RGB {
+        return new RGB(0.0, 1.0, 0.0);
+    }
+
+    public static get blue(): RGB {
+        return new RGB(0.0, 0.0, 1.0);
+    }
+
+    public static get yellow(): RGB {
+        return new RGB(1.0, 1.0, 0.0);
+    }
+
+    public static get cyan(): RGB {
+        return new RGB(0.0, 1.0, 1.0);
+    }
+
+    public static get magenta(): RGB {
+        return new RGB(1.0, 0.0, 1.0);
+    }
+
     public static get black(): RGB {
         return new RGB(0.0, 0.0, 0.0);
     }
@@ -85,6 +116,10 @@ export class RGB {
 
     public toVector3(): Vector3 {
         return new Vector3(this.r, this.g, this.b);
+    }
+
+    public copy() {
+        return new RGB(this.r, this.g, this.b);
     }
 }
 
@@ -128,6 +163,10 @@ export class Bounds {
     public getCentre() {
         const extents = Vector3.sub(this._max, this._min).divScalar(2);
         return Vector3.add(this.min, extents);
+    }
+
+    public getDimensions() {
+        return Vector3.sub(this._max, this._min);
     }
 }
 
@@ -249,6 +288,86 @@ export class Warnable {
     }
 }
 
+export const BASE_DIR = path.join(__dirname, '/../../');
+export const RESOURCES_DIR = path.join(BASE_DIR, './resources/');
+export const ATLASES_DIR = path.join(RESOURCES_DIR, './atlases');
+export const PALETTES_DIR = path.join(RESOURCES_DIR, './palettes/');
+export const STATIC_DIR = path.join(RESOURCES_DIR, './static/');
+export const SHADERS_DIR = path.join(RESOURCES_DIR, './shaders/');
+
 export function getRandomID(): string {
     return (Math.random() + 1).toString(36).substring(7);
+}
+
+export class SmoothVariable {
+    private _actual: number;
+    private _target: number;
+    private _smoothing: number;
+    private _min: number;
+    private _max: number;
+
+    public constructor(value: number, smoothing: number) {
+        this._actual = value;
+        this._target = value;
+        this._smoothing = smoothing;
+        this._min = -Infinity;
+        this._max = Infinity;
+    }
+
+    public setClamp(min: number, max: number) {
+        this._min = min;
+        this._max = max;
+    }
+
+    public addToTarget(delta: number) {
+        this._target = clamp(this._target + delta, this._min, this._max);
+    }
+
+    public setTarget(target: number) {
+        this._target = target;
+    }
+
+    public tick() {
+        this._actual += (this._target - this._actual) * this._smoothing;
+    }
+
+    public getActual() {
+        return this._actual;
+    }
+
+    public getTarget() {
+        return this._target;
+    }
+}
+
+export class SmoothVectorVariable {
+    private _actual: Vector3;
+    private _target: Vector3;
+    private _smoothing: number;
+
+    public constructor(value: Vector3, smoothing: number) {
+        this._actual = value;
+        this._target = value;
+        this._smoothing = smoothing;
+    }
+
+    public addToTarget(delta: Vector3) {
+        this._target = Vector3.add(this._target, delta);
+    }
+
+    public setTarget(target: Vector3) {
+        this._target = target;
+    }
+
+    public tick() {
+        this._actual.add(Vector3.sub(this._target, this._actual).mulScalar(this._smoothing));
+    }
+
+    public getActual() {
+        return this._actual;
+    }
+
+    public getTarget() {
+        return this._target;
+    }
 }

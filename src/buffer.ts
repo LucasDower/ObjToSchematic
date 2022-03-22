@@ -1,6 +1,5 @@
 import { Renderer } from './renderer';
 import { ASSERT } from './util';
-import { AppConfig } from './config';
 
 import * as twgl from 'twgl.js';
 
@@ -19,11 +18,50 @@ interface BottomlessAttributeData {
     data: Array<number>
 }
 
-export interface VoxelData {
+export interface AttributeData {
     indices: Uint32Array
     custom: {
         [name: string]: Array<number>
     }
+}
+
+export function MergeAttributeData(...data: AttributeData[]): AttributeData {
+    if (data.length === 0) {
+        return {
+            indices: new Uint32Array(),
+            custom: {},
+        };
+    }
+    // Check custom attributes match
+    const requiredAttributes = Object.keys(data[0].custom);
+    for (let i = 1; i < data.length; ++i) {
+        const customAttributes = Object.keys(data[i].custom);
+        const isAllRequiredInCustom = requiredAttributes.every((attr) => {
+            return customAttributes.includes(attr);
+        });
+        const isAllCustomInRequired = customAttributes.every((attr) => {
+            return requiredAttributes.includes(attr);
+        });
+        ASSERT(isAllRequiredInCustom && isAllCustomInRequired, 'Attributes to merge do not match');
+    }
+    // Merge data
+    const indices = Array.from(data[0].indices);
+    const custom = data[0].custom;
+    for (let i = 1; i < data.length; ++i) {
+        const nextIndex = Math.max(...indices) + 1;
+        const d = data[i];
+        const newIndices = d.indices.map((index) => index + nextIndex);
+        indices.push(...Array.from(newIndices));
+        for (const attr of requiredAttributes) {
+            const attrData = d.custom[attr];
+            custom[attr].push(...attrData);
+        }
+    }
+
+    return {
+        indices: new Uint32Array(indices),
+        custom: custom,
+    };
 }
 
 export class RenderBuffer {
@@ -53,13 +91,7 @@ export class RenderBuffer {
         this._getNewBuffer();
     }
 
-    public add(data: VoxelData) {
-        ASSERT(!this._compiled);
-
-        if (AppConfig.DEBUG_ENABLED) {
-            // this._checkDataMatchesAttributes(data);
-        }
-
+    public add(data: AttributeData) {
         const mappedIndicesToAdd = new Array<number>(data.indices.length);
         let maxMapped = -1;
         data.indices.forEach((index, i) => {
@@ -140,7 +172,7 @@ export class RenderBuffer {
         }
     }
 
-    private _checkDataMatchesAttributes(data: VoxelData) {
+    private _checkDataMatchesAttributes(data: AttributeData) {
         if (!('indices' in data)) {
             throw Error('Given data does not have indices data');
         }

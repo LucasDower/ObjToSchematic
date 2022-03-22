@@ -308,10 +308,10 @@ async function buildAtlas() {
         }
 
         textureDetails[textureName] = {
-            texcoord: {
-                u: 16 * (3 * offsetX + 1) / (atlasWidth * 3),
-                v: 16 * (3 * offsetY + 1) / (atlasWidth * 3),
-            },
+            texcoord: new UV(
+                16 * (3 * offsetX + 1) / (atlasWidth * 3),
+                16 * (3 * offsetY + 1) / (atlasWidth * 3),
+            ),
             colour: getAverageColour(pngData),
         },
 

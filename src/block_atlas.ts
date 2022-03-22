@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT, fileExists, ColourSpace } from './util';
+import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
@@ -52,14 +52,12 @@ export class BlockAtlas {
         this._atlasLoaded = false;
         this._palette = [];
         this._paletteLoaded = false;
-
-        // this.loadAtlas(path.join(__dirname, '../resources/atlases/vanilla.atlas'));
     }
 
     public loadAtlas(atlasID: string) {
         this._cachedBlocks = new HashMap(1024);
 
-        const atlasDir = path.join(__dirname, '../resources/atlases', atlasID + '.atlas');
+        const atlasDir = path.join(ATLASES_DIR, atlasID + '.atlas');
         ASSERT(fileExists(atlasDir), `Atlas to load does not exist ${atlasDir}`);
 
         const blocksString = fs.readFileSync(atlasDir, 'utf-8');
@@ -85,7 +83,7 @@ export class BlockAtlas {
     public loadPalette(paletteID: string) {
         this._cachedBlocks = new HashMap(1024);
 
-        const paletteDir = path.join(__dirname, '../resources/palettes', paletteID + '.palette');
+        const paletteDir = path.join(PALETTES_DIR, paletteID + '.palette');
         ASSERT(fileExists(paletteDir), `Palette to load does not exist ${paletteDir}`);
 
         const palette: BlockPalette = JSON.parse(fs.readFileSync(paletteDir, 'utf8'));
@@ -131,6 +129,6 @@ export class BlockAtlas {
     public getAtlasTexturePath() {
         ASSERT(this._atlasLoaded, 'No atlas texture available');
         ASSERT(this._atlasTextureID, 'No atlas texture ID available');
-        return path.join(__dirname, '../resources/atlases', this._atlasTextureID + '.png');
+        return path.join(ATLASES_DIR, this._atlasTextureID + '.png');
     }
 }

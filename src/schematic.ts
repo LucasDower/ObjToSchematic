@@ -4,7 +4,7 @@ import path from 'path';
 import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
 import { Vector3 } from './vector';
 import { BlockMesh } from './block_mesh';
-import { LOG, Warnable } from './util';
+import { LOG, RESOURCES_DIR, Warnable } from './util';
 
 export abstract class Exporter extends Warnable {
     protected _sizeVector!: Vector3;
@@ -46,7 +46,9 @@ export class Schematic extends Exporter {
         const metaData = Array<number>(bufferSize);
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
-        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(fs.readFileSync(path.join(__dirname, '../resources/block_ids.json'), 'utf8'));
+        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(
+            fs.readFileSync(path.join(RESOURCES_DIR, './block_ids.json'), 'utf8'),
+        );
 
         const blocks = blockMesh.getBlocks();
         const unsupportedBlocks = new Set<string>();
