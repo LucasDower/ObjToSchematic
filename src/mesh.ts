@@ -1,5 +1,5 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
+import { UV, Bounds, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
 
