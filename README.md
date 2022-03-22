@@ -21,7 +21,7 @@
 <sub>"Homo erectus georgicus" (https://skfb.ly/6ADT8) by Geoffrey Marchal is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
 
 ## Usage
-You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or build it yourself by following the instructions below.
+You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or if you want the latest features you can build it yourself by following the instructions below.
 
 * Download and install [Node.js](https://nodejs.org/en/).
 * Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
@@ -31,9 +31,12 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
 
 ### Advanced
 
-**Block Palettes** You can create your own block palettes to fit the build you desire. When you select this palette, the generated structure will only use the blocks defined in your palette. To create a palette, list every block you want to use in `/tools/new-palette-blocks`. A list of every supported block can be found in `/tools/all-supported-blocks`. When your list is complete, run `npm run palette`, (make sure you run `run run build` before  the first time you do this). If everything is successful, the next time you run the program you'll be able to select your new palette in the 'Block palette' dropdown.
+#### Block Palettes
+You can create your own block palettes to fit the build you desire. When you select this palette, the generated structure will only use the blocks defined in your palette. To create a palette, list every block you want to use in `/tools/new-palette-blocks`. A list of every supported block can be found in `/tools/all-supported-blocks`. When your list is complete, run `npm run palette`, (make sure you run `run run build` before  the first time you do this). If everything is successful, the next time you run the program you'll be able to select your new palette in the 'Block palette' dropdown.
 
-**Texture Atlases** If you play Minecraft with a resource pack, you will probably want to build your own texture atlas. This way the program will use the same resource pack for its visualisation and more accurate colour-to-block conversions can be made. To do this, run `npm run atlas` (make sure you run `run run build` before the first time you do this) and follow the instructions. If everything is successful, the next time you run the program you'll be able to select your resource pack in the 'Texture atlas' dropdown.
+#### Texture Atlases
+If you play Minecraft with a resource pack, you will probably want to build your own texture atlas. This way the program will use the same resource pack for its visualisation and more accurate colour-to-block conversions can be made. To do this, run `npm run atlas` (make sure you run `run run build` before the first time you do this) and follow the instructions. If everything is successful, the next time you run the program you'll be able to select your resource pack in the 'Texture atlas' dropdown.
+
 ## Progress
 [0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
 * 🟢 **.json model loading**
