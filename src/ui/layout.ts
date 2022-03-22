@@ -58,6 +58,10 @@ export class UI {
             label: 'Build',
             elements: {
                 'height': new SliderElement('Desired height', 3, 320, 0, 80),
+                'voxeliser': new ComboBoxElement('Algorithm', [
+                    { id: 'raybased', displayText: 'Ray-based' },
+                    { id: 'normalcorrectedraybased', displayText: 'NCRB (beta)' },
+                ]),
                 'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
                     { id: 'on', displayText: 'On (recommended)' },
                     { id: 'off', displayText: 'Off (faster)' },
@@ -71,7 +75,7 @@ export class UI {
                     { id: 'nearest', displayText: 'Nearest (faster)' },
                 ]),
             },
-            elementsOrder: ['height', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
+            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(Action.Voxelise);
             }),

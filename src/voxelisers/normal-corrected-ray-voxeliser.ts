@@ -12,11 +12,12 @@ import { DebugGeometryTemplates } from '../geometry';
  * This voxeliser works by projecting rays onto each triangle
  * on each of the principle angles and testing for intersections
  */
-export class RayVoxeliser extends IVoxeliser {
+export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
     private _voxelMeshParams?: VoxelMeshParams;
     private _scale!: number;
+    private _size!: Vector3;
     private _offset!: Vector3;
 
     public override voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
@@ -24,40 +25,49 @@ export class RayVoxeliser extends IVoxeliser {
         this._voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         this._voxelMeshParams = voxelMeshParams;
 
-        this._scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
-        this._offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        this._scale = (voxelMeshParams.desiredHeight) / Mesh.desiredHeight;
         const useMesh = mesh.copy();
 
         useMesh.scaleMesh(this._scale);
-        useMesh.translateMesh(this._offset);
+        const bounds = useMesh.getBounds();
+        this._size = Vector3.sub(bounds.max, bounds.min);
+        this._offset =new Vector3(
+            this._size.x % 2 < 0.001 ? 0.5 : 0.0,
+            this._size.y % 2 < 0.001 ? 0.5 : 0.0,
+            this._size.z % 2 < 0.001 ? 0.5 : 0.0,
+        );
 
         for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
             const uvTriangle = useMesh.getUVTriangle(triIndex);
+            const normals = useMesh.getNormals(triIndex);
             const material = useMesh.getMaterialByTriangle(triIndex);
-            this._voxeliseTri(uvTriangle, material);
+            this._voxeliseTri(uvTriangle, material, normals);
         }
 
         return this._voxelMesh;
     }
 
-    private _voxeliseTri(triangle: UVTriangle, materialName: string) {
-        const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2);
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3}) {
+        const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2,
+            this._offset,
+        );
         
         rayList.forEach((ray) => {
-            const rayOriginWorld = Vector3.divScalar(ray.origin, this._scale).sub(this._offset);
-            this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.cross(
-                rayOriginWorld,
-                0.1,
-                ray.axis === Axes.x ? RGB.red : (ray.axis === Axes.y ? RGB.green : RGB.blue),
-            ));
-
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
-                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.arrow(
-                    rayOriginWorld,
-                    Vector3.divScalar(intersection, this._scale).sub(this._offset),
-                    ray.axis === Axes.x ? RGB.red : (ray.axis === Axes.y ? RGB.green : RGB.blue),
+                const intersectionWorld = Vector3.divScalar(intersection, this._scale);
+                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.cross(
+                    intersectionWorld,
+                    0.1,
+                    RGB.magenta,
                 ));
+                
+                // Move transition away from normal
+                const norm = normals.v0.normalise();
+                intersection.sub(Vector3.mulScalar(norm, 0.5));
+                // Correct size parity
+                intersection.add(this._offset);
+                
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
                 case Axes.x:
@@ -70,6 +80,13 @@ export class RayVoxeliser extends IVoxeliser {
                     voxelPosition = new Vector3(intersection.x, intersection.y, Math.round(intersection.z));
                     break;
                 }
+                voxelPosition.round();
+
+                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.arrow(
+                    intersectionWorld,
+                    Vector3.divScalar(voxelPosition, this._scale),
+                    RGB.magenta,
+                ));
 
                 let voxelColour: RGB;
                 if (this._voxelMeshParams!.useMultisampleColouring) {
@@ -106,30 +123,30 @@ export class RayVoxeliser extends IVoxeliser {
         return this._mesh!.sampleMaterial(materialName, uv, this._voxelMeshParams!.textureFiltering);
     }
 
-    private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> {
+    private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3, offset: Vector3): Array<Ray> {
         const bounds: Bounds = new Bounds(
             new Vector3(
-                Math.floor(Math.min(v0.x, v1.x, v2.x)),
-                Math.floor(Math.min(v0.y, v1.y, v2.y)),
-                Math.floor(Math.min(v0.z, v1.z, v2.z)),
+                Math.ceil(Math.min(v0.x, v1.x, v2.x)),
+                Math.ceil(Math.min(v0.y, v1.y, v2.y)),
+                Math.ceil(Math.min(v0.z, v1.z, v2.z)),
             ),
             new Vector3(
-                Math.ceil(Math.max(v0.x, v1.x, v2.x)),
-                Math.ceil(Math.max(v0.y, v1.y, v2.y)),
-                Math.ceil(Math.max(v0.z, v1.z, v2.z)),
+                Math.floor(Math.max(v0.x, v1.x, v2.x)),
+                Math.floor(Math.max(v0.y, v1.y, v2.y)),
+                Math.floor(Math.max(v0.z, v1.z, v2.z)),
             ),
         );
     
         const rayList: Array<Ray> = [];
-        this._traverseX(rayList, bounds);
-        this._traverseY(rayList, bounds);
-        this._traverseZ(rayList, bounds);
+        this._traverseX(rayList, bounds, offset);
+        this._traverseY(rayList, bounds, offset);
+        this._traverseZ(rayList, bounds, offset);
         return rayList;
     }
     
-    private _traverseX(rayList: Array<Ray>, bounds: Bounds) {
-        for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
-            for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
+    private _traverseX(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
+        for (let y = bounds.min.y - offset.y; y <= bounds.max.y + offset.y; ++y) {
+            for (let z = bounds.min.z - offset.z; z <= bounds.max.z + offset.z; ++z) {
                 rayList.push({
                     origin: new Vector3(bounds.min.x - 1, y, z),
                     axis: Axes.x,
@@ -138,9 +155,9 @@ export class RayVoxeliser extends IVoxeliser {
         }
     }
     
-    private _traverseY(rayList: Array<Ray>, bounds: Bounds) {
-        for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-            for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
+    private _traverseY(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
+        for (let x = bounds.min.x - offset.x; x <= bounds.max.x + offset.x; ++x) {
+            for (let z = bounds.min.z - offset.z; z <= bounds.max.z + offset.z; ++z) {
                 rayList.push({
                     origin: new Vector3(x, bounds.min.y - 1, z),
                     axis: Axes.y,
@@ -149,9 +166,9 @@ export class RayVoxeliser extends IVoxeliser {
         }
     }
     
-    private _traverseZ(rayList: Array<Ray>, bounds: Bounds) {
-        for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-            for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
+    private _traverseZ(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
+        for (let x = bounds.min.x - offset.x; x <= bounds.max.x + offset.x; ++x) {
+            for (let y = bounds.min.y - offset.y; y <= bounds.max.y + offset.y; ++y) {
                 rayList.push({
                     origin: new Vector3(x, y, bounds.min.z - 1),
                     axis: Axes.z,

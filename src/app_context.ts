@@ -10,6 +10,8 @@ import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams } from './block_mesh';
 import { TextureFiltering } from './texture';
 import { RayVoxeliser } from './voxelisers/ray-voxeliser';
+import { IVoxeliser } from './voxelisers/base-voxeliser';
+import { NormalCorrectedRayVoxeliser } from './voxelisers/normal-corrected-ray-voxeliser';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -170,7 +172,8 @@ export class AppContext {
             ambientOcclusionEnabled: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
 
-        this._loadedVoxelMesh = new RayVoxeliser().voxelise(this._loadedMesh, voxelMeshParams);
+        const voxeliser: IVoxeliser = (uiElements.voxeliser.getCachedValue() === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser());
+        this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
     }
 
