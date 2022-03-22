@@ -19,7 +19,7 @@ export const headlessConfig = {
         },
     },
     export: {
-        absoluteFilePathSave: 'C://Users//<Username>//AppData//Roaming//.minecraft//schematics', // Must be an absolute path to the file (can be anywhere)
+        absoluteFilePathSave: 'C:/Users/<Username>/AppData//Roaming/.minecraft/schematics/MySchematic.schematic', // Must be an absolute path to the file (can be anywhere)
         exporter: 'schematic', // 'schematic' / 'litematic',
     },
 };
