@@ -294,6 +294,7 @@ export const ATLASES_DIR = path.join(RESOURCES_DIR, './atlases');
 export const PALETTES_DIR = path.join(RESOURCES_DIR, './palettes/');
 export const STATIC_DIR = path.join(RESOURCES_DIR, './static/');
 export const SHADERS_DIR = path.join(RESOURCES_DIR, './shaders/');
+export const TOOLS_DIR = path.join(BASE_DIR, './tools/');
 
 export function getRandomID(): string {
     return (Math.random() + 1).toString(36).substring(7);

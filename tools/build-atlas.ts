@@ -1,4 +1,4 @@
-import { RGB, UV } from '../src/util';
+import { ATLASES_DIR, RGB, TOOLS_DIR, UV } from '../src/util';
 import { log, logBreak, LogStyle } from './logging';
 import { isDirSetup, ASSERT, getAverageColour, getPermission } from './misc';
 
@@ -21,8 +21,8 @@ void async function main() {
 }();
 
 function cleanupDirectories() {
-    fs.rmSync(path.join(__dirname, '/blocks'), { recursive: true, force: true });
-    fs.rmSync(path.join(__dirname, '/models'), { recursive: true, force: true });
+    fs.rmSync(path.join(TOOLS_DIR, '/blocks'), { recursive: true, force: true });
+    fs.rmSync(path.join(TOOLS_DIR, '/models'), { recursive: true, force: true });
 }
 
 async function getResourcePack() {
@@ -85,9 +85,9 @@ function fetchVanillModelsAndTextures(fetchTextures: boolean) {
         const zipEntries = zip.getEntries();
         zipEntries.forEach((zipEntry: any) => {
             if (fetchTextures && zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './blocks'), false, true);
             } else if (zipEntry.entryName.startsWith('assets/minecraft/models/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './models'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './models'), false, true);
             }
         });
         log(LogStyle.Success, `Extracted textures and models successfully\n`);
@@ -109,7 +109,7 @@ async function fetchModelsAndTextures() {
     if (fs.lstatSync(resourcePackDir).isDirectory()) {
         log(LogStyle.Info, `Resource pack '${resourcePack}' is a directory`);
         const blockTexturesSrc = path.join(resourcePackDir, 'assets/minecraft/textures/block');
-        const blockTexturesDst = path.join(__dirname, '../tools/blocks');
+        const blockTexturesDst = path.join(TOOLS_DIR, './blocks');
         log(LogStyle.Info, `Copying ${blockTexturesSrc} to ${blockTexturesDst}`);
         copydir(blockTexturesSrc, blockTexturesDst, {
             utimes: true,
@@ -124,7 +124,7 @@ async function fetchModelsAndTextures() {
         const zipEntries = zip.getEntries();
         zipEntries.forEach((zipEntry: any) => {
             if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './blocks'), false, true);
             }
         });
         log(LogStyle.Success, `Copied block textures successfully`);
@@ -149,7 +149,7 @@ async function buildAtlas() {
     logBreak();
     log(LogStyle.Info, 'Loading ignore list...');
     let ignoreList: Array<string> = [];
-    const ignoreListPath = path.join(__dirname, './ignore-list.txt');
+    const ignoreListPath = path.join(TOOLS_DIR, './ignore-list.txt');
     if (fs.existsSync(ignoreListPath)) {
         log(LogStyle.Success, 'Found ignore list');
         ignoreList = fs.readFileSync(ignoreListPath, 'utf-8').replace(/\r/g, '').split('\n');
@@ -186,13 +186,14 @@ async function buildAtlas() {
     log(LogStyle.Info, 'Loading block models...');
     const faces = ['north', 'south', 'up', 'down', 'east', 'west'];
     const allModels: Array<Model> = [];
+    const allBlockNames: Set<string> = new Set();
     const usedTextures: Set<string> = new Set();
-    fs.readdirSync(path.join(__dirname, './models')).forEach((filename) => {
+    fs.readdirSync(path.join(TOOLS_DIR, './models')).forEach((filename) => {
         if (path.extname(filename) !== '.json') {
             return;
         };
 
-        const filePath = path.join(__dirname, './models', filename);
+        const filePath = path.join(TOOLS_DIR, './models', filename);
         const fileData = fs.readFileSync(filePath, 'utf8');
         const modelData = JSON.parse(fileData);
         const parsedPath = path.parse(filePath);
@@ -266,6 +267,7 @@ async function buildAtlas() {
             name: modelName,
             faces: faceData,
         });
+        allBlockNames.add(modelName);
     });
     if (allModels.length === 0) {
         log(LogStyle.Failure, 'No blocks loaded');
@@ -296,7 +298,7 @@ async function buildAtlas() {
     log(LogStyle.Info, `Building ${atlasName}.png...`);
     usedTextures.forEach((textureName) => {
         const shortName = textureName.split('/')[1]; // Eww
-        const absolutePath = path.join(__dirname, './blocks', shortName + '.png');
+        const absolutePath = path.join(TOOLS_DIR, './blocks', shortName + '.png');
         const fileData = fs.readFileSync(absolutePath);
         const pngData = PNG.sync.read(fileData);
         const image = images(absolutePath);
@@ -343,14 +345,15 @@ async function buildAtlas() {
 
 
     log(LogStyle.Info, 'Exporting...');
-    const atlasDir = path.join(__dirname, `../../resources/atlases/${atlasName}.png`);
+    const atlasDir = path.join(ATLASES_DIR, `./${atlasName}.png`);
     outputImage.save(atlasDir);
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
         atlasSize: atlasSize,
         blocks: allModels,
+        supportedBlockNames: Array.from(allBlockNames),
     };
-    fs.writeFileSync(path.join(__dirname, `../../resources/atlases/${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
+    fs.writeFileSync(path.join(ATLASES_DIR, `./${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
     log(LogStyle.Success, `${atlasName}.atlas exported to /resources/atlases/\n`);
 
     /* eslint-disable */

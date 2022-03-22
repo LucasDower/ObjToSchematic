@@ -5,10 +5,9 @@ import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { Action, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG } from '../util';
+import { ASSERT, ATLASES_DIR, LOG, PALETTES_DIR } from '../util';
 
 import fs from 'fs';
-import path from 'path';
 import { ToolbarItemElement } from './elements/toolbar_item';
 import { EAppEvent } from '../event';
 import { MeshType, Renderer } from '../renderer';
@@ -458,9 +457,8 @@ export class UI {
 
     private _getBlockPalettes(): ComboBoxItem[] {
         const blockPalettes: ComboBoxItem[] = [];
-        const palettesDir = path.join(__dirname, '../../../resources/palettes');
 
-        fs.readdirSync(palettesDir).forEach((file) => {
+        fs.readdirSync(PALETTES_DIR).forEach((file) => {
             if (file.endsWith('.palette')) {
                 const paletteID = file.split('.')[0];
                 let paletteName = paletteID.replace('-', ' ').toLowerCase();
