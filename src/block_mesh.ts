@@ -28,16 +28,12 @@ export class BlockMesh {
     }
 
     private constructor(voxelMesh: VoxelMesh) {
-        LOG('New block mesh');
-
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
     }
     
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
-        LOG('Assigning blocks');
-        
         BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
 

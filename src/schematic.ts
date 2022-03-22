@@ -4,7 +4,7 @@ import path from 'path';
 import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
 import { Vector3 } from './vector';
 import { BlockMesh } from './block_mesh';
-import { LOG, RESOURCES_DIR, Warnable } from './util';
+import { RESOURCES_DIR, Warnable } from './util';
 
 export abstract class Exporter extends Warnable {
     protected _sizeVector!: Vector3;
@@ -70,7 +70,7 @@ export class Schematic extends Exporter {
 
         if (unsupportedBlocks.size > 0) {
             this.addWarning(`${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`);
-            LOG('Unsupported blocks', unsupportedBlocks);
+            // LOG('Unsupported blocks', unsupportedBlocks);
         }
 
         const nbt: NBT = {

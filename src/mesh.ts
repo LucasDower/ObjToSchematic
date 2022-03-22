@@ -182,7 +182,6 @@ export class Mesh extends Warnable {
         if (!centre.isNumber()) {
             throw new CustomError('Could not find centre of mesh');
         }
-        LOG('Centre', centre);
 
         // Translate each triangle
         this.translateMesh(centre.negate());
@@ -281,7 +280,7 @@ export class Mesh extends Warnable {
     }
 
     public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
-        ASSERT(materialName in this._materials, 'Sampling material that does not exist');
+        ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
         const material = this._materials[materialName];
         if (material.type === MaterialType.solid) {
             return material.colour;
