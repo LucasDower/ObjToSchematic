@@ -17,7 +17,7 @@
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/node.js.yml/badge.svg" alt="Logo">
 </p>
 
-![Preview](https://i.imgur.com/w1GWPvT.png)
+![Preview](https://i.imgur.com/HgQaEIO.png)
 <sub>"Homo erectus georgicus" (https://skfb.ly/6ADT8) by Geoffrey Marchal is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
 
 ## Usage
