@@ -10,8 +10,6 @@ import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
 
-import fs from 'fs';
-
 void async function main() {
     const mesh = _import({
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,

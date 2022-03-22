@@ -1,7 +1,7 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, CustomError, LOG } from './util';
+import { ColourSpace, CustomError } from './util';
 import { Renderer } from './renderer';
 
 interface Block {
