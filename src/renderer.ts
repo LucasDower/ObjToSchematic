@@ -179,6 +179,7 @@ export class Renderer {
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, false, 0.25);
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89));
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18));
+        delete this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev];
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
