@@ -1,5 +1,21 @@
-# ObjToSchematic
-A visual tool to convert .obj model files into Minecraft Schematics or [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica/files).
+<h1>
+  <p align="center">
+    <img src="resources/static/icon.png" alt="Logo" width="64" height="64">
+    <br>
+    ObjToSchematic
+  </p>
+</h1>
+<p align="center">
+  A visual tool to convert 3D .obj models into Minecraft Schematics or <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">Litematica</a>.
+  <br>
+  <a href="#usage">Usage</a> •
+  <a href="#progress">Progress</a> •
+  <a href="#disclaimer">Disclaimer</a> •
+  <a href="#contributing">Contributing</a>
+</p>
+<p align="center">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/node.js.yml/badge.svg" alt="Logo">
+</p>
 
 ![Preview](https://i.imgur.com/w1GWPvT.png)
 <sub>"Homo erectus georgicus" (https://skfb.ly/6ADT8) by Geoffrey Marchal is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
