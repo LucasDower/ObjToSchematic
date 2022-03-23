@@ -51,6 +51,7 @@ export class Mesh extends Warnable {
         this._loadedTextures = {};
     }
 
+    // TODO: Always check
     public processMesh() {
         this._checkMesh();
         this._checkMaterials();

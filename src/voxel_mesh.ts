@@ -18,7 +18,7 @@ export interface VoxelMeshParams {
     desiredHeight: number,
     useMultisampleColouring: boolean,
     textureFiltering: TextureFiltering,
-    ambientOcclusionEnabled: boolean,
+    ambientOcclusionEnabled: boolean, // TODO: Refactor into rendering
 }
 
 export class VoxelMesh {
@@ -53,6 +53,13 @@ export class VoxelMesh {
 
     public isVoxelAt(pos: Vector3) {
         return this._voxelsHash.has(pos);
+    }
+
+    public getVoxelAt(pos: Vector3) {
+        const voxelIndex = this._voxelsHash.get(pos);
+        if (voxelIndex !== undefined) {
+            return this._voxels[voxelIndex];
+        }
     }
 
     public getMesh() {
