@@ -6,7 +6,7 @@ import { Vector3 } from '../src/vector';
 
 import path from 'path';
 
-test('Parse vertex #1', () => {
+test('Voxelise solid 2x2 cube', () => {
     const importer = new ObjImporter();
     importer.parseFile(path.join(__dirname, './data/cube.obj'));
     const mesh = importer.toMesh();
@@ -61,4 +61,21 @@ test('Parse vertex #1', () => {
         expect(voxel).toBeDefined(); ASSERT(voxel);
         expect(voxel.colour.toVector3().equals(expected.colour.toVector3()));
     }
+});
+
+test('Voxelise textured 2x2 cube', () => {
+    const importer = new ObjImporter();
+    importer.parseFile(path.join(__dirname, './data/textured-cube.obj'));
+    const mesh = importer.toMesh();
+    mesh.processMesh();
+
+    const voxeliser = new NormalCorrectedRayVoxeliser();
+    const voxelMesh = voxeliser.voxelise(mesh, {
+        desiredHeight: 2,
+        useMultisampleColouring: false,
+        textureFiltering: TextureFiltering.Nearest,
+        ambientOcclusionEnabled: false,
+    });
+
+    console.log(voxelMesh.getVoxels());
 });
