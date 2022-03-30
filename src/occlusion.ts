@@ -65,6 +65,7 @@ export class Occlusion {
 */
 
 import { AppConfig } from './config';
+import { ASSERT } from './util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 
@@ -104,10 +105,11 @@ export class OcclusionManager {
             }
         }
 
-        const occlusions = new Array<Array<number>>(6);
+        // const occlusions = new Array<Array<number>>(6);
+        const occlusions = new Array<number>(6 * 4).fill(1.0);
         // For each face
         for (let f = 0; f < 6; ++f) {
-            occlusions[f] = [1, 1, 1, 1];
+            // occlusions[f] = [1, 1, 1, 1];
 
             // Only compute ambient occlusion if this face is visible
             const faceNormal = this.getFaceNormals()[f];
@@ -133,7 +135,7 @@ export class OcclusionManager {
 
                     // Convert from occlusion denoting the occlusion factor to the
                     // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-                    occlusions[f][v] = 1.0 - 0.2 * numNeighbours;
+                    occlusions[f * 4 + v] = 1.0 - 0.2 * numNeighbours;
                 }
             }
         }
@@ -217,13 +219,14 @@ export class OcclusionManager {
         }
     }
 
-    private _expandOcclusions(occlusions: number[][]) {
+    private _expandOcclusions(occlusions: number[]) {
         const expandedOcclusions = new Array<number>(96);
         for (let j = 0; j < 6; ++j) {
             for (let k = 0; k < 16; ++k) {
-                expandedOcclusions[j * 16 + k] = occlusions[j][k % 4];
+                expandedOcclusions[j * 16 + k] = occlusions[(j * 4) + (k % 4)];
             }
         }
+
         return expandedOcclusions;
     }
 }
