@@ -81,11 +81,14 @@ export class OcclusionManager {
     }
 
     public getBlankOcclusions() {
+        return new Array<number>(96).fill(1.0);
+        /*
         const blankOcclusions = new Array<Array<number>>(6);
         for (let f = 0; f < 6; ++f) {
             blankOcclusions[f] = [1, 1, 1, 1];
         }
         return this._expandOcclusions(blankOcclusions);
+        */
     }
 
     public getOcclusions(centre: Vector3, voxelMesh: VoxelMesh) {
