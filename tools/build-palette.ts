@@ -1,4 +1,5 @@
 import { log, LogStyle } from './logging';
+import { TOOLS_DIR, PALETTES_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
@@ -7,7 +8,7 @@ import prompt from 'prompt';
 void async function main() {
     log(LogStyle.Info, 'Creating a new palette...');
     
-    const paletteBlocksDir = path.join(__dirname, './new-palette-blocks.txt');
+    const paletteBlocksDir = path.join(TOOLS_DIR, './new-palette-blocks.txt');
     if (!fs.existsSync(paletteBlocksDir)) {
         log(LogStyle.Failure, 'Could not find /tools/new-palette-blocks.txt');
         return;
@@ -42,6 +43,6 @@ void async function main() {
         blocks: blocksToUse,
     };
 
-    fs.writeFileSync(path.join(__dirname, `../resources/palettes/${promptUser.paletteName}.palette`), JSON.stringify(paletteJSON, null, 4));
+    fs.writeFileSync(path.join(PALETTES_DIR, `./${promptUser.paletteName}.palette`), JSON.stringify(paletteJSON, null, 4));
     log(LogStyle.Success, `Successfully created ${promptUser.paletteName}.palette in /resources/palettes/`);
 }();

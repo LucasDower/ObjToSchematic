@@ -12,6 +12,7 @@ import { TextureFiltering } from './texture';
 import { RayVoxeliser } from './voxelisers/ray-voxeliser';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { NormalCorrectedRayVoxeliser } from './voxelisers/normal-corrected-ray-voxeliser';
+import { BVHRayVoxeliser } from './voxelisers/bvh-ray-voxeliser';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -169,12 +170,23 @@ export class AppContext {
             desiredHeight: uiElements.height.getCachedValue() as number,
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-            ambientOcclusionEnabled: uiElements.ambientOcclusion.getCachedValue() === 'on',
+            
         };
+        const ambientOcclusionEnabled = uiElements.ambientOcclusion.getCachedValue() === 'on';
 
-        const voxeliser: IVoxeliser = (uiElements.voxeliser.getCachedValue() === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser());
+        const voxeliserID = uiElements.voxeliser.getCachedValue();
+        let voxeliser: IVoxeliser;
+        if (voxeliserID === 'raybased') {
+            voxeliser = new RayVoxeliser();
+        } else if (voxeliserID === 'bvhraybased') {
+            voxeliser = new BVHRayVoxeliser();
+        } else {
+            ASSERT(voxeliserID === 'normalcorrectedraybased');
+            voxeliser = new NormalCorrectedRayVoxeliser();
+        }
+        
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
-        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh);
+        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusionEnabled);
     }
 
     private _palette() {

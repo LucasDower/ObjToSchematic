@@ -26,7 +26,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         this._voxelMeshParams = voxelMeshParams;
 
         this._scale = (voxelMeshParams.desiredHeight) / Mesh.desiredHeight;
-        const useMesh = mesh.copy();
+        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
 
         useMesh.scaleMesh(this._scale);
         const bounds = useMesh.getBounds();
@@ -93,11 +93,11 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5));
-                        samples.push(this._getVoxelColour(triangle, materialName, samplePosition));
+                        samples.push(this.__getVoxelColour(triangle, materialName, samplePosition));
                     }
                     voxelColour = RGB.averageFrom(samples);
                 } else {
-                    voxelColour = this._getVoxelColour(triangle, materialName, voxelPosition);
+                    voxelColour = this.__getVoxelColour(triangle, materialName, voxelPosition);
                 }
 
                 this._voxelMesh!.addVoxel(voxelPosition, voxelColour);
@@ -105,7 +105,8 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         });
     }
 
-    private _getVoxelColour(triangle: UVTriangle, materialName: string, location: Vector3): RGB {
+    // TODO: Remove
+    private __getVoxelColour(triangle: UVTriangle, materialName: string, location: Vector3): RGB {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
         const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();

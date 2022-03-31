@@ -2,17 +2,17 @@ import { BlockAtlas, BlockInfo } from './block_atlas';
 import { ASSERT, ColourSpace, RGB } from './util';
 import { Vector3 } from './vector';
 
-interface BlockAssigner {
+interface IBlockAssigner {
     assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo;
 }
 
-export class BasicBlockAssigner implements BlockAssigner {
+export class BasicBlockAssigner implements IBlockAssigner {
     assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo {
         return BlockAtlas.Get.getBlock(voxelColour, colourSpace);
     }
 }
 
-export class OrderedDitheringBlockAssigner implements BlockAssigner {
+export class OrderedDitheringBlockAssigner implements IBlockAssigner {
     /** 4x4x4 */
     private static _size = 4;
     private static _threshold = 256 / 8;

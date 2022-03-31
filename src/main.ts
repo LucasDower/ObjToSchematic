@@ -1,3 +1,19 @@
+
+/**
+                ,d                            
+                88                            
+    ,adPPYba, MM88MMM ,adPPYba,  8b,dPPYba,   
+    I8[    ""   88   a8"     "8a 88P'    "8a  
+     `"Y8ba,    88   8b       d8 88       d8  
+    aa    ]8I   88,  "8a,   ,a8" 88b,   ,a8"  
+    `"YbbdP"'   "Y888 `"YbbdP"'  88`YbbdP"'   
+                                 88           
+                                 88
+
+    If you're interested in the code, I recommend starting in /src/AppContext.ts
+    The stuff here is boring Electron boilerplate \(•◡•)/
+*/
+
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import url from 'url';
@@ -27,8 +43,7 @@ function createWindow() {
         },
     });
     // mainWindow.removeMenu();
-
-
+    
     // Load index.html
     mainWindow.loadURL(url.format({
         pathname: path.join(BASE_DIR, './index.html'),
@@ -36,6 +51,15 @@ function createWindow() {
         slashes: true,
     }));
 
+    const baseTitle = 'ObjToSchematic – Convert 3D models into Minecraft builds';
+    try {
+        const branchName = require('child_process').execSync('git rev-parse --abbrev-ref HEAD');
+        const commitHash = require('child_process').execSync('git rev-parse --short HEAD');
+        mainWindow.setTitle(`${baseTitle} (git//${branchName}++${commitHash})`);
+    } catch (e: any) {
+        mainWindow.setTitle(`${baseTitle} (release//v0.5.0)`);
+    }
+    
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();
 

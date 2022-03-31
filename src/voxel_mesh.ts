@@ -18,7 +18,6 @@ export interface VoxelMeshParams {
     desiredHeight: number,
     useMultisampleColouring: boolean,
     textureFiltering: TextureFiltering,
-    ambientOcclusionEnabled: boolean,
 }
 
 export class VoxelMesh {
@@ -53,6 +52,13 @@ export class VoxelMesh {
 
     public isVoxelAt(pos: Vector3) {
         return this._voxelsHash.has(pos);
+    }
+
+    public getVoxelAt(pos: Vector3) {
+        const voxelIndex = this._voxelsHash.get(pos);
+        if (voxelIndex !== undefined) {
+            return this._voxels[voxelIndex];
+        }
     }
 
     public getMesh() {
@@ -90,7 +96,7 @@ export class VoxelMesh {
 
     // //////////////////////////////////////////////////////////////////////////
 
-    public createBuffer() {
+    public createBuffer(ambientOcclusionEnabled: boolean) {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
@@ -103,7 +109,7 @@ export class VoxelMesh {
             // Each vertex of a face needs the occlusion data for the other 3 vertices
             // in it's face, not just itself. Also flatten occlusion data.
             let occlusions: number[];
-            if (this._voxelMeshParams.ambientOcclusionEnabled) {
+            if (ambientOcclusionEnabled) {
                 occlusions = OcclusionManager.Get.getOcclusions(voxel.position, this);
             } else {
                 occlusions = OcclusionManager.Get.getBlankOcclusions();
@@ -119,7 +125,7 @@ export class VoxelMesh {
 
             const faceNormals = OcclusionManager.Get.getFaceNormals();
             if (AppConfig.FACE_CULLING) {
-                // TODO: Optmise, enabling FACE_CULLING is slower than not bothering
+                // TODO: Optimise, enabling FACE_CULLING is slower than not bothering
                 for (let i = 0; i < 6; ++i) {
                     if (!this.isVoxelAt(Vector3.add(voxel.position, faceNormals[i]))) {
                         buffer.add({

@@ -1,7 +1,7 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, CustomError, LOG } from './util';
+import { ColourSpace, CustomError } from './util';
 import { Renderer } from './renderer';
 
 interface Block {
@@ -28,16 +28,12 @@ export class BlockMesh {
     }
 
     private constructor(voxelMesh: VoxelMesh) {
-        LOG('New block mesh');
-
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
     }
     
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
-        LOG('Assigning blocks');
-        
         BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
 

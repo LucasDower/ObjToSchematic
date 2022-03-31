@@ -1,5 +1,5 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
+import { UV, Bounds, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
 
@@ -51,6 +51,7 @@ export class Mesh extends Warnable {
         this._loadedTextures = {};
     }
 
+    // TODO: Always check
     public processMesh() {
         this._checkMesh();
         this._checkMaterials();
@@ -186,7 +187,6 @@ export class Mesh extends Warnable {
         if (!centre.isNumber()) {
             throw new CustomError('Could not find centre of mesh');
         }
-        LOG('Centre', centre);
 
         // Translate each triangle
         this.translateMesh(centre.negate());
@@ -285,7 +285,7 @@ export class Mesh extends Warnable {
     }
 
     public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
-        ASSERT(materialName in this._materials, 'Sampling material that does not exist');
+        ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
         const material = this._materials[materialName];
         if (material.type === MaterialType.solid) {
             return material.colour;

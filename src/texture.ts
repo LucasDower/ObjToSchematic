@@ -1,4 +1,4 @@
-import { UV, ASSERT, CustomError } from './util';
+import { UV, ASSERT, CustomError, LOG } from './util';
 import { RGB } from './util';
 
 import * as fs from 'fs';
@@ -73,6 +73,9 @@ export class Texture {
 
         const u = wayThrough(x, xL, xU);
         const v = wayThrough(y, yL, yU);
+        if (isNaN(x) || isNaN(y)) {
+            LOG('BAD');
+        }
         ASSERT(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0, `UV out of range (${u}, ${v})`);
 
         const A = this._getFromXY(xL, yU).toVector3();
