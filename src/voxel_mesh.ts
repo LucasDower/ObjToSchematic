@@ -125,7 +125,7 @@ export class VoxelMesh {
 
             const faceNormals = OcclusionManager.Get.getFaceNormals();
             if (AppConfig.FACE_CULLING) {
-                // TODO: Optmise, enabling FACE_CULLING is slower than not bothering
+                // TODO: Optimise, enabling FACE_CULLING is slower than not bothering
                 for (let i = 0; i < 6; ++i) {
                     if (!this.isVoxelAt(Vector3.add(voxel.position, faceNormals[i]))) {
                         buffer.add({

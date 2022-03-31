@@ -6,7 +6,7 @@ import { Vector3 } from './vector';
 import { BlockMesh } from './block_mesh';
 import { RESOURCES_DIR, Warnable } from './util';
 
-export abstract class Exporter extends Warnable {
+export abstract class IExporter extends Warnable {
     protected _sizeVector!: Vector3;
 
     public abstract convertToNBT(blockMesh: BlockMesh): NBT
@@ -38,7 +38,7 @@ export abstract class Exporter extends Warnable {
     }
 }
 
-export class Schematic extends Exporter {
+export class Schematic extends IExporter {
     public override convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
@@ -118,7 +118,7 @@ interface BlockMapping {
     [name: string]: BlockID
 }
 
-export class Litematic extends Exporter {
+export class Litematic extends IExporter {
     // XZY
     _getBufferIndex(vec: Vector3) {
         return (this._sizeVector.z * this._sizeVector.x * vec.y) + (this._sizeVector.x * vec.z) + vec.x;

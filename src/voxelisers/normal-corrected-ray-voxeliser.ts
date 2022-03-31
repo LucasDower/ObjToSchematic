@@ -26,7 +26,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         this._voxelMeshParams = voxelMeshParams;
 
         this._scale = (voxelMeshParams.desiredHeight) / Mesh.desiredHeight;
-        const useMesh = mesh.copy();
+        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
 
         useMesh.scaleMesh(this._scale);
         const bounds = useMesh.getBounds();

@@ -26,7 +26,7 @@ export class RayVoxeliser extends IVoxeliser {
 
         this._scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
         this._offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
-        const useMesh = mesh.copy();
+        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
 
         useMesh.scaleMesh(this._scale);
         useMesh.translateMesh(this._offset);

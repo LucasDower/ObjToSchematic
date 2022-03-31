@@ -16,8 +16,8 @@ export class BVHRayVoxeliser extends IVoxeliser {
         const voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         const scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
-        const useMesh = mesh.copy();
-
+        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
+        
         useMesh.scaleMesh(scale);
         useMesh.translateMesh(offset);
 

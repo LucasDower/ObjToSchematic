@@ -3,7 +3,7 @@ import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
 import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams } from '../src/block_mesh';
-import { Exporter, Litematic, Schematic } from '../src/schematic';
+import { IExporter, Litematic, Schematic } from '../src/schematic';
 import { RayVoxeliser } from '../src/voxelisers/ray-voxeliser';
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { TextureFiltering } from '../src/texture';
@@ -53,7 +53,7 @@ interface PaletteParams {
 
 interface ExportParams {
     absoluteFilePathSave: string;
-    exporter: Exporter;
+    exporter: IExporter;
 }
 
 function _import(params: ImportParams): Mesh {
