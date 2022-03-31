@@ -11,7 +11,8 @@
   <a href="#usage">Usage</a> •
   <a href="#progress">Progress</a> •
   <a href="#disclaimer">Disclaimer</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="#contributing">Contributing</a> •
+  <a href="#gallery">Gallery</a>
 </p>
 <p align="center">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/node.js.yml/badge.svg" alt="Logo">
@@ -107,3 +108,18 @@ Adding more file formats to import from and export to would be nice. Adding new 
 
 ### Debugging
 To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in VSCode. Use `Ctrl+Shift+D`, and run "*Debug Main Process*" and once the Electron window has initialised, run "*Attach to Render Process*".
+
+## Gallery
+<p align="center">
+  <img src="https://i.imgur.com/wmNQnkN.png" alt="Gallery1" width="600"><br>
+  <sub>"Creepy Lady Bust Statue Scan" (https://skfb.ly/6B7pK) by alex.toporowicz is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
+  <br>
+  <img src="https://imgur.com/oewDRvM.png" alt="Gallery2" width="600"><br>
+  <sub>"Cut Fish" (https://skfb.ly/orWLC) by Suushimi is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
+  <br>
+  <img src="https://imgur.com/SF33FGa.png" alt="Gallery3" width="600"><br>
+  <sub>"Pivot Demo: Journey" (https://skfb.ly/6WCIJ) by Sketchfab is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
+  <br>
+  <img src="https://imgur.com/7domJdr.png" alt="Gallery4" width="600"><br>
+  <sub>"Handpainted Pancake" (https://skfb.ly/6T7yN) by Marvi is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
+</p>

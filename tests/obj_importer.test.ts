@@ -10,6 +10,14 @@ test('Parse vertex #1', () => {
     expect(mesh._vertices[0].equals(new Vector3(1, -2, 3))).toBe(true);
 });
 
+test('Parse vertex #2', () => {
+    const importer = new ObjImporter();
+    importer.parseOBJLine('v 4.467e+000 9.243e+000 9.869e+000');
+    const mesh = importer.toMesh();
+    expect(mesh._vertices.length).toEqual(1);
+    expect(mesh._vertices[0].equals(new Vector3(4.467e+000, 9.243e+000, 9.869e+000))).toBe(true);
+});
+
 test('Parse normal #1', () => {
     const importer = new ObjImporter();
     importer.parseOBJLine('vn -1.0 -0.5 0.0');

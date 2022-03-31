@@ -186,7 +186,7 @@ export const LOG_ERROR = console.error;
 export const REGEX_NZ_WS = /[ \t]+/;
 
 /** Regex for number */
-export const REGEX_NUMBER = /[0-9\.\-]+/;
+export const REGEX_NUMBER = /[0-9e+\.\-]+/;
 
 export const REGEX_NZ_ANY = /.+/;
 
@@ -280,7 +280,7 @@ export class Warnable {
     }
 
     public addWarning(warning: string) {
-        this._warnings.push(warning);
+        this._warnings.push('- ' + warning);
     }
 
     public getWarnings() {

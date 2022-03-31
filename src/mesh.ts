@@ -93,6 +93,10 @@ export class Mesh extends Warnable {
             throw new CustomError('No triangles were loaded');
         }
 
+        if (this._tris.length >= 100_000) {
+            this.addWarning(`The imported mesh has ${this._tris.length} triangles, consider simplifying it in a DDC such as Blender`);
+        }
+
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
         for (let triIndex = 0; triIndex < this.getTriangleCount(); ++triIndex) {
