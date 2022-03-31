@@ -70,26 +70,37 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Transition to ray-based voxelisation**
 * 🟢 **Dithering**
 
-0.5
-* ⚪ Support for simplifying complex meshes
+[0.5](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.5-alpha)
 * 🟢 **Load custom block palettes and texture atlases**
+  * Added custom tool scripts for building atlases and palettes 
+* 🟢 **Major refactor for extendibility**
+  * New interfaces: IImporter, IVoxeliser, IBlockAssigner, IExporter
+* 🟢 **QoL editor impovements**
+  * Switch between Mesh/Voxel Mesh/Block Mesh rendering, zoom accessibility options, camera translation/centreing
+  * Debug draw options: grid, wireframe, normal, voxel algorithm debug
+* 🟢 **Headless launch option**
+* 🟢 **New voxelising algorithms**
+  * Normal-corrected ray-based (NCRB)
+  * BVH-accelerated ray-based
 * 🟢 **Optimise construction of voxel mesh vertex buffers**
+* 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
+
+0.6
+* ⚪ Support for simplifying complex meshes
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
-* 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 * ⚪ Alpha support
   * Alpha texture maps
   * Transparent blocks
-* ⚪ Export to .nbt (structure blocks)
-* ⚪ Import from .gltf
+* ⚪ Importers for .fbx and .gltf
+* ⚪ Exporters for .nbt (structure blocks)
 
-0.6
+0.7
 * ⚪ Node.js C++ addons
 * ⚪ Block painting
 * ⚪ Building guides
 * ⚪ Slice viewer
-* ⚪ .fbx import support
 * ⚪ Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
 
 ## Disclaimer
