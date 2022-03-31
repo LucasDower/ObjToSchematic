@@ -1,12 +1,9 @@
 import { VoxelMeshParams, VoxelMesh } from '../voxel_mesh';
-import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
-import { Axes, axesToDirection, Ray, rayIntersectTriangle } from '../ray';
-import { Triangle, UVTriangle } from '../triangle';
-import { ASSERT, Bounds, LOG, RGB, UV } from '../util';
+import { Axes, axesToDirection, Ray } from '../ray';
+import { ASSERT, LOG } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
-import { DebugGeometryTemplates } from '../geometry';
 
 const bvhtree = require('bvh-tree');
 
