@@ -137,7 +137,7 @@ async function buildAtlas() {
     logBreak();
     log(LogStyle.Info, 'Checking assets are provided...');   
     
-    const texturesDirSetup = isDirSetup('./models', 'assets/minecraft/textures/block');
+    const texturesDirSetup = isDirSetup('./blocks', 'assets/minecraft/textures/block');
     ASSERT(texturesDirSetup, '/blocks is not setup correctly');
     log(LogStyle.Success, '/tools/blocks/ setup correctly');   
     

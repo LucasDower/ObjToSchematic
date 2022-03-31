@@ -1,5 +1,5 @@
 import { log, LogStyle } from './logging';
-import { RGB } from '../src/util';
+import { RGB, TOOLS_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
@@ -14,7 +14,7 @@ export const ASSERT = (condition: boolean, onFailMessage: string) => {
 };
 
 export function isDirSetup(relativePath: string, jarAssetDir: string) {
-    const dir = path.join(__dirname, relativePath);
+    const dir = path.join(TOOLS_DIR, relativePath);
     if (fs.existsSync(dir)) {
         if (fs.readdirSync(dir).length > 0) {
             return true;
