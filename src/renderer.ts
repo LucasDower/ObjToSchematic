@@ -65,8 +65,6 @@ export class Renderer {
         })!;
         twgl.addExtensionsToContext(this._gl);
 
-        this._setupOcclusions();
-
         this._modelsAvailable = 0;
         this._materialBuffers = [];
         this._voxelBuffer = new RenderBuffer([]);
@@ -187,13 +185,13 @@ export class Renderer {
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
     
-    public useVoxelMesh(voxelMesh: VoxelMesh) {
+    public useVoxelMesh(voxelMesh: VoxelMesh, ambientOcclusionEnabled: boolean) {
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
 
         LOG('Using voxel mesh');
         LOG(voxelMesh);
-        this._voxelBuffer = voxelMesh.createBuffer();
+        this._voxelBuffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
         this._voxelSize = voxelMesh?.getVoxelSize();
         
         // this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
@@ -298,70 +296,6 @@ export class Renderer {
 
     private _drawRegister(register: RenderBuffer, shaderProgram: twgl.ProgramInfo, uniforms: any) {
         this._drawBuffer(this._gl.TRIANGLES, register.getWebGLBuffer(), shaderProgram, uniforms);
-    }
-
-    private _setupOcclusions() {
-        // TODO: Find some for-loop to clean this up
-
-        // [Edge, Edge, Corner]
-        const occlusionNeighbours = [
-            [
-                // +X
-                [new Vector3(1, 1, 0), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
-                [new Vector3(1, -1, 0), new Vector3(1, 0, -1), new Vector3(1, -1, -1)],
-                [new Vector3(1, 1, 0), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
-                [new Vector3(1, -1, 0), new Vector3(1, 0, 1), new Vector3(1, -1, 1)],
-            ],
-
-            [
-                // -X
-                [new Vector3(-1, 1, 0), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1)],
-            ],
-
-            [
-                // +Y
-                [new Vector3(-1, 1, 0), new Vector3(0, 1, 1), new Vector3(-1, 1, 1)],
-                [new Vector3(-1, 1, 0), new Vector3(0, 1, -1), new Vector3(-1, 1, -1)],
-                [new Vector3(1, 1, 0), new Vector3(0, 1, 1), new Vector3(1, 1, 1)],
-                [new Vector3(1, 1, 0), new Vector3(0, 1, -1), new Vector3(1, 1, -1)],
-            ],
-
-            [
-                // -Y
-                [new Vector3(-1, -1, 0), new Vector3(0, -1, -1), new Vector3(-1, -1, -1)],
-                [new Vector3(-1, -1, 0), new Vector3(0, -1, 1), new Vector3(-1, -1, 1)],
-                [new Vector3(1, -1, 0), new Vector3(0, -1, -1), new Vector3(1, -1, -1)],
-                [new Vector3(1, -1, 0), new Vector3(0, -1, 1), new Vector3(1, -1, 1)],
-            ],
-
-            [
-                // + Z
-                [new Vector3(0, 1, 1), new Vector3(1, 0, 1), new Vector3(1, 1, 1)],
-                [new Vector3(0, -1, 1), new Vector3(1, 0, 1), new Vector3(1, -1, 1)],
-                [new Vector3(0, 1, 1), new Vector3(-1, 0, 1), new Vector3(-1, 1, 1)],
-                [new Vector3(0, -1, 1), new Vector3(-1, 0, 1), new Vector3(-1, -1, 1)],
-            ],
-
-            [
-                // -Z
-                [new Vector3(0, 1, -1), new Vector3(-1, 0, -1), new Vector3(-1, 1, -1)],
-                [new Vector3(0, -1, -1), new Vector3(-1, 0, -1), new Vector3(-1, -1, -1)],
-                [new Vector3(0, 1, -1), new Vector3(1, 0, -1), new Vector3(1, 1, -1)],
-                [new Vector3(0, -1, -1), new Vector3(1, 0, -1), new Vector3(1, -1, -1)],
-            ],
-        ];
-
-        this._occlusionNeighboursIndices = new Array<Array<Array<number>>>();
-        for (let i = 0; i < 6; ++i) {
-            const row = new Array<Array<number>>();
-            for (let j = 0; j < 4; ++j) {
-                row.push(occlusionNeighbours[i][j].map((x) => Renderer._getNeighbourIndex(x)));
-            }
-            this._occlusionNeighboursIndices.push(row);
-        }
     }
 
     public setModelToUse(meshType: MeshType) {

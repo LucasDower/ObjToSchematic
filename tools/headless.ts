@@ -21,7 +21,6 @@ void async function main() {
             desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
             useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
             textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-            ambientOcclusionEnabled: false,
         },
     });
     const blockMesh = _palette(voxelMesh, {

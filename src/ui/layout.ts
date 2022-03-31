@@ -58,8 +58,9 @@ export class UI {
             elements: {
                 'height': new SliderElement('Desired height', 3, 320, 0, 80),
                 'voxeliser': new ComboBoxElement('Algorithm', [
-                    { id: 'raybased', displayText: 'Ray-based' },
-                    { id: 'normalcorrectedraybased', displayText: 'NCRB (beta)' },
+                    { id: 'bvhraybased', displayText: 'BVH Ray-based' },
+                    { id: 'normalcorrectedraybased', displayText: 'NCRB' },
+                    { id: 'raybased', displayText: 'Ray-based (legacy)' },
                 ]),
                 'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
                     { id: 'on', displayText: 'On (recommended)' },

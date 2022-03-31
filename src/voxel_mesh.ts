@@ -18,7 +18,6 @@ export interface VoxelMeshParams {
     desiredHeight: number,
     useMultisampleColouring: boolean,
     textureFiltering: TextureFiltering,
-    ambientOcclusionEnabled: boolean, // TODO: Refactor into rendering
 }
 
 export class VoxelMesh {
@@ -97,7 +96,7 @@ export class VoxelMesh {
 
     // //////////////////////////////////////////////////////////////////////////
 
-    public createBuffer() {
+    public createBuffer(ambientOcclusionEnabled: boolean) {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
@@ -110,7 +109,7 @@ export class VoxelMesh {
             // Each vertex of a face needs the occlusion data for the other 3 vertices
             // in it's face, not just itself. Also flatten occlusion data.
             let occlusions: number[];
-            if (this._voxelMeshParams.ambientOcclusionEnabled) {
+            if (ambientOcclusionEnabled) {
                 occlusions = OcclusionManager.Get.getOcclusions(voxel.position, this);
             } else {
                 occlusions = OcclusionManager.Get.getBlankOcclusions();

@@ -231,6 +231,20 @@ export class Vector3 extends Hashable {
         return this;
     }
 
+    public floor() {
+        this.x = Math.floor(this.x);
+        this.y = Math.floor(this.y);
+        this.z = Math.floor(this.z);
+        return this;
+    }
+
+    public ceil() {
+        this.x = Math.ceil(this.x);
+        this.y = Math.ceil(this.y);
+        this.z = Math.ceil(this.z);
+        return this;
+    }
+
     // Begin IHashable interface
     override hash() {
         const p0 = 73856093;
