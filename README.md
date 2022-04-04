@@ -15,7 +15,8 @@
   <a href="#gallery">Gallery</a>
 </p>
 <p align="center">
-  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/node.js.yml/badge.svg" alt="Logo">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build.js.yml/badge.svg" alt="Logo">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests.js.yml/badge.svg" alt="Logo">
 </p>
 
 ![Preview](https://i.imgur.com/HgQaEIO.png)
