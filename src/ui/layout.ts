@@ -387,8 +387,11 @@ export class UI {
     }
 
     public enable(action: Action) {
-        LOG('enabling', action);
+        if (action >= Action.MAX) {
+            return;
+        }
 
+        LOG('enabling', action);
         // TODO: Remove once Simplify has been implemented
         if (action === Action.Simplify) {
             action = Action.Voxelise;
@@ -409,6 +412,10 @@ export class UI {
     }
 
     public disable(action: Action) {
+        if (action < 0) {
+            return;
+        }
+
         for (let i = action; i < Action.MAX; ++i) {
             const group = this._getActionGroup(i);
             LOG('disabling', group.label);
