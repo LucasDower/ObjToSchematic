@@ -12,6 +12,7 @@ export abstract class IExporter extends Warnable {
     public abstract convertToNBT(blockMesh: BlockMesh): NBT
     abstract getFormatFilter(): Electron.FileFilter;
     abstract getFormatName(): string;
+    abstract getFileExtension(): string;
 
     getFormatDisclaimer(): string | undefined {
         return;
@@ -108,6 +109,10 @@ export class Schematic extends IExporter {
 
     getFormatDisclaimer() {
         return 'Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.';
+    }
+
+    getFileExtension(): string {
+        return 'schematic';
     }
 }
 
@@ -281,5 +286,9 @@ export class Litematic extends IExporter {
 
     getFormatName() {
         return 'Litematic';
+    }
+
+    getFileExtension(): string {
+        return 'litematic';
     }
 }

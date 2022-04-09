@@ -208,7 +208,7 @@ export class AppContext {
         const exportFormat = this._ui.layout.export.elements.export.getCachedValue() as string;
         const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
 
-        const filePath = remote.dialog.showSaveDialogSync({
+        let filePath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',
             filters: [exporter.getFormatFilter()],
@@ -216,6 +216,10 @@ export class AppContext {
 
         ASSERT(this._loadedBlockMesh);
         if (filePath) {
+            const fileExtension = '.' + exporter.getFileExtension();
+            if (!filePath.endsWith(fileExtension)) {
+                filePath += fileExtension;
+            }
             exporter.export(this._loadedBlockMesh, filePath);
         }
 
