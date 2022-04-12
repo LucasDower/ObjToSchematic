@@ -17,7 +17,10 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import url from 'url';
+import { AppConfig } from './config';
 import { BASE_DIR, STATIC_DIR } from './util';
+
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -42,7 +45,9 @@ function createWindow() {
             enableRemoteModule: true,
         },
     });
-    // mainWindow.removeMenu();
+    if (!AppConfig.DEBUG_ENABLED) {
+        mainWindow.removeMenu();
+    }
     
     // Load index.html
     mainWindow.loadURL(url.format({
