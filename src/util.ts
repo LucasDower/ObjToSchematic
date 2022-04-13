@@ -207,17 +207,10 @@ export function buildRegex(...args: (string | RegExp)[]) {
     }).join(''));
 }
 
-export class CustomError extends Error {
+export class AppError extends Error {
     constructor(msg: string) {
         super(msg);
-        Object.setPrototypeOf(this, CustomError.prototype);
-    }
-}
-
-export class CustomWarning extends Error {
-    constructor(msg: string) {
-        super(msg);
-        Object.setPrototypeOf(this, CustomWarning.prototype);
+        Object.setPrototypeOf(this, AppError.prototype);
     }
 }
 
@@ -269,22 +262,6 @@ export class RegExpBuilder {
 
     public toRegExp(): RegExp {
         return new RegExp(this._components.join(''));
-    }
-}
-
-export class Warnable {
-    private _warnings: string[];
-
-    constructor() {
-        this._warnings = [];
-    }
-
-    public addWarning(warning: string) {
-        this._warnings.push('- ' + warning);
-    }
-
-    public getWarnings() {
-        return this._warnings;
     }
 }
 

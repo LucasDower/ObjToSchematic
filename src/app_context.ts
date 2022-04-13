@@ -3,7 +3,7 @@ import { Litematic, Schematic } from './schematic';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, ColourSpace, CustomError, CustomWarning, LOG, LOG_ERROR, LOG_WARN } from './util';
+import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, LOG_WARN } from './util';
 
 import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
@@ -13,22 +13,12 @@ import { RayVoxeliser } from './voxelisers/ray-voxeliser';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { NormalCorrectedRayVoxeliser } from './voxelisers/normal-corrected-ray-voxeliser';
 import { BVHRayVoxeliser } from './voxelisers/bvh-ray-voxeliser';
+import { StatusHandler } from './status';
+import { UIMessageBuilder } from './ui/misc';
+import { OutputStyle } from './ui/elements/output';
 
 /* eslint-disable */
-export enum ActionReturnType {
-    Success,
-    Warning,
-    Failure
-}
-/* eslint-enable */
-export interface ReturnStatus {
-    message: string,
-    type: ActionReturnType,
-    error?: unknown
-}
-
-/* eslint-disable */
-export enum Action {
+export enum EAction {
     Import = 0,
     Simplify = 1,
     Voxelise = 2,
@@ -38,21 +28,13 @@ export enum Action {
 }
 /* eslint-enable */
 
-const ReturnMessages = new Map<Action, { onSuccess: string, onFailure: string }>();
-ReturnMessages.set(Action.Import,   { onSuccess: 'Loaded mesh successfully',        onFailure: 'Failed to load mesh' });
-ReturnMessages.set(Action.Simplify, { onSuccess: 'Simplified mesh successfully',    onFailure: 'Failed to simplify mesh' });
-ReturnMessages.set(Action.Voxelise, { onSuccess: 'Voxelised mesh successfully',     onFailure: 'Failed to voxelise mesh' });
-ReturnMessages.set(Action.Palette,  { onSuccess: 'Assigned blocks successfully',    onFailure: 'Failed to assign blocks' });
-ReturnMessages.set(Action.Export,   { onSuccess: 'Exported structure successfully', onFailure: 'Failed to export structure' });
-
 export class AppContext {
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
-    private _warnings: string[];
     private _ui: UI;
 
-    private _actionMap = new Map<Action, {
+    private _actionMap = new Map<EAction, {
         action: () => void;
         onFailure?: () => void
     }>();
@@ -63,86 +45,91 @@ export class AppContext {
             throw Error('Could not load WebGL context');
         }
 
-        this._warnings = [];
-        this._actionMap.set(Action.Import, {
-            action: () => {
-                return this._import();
-            },
-            onFailure: () => {
-                this._loadedMesh = undefined;
-            },
-        });
-        this._actionMap.set(Action.Simplify, {
-            action: () => {
-                return this._simplify();
-            },
-        });
-        this._actionMap.set(Action.Voxelise, {
-            action: () => {
-                return this._voxelise();
-            },
-            onFailure: () => {
-                this._loadedVoxelMesh = undefined;
-            },
-        });
-        this._actionMap.set(Action.Palette, {
-            action: () => {
-                return this._palette();
-            },
-            onFailure: () => {
-                this._loadedBlockMesh = undefined;
-            },
-        });
-        this._actionMap.set(Action.Export, {
-            action: () => {
-                return this._export();
-            },
-        });
+        this._actionMap = new Map([
+            [
+                EAction.Import, {
+                    action: () => { return this._import(); },
+                    onFailure: () => { this._loadedMesh = undefined; },
+                },
+            ],
+            [
+                EAction.Simplify, {
+                    action: () => { return this._simplify(); },
+                },
+            ],
+            [
+                EAction.Voxelise, {
+                    action: () => { return this._voxelise(); },
+                    onFailure: () => { this._loadedVoxelMesh = undefined; },
+                },
+            ],
+            [
+                EAction.Palette, {
+                    action: () => { return this._palette(); },
+                    onFailure: () => { this._loadedBlockMesh = undefined; },
+                },
+            ],
+            [
+                EAction.Export, {
+                    action: () => { return this._export(); },
+                },
+            ],
+        ]);
 
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
 
-        // this._ui.disablePost(Action.Import);
-        this._ui.disable(Action.Simplify);
+        this._ui.disable(EAction.Simplify);
 
         Renderer.Get.toggleIsGridEnabled();
     }
 
-    public do(action: Action) {
-        this._ui.disable(action + 1);
-        this._warnings = [];
-        const groupName = this._ui.uiOrder[action];
+    public do(action: EAction) {
         LOG(`Doing ${action}`);
+        const groupName = this._ui.uiOrder[action];
+        this._ui.disable(action + 1);
         this._ui.cacheValues(action);
+        StatusHandler.Get.clear();
+
         const delegate = this._actionMap.get(action)!;
         try {
             delegate.action();
-        } catch (err: any) {
-            LOG_ERROR(err);
-            if (err instanceof CustomError) {
-                this._ui.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Failure);
-            } else if (err instanceof CustomWarning) {
-                this._ui.layoutDull[groupName].output.setMessage(err.message, ActionReturnType.Warning);
+        } catch (error: any) {
+            // On failure...
+            LOG_ERROR(error);
+            const message = new UIMessageBuilder();
+            if (error instanceof AppError) {
+                message.addHeading(StatusHandler.Get.getDefaultFailureMessage(action));
+                message.add(error.message);
             } else {
-                this._ui.layoutDull[groupName].output.setMessage(ReturnMessages.get(action)!.onFailure, ActionReturnType.Failure);
+                message.addBold(StatusHandler.Get.getDefaultFailureMessage(action));
             }
-            if (delegate.onFailure) {
-                delegate.onFailure();
-            }
+            this._ui.layoutDull[groupName].output.setMessage(message, 'error');
+            delegate.onFailure?.();
             return;
         }
 
-        const successMessage = ReturnMessages.get(action)!.onSuccess;
-        if (this._warnings.length !== 0) {
-            const allWarnings = this._warnings.join('<br>');
-            this._ui.layoutDull[groupName].output.setMessage(successMessage + `, with ${this._warnings.length} warning(s):` + '<br><b>' + allWarnings + '</b>', ActionReturnType.Warning);
+        // On success...
+        const message = new UIMessageBuilder();
+        if (StatusHandler.Get.hasStatusMessages('info')) {
+            message.addHeading(StatusHandler.Get.getDefaultSuccessMessage(action));
+            message.add(...StatusHandler.Get.getStatusMessages('info'));
         } else {
-            this._ui.layoutDull[groupName].output.setMessage(successMessage, ActionReturnType.Success);
+            message.addBold(StatusHandler.Get.getDefaultSuccessMessage(action));
         }
 
-        LOG(`Finished ${action}`);
+        let returnStyle: OutputStyle = 'success';
+        if (StatusHandler.Get.hasStatusMessages('warning')) {
+            message.addHeading('There were some warnings');
+            message.add(...StatusHandler.Get.getStatusMessages('warning'));
+            returnStyle = 'warning';
+        }
+        
+        this._ui.layoutDull[groupName].output.setMessage(message, returnStyle);
+
         this._ui.enable(action + 1);
+        LOG(`Finished ${action}`);
     }
 
     private _import() {
@@ -154,8 +141,6 @@ export class AppContext {
         this._loadedMesh = importer.toMesh();
         this._loadedMesh.processMesh();
         Renderer.Get.useMesh(this._loadedMesh);
-
-        this._warnings = this._loadedMesh.getWarnings();
     }
 
     private _simplify() {
@@ -164,13 +149,13 @@ export class AppContext {
 
     private _voxelise() {
         ASSERT(this._loadedMesh);
-        
+
         const uiElements = this._ui.layout.build.elements;
         const voxelMeshParams: VoxelMeshParams = {
             desiredHeight: uiElements.height.getCachedValue() as number,
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-            
+
         };
         const ambientOcclusionEnabled = uiElements.ambientOcclusion.getCachedValue() === 'on';
 
@@ -184,7 +169,7 @@ export class AppContext {
             ASSERT(voxeliserID === 'normalcorrectedraybased');
             voxeliser = new NormalCorrectedRayVoxeliser();
         }
-        
+
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
         Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusionEnabled);
     }
@@ -222,8 +207,6 @@ export class AppContext {
             }
             exporter.export(this._loadedBlockMesh, filePath);
         }
-
-        this._warnings = exporter.getWarnings();
     }
 
     public draw() {
@@ -237,6 +220,5 @@ export class AppContext {
 
     public addWarning(warning: string) {
         LOG_WARN(warning);
-        this._warnings.push(warning);
     }
 }

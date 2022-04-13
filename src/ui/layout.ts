@@ -4,7 +4,7 @@ import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { Action, AppContext } from '../app_context';
+import { EAction, AppContext } from '../app_context';
 import { ASSERT, ATLASES_DIR, LOG, PALETTES_DIR } from '../util';
 
 import fs from 'fs';
@@ -38,7 +38,7 @@ export class UI {
             },
             elementsOrder: ['input'],
             submitButton: new ButtonElement('Load mesh', () => {
-                this._appContext.do(Action.Import);
+                this._appContext.do(EAction.Import);
             }),
             output: new OutputElement(),
         },
@@ -49,7 +49,7 @@ export class UI {
             },
             elementsOrder: ['ratio'],
             submitButton: new ButtonElement('Simplify mesh', () => {
-                this._appContext.do(Action.Simplify);
+                this._appContext.do(EAction.Simplify);
             }),
             output: new OutputElement(),
         },
@@ -77,7 +77,7 @@ export class UI {
             },
             elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
-                this._appContext.do(Action.Voxelise);
+                this._appContext.do(EAction.Voxelise);
             }),
             output: new OutputElement(),
         },
@@ -97,7 +97,7 @@ export class UI {
             },
             elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],
             submitButton: new ButtonElement('Assign blocks', () => {
-                this._appContext.do(Action.Palette);
+                this._appContext.do(EAction.Palette);
             }),
             output: new OutputElement(),
         },
@@ -111,7 +111,7 @@ export class UI {
             },
             elementsOrder: ['export'],
             submitButton: new ButtonElement('Export structure', () => {
-                this._appContext.do(Action.Export);
+                this._appContext.do(EAction.Export);
             }),
             output: new OutputElement(),
         },
@@ -296,8 +296,8 @@ export class UI {
         document.getElementById('toolbar')!.innerHTML = toolbarHTML;
     }
 
-    public cacheValues(action: Action) {
-        const group = this._getActionGroup(action);
+    public cacheValues(action: EAction) {
+        const group = this._getEActionGroup(action);
         for (const elementName of group.elementsOrder) {
             LOG(`Caching ${elementName}`);
             const element = group.elements[elementName];
@@ -386,23 +386,23 @@ export class UI {
         return this._uiDull;
     }
 
-    public enable(action: Action) {
-        if (action >= Action.MAX) {
+    public enable(action: EAction) {
+        if (action >= EAction.MAX) {
             return;
         }
 
         LOG('enabling', action);
         // TODO: Remove once Simplify has been implemented
-        if (action === Action.Simplify) {
-            action = Action.Voxelise;
+        if (action === EAction.Simplify) {
+            action = EAction.Voxelise;
         }
-        const group = this._getActionGroup(action);
+        const group = this._getEActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);
         }
         group.submitButton.setEnabled(true);
         // Enable the post elements of the previous group
-        const prevGroup = this._getActionGroup(action - 1);
+        const prevGroup = this._getEActionGroup(action - 1);
         if (prevGroup && prevGroup.postElements) {
             ASSERT(prevGroup.postElementsOrder);
             for (const postElementName in prevGroup.postElements) {
@@ -411,13 +411,13 @@ export class UI {
         }
     }
 
-    public disable(action: Action) {
+    public disable(action: EAction) {
         if (action < 0) {
             return;
         }
 
-        for (let i = action; i < Action.MAX; ++i) {
-            const group = this._getActionGroup(i);
+        for (let i = action; i < EAction.MAX; ++i) {
+            const group = this._getEActionGroup(i);
             LOG('disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
@@ -434,7 +434,7 @@ export class UI {
             }
         }
         // Disable the post elements of the previous group
-        const prevGroup = this._getActionGroup(action - 1);
+        const prevGroup = this._getEActionGroup(action - 1);
         if (prevGroup && prevGroup.postElements) {
             ASSERT(prevGroup.postElementsOrder);
             for (const postElementName in prevGroup.postElements) {
@@ -443,7 +443,7 @@ export class UI {
         }
     }
 
-    private _getActionGroup(action: Action): Group {
+    private _getEActionGroup(action: EAction): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
     }

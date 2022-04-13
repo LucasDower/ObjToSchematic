@@ -1,11 +1,12 @@
 import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, RGB, CustomError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
+import { UV, ASSERT, RGB, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
 import path from 'path';
+import { StatusHandler } from '../status';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
@@ -106,7 +107,7 @@ export class ObjImporter extends IImporter {
                 
                 if (vertices.length < 3) {
                     // this.addWarning('')
-                    // throw new CustomError('Face data should have at least 3 vertices');
+                    // throw new AppError('Face data should have at least 3 vertices');
                 }
                 
                 const points: {
@@ -118,37 +119,37 @@ export class ObjImporter extends IImporter {
                 for (const vertex of vertices) {
                     const vertexData = vertex.split('/');
                     switch (vertexData.length) {
-                    case 1: {
-                        const index = parseInt(vertexData[0]);
-                        points.push({
-                            positionIndex: index,
-                            texcoordIndex: index,
-                            normalIndex: index,
-                        });
-                        break;
-                    }
-                    case 2: {
-                        const positionIndex = parseInt(vertexData[0]);
-                        const texcoordIndex = parseInt(vertexData[1]);
-                        points.push({
-                            positionIndex: positionIndex,
-                            texcoordIndex: texcoordIndex,
-                        });
-                        break;
-                    }
-                    case 3: {
-                        const positionIndex = parseInt(vertexData[0]);
-                        const texcoordIndex = parseInt(vertexData[1]);
-                        const normalIndex = parseInt(vertexData[2]);
-                        points.push({
-                            positionIndex: positionIndex,
-                            texcoordIndex: texcoordIndex,
-                            normalIndex: normalIndex,
-                        });
-                        break;
-                    }
-                    default:
-                        throw new CustomError(`Face data has unexpected number of vertex data: ${vertexData.length}`);
+                        case 1: {
+                            const index = parseInt(vertexData[0]);
+                            points.push({
+                                positionIndex: index,
+                                texcoordIndex: index,
+                                normalIndex: index,
+                            });
+                            break;
+                        }
+                        case 2: {
+                            const positionIndex = parseInt(vertexData[0]);
+                            const texcoordIndex = parseInt(vertexData[1]);
+                            points.push({
+                                positionIndex: positionIndex,
+                                texcoordIndex: texcoordIndex,
+                            });
+                            break;
+                        }
+                        case 3: {
+                            const positionIndex = parseInt(vertexData[0]);
+                            const texcoordIndex = parseInt(vertexData[1]);
+                            const normalIndex = parseInt(vertexData[2]);
+                            points.push({
+                                positionIndex: positionIndex,
+                                texcoordIndex: texcoordIndex,
+                                normalIndex: normalIndex,
+                            });
+                            break;
+                        }
+                        default:
+                            throw new AppError(`Face data has unexpected number of vertex data: ${vertexData.length}`);
                     }
                 }
 
@@ -244,7 +245,7 @@ export class ObjImporter extends IImporter {
         this._parseOBJ(filePath);
 
         if (this._mtlLibs.length === 0) {
-            this.addWarning('Could not find associated .mtl file');
+            StatusHandler.Get.add('warning', 'Could not find associated .mtl file');
         }
         for (let i = 0; i < this._mtlLibs.length; ++i) {
             const mtlLib = this._mtlLibs[i];
@@ -263,11 +264,11 @@ export class ObjImporter extends IImporter {
 
     private _parseOBJ(path: string) {
         if (!fs.existsSync(path)) {
-            throw new CustomError(`Could not find ${path}`);
+            throw new AppError(`Could not find ${path}`);
         }
         const fileContents = fs.readFileSync(path, 'utf8');
         if (fileContents.includes('�')) {
-            throw new CustomError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
+            throw new AppError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
         }
 
         fileContents.replace('\r', ''); // Convert Windows carriage return
@@ -288,8 +289,8 @@ export class ObjImporter extends IImporter {
                     parser.delegate(match.groups);
                 } catch (error) {
                     LOG_ERROR('Caught', error);
-                    if (error instanceof CustomError) {
-                        throw new CustomError(`Failed attempt to parse '${line}', because '${error.message}'`);
+                    if (error instanceof AppError) {
+                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
                 }
                 return;
@@ -300,14 +301,14 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new CustomError(`Failed to parse essential token for <b>${line}</b>`);
+            throw new AppError(`Failed to parse essential token for <b>${line}</b>`);
         }
     }
 
     private _parseMTL() {
         for (const mtlLib of this._mtlLibs) {
             if (!fs.existsSync(mtlLib)) {
-                throw new CustomError(`Could not find ${mtlLib}`);
+                throw new AppError(`Could not find ${mtlLib}`);
             }
             const fileContents = fs.readFileSync(mtlLib, 'utf8');
     
@@ -331,8 +332,8 @@ export class ObjImporter extends IImporter {
                 try {
                     parser.delegate(match.groups);
                 } catch (error) {
-                    if (error instanceof CustomError) {
-                        throw new CustomError(`Failed attempt to parse '${line}', because '${error.message}'`);
+                    if (error instanceof AppError) {
+                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
                 }
                 return;
@@ -343,7 +344,7 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new CustomError(`Failed to parse essential token for ${line}`);
+            throw new AppError(`Failed to parse essential token for ${line}`);
         }
     }
 

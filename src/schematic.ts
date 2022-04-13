@@ -4,9 +4,10 @@ import path from 'path';
 import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
 import { Vector3 } from './vector';
 import { BlockMesh } from './block_mesh';
-import { RESOURCES_DIR, Warnable } from './util';
+import { RESOURCES_DIR } from './util';
+import { StatusHandler } from './status';
 
-export abstract class IExporter extends Warnable {
+export abstract class IExporter {
     protected _sizeVector!: Vector3;
 
     public abstract convertToNBT(blockMesh: BlockMesh): NBT
@@ -70,8 +71,10 @@ export class Schematic extends IExporter {
         }
 
         if (unsupportedBlocks.size > 0) {
-            this.addWarning(`${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`);
-            // LOG('Unsupported blocks', unsupportedBlocks);
+            StatusHandler.Get.add(
+                'warning',
+                `${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`,
+            );
         }
 
         const nbt: NBT = {

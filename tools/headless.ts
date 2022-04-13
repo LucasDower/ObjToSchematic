@@ -56,29 +56,30 @@ interface ExportParams {
     exporter: IExporter;
 }
 
+// TODO: Log status messages
 function _import(params: ImportParams): Mesh {
     log(LogStyle.Info, 'Importing...');
     const importer = new ObjImporter();
     importer.parseFile(params.absoluteFilePathLoad);
-    for (const warning of importer.getWarnings()) {
-        log(LogStyle.Warning, warning);
-    }
     const mesh = importer.toMesh();
     mesh.processMesh();
     return mesh;
 }
 
+// TODO: Log status messages
 function _voxelise(mesh: Mesh, params: VoxeliseParams): VoxelMesh {
     log(LogStyle.Info, 'Voxelising...');
     const voxeliser: IVoxeliser = params.voxeliser;
     return voxeliser.voxelise(mesh, params.voxelMeshParams);
 }
 
+// TODO: Log status messages
 function _palette(voxelMesh: VoxelMesh, params: PaletteParams): BlockMesh {
     log(LogStyle.Info, 'Assigning blocks...');
     return BlockMesh.createFromVoxelMesh(voxelMesh, params.blockMeshParams);
 }
 
+// TODO: Log status messages
 function _export(blockMesh: BlockMesh, params: ExportParams) {
     log(LogStyle.Info, 'Exporting...');
     params.exporter.export(blockMesh, params.absoluteFilePathSave);

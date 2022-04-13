@@ -1,7 +1,7 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, CustomError } from './util';
+import { ColourSpace, AppError } from './util';
 import { Renderer } from './renderer';
 
 interface Block {
@@ -64,7 +64,7 @@ export class BlockMesh {
 
     public getVoxelMesh() {
         if (!this._voxelMesh) {
-            throw new CustomError('Could not get voxel mesh');
+            throw new AppError('Could not get voxel mesh');
         }
         return this._voxelMesh;
     }

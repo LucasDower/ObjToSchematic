@@ -1,11 +1,12 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
+import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
 
 import path from 'path';
 import fs from 'fs';
 import { Texture, TextureFiltering } from './texture';
+import { StatusHandler } from './status';
 
 interface VertexIndices {
     x: number;
@@ -27,7 +28,7 @@ export interface SolidMaterial { colour: RGB; type: MaterialType.solid }
 export interface TexturedMaterial { path: string; type: MaterialType.textured }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
-export class Mesh extends Warnable {
+export class Mesh {
     public readonly id: string;
 
     public _vertices: Vector3[];
@@ -40,7 +41,6 @@ export class Mesh extends Warnable {
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
-        super();
         this.id = getRandomID();
 
         this._vertices = vertices;
@@ -86,16 +86,24 @@ export class Mesh extends Warnable {
         // TODO: Check indices exist
 
         if (this._vertices.length === 0) {
-            throw new CustomError('No vertices were loaded');
+            throw new AppError('No vertices were loaded');
         }
 
         if (this._tris.length === 0) {
-            throw new CustomError('No triangles were loaded');
+            throw new AppError('No triangles were loaded');
         }
 
         if (this._tris.length >= 100_000) {
-            this.addWarning(`The imported mesh has ${this._tris.length} triangles, consider simplifying it in a DDC such as Blender`);
+            StatusHandler.Get.add(
+                'warning',
+                `The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`,
+            );
         }
+
+        StatusHandler.Get.add(
+            'info',
+            `${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`,
+        );
 
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
@@ -116,13 +124,16 @@ export class Mesh extends Warnable {
             }
         }
         if (giveNormalsWarning) {
-            this.addWarning('Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly');
-        }
+            StatusHandler.Get.add(
+                'warning',
+                'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
+            );
+        };
     }
 
     private _checkMaterials() {
         if (Object.keys(this._materials).length === 0) {
-            throw new CustomError('Loaded mesh has no materials');
+            throw new AppError('Loaded mesh has no materials');
         }
 
         // Check used materials exist
@@ -142,7 +153,10 @@ export class Mesh extends Warnable {
         }
         if (wasRemapped) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            this.addWarning('Some materials were not loaded correctly');
+            StatusHandler.Get.add(
+                'warning',
+                'Some materials were not loaded correctly',
+            );
             this._materials[debugName] = {
                 type: MaterialType.solid,
                 colour: RGB.white,
@@ -155,7 +169,10 @@ export class Mesh extends Warnable {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    this.addWarning(`Could not find ${material.path}`);
+                    StatusHandler.Get.add(
+                        'warning',
+                        `Could not find ${material.path}`,
+                    );
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {
                         type: MaterialType.solid,
@@ -185,7 +202,7 @@ export class Mesh extends Warnable {
         const centre = this.getBounds().getCentre();
         
         if (!centre.isNumber()) {
-            throw new CustomError('Could not find centre of mesh');
+            throw new AppError('Could not find centre of mesh');
         }
 
         // Translate each triangle
@@ -198,7 +215,7 @@ export class Mesh extends Warnable {
         const scaleFactor = Mesh.desiredHeight / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
-            throw new CustomError('<b>Could not scale mesh correctly</b>: Mesh is likely 2D, rotate it so that it has a non-zero height');
+            throw new AppError('Could not scale mesh correctly - mesh is likely 2D, rotate it so that it has a non-zero height');
         } else {
             this.scaleMesh(scaleFactor);
         }

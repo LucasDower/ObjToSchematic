@@ -1,5 +1,7 @@
 import { ASSERT } from '../../util';
-import { ActionReturnType } from '../../app_context';
+import { UIMessageBuilder } from '../misc';
+
+export type OutputStyle = 'success' | 'warning' | 'error';
 
 export class OutputElement {
     private _id: string;
@@ -25,18 +27,22 @@ export class OutputElement {
         element.classList.remove('border-error');
     }
 
-    public setMessage(message: string, returnType: ActionReturnType) {
+    public setMessage(message: UIMessageBuilder, style: OutputStyle) {
         const element = document.getElementById(this._id) as HTMLDivElement;
         ASSERT(element !== null);
 
         this.clearMessage();
-        element.innerHTML = message;
-        if (returnType === ActionReturnType.Success) {
-            element.classList.add('border-success');
-        } else if (returnType === ActionReturnType.Warning) {
-            element.classList.add('border-warning');
-        } else if (returnType === ActionReturnType.Failure) {
-            element.classList.add('border-error');
+        element.innerHTML = message.toString();
+        switch (style) {
+            case 'success':
+                element.classList.add('border-success');
+                break;
+            case 'warning':
+                element.classList.add('border-warning');
+                break;
+            case 'error':
+                element.classList.add('border-error');
+                break;
         }
     }
 }

@@ -89,15 +89,15 @@ export class Renderer {
         this._setupScene();
 
         switch (this._meshToUse) {
-        case MeshType.TriangleMesh:
-            this._drawMesh();
-            break;
-        case MeshType.VoxelMesh:
-            this._drawVoxelMesh();
-            break;
-        case MeshType.BlockMesh:
-            this._drawBlockMesh();
-            break;
+            case MeshType.TriangleMesh:
+                this._drawMesh();
+                break;
+            case MeshType.VoxelMesh:
+                this._drawVoxelMesh();
+                break;
+            case MeshType.BlockMesh:
+                this._drawBlockMesh();
+                break;
         };
 
         this._drawDebug();
