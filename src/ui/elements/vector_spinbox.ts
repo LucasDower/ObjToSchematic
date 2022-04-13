@@ -119,18 +119,18 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
             const elementZV = document.getElementById(this._id + '-vz') as HTMLDivElement;
 
             switch (this._dragging) {
-            case EAxis.X:
-                elementXK.classList.remove('spinbox-key-hover');
-                elementXV.classList.remove('spinbox-value-hover');
-                break;
-            case EAxis.Y:
-                elementYK.classList.remove('spinbox-key-hover');
-                elementYV.classList.remove('spinbox-value-hover');
-                break;
-            case EAxis.Z:
-                elementZK.classList.remove('spinbox-key-hover');
-                elementZV.classList.remove('spinbox-value-hover');
-                break;
+                case EAxis.X:
+                    elementXK.classList.remove('spinbox-key-hover');
+                    elementXV.classList.remove('spinbox-value-hover');
+                    break;
+                case EAxis.Y:
+                    elementYK.classList.remove('spinbox-key-hover');
+                    elementYV.classList.remove('spinbox-value-hover');
+                    break;
+                case EAxis.Z:
+                    elementZK.classList.remove('spinbox-key-hover');
+                    elementZV.classList.remove('spinbox-value-hover');
+                    break;
             }
             this._dragging = EAxis.None;
         });
@@ -145,15 +145,15 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
         this._lastClientX = e.clientX;
 
         switch (this._dragging) {
-        case EAxis.X:
-            this._value.x += deltaX;
-            break;
-        case EAxis.Y:
-            this._value.y += deltaX;
-            break;
-        case EAxis.Z:
-            this._value.z += deltaX;
-            break;
+            case EAxis.X:
+                this._value.x += deltaX;
+                break;
+            case EAxis.Y:
+                this._value.y += deltaX;
+                break;
+            case EAxis.Z:
+                this._value.z += deltaX;
+                break;
         }
 
         const elementXV = document.getElementById(this._id + '-vx') as HTMLDivElement;

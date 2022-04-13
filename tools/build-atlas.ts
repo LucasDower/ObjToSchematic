@@ -205,58 +205,58 @@ async function buildAtlas() {
 
         let faceData: { [face: string]: Texture } = {};
         switch (modelData.parent) {
-        case parentModel.CubeAll:
-            faceData = {
-                up: { name: modelData.textures.all },
-                down: { name: modelData.textures.all },
-                north: { name: modelData.textures.all },
-                south: { name: modelData.textures.all },
-                east: { name: modelData.textures.all },
-                west: { name: modelData.textures.all },
-            };
-            break;
-        case parentModel.CubeColumn:
-            faceData = {
-                up: { name: modelData.textures.end },
-                down: { name: modelData.textures.end },
-                north: { name: modelData.textures.side },
-                south: { name: modelData.textures.side },
-                east: { name: modelData.textures.side },
-                west: { name: modelData.textures.side },
-            };
-            break;
-        case parentModel.Cube:
-            faceData = {
-                up: { name: modelData.textures.up },
-                down: { name: modelData.textures.down },
-                north: { name: modelData.textures.north },
-                south: { name: modelData.textures.south },
-                east: { name: modelData.textures.east },
-                west: { name: modelData.textures.west },
-            };
-            break;
-        case parentModel.TemplateSingleFace:
-            faceData = {
-                up: { name: modelData.textures.texture },
-                down: { name: modelData.textures.texture },
-                north: { name: modelData.textures.texture },
-                south: { name: modelData.textures.texture },
-                east: { name: modelData.textures.texture },
-                west: { name: modelData.textures.texture },
-            };
-            break;
-        case parentModel.TemplateGlazedTerracotta:
-            faceData = {
-                up: { name: modelData.textures.pattern },
-                down: { name: modelData.textures.pattern },
-                north: { name: modelData.textures.pattern },
-                south: { name: modelData.textures.pattern },
-                east: { name: modelData.textures.pattern },
-                west: { name: modelData.textures.pattern },
-            };
-            break;
-        default:
-            return;
+            case parentModel.CubeAll:
+                faceData = {
+                    up: { name: modelData.textures.all },
+                    down: { name: modelData.textures.all },
+                    north: { name: modelData.textures.all },
+                    south: { name: modelData.textures.all },
+                    east: { name: modelData.textures.all },
+                    west: { name: modelData.textures.all },
+                };
+                break;
+            case parentModel.CubeColumn:
+                faceData = {
+                    up: { name: modelData.textures.end },
+                    down: { name: modelData.textures.end },
+                    north: { name: modelData.textures.side },
+                    south: { name: modelData.textures.side },
+                    east: { name: modelData.textures.side },
+                    west: { name: modelData.textures.side },
+                };
+                break;
+            case parentModel.Cube:
+                faceData = {
+                    up: { name: modelData.textures.up },
+                    down: { name: modelData.textures.down },
+                    north: { name: modelData.textures.north },
+                    south: { name: modelData.textures.south },
+                    east: { name: modelData.textures.east },
+                    west: { name: modelData.textures.west },
+                };
+                break;
+            case parentModel.TemplateSingleFace:
+                faceData = {
+                    up: { name: modelData.textures.texture },
+                    down: { name: modelData.textures.texture },
+                    north: { name: modelData.textures.texture },
+                    south: { name: modelData.textures.texture },
+                    east: { name: modelData.textures.texture },
+                    west: { name: modelData.textures.texture },
+                };
+                break;
+            case parentModel.TemplateGlazedTerracotta:
+                faceData = {
+                    up: { name: modelData.textures.pattern },
+                    down: { name: modelData.textures.pattern },
+                    north: { name: modelData.textures.pattern },
+                    south: { name: modelData.textures.pattern },
+                    east: { name: modelData.textures.pattern },
+                    west: { name: modelData.textures.pattern },
+                };
+                break;
+            default:
+                return;
         }
 
         for (const face of faces) {

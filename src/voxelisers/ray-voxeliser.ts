@@ -60,15 +60,15 @@ export class RayVoxeliser extends IVoxeliser {
                 ));
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
-                case Axes.x:
-                    voxelPosition = new Vector3(Math.round(intersection.x), intersection.y, intersection.z);
-                    break;
-                case Axes.y:
-                    voxelPosition = new Vector3(intersection.x, Math.round(intersection.y), intersection.z);
-                    break;
-                case Axes.z:
-                    voxelPosition = new Vector3(intersection.x, intersection.y, Math.round(intersection.z));
-                    break;
+                    case Axes.x:
+                        voxelPosition = new Vector3(Math.round(intersection.x), intersection.y, intersection.z);
+                        break;
+                    case Axes.y:
+                        voxelPosition = new Vector3(intersection.x, Math.round(intersection.y), intersection.z);
+                        break;
+                    case Axes.z:
+                        voxelPosition = new Vector3(intersection.x, intersection.y, Math.round(intersection.z));
+                        break;
                 }
 
                 let voxelColour: RGB;
