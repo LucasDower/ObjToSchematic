@@ -48,8 +48,9 @@ export class Renderer {
         buffer: RenderBuffer,
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
-    public _voxelBuffer: RenderBuffer;
-    private _blockBuffer: RenderBuffer;
+    public _voxelBuffer?: twgl.BufferInfo;
+    public _voxelBufferRaw?: any;
+    private _blockBuffer?: twgl.BufferInfo;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
@@ -67,8 +68,6 @@ export class Renderer {
 
         this._modelsAvailable = 0;
         this._materialBuffers = [];
-        this._voxelBuffer = new RenderBuffer([]);
-        this._blockBuffer = new RenderBuffer([]);
 
         this._debugBuffers = {};
         this._debugBuffers[MeshType.None] = {};
@@ -191,7 +190,9 @@ export class Renderer {
 
         LOG('Using voxel mesh');
         LOG(voxelMesh);
-        this._voxelBuffer = voxelMesh.createBuffer(ambientOcclusionEnabled);
+
+        this._voxelBufferRaw = voxelMesh.createBuffer(ambientOcclusionEnabled);
+        this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, this._voxelBufferRaw);
         this._voxelSize = voxelMesh?.getVoxelSize();
         
         // this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
@@ -217,7 +218,7 @@ export class Renderer {
 
         LOG('Using block mesh');
         LOG(blockMesh);
-        this._blockBuffer = blockMesh.createBuffer();
+        this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
         this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
         
         this._atlasTexture = twgl.createTexture(this._gl, {
@@ -275,21 +276,35 @@ export class Renderer {
     }
 
     private _drawVoxelMesh() {
-        this._drawRegister(this._voxelBuffer, ShaderManager.Get.voxelProgram, {
+        const shader = ShaderManager.Get.voxelProgram;
+        const uniforms = {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
             u_gridOffset: this._gridOffset.toArray(),
-        });
+        };
+        if (this._voxelBuffer) {
+            this._gl.useProgram(shader.program);
+            twgl.setBuffersAndAttributes(this._gl, shader, this._voxelBuffer);
+            twgl.setUniforms(shader, uniforms);
+            this._gl.drawElements(this._gl.TRIANGLES, this._voxelBuffer.numElements, this._gl.UNSIGNED_INT, 0);
+        }
     }
 
     private _drawBlockMesh() {
-        this._drawRegister(this._blockBuffer, ShaderManager.Get.blockProgram, {
+        const shader = ShaderManager.Get.blockProgram;
+        const uniforms = {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,
             u_atlasSize: BlockAtlas.Get.getAtlasSize(),
             u_gridOffset: this._gridOffset.toArray(),
-        });
+        };
+        if (this._blockBuffer) {
+            this._gl.useProgram(shader.program);
+            twgl.setBuffersAndAttributes(this._gl, shader, this._blockBuffer);
+            twgl.setUniforms(shader, uniforms);
+            this._gl.drawElements(this._gl.TRIANGLES, this._blockBuffer.numElements, this._gl.UNSIGNED_INT, 0);
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -304,10 +319,6 @@ export class Renderer {
             this._meshToUse = meshType;
             EventManager.Get.broadcast(EAppEvent.onModelActiveChanged, meshType);
         }
-    }
-
-    private static _getNeighbourIndex(neighbour: Vector3) {
-        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
     }
 
     private _setupScene() {

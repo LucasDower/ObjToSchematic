@@ -1,7 +1,8 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
-import { Voxel, VoxelMesh } from './voxel_mesh';
+import { FACES_PER_VOXEL, VERTICES_PER_FACE, Voxel, VoxelMesh, VoxelMeshBufferComponentOffsets } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, AppError } from './util';
+import { ColourSpace, AppError, ASSERT } from './util';
+import { ComponentSize } from './buffer';
 import { Renderer } from './renderer';
 
 interface Block {
@@ -70,21 +71,53 @@ export class BlockMesh {
     }
 
     public createBuffer() {
-        const buffer = Renderer.Get._voxelBuffer.copy();
+        ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
-        const blockTexcoords: number[] = [];
-        for (const block of this._blocks) {
-            const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
-            for (const face of faceOrder) {
-                for (let i = 0; i < 4; ++i) {
-                    const texcoord = block.blockInfo.faces[face].texcoord;
-                    blockTexcoords.push(texcoord.u, texcoord.v);
+        const numBlocks = this._blocks.length;
+        const newBuffer = {
+            position: {
+                numComponents: ComponentSize.POSITION,
+                data: Renderer.Get._voxelBufferRaw!.position.data,
+            },
+            colour: {
+                numComponents: ComponentSize.COLOUR,
+                data: Renderer.Get._voxelBufferRaw!.colour.data,
+            },
+            occlusion: {
+                numComponents: ComponentSize.OCCLUSION,
+                data: Renderer.Get._voxelBufferRaw!.occlusion.data,
+            },
+            texcoord: {
+                numComponents: ComponentSize.TEXCOORD,
+                data: Renderer.Get._voxelBufferRaw!.texcoord.data,
+            },
+            normal: {
+                numComponents: ComponentSize.NORMAL,
+                data: Renderer.Get._voxelBufferRaw!.normal.data,
+            },
+            indices: {
+                numComponents: ComponentSize.INDICES,
+                data: Renderer.Get._voxelBufferRaw!.indices.data,
+            },
+            blockTexcoord: {
+                numComponents: ComponentSize.TEXCOORD,
+                data: new Float32Array(numBlocks * VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+        };
+
+        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+        let insertIndex = 0;
+        for (let i = 0; i < numBlocks; ++i) {
+            for (let f = 0; f < FACES_PER_VOXEL; ++f) {
+                const faceName = faceOrder[f];
+                const texcoord = this._blocks[i].blockInfo.faces[faceName].texcoord;
+                for (let v = 0; v < VERTICES_PER_FACE; ++v) {
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
                 }
             }
         }
-        buffer.attachNewAttribute({ name: 'blockTexcoord', numComponents: 2 }, blockTexcoords);
-        buffer.removeAttribute('colour');
 
-        return buffer;
+        return newBuffer;
     }
 }
