@@ -14,9 +14,13 @@ export class ArcballCamera {
     private readonly zFar: number;
     public aspect: number;
     
-    private _distance = new SmoothVariable(18.0, 0.025);
-    private _azimuth = new SmoothVariable(-1.0, 0.025);
-    private _elevation = new SmoothVariable(1.3, 0.025);
+    private readonly _defaultDistance = 18.0;
+    private readonly _defaultAzimuth = -1.0;
+    private readonly _defaultElevation = 1.3;
+
+    private _distance = new SmoothVariable(this._defaultDistance, 0.025);
+    private _azimuth = new SmoothVariable(this._defaultAzimuth, 0.025);
+    private _elevation = new SmoothVariable(this._defaultElevation, 0.025);
     private _target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
 
     private readonly up: v3.Vec3 = [0, 1, 0];
@@ -151,9 +155,16 @@ export class ArcballCamera {
 
     public reset() {
         this._target.setTarget(new Vector3(0, 0, 0));
-        this._distance.setTarget(18.0);
-        this._azimuth.setTarget(-1.0);
-        this._elevation.setTarget(1.3);
+        this._distance.setTarget(this._defaultDistance);
+        this._azimuth.setTarget(this._defaultAzimuth);
+        this._elevation.setTarget(this._defaultElevation);
+
+        while (this._azimuth.getActual() < this._defaultAzimuth - Math.PI) {
+            this._azimuth.setActual(this._azimuth.getActual() + Math.PI * 2);
+        }
+        while (this._azimuth.getActual() > this._defaultAzimuth + Math.PI) {
+            this._azimuth.setActual(this._azimuth.getActual() - Math.PI * 2);
+        }
     }
 
     /*

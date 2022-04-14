@@ -306,6 +306,10 @@ export class SmoothVariable {
         this._target = target;
     }
 
+    public setActual(actual: number) {
+        this._actual = actual;
+    }
+
     public tick() {
         this._actual += (this._target - this._actual) * this._smoothing;
     }
