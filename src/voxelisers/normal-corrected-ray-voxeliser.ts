@@ -20,7 +20,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _size!: Vector3;
     private _offset!: Vector3;
 
-    public override voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         this._voxelMeshParams = voxelMeshParams;

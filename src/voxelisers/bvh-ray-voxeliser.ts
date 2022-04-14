@@ -12,7 +12,7 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    public override voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
         const voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         const scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);

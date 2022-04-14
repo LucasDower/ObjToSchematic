@@ -4,9 +4,21 @@ import { Vector3 } from '../vector';
 import { Mesh } from '../mesh';
 import { VoxelMesh, VoxelMeshParams} from '../voxel_mesh';
 import { TextureFiltering } from '../texture';
+import { StatusHandler } from '../status';
 
 export abstract class IVoxeliser {
-    public abstract voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh;
+    public voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+        const voxelMesh = this._voxelise(mesh, voxelMeshParams);
+
+        StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
+
+        const dim = voxelMesh.getBounds().getDimensions().addScalar(1);
+        StatusHandler.Get.add('info', `Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
+
+        return voxelMesh;
+    }
+
+    protected abstract _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh;
 
     protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): RGB {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();

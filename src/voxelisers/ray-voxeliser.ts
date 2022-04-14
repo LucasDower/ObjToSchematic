@@ -19,7 +19,7 @@ export class RayVoxeliser extends IVoxeliser {
     private _scale!: number;
     private _offset!: Vector3;
 
-    public override voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
         this._voxelMeshParams = voxelMeshParams;
