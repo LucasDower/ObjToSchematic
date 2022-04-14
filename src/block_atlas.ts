@@ -106,9 +106,12 @@ export class BlockAtlas {
         const missingBlocks: string[] = [];
         for (let paletteBlockIndex = palette.blocks.length - 1; paletteBlockIndex >= 0; --paletteBlockIndex) {
             const paletteBlockName = palette.blocks[paletteBlockIndex];
-            if (this._atlasBlocks.findIndex((x) => x.name === paletteBlockName) === -1) {
+            const atlasBlockIndex = this._atlasBlocks.findIndex((x) => x.name === paletteBlockName);
+            if (atlasBlockIndex === -1) {
                 missingBlocks.push(paletteBlockName);
                 palette.blocks.splice(paletteBlockIndex, 1);
+            } else {
+                this._paletteBlockToBlockInfoIndex.set(paletteBlockName, atlasBlockIndex);
             }
         }
         if (missingBlocks.length > 0) {
@@ -135,16 +138,16 @@ export class BlockAtlas {
 
         for (const paletteBlockName of this._palette) {
             // TODO: Optimise Use hash map for  blockIndex instead of linear search
-            const blockIndex: number = this._atlasBlocks.findIndex((x) => x.name === paletteBlockName);
-            if (blockIndex !== -1) {
-                const block: BlockInfo = this._atlasBlocks[blockIndex];
-                const blockAvgColour = block.colour as RGB;
-                const distance = RGB.distance(blockAvgColour, voxelColour, colourSpace);
+            const blockIndex: (number | undefined) = this._paletteBlockToBlockInfoIndex.get(paletteBlockName);
+            ASSERT(blockIndex !== undefined);
+            
+            const block: BlockInfo = this._atlasBlocks[blockIndex];
+            const blockAvgColour = block.colour as RGB;
+            const distance = RGB.distance(blockAvgColour, voxelColour, colourSpace);
 
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    blockChoiceIndex = blockIndex;
-                }
+            if (distance < minDistance) {
+                minDistance = distance;
+                blockChoiceIndex = blockIndex;
             }
         }
 
