@@ -3,15 +3,6 @@ import { ASSERT } from './util';
 
 import * as twgl from 'twgl.js';
 
-export namespace ComponentSize {
-    export const TEXCOORD = 2;
-    export const POSITION = 3;
-    export const COLOUR = 3;
-    export const NORMAL = 3;
-    export const INDICES = 3;
-    export const OCCLUSION = 4;
-}
-
 export interface Attribute {
     name: string,
     numComponents: number
