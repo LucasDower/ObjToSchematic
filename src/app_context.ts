@@ -1,5 +1,6 @@
 import { UI } from './ui/layout';
-import { Litematic, Schematic } from './schematic';
+import { Schematic } from './exporters/schematic_exporter';
+import { Litematic } from './exporters/litematic_exporter';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
