@@ -1,9 +1,10 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR } from './util';
+import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR, AppError, LOG_WARN } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
 import path from 'path';
+import { StatusHandler } from './status';
 
 export interface TextureInfo {
     name: string
@@ -33,12 +34,13 @@ interface BlockPalette {
 /* eslint-enable */
 export class BlockAtlas {
     private _cachedBlocks: HashMap<Vector3, number>;
-    private _blocks: Array<BlockInfo>;
+    private _atlasBlocks: Array<BlockInfo>;
     private _palette: string[];
     private _atlasSize: number;
     private _atlasLoaded: boolean;
     private _paletteLoaded: boolean;
     private _atlasTextureID?: string;
+    private _paletteBlockToBlockInfoIndex: Map<string, number>;
 
     private static _instance: BlockAtlas;
     public static get Get() {
@@ -47,11 +49,12 @@ export class BlockAtlas {
 
     private constructor() {
         this._cachedBlocks = new HashMap(0);
-        this._blocks = [];
+        this._atlasBlocks = [];
         this._atlasSize = 0;
         this._atlasLoaded = false;
         this._palette = [];
         this._paletteLoaded = false;
+        this._paletteBlockToBlockInfoIndex = new Map();
     }
 
     public loadAtlas(atlasID: string) {
@@ -68,8 +71,8 @@ export class BlockAtlas {
         const json = JSON.parse(blocksString);
         this._atlasSize = json.atlasSize;
         this._atlasTextureID = atlasID;
-        this._blocks = json.blocks;
-        for (const block of this._blocks) {
+        this._atlasBlocks = json.blocks;
+        for (const block of this._atlasBlocks) {
             block.colour = new RGB(
                 block.colour.r,
                 block.colour.g,
@@ -77,10 +80,18 @@ export class BlockAtlas {
             );
         }
 
+        if (this._atlasBlocks.length === 0) {
+            throw new AppError('The chosen atlas has no blocks');
+        }
+
+        StatusHandler.Get.add('info', `Atlas '${atlasID}' has data for ${this._atlasBlocks.length} blocks`);
+
         this._atlasLoaded = true;
     }
 
     public loadPalette(paletteID: string) {
+        ASSERT(this._atlasLoaded, 'An atlas must be loaded before a palette');
+
         this._cachedBlocks = new HashMap(1024);
 
         const paletteDir = path.join(PALETTES_DIR, paletteID + '.palette');
@@ -88,6 +99,24 @@ export class BlockAtlas {
 
         const palette: BlockPalette = JSON.parse(fs.readFileSync(paletteDir, 'utf8'));
         this._palette = palette.blocks;
+        StatusHandler.Get.add('info', `Palette '${paletteID}' has data for ${this._palette.length} blocks`);
+
+        // Count the number of palette blocks that are missing from the atlas
+        // For example, loading an old atlas with a new palette
+        const missingBlocks: string[] = [];
+        for (let paletteBlockIndex = palette.blocks.length - 1; paletteBlockIndex >= 0; --paletteBlockIndex) {
+            const paletteBlockName = palette.blocks[paletteBlockIndex];
+            if (this._atlasBlocks.findIndex((x) => x.name === paletteBlockName) === -1) {
+                missingBlocks.push(paletteBlockName);
+                palette.blocks.splice(paletteBlockIndex, 1);
+            }
+        }
+        if (missingBlocks.length > 0) {
+            StatusHandler.Get.add('warning', `${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
+            LOG_WARN('Blocks missing atlas textures', missingBlocks);
+        }
+
+        StatusHandler.Get.add('info', `There are ${this._palette.length} valid blocks to assign from`);
 
         this._paletteLoaded = true;
     }
@@ -98,27 +127,33 @@ export class BlockAtlas {
 
         const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
         if (cachedBlockIndex) {
-            return this._blocks[cachedBlockIndex];
+            return this._atlasBlocks[cachedBlockIndex];
         }
 
         let minDistance = Infinity;
         let blockChoiceIndex!: number;
 
-        for (let i = 0; i < this._blocks.length; ++i) {
-            const block: BlockInfo = this._blocks[i];
-            if (this._palette.includes(block.name)) {
+        for (const paletteBlockName of this._palette) {
+            // TODO: Optimise Use hash map for  blockIndex instead of linear search
+            const blockIndex: number = this._atlasBlocks.findIndex((x) => x.name === paletteBlockName);
+            if (blockIndex !== -1) {
+                const block: BlockInfo = this._atlasBlocks[blockIndex];
                 const blockAvgColour = block.colour as RGB;
                 const distance = RGB.distance(blockAvgColour, voxelColour, colourSpace);
 
                 if (distance < minDistance) {
                     minDistance = distance;
-                    blockChoiceIndex = i;
+                    blockChoiceIndex = blockIndex;
                 }
             }
         }
 
+        if (blockChoiceIndex === undefined) {
+            throw new AppError('The chosen palette does not have suitable blocks');
+        }
+
         this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
-        return this._blocks[blockChoiceIndex];
+        return this._atlasBlocks[blockChoiceIndex];
     }
 
     public getAtlasSize() {
