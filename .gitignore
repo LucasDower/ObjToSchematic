@@ -1,11 +1,10 @@
 /node_modules
 ObjToSchematic-win32-x64
-/resources/*.obj
-/resources/*.mtl
-/resources/atlases/*.atlas
-!/resources/atlases/vanilla.atlas
-/resources/atlases/*.png
-!/resources/atlases/vanilla.png
+/res/atlases/*.atlas
+/res/atlases/*.png
+!/res/atlases/vanilla.atlas
+!/res/atlases/vanilla.png
+/res/palettes/empty.palette
 /dist
 /tools/blocks
 /tools/models
