@@ -17,6 +17,7 @@ test('Voxelise solid 2x2 cube', () => {
         desiredHeight: 2,
         useMultisampleColouring: false,
         textureFiltering: TextureFiltering.Nearest,
+        enableAmbientOcclusion: false,
     });
 
     const expectedVoxels = [

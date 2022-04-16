@@ -4,7 +4,7 @@ import { Litematic } from './exporters/litematic_exporter';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, LOG_WARN } from './util';
+import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, LOG_WARN, TIME_START, TIME_END } from './util';
 
 import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
@@ -156,9 +156,8 @@ export class AppContext {
             desiredHeight: uiElements.height.getCachedValue() as number,
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-
+            enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
-        const ambientOcclusionEnabled = uiElements.ambientOcclusion.getCachedValue() === 'on';
 
         const voxeliserID = uiElements.voxeliser.getCachedValue();
         let voxeliser: IVoxeliser;
@@ -171,8 +170,16 @@ export class AppContext {
             voxeliser = new NormalCorrectedRayVoxeliser();
         }
 
-        this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
-        Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, ambientOcclusionEnabled);
+        TIME_START('Voxelising');
+        {
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
+        }
+        TIME_END('Voxelising');
+        TIME_START('Render Voxel Mesh');
+        {
+            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelMeshParams.enableAmbientOcclusion);
+        }
+        TIME_END('Render Voxel Mesh');
     }
 
     private _palette() {

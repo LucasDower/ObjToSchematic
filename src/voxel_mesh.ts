@@ -5,7 +5,7 @@ import { HashMap } from './hash_map';
 import { Mesh } from './mesh';
 import { OcclusionManager } from './occlusion';
 import { TextureFiltering } from './texture';
-import { Bounds, RGB } from './util';
+import { ASSERT, Bounds, RGB } from './util';
 import { Vector3 } from './vector';
 
 export interface Voxel {
@@ -18,6 +18,7 @@ export interface VoxelMeshParams {
     desiredHeight: number,
     useMultisampleColouring: boolean,
     textureFiltering: TextureFiltering,
+    enableAmbientOcclusion: boolean,
 }
 
 export class VoxelMesh {
@@ -30,6 +31,8 @@ export class VoxelMesh {
     private _voxels: Voxel[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _bounds: Bounds;
+    private _neighbourMap: Map<string, { value: number }>;
+    private _calculateNeighbours: boolean;
 
     public constructor(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
         this.debugBuffer = new RenderBuffer([
@@ -43,7 +46,9 @@ export class VoxelMesh {
         this._voxelSize = 8.0 / Math.round(voxelMeshParams.desiredHeight);
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
+        this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
+        this._calculateNeighbours = voxelMeshParams.enableAmbientOcclusion;
     }
 
     public getVoxels() {
@@ -65,9 +70,13 @@ export class VoxelMesh {
         return this._mesh;
     }
 
+
     public addVoxel(pos: Vector3, colour: RGB) {
+        pos.round();
+
         const voxelIndex = this._voxelsHash.get(pos);
         if (voxelIndex !== undefined) {
+            // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
             const voxelColour = voxel.colour.toVector3();
             voxelColour.mulScalar(voxel.collisions);
@@ -76,6 +85,7 @@ export class VoxelMesh {
             voxelColour.divScalar(voxel.collisions);
             voxel.colour = RGB.fromVector3(voxelColour);
         } else {
+            // This is a new voxel
             this._voxels.push({
                 position: pos,
                 colour: colour,
@@ -83,6 +93,7 @@ export class VoxelMesh {
             });
             this._voxelsHash.add(pos, this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
+            this._updateNeighbours(pos);
         }
     }
 
@@ -98,9 +109,70 @@ export class VoxelMesh {
         return this._voxels.length;
     }
 
+    private _neighbours = [
+        new Vector3(1, 1, -1),
+        new Vector3(0, 1, -1),
+        new Vector3(-1, 1, -1),
+        new Vector3(1, 0, -1),
+        new Vector3(-1, 0, -1),
+        new Vector3(1, -1, -1),
+        new Vector3(0, -1, -1),
+        new Vector3(-1, -1, -1),
+        new Vector3(1, 1, 0),
+        new Vector3(-1, 1, 0),
+        new Vector3(1, -1, 0),
+        new Vector3(-1, -1, 0),
+        new Vector3(1, 1, 1),
+        new Vector3(0, 1, 1),
+        new Vector3(-1, 1, 1),
+        new Vector3(1, 0, 1),
+        new Vector3(-1, 0, 1),
+        new Vector3(1, -1, 1),
+        new Vector3(0, -1, 1),
+        new Vector3(-1, -1, 1),
+    ];
+
+    private _updateNeighbours(pos: Vector3) {
+        if (this._calculateNeighbours) {
+            for (const neighbourOffset of this._neighbours) {
+                const neighbour = Vector3.add(pos, neighbourOffset);
+                const inverseOffset = neighbourOffset.copy().negate();
+                const inverseIndex = OcclusionManager.getNeighbourIndex(inverseOffset);
+                // ASSERT(inverseIndex >= 0 && inverseIndex < 27);
+                const neighbourData = this.getNeighbours(neighbour);
+                neighbourData.value |= (1 << inverseIndex);
+                // ASSERT((this.getNeighbours(neighbour).value & (1 << inverseIndex)) !== 0);
+            }
+        }
+    }
+
+    private _stringified: string = '';
+    public getNeighbours(pos: Vector3) {
+        this._stringified = pos.stringify();
+        const neighbours = this._neighbourMap.get(this._stringified);
+        if (neighbours === undefined) {
+            this._neighbourMap.set(this._stringified, { value: 0 });
+            return this._neighbourMap.get(this._stringified)!;
+        } else {
+            return neighbours;
+        }
+    }
+
+    public getNeighbourhoodMap() {
+        return this._neighbourMap;
+    }
+
+    /*
+     * Returns true if a voxel at position 'pos' has a neighbour with offset 'offset'
+     * Offset must be a vector that exists within this._neighbours defined above
+     */
+    public hasNeighbour(pos: Vector3, offset: Vector3): boolean {
+        return (this.getNeighbours(pos).value & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
+    }
+
     // //////////////////////////////////////////////////////////////////////////
 
-    public createBuffer(ambientOcclusionEnabled: boolean) {
+    public createBuffer(enableAmbientOcclusion: boolean) {
         const numVoxels = this._voxels.length;
         const newBuffer = {
             position: {
@@ -134,11 +206,11 @@ export class VoxelMesh {
             const voxel = this._voxels[i];
             const voxelColourArray = voxel.colour.toArray();
             const voxelPositionArray = voxel.position.toArray();
-            
+
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
                 newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
             }
-            
+
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
                 newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 3];
             }
@@ -154,8 +226,8 @@ export class VoxelMesh {
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
                 newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
             }
-            
-            if (ambientOcclusionEnabled) {
+
+            if (enableAmbientOcclusion) {
                 const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, this);
                 for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
                     newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];

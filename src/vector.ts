@@ -13,6 +13,18 @@ export class Vector3 extends Hashable {
         this.z = z;
     }
 
+    public set(x: number, y: number, z: number) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
+    public setFrom(vec: Vector3) {
+        this.x = vec.x;
+        this.y = vec.y;
+        this.z = vec.z;
+    }
+
     static fromArray(arr: number[]) {
         ASSERT(arr.length === 3);
         return new Vector3(arr[0], arr[1], arr[2]);
@@ -257,4 +269,8 @@ export class Vector3 extends Hashable {
         return this.x == other.x && this.y == other.y && this.z == other.z;
     }
     // End IHashable interface
+
+    public stringify() {
+        return `${this.x}_${this.y}_${this.z}`;
+    }
 }
