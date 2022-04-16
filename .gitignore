@@ -1,5 +1,6 @@
 /node_modules
 ObjToSchematic-win32-x64
+ObjToSchematic-darwin-x64
 /res/atlases/*.atlas
 /res/atlases/*.png
 !/res/atlases/vanilla.atlas
@@ -9,3 +10,4 @@ ObjToSchematic-win32-x64
 /tools/blocks
 /tools/models
 notes.txt
+*.DS_Store
