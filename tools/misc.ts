@@ -67,7 +67,7 @@ export function getMinecraftDir(): string {
         case 'darwin': // MacOS
             return path.join(process.env.HOME!, './Library/Application Support/minecraft');
         case 'win32': // Windows
-            return path.join(getMinecraftDir(), './.minecraft');
+            return path.join(process.env.APPDATA!, './.minecraft');
         default:
             return path.join(require('os').homedir(), '/.minecraft');
     }
