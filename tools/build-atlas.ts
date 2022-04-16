@@ -1,6 +1,6 @@
 import { ATLASES_DIR, RGB, TOOLS_DIR, UV } from '../src/util';
-import { log, logBreak, LogStyle } from './logging';
-import { isDirSetup, ASSERT, getAverageColour, getPermission } from './misc';
+import { log, LogStyle } from './logging';
+import { isDirSetup, ASSERT, getAverageColour, getPermission, getMinecraftDir } from './misc';
 
 import fs from 'fs';
 import path from 'path';
@@ -13,12 +13,23 @@ const copydir = require('copy-dir');
 
 void async function main() {
     await getPermission();
-    logBreak();
+    checkMinecraftInstallation();
     cleanupDirectories();
     await fetchModelsAndTextures();
     await buildAtlas();
     cleanupDirectories();
 }();
+
+function checkMinecraftInstallation() {
+    const dir = getMinecraftDir();
+    if (!fs.existsSync(dir)) {
+        log(LogStyle.Failure, `Could not find ${dir}`);
+        log(LogStyle.Failure, 'To use this tool you need to install Minecraft Java Edition');
+        process.exit(1);
+    } else {
+        log(LogStyle.Success, `Found Minecraft Java Edition installation at ${dir}`);
+    }
+}
 
 function cleanupDirectories() {
     fs.rmSync(path.join(TOOLS_DIR, '/blocks'), { recursive: true, force: true });
@@ -26,7 +37,7 @@ function cleanupDirectories() {
 }
 
 async function getResourcePack() {
-    const resourcePacksDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks');
+    const resourcePacksDir = path.join(getMinecraftDir(), './resourcepacks');
     if (!fs.existsSync(resourcePacksDir)) {
         log(LogStyle.Failure, 'Could not find .minecraft/resourcepacks\n');
         process.exit(1);
@@ -58,7 +69,7 @@ async function getResourcePack() {
 }
 
 function fetchVanillModelsAndTextures(fetchTextures: boolean) {
-    const versionsDir = path.join(process.env.APPDATA!, './.minecraft/versions');
+    const versionsDir = path.join(getMinecraftDir(), './versions');
     ASSERT(fs.existsSync(versionsDir), 'Could not find .minecraft/versions');
     log(LogStyle.Info, '.minecraft/versions found successfully');
 
@@ -97,7 +108,6 @@ function fetchVanillModelsAndTextures(fetchTextures: boolean) {
 
 async function fetchModelsAndTextures() {
     const resourcePack = await getResourcePack();
-    logBreak();
     await fetchVanillModelsAndTextures(true);
     if (resourcePack === 'Vanilla') {
         return;
@@ -105,7 +115,7 @@ async function fetchModelsAndTextures() {
 
     log(LogStyle.Warning, 'Non-16x16 texture packs are not supported');
 
-    const resourcePackDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks', resourcePack);
+    const resourcePackDir = path.join(getMinecraftDir(), './resourcepacks', resourcePack);
     if (fs.lstatSync(resourcePackDir).isDirectory()) {
         log(LogStyle.Info, `Resource pack '${resourcePack}' is a directory`);
         const blockTexturesSrc = path.join(resourcePackDir, 'assets/minecraft/textures/block');
@@ -134,7 +144,6 @@ async function fetchModelsAndTextures() {
 
 async function buildAtlas() {
     // Check /blocks and /models is setup correctly
-    logBreak();
     log(LogStyle.Info, 'Checking assets are provided...');   
     
     const texturesDirSetup = isDirSetup('./blocks', 'assets/minecraft/textures/block');
@@ -146,7 +155,6 @@ async function buildAtlas() {
     log(LogStyle.Success, '/tools/models/ setup correctly');   
 
     // Load the ignore list
-    logBreak();
     log(LogStyle.Info, 'Loading ignore list...');
     let ignoreList: Array<string> = [];
     const ignoreListPath = path.join(TOOLS_DIR, './ignore-list.txt');

@@ -28,9 +28,3 @@ export function log(style: LogStyle, message: string) {
         /* eslint-enable */
     }
 }
-
-export function logBreak() {
-    /* eslint-disable */
-    console.log()
-    /* eslint-enable */
-}

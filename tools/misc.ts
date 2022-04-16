@@ -44,7 +44,7 @@ export function getAverageColour(image: PNG) {
 }
 
 export async function getPermission() {
-    const directory = path.join(process.env.APPDATA!, '.minecraft');
+    const directory = getMinecraftDir();
     log(LogStyle.Info, `This script requires files inside of ${directory}`);
     const { permission } = await prompt.get({
         properties: {
@@ -59,5 +59,16 @@ export async function getPermission() {
     const responseYes = ['Y', 'y'].includes(permission as string);
     if (!responseYes) {
         process.exit(0);
+    }
+}
+
+export function getMinecraftDir(): string {
+    switch (process.platform) {
+        case 'darwin': // MacOS
+            return path.join(process.env.HOME!, './Library/Application Support/minecraft');
+        case 'win32': // Windows
+            return path.join(getMinecraftDir(), './.minecraft');
+        default:
+            return path.join(require('os').homedir(), '/.minecraft');
     }
 }
