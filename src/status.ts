@@ -47,7 +47,7 @@ export class StatusHandler {
                 return 'Successfully simplified mesh';
             case EAction.Voxelise:
                 return 'Successfully voxelised mesh';
-            case EAction.Palette:
+            case EAction.Assign:
                 return 'Successfully assigned blocks';
             case EAction.Export:
                 return 'Successfully exported mesh';
@@ -64,7 +64,7 @@ export class StatusHandler {
                 return 'Failed to simplify mesh';
             case EAction.Voxelise:
                 return 'Failed to voxelise mesh';
-            case EAction.Palette:
+            case EAction.Assign:
                 return 'Failed to assign blocks';
             case EAction.Export:
                 return 'Failed to export mesh';

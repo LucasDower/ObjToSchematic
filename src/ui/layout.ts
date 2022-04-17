@@ -29,7 +29,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'simplify', 'build', 'palette', 'export'];
+    public uiOrder = ['import', 'simplify', 'build', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -81,8 +81,8 @@ export class UI {
             }),
             output: new OutputElement(),
         },
-        'palette': {
-            label: 'Palette',
+        'assign': {
+            label: 'Assign',
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
@@ -97,7 +97,7 @@ export class UI {
             },
             elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],
             submitButton: new ButtonElement('Assign blocks', () => {
-                this._appContext.do(EAction.Palette);
+                this._appContext.do(EAction.Assign);
             }),
             output: new OutputElement(),
         },

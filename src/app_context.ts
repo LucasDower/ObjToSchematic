@@ -23,7 +23,7 @@ export enum EAction {
     Import = 0,
     Simplify = 1,
     Voxelise = 2,
-    Palette = 3,
+    Assign = 3,
     Export = 4,
     MAX = 5,
 }
@@ -65,8 +65,8 @@ export class AppContext {
                 },
             ],
             [
-                EAction.Palette, {
-                    action: () => { return this._palette(); },
+                EAction.Assign, {
+                    action: () => { return this._assign(); },
                     onFailure: () => { this._loadedBlockMesh = undefined; },
                 },
             ],
@@ -183,10 +183,10 @@ export class AppContext {
         TIME_END('Render Voxel Mesh');
     }
 
-    private _palette() {
+    private _assign() {
         ASSERT(this._loadedVoxelMesh);
 
-        const uiElements = this._ui.layout.palette.elements;
+        const uiElements = this._ui.layout.assign.elements;
         const blockMeshParams: BlockMeshParams = {
             textureAtlas: uiElements.textureAtlas.getCachedValue(),
             blockPalette: uiElements.blockPalette.getCachedValue(),
