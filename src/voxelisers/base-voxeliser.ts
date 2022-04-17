@@ -12,7 +12,7 @@ export abstract class IVoxeliser {
 
         StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
 
-        const dim = voxelMesh.getBounds().getDimensions().addScalar(1);
+        const dim = voxelMesh.getBounds().getDimensions().add(1);
         StatusHandler.Get.add('info', `Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
 
         return voxelMesh;

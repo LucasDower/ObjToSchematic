@@ -38,7 +38,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
         bounds.min.floor();
         bounds.max.ceil();
 
-        const planeDims = Vector3.sub(bounds.max, bounds.min).addScalar(1);
+        const planeDims = Vector3.sub(bounds.max, bounds.min).add(1);
         const numRays = (planeDims.x * planeDims.y) + (planeDims.x * planeDims.z) + (planeDims.y * planeDims.z);
         const rays = new Array<Ray>(numRays);
         let rayIndex = 0;

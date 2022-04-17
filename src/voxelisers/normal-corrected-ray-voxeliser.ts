@@ -92,7 +92,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                 if (this._voxelMeshParams!.useMultisampleColouring) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
-                        const samplePosition = Vector3.add(voxelPosition, Vector3.random().addScalar(-0.5));
+                        const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
                         samples.push(this.__getVoxelColour(triangle, materialName, samplePosition));
                     }
                     voxelColour = RGB.averageFrom(samples);

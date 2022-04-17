@@ -103,8 +103,8 @@ export class DebugGeometryTemplates {
     }
 
     public static cube(centre: Vector3, size: number, colour: RGB): AttributeData {
-        const min = Vector3.subScalar(centre, size/2);
-        const max = Vector3.addScalar(centre, size/2);
+        const min = Vector3.sub(centre, size/2);
+        const max = Vector3.add(centre, size/2);
         const bounds = new Bounds(min, max);
         return this.bounds(bounds, colour);
     }

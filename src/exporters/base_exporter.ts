@@ -19,7 +19,7 @@ export abstract class IExporter {
 
     export(blockMesh: BlockMesh, filePath: string): boolean {
         const bounds = blockMesh.getVoxelMesh()?.getBounds();
-        this._sizeVector = Vector3.sub(bounds.max, bounds.min).addScalar(1);
+        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this.convertToNBT(blockMesh);
 

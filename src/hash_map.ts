@@ -1,9 +1,9 @@
-export abstract class Hashable {
-    abstract hash(): number;
-    abstract equals(other: Hashable): boolean;
+export interface IHashable {
+    hash(): number;
+    equals(other: IHashable): boolean;
 }
 
-export class HashSet<T extends Hashable> {
+export class HashSet<T extends IHashable> {
     private _numBins: number;
     protected _bins: Array<Array<T>>;
 
@@ -40,7 +40,7 @@ export class HashSet<T extends Hashable> {
 }
 
 
-export class HashMap<K extends Hashable, V> {
+export class HashMap<K extends IHashable, V> {
     private _numBins: number;
     protected _bins: Array<Array<{key: K, value: V}>>;
 

@@ -1,13 +1,12 @@
-import { Hashable } from './hash_map';
+import { IHashable } from './hash_map';
 import { ASSERT } from './util';
 
-export class Vector3 extends Hashable {
+export class Vector3 implements IHashable {
     public x: number;
     public y: number;
     public z: number;
 
     constructor(x: number, y: number, z: number) {
-        super();
         this.x = x;
         this.y = y;
         this.z = z;
@@ -34,14 +33,6 @@ export class Vector3 extends Hashable {
         return [this.x, this.y, this.z];
     }
 
-    static add(vecA: Vector3, vecB: Vector3) {
-        return new Vector3(
-            vecA.x + vecB.x,
-            vecA.y + vecB.y,
-            vecA.z + vecB.z,
-        );
-    }
-
     static random() {
         return new Vector3(
             Math.random(),
@@ -61,56 +52,7 @@ export class Vector3 extends Hashable {
         );
     }
 
-    add(vec: Vector3) {
-        this.x += vec.x;
-        this.y += vec.y;
-        this.z += vec.z;
-        return this;
-    }
-
-    static addScalar(vec: Vector3, scalar: number) {
-        return new Vector3(
-            vec.x + scalar,
-            vec.y + scalar,
-            vec.z + scalar,
-        );
-    }
-
-    addScalar(scalar: number) {
-        this.x += scalar;
-        this.y += scalar;
-        this.z += scalar;
-        return this;
-    }
-
-    static sub(vecA: Vector3, vecB: Vector3) {
-        return new Vector3(
-            vecA.x - vecB.x,
-            vecA.y - vecB.y,
-            vecA.z - vecB.z,
-        );
-    }
-
-    sub(vec: Vector3) {
-        this.x -= vec.x;
-        this.y -= vec.y;
-        this.z -= vec.z;
-        return this;
-    }
-
-    static subScalar(vec: Vector3, scalar: number) {
-        return new Vector3(
-            vec.x - scalar,
-            vec.y - scalar,
-            vec.z - scalar,
-        );
-    }
-
-    static dot(vecA: Vector3, vecB: Vector3) {
-        return vecA.x * vecB.x + vecA.y * vecB.y + vecA.z * vecB.z;
-    }
-
-    static copy(vec: Vector3) {
+    public static copy(vec: Vector3) {
         return new Vector3(
             vec.x,
             vec.y,
@@ -118,12 +60,48 @@ export class Vector3 extends Hashable {
         );
     }
 
-    copy() {
-        return new Vector3(
-            this.x,
-            this.y,
-            this.z,
-        );
+    public static add(vec: Vector3, toAdd: (Vector3 | number)) {
+        return Vector3.copy(vec).add(toAdd);
+    }
+
+    public static sub(vec: Vector3, toAdd: (Vector3 | number)) {
+        return Vector3.copy(vec).sub(toAdd);
+    }
+
+    public add(toAdd: (Vector3 | number)) {
+        if (toAdd instanceof Vector3) {
+            this.x += toAdd.x;
+            this.y += toAdd.y;
+            this.z += toAdd.z;
+            return this;
+        } else {
+            this.x += toAdd;
+            this.y += toAdd;
+            this.z += toAdd;
+            return this;
+        }
+    }
+
+    public sub(toAdd: (Vector3 | number)) {
+        if (toAdd instanceof Vector3) {
+            this.x -= toAdd.x;
+            this.y -= toAdd.y;
+            this.z -= toAdd.z;
+            return this;
+        } else {
+            this.x -= toAdd;
+            this.y -= toAdd;
+            this.z -= toAdd;
+            return this;
+        }
+    }
+
+    static dot(vecA: Vector3, vecB: Vector3) {
+        return vecA.x * vecB.x + vecA.y * vecB.y + vecA.z * vecB.z;
+    }
+
+    public copy() {
+        return Vector3.copy(this);
     }
 
     static mulScalar(vec: Vector3, scalar: number) {
@@ -258,14 +236,14 @@ export class Vector3 extends Hashable {
     }
 
     // Begin IHashable interface
-    override hash() {
+    public hash() {
         const p0 = 73856093;
         const p1 = 19349663;
         const p2 = 83492791;
         return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2);
     }
 
-    override equals(other: Vector3) {
+    public equals(other: Vector3) {
         return this.x == other.x && this.y == other.y && this.z == other.z;
     }
     // End IHashable interface
