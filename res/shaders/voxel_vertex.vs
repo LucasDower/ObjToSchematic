@@ -1,3 +1,5 @@
+precision mediump float;
+
 uniform mat4 u_worldViewProjection;
 uniform float u_voxelSize;
 uniform vec3 u_gridOffset;

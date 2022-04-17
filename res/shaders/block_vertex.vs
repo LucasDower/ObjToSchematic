@@ -1,3 +1,5 @@
+precision mediump float;
+
 uniform mat4 u_worldViewProjection;
 uniform sampler2D u_texture;
 uniform float u_voxelSize;
