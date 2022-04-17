@@ -177,7 +177,8 @@ export class AppContext {
         TIME_END('Voxelising');
         TIME_START('Render Voxel Mesh');
         {
-            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelMeshParams.enableAmbientOcclusion);
+            const voxelSize = 8.0 / voxelMeshParams.desiredHeight;
+            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxelMeshParams.enableAmbientOcclusion);
         }
         TIME_END('Render Voxel Mesh');
     }

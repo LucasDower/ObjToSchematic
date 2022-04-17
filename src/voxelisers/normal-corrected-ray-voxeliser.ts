@@ -22,7 +22,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
 
     protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
         this._mesh = mesh;
-        this._voxelMesh = new VoxelMesh(mesh, voxelMeshParams);
+        this._voxelMesh = new VoxelMesh();
         this._voxelMeshParams = voxelMeshParams;
 
         this._scale = (voxelMeshParams.desiredHeight) / Mesh.desiredHeight;
@@ -56,11 +56,6 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
                 const intersectionWorld = Vector3.divScalar(intersection, this._scale);
-                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.cross(
-                    intersectionWorld,
-                    0.1,
-                    RGB.magenta,
-                ));
                 
                 // Move transition away from normal
                 const norm = normals.v0.normalise();
@@ -81,12 +76,6 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                         break;
                 }
                 voxelPosition.round();
-
-                this._voxelMesh!.debugBuffer.add(DebugGeometryTemplates.arrow(
-                    intersectionWorld,
-                    Vector3.divScalar(voxelPosition, this._scale),
-                    RGB.magenta,
-                ));
 
                 let voxelColour: RGB;
                 if (this._voxelMeshParams!.useMultisampleColouring) {

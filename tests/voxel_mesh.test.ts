@@ -6,14 +6,7 @@ import { LOG, RGB } from '../src/util';
 import { OcclusionManager } from '../src/occlusion';
 
 test('Voxel neighbours', () => {
-    const mesh = new Mesh([], [], [], [], {});
-    const voxelMesh = new VoxelMesh(mesh, {
-        desiredHeight: 0,
-        textureFiltering: TextureFiltering.Nearest,
-        useMultisampleColouring: false,
-        enableAmbientOcclusion: true,
-    });
-
+    const voxelMesh = new VoxelMesh();
     voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.white);
 
     expect(voxelMesh.getNeighbours(new Vector3(1, 2, 3)).value).toBe(0);

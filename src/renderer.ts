@@ -184,7 +184,7 @@ export class Renderer {
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
     
-    public useVoxelMesh(voxelMesh: VoxelMesh, ambientOcclusionEnabled: boolean) {
+    public useVoxelMesh(voxelMesh: VoxelMesh, voxelSize: number, ambientOcclusionEnabled: boolean) {
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
         EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
 
@@ -193,9 +193,8 @@ export class Renderer {
 
         this._voxelBufferRaw = voxelMesh.createBuffer(ambientOcclusionEnabled);
         this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, this._voxelBufferRaw);
-        this._voxelSize = voxelMesh?.getVoxelSize();
-        
-        // this._translate = new Vector3(0, voxelMesh.getBounds().getDimensions().y/2 *  voxelMesh.getVoxelSize(), 0);
+        this._voxelSize = voxelSize;
+
         const dimensions = voxelMesh.getBounds().getDimensions();
         this._gridOffset = new Vector3(
             dimensions.x % 2 === 0 ? 0 : -0.5,
@@ -203,9 +202,8 @@ export class Renderer {
             dimensions.z % 2 === 0 ? 0 : -0.5,
         );
 
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, voxelMesh.getVoxelSize());
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89));
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev] = voxelMesh.debugBuffer;
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize);
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89), this._voxelSize);
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
@@ -219,14 +217,13 @@ export class Renderer {
         LOG('Using block mesh');
         LOG(blockMesh);
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
-        this._voxelSize = blockMesh.getVoxelMesh().getVoxelSize();
         
         this._atlasTexture = twgl.createTexture(this._gl, {
             src: BlockAtlas.Get.getAtlasTexturePath(),
             mag: this._gl.NEAREST,
         });
         
-        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, blockMesh.getVoxelMesh().getVoxelSize());
+        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize);
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);

@@ -22,33 +22,18 @@ export interface VoxelMeshParams {
 }
 
 export class VoxelMesh {
-    public debugBuffer: RenderBuffer;
-
-    private _mesh: Mesh;
-    private _voxelMeshParams: VoxelMeshParams;
-
-    private _voxelSize: number;
     private _voxels: Voxel[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
     private _calculateNeighbours: boolean;
 
-    public constructor(mesh: Mesh, voxelMeshParams: VoxelMeshParams) {
-        this.debugBuffer = new RenderBuffer([
-            { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
-        ]);
-
-        this._mesh = mesh;
-        this._voxelMeshParams = voxelMeshParams;
-
-        this._voxelSize = 8.0 / Math.round(voxelMeshParams.desiredHeight);
+    public constructor(calculateNeighbours: boolean = true) {
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
-        this._calculateNeighbours = voxelMeshParams.enableAmbientOcclusion;
+        this._calculateNeighbours = calculateNeighbours;
     }
 
     public getVoxels() {
@@ -65,11 +50,6 @@ export class VoxelMesh {
             return this._voxels[voxelIndex];
         }
     }
-
-    public getMesh() {
-        return this._mesh;
-    }
-
 
     public addVoxel(pos: Vector3, colour: RGB) {
         pos.round();
@@ -95,10 +75,6 @@ export class VoxelMesh {
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
-    }
-
-    public getVoxelSize() {
-        return this._voxelSize;
     }
 
     public getBounds() {

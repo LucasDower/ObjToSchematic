@@ -343,7 +343,7 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGB): RenderBuffer {
+    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGB, voxelSize: number): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 3 },
@@ -355,7 +355,6 @@ export class DebugGeometryTemplates {
             dimensions.y % 2 === 0 ? 0 : -0.5,
             dimensions.z % 2 === 0 ? 0 : -0.5,
         );
-        const voxelSize = voxelMesh.getVoxelSize();
         for (const voxel of voxelMesh.getVoxels()) {
             buffer.add(DebugGeometryTemplates.cube(
                 Vector3.mulScalar(Vector3.add(voxel.position, gridOffset), voxelSize), voxelSize, colour,
