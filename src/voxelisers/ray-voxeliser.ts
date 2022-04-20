@@ -6,7 +6,6 @@ import { Triangle, UVTriangle } from '../triangle';
 import { Bounds, RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
-import { DebugGeometryTemplates } from '../geometry';
 
 /**
  * This voxeliser works by projecting rays onto each triangle

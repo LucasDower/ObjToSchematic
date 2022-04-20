@@ -6,7 +6,6 @@ import { Triangle, UVTriangle } from '../triangle';
 import { Bounds, RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
-import { DebugGeometryTemplates } from '../geometry';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -54,9 +53,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         
         rayList.forEach((ray) => {
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
-            if (intersection) {
-                const intersectionWorld = Vector3.divScalar(intersection, this._scale);
-                
+            if (intersection) {                
                 // Move transition away from normal
                 const norm = normals.v0.normalise();
                 intersection.sub(Vector3.mulScalar(norm, 0.5));

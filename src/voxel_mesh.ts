@@ -1,11 +1,10 @@
-import { RenderBuffer, AttributeData } from './buffer';
+import { AttributeData } from './buffer';
 import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
-import { Mesh } from './mesh';
 import { OcclusionManager } from './occlusion';
 import { TextureFiltering } from './texture';
-import { ASSERT, Bounds, RGB } from './util';
+import { Bounds, RGB } from './util';
 import { Vector3 } from './vector';
 
 export interface Voxel {
