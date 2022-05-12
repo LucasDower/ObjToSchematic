@@ -45,7 +45,7 @@ export class UI {
         'simplify': {
             label: 'Simplify',
             elements: {
-                'ratio': new SliderElement('Ratio', 0.0, 1.0, 2, 0.5),
+                'ratio': new SliderElement('Ratio', 0.0, 1.0, 2, 0.5, 0.01),
             },
             elementsOrder: ['ratio'],
             submitButton: new ButtonElement('Simplify mesh', () => {
@@ -56,7 +56,7 @@ export class UI {
         'build': {
             label: 'Build',
             elements: {
-                'height': new SliderElement('Desired height', 3, 320, 0, 80),
+                'height': new SliderElement('Desired height', 3, 320, 0, 80, 1),
                 'voxeliser': new ComboBoxElement('Algorithm', [
                     { id: 'bvhraybased', displayText: 'BVH Ray-based' },
                     { id: 'normalcorrectedraybased', displayText: 'NCRB' },
