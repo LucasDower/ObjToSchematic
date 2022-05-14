@@ -84,6 +84,7 @@ export class AppContext {
         this._ui.disable(EAction.Simplify);
 
         Renderer.Get.toggleIsGridEnabled();
+        Renderer.Get.toggleIsAxesEnabled();
     }
 
     public do(action: EAction) {

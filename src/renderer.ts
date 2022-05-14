@@ -36,7 +36,6 @@ export class Renderer {
 
     private _backgroundColour = new RGB(0.125, 0.125, 0.125);
     private _atlasTexture?: WebGLTexture;
-    private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
 
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
@@ -55,6 +54,7 @@ export class Renderer {
     private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
+    private _axesEnabled: boolean;
 
     private static _instance: Renderer;
     public static get Get() {
@@ -79,6 +79,7 @@ export class Renderer {
 
         this._isGridComponentEnabled = {};
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
+        this._axesEnabled = false;
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -117,6 +118,11 @@ export class Renderer {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Grid];
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = isEnabled;
         EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, isEnabled);
+    }
+
+    public toggleIsAxesEnabled() {
+        this._axesEnabled = !this._axesEnabled;
+        EventManager.Get.broadcast(EAppEvent.onAxesEnabledChanged, this._axesEnabled);
     }
 
     public toggleIsWireframeEnabled() {
@@ -260,11 +266,13 @@ export class Renderer {
             }
         }
         // Draw axis
-        this._gl.disable(this._gl.DEPTH_TEST);
-        this._drawBuffer(this._gl.LINES, this._axisBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
-            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-        });
-        this._gl.enable(this._gl.DEPTH_TEST);
+        if (this._axesEnabled) {
+            this._gl.disable(this._gl.DEPTH_TEST);
+            this._drawBuffer(this._gl.LINES, this._axisBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+            });
+            this._gl.enable(this._gl.DEPTH_TEST);
+        }
     }
 
     private _drawMesh() {

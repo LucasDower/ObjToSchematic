@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-axis-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00abfb" fill="none" stroke-linecap="round" stroke-linejoin="round" id="axes-svg">
+  <path d="M17 20l3 -3l-3 -3" />
+  <path d="M4 17h16" />
+  <path d="M4 7l3 -3l3 3" />
+  <path d="M7 20v-16" />
+</svg>

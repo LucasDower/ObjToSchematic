@@ -5,6 +5,7 @@ export enum EAppEvent {
     onModelActiveChanged,
     onModelAvailableChanged,
     onGridEnabledChanged,
+    onAxesEnabledChanged,
     onWireframeEnabledChanged,
     onNormalsEnabledChanged,
     onDevViewEnabledChanged,

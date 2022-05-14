@@ -180,8 +180,14 @@ export class UI {
                         const isEnabled = args[0][0][0] as boolean;
                         return isEnabled;
                     }),
+                    'axes': new ToolbarItemElement('axes', () => {
+                        Renderer.Get.toggleIsAxesEnabled();
+                    }, EAppEvent.onAxesEnabledChanged, (...args: any[]) => {
+                        const isEnabled = args[0][0][0] as boolean;
+                        return isEnabled;
+                    }),
                 },
-                elementsOrder: ['grid'],
+                elementsOrder: ['grid', 'axes'],
             },
         },
         groupsOrder: ['viewmode', 'zoom', 'debug'],
