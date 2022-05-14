@@ -1,5 +1,5 @@
 import { UVTriangle, Triangle } from '../triangle';
-import { RGB, UV } from '../util';
+import { ASSERT, RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { Mesh } from '../mesh';
 import { VoxelMesh, VoxelMeshParams} from '../voxel_mesh';
@@ -20,7 +20,7 @@ export abstract class IVoxeliser {
 
     protected abstract _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh;
 
-    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): RGB {
+    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): (RGB | undefined) {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
         const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();
@@ -34,6 +34,10 @@ export abstract class IVoxeliser {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
+        
+        if (isNaN(uv.u) || isNaN(uv.v)) {
+            return undefined;
+        }
         
         return mesh.sampleMaterial(materialName, uv, filtering);
     }

@@ -90,7 +90,10 @@ export class BVHRayVoxeliser extends IVoxeliser {
                     position,
                     voxelMeshParams.textureFiltering,
                 );
-                voxelMesh.addVoxel(position, voxelColour);
+
+                if (voxelColour) {
+                    voxelMesh.addVoxel(position, voxelColour);
+                }
             }
         }
 
