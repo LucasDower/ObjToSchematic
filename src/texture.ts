@@ -73,10 +73,10 @@ export class Texture {
 
         const u = wayThrough(x, xL, xU);
         const v = wayThrough(y, yL, yU);
-        if (isNaN(x) || isNaN(y)) {
-            LOG('BAD');
+        
+        if (!(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0)) {
+            return RGB.magenta;
         }
-        ASSERT(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0, `UV out of range (${u}, ${v})`);
 
         const A = this._getFromXY(xL, yU).toVector3();
         const B = this._getFromXY(xU, yU).toVector3();
