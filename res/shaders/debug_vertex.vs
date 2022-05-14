@@ -3,9 +3,9 @@ precision mediump float;
 uniform mat4 u_worldViewProjection;
 
 attribute vec3 position;
-attribute vec3 colour;
+attribute vec4 colour;
 
-varying vec3 v_colour;
+varying vec4 v_colour;
 
 void main() { 
   v_colour = colour;

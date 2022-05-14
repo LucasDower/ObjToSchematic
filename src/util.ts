@@ -29,6 +29,13 @@ export enum ColourSpace {
 }
 /* eslint-enable */
 
+export type RGBA = {
+    r: number,
+    g: number,
+    b: number,
+    a: number
+}
+
 export class RGB {
     public r: number;
     public g: number;
@@ -61,6 +68,10 @@ export class RGB {
 
     public toArray(): number[] {
         return [this.r, this.g, this.b];
+    }
+
+    public toRGBA(a: number = 1.0): RGBA {
+        return { r: this.r, g: this.g, b: this.b, a: a };
     }
 
     public static distance(a: RGB, b: RGB, colourSpace: ColourSpace): number {

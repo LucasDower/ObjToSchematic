@@ -2,7 +2,7 @@ import * as twgl from 'twgl.js';
 import { Triangle, UVTriangle } from './triangle';
 import { Vector3 } from './vector';
 import { AttributeData, MergeAttributeData, RenderBuffer } from './buffer';
-import { ASSERT, Bounds, RGB } from './util';
+import { ASSERT, Bounds, RGB, RGBA } from './util';
 import { Mesh } from './mesh';
 import { VoxelMesh } from './voxel_mesh';
 
@@ -62,7 +62,7 @@ export class GeometryTemplates {
 }
 
 export class DebugGeometryTemplates {
-    public static cross(centre: Vector3, radius: number, colour: RGB): AttributeData {
+    public static cross(centre: Vector3, radius: number, colour: RGBA): AttributeData {
         return {
             indices: new Uint32Array([0, 1, 2, 3, 4, 5]),
             custom: {
@@ -75,18 +75,17 @@ export class DebugGeometryTemplates {
                     centre.x, centre.y, centre.z - radius,
                 ],
                 colour: [
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
                 ],
             },
         };
     }
 
-    public static line(start: Vector3, end: Vector3, colour: RGB): AttributeData {
+    public static line(start: Vector3, end: Vector3, colour: RGBA): AttributeData {
         return {
             indices: new Uint32Array([0, 1]),
             custom: {
@@ -95,21 +94,21 @@ export class DebugGeometryTemplates {
                     end.x, end.y, end.z,
                 ],
                 colour: [
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
                 ],
             },
         };
     }
 
-    public static cube(centre: Vector3, size: number, colour: RGB): AttributeData {
+    public static cube(centre: Vector3, size: number, colour: RGBA): AttributeData {
         const min = Vector3.sub(centre, size/2);
         const max = Vector3.add(centre, size/2);
         const bounds = new Bounds(min, max);
         return this.bounds(bounds, colour);
     }
 
-    public static bounds(bounds: Bounds, colour: RGB): AttributeData {
+    public static bounds(bounds: Bounds, colour: RGBA): AttributeData {
         return {
             indices: new Uint32Array([
                 0, 1,
@@ -137,20 +136,20 @@ export class DebugGeometryTemplates {
                     bounds.min.x, bounds.max.y, bounds.max.z,
                 ],
                 colour: [
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
-                    colour.r, colour.g, colour.b,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
+                    colour.r, colour.g, colour.b, colour.a,
                 ],
             },
         };
     }
 
-    public static circle(centre: Vector3, normal: Vector3, radius: number, colour: RGB, steps: number = 8): AttributeData {
+    public static circle(centre: Vector3, normal: Vector3, radius: number, colour: RGBA, steps: number = 8): AttributeData {
         const indices = [];
         const positions = [];
         const colours = [];
@@ -160,7 +159,7 @@ export class DebugGeometryTemplates {
             const point = circlePoints[i];
             positions.push(point.x, point.y, point.z);
             indices.push(i, (i+1) % steps);
-            colours.push(colour.r, colour.g, colour.b);
+            colours.push(colour.r, colour.g, colour.b, colour.a);
         }
 
         return {
@@ -172,7 +171,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static cone(tipCentre: Vector3, tipHeight: number, normal: Vector3, radius: number, colour: RGB, quarterSteps: number): AttributeData {
+    public static cone(tipCentre: Vector3, tipHeight: number, normal: Vector3, radius: number, colour: RGBA, quarterSteps: number): AttributeData {
         const indices = [];
         const positions = [];
         const colours = [];
@@ -186,11 +185,11 @@ export class DebugGeometryTemplates {
             const point = circlePoints[i];
             positions.push(point.x, point.y, point.z);
             indices.push(i, (i+1) % steps);
-            colours.push(colour.r, colour.g, colour.b);
+            colours.push(colour.r, colour.g, colour.b, colour.a);
         }
         // Add cone tip
         positions.push(tipCentre.x, tipCentre.y, tipCentre.z);
-        colours.push(colour.r, colour.g, colour.b);
+        colours.push(colour.r, colour.g, colour.b, colour.a);
         const tipIndex = steps;
         // Add cone lines
         for (let i = 0; i < 4; ++i) {
@@ -207,7 +206,7 @@ export class DebugGeometryTemplates {
         };
     }
 
-    public static arrow(start: Vector3, end: Vector3, colour: RGB): AttributeData {
+    public static arrow(start: Vector3, end: Vector3, colour: RGBA): AttributeData {
         const line = DebugGeometryTemplates.line(start, end, colour);
         const lineLength = Vector3.sub(end, start).magnitude();
         const coneHeight = 0.15 * lineLength;
@@ -222,10 +221,10 @@ export class DebugGeometryTemplates {
     public static grid(dimensions: Vector3, spacing?: number): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
         ]);
-        const COLOUR_MINOR = new RGB(0.15, 0.15, 0.15);
-        const COLOUR_MAJOR = new RGB(0.3, 0.3, 0.3);
+        const COLOUR_MINOR: RGBA = new RGB(0.5, 0.5, 0.5).toRGBA(0.3);
+        const COLOUR_MAJOR: RGBA = RGB.white.toRGBA(0.3);
         
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(-dimensions.x / 2, 0, -dimensions.z / 2),
@@ -273,10 +272,10 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static meshWireframe(mesh: Mesh, colour: RGB): RenderBuffer {
+    public static meshWireframe(mesh: Mesh, colour: RGBA): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
         ]);
 
         let v0: Vector3 = new Vector3(0, 0, 0);
@@ -298,10 +297,10 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGB, voxelSize: number): RenderBuffer {
+    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGBA, voxelSize: number): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
         ]);
 
         const dimensions = voxelMesh.getBounds().getDimensions();
@@ -319,10 +318,10 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static meshNormals(mesh: Mesh, colour: RGB): RenderBuffer {
+    public static meshNormals(mesh: Mesh, colour: RGBA): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
         ]);
 
         for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
