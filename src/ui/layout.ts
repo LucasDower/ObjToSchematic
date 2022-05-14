@@ -179,6 +179,8 @@ export class UI {
                     }, EAppEvent.onGridEnabledChanged, (...args: any[]) => {
                         const isEnabled = args[0][0][0] as boolean;
                         return isEnabled;
+                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
+                        return Renderer.Get.getActiveMeshType() !== MeshType.None;
                     }),
                     'axes': new ToolbarItemElement('axes', () => {
                         Renderer.Get.toggleIsAxesEnabled();
