@@ -52,6 +52,7 @@ export class Renderer {
     public _voxelBufferRaw?: any;
     private _blockBuffer?: twgl.BufferInfo;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
+    private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
 
@@ -78,6 +79,14 @@ export class Renderer {
 
         this._isGridComponentEnabled = {};
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
+
+        this._axisBuffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 3 },
+        ]);
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(1, 0, 0), new RGB(0.96, 0.21, 0.32)));
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 1, 0), new RGB(0.44, 0.64, 0.11)));
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 0, 1), new RGB(0.18, 0.52, 0.89)));
     }
 
     public update() {
@@ -202,7 +211,7 @@ export class Renderer {
             dimensions.z % 2 === 0 ? 0 : -0.5,
         );
 
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize);
+        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize, this._gridOffset.x === 0, this._gridOffset.z === 0);
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89), this._voxelSize);
         
         this._modelsAvailable = 2;
@@ -223,7 +232,7 @@ export class Renderer {
             mag: this._gl.NEAREST,
         });
         
-        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize);
+        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(true, true, true, this._voxelSize, this._gridOffset.x === 0, this._gridOffset.z === 0);
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
@@ -250,6 +259,12 @@ export class Renderer {
                 }
             }
         }
+        // Draw axis
+        this._gl.disable(this._gl.DEPTH_TEST);
+        this._drawBuffer(this._gl.LINES, this._axisBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+        });
+        this._gl.enable(this._gl.DEPTH_TEST);
     }
 
     private _drawMesh() {

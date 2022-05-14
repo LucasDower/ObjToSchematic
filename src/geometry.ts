@@ -210,8 +210,8 @@ export class DebugGeometryTemplates {
     public static arrow(start: Vector3, end: Vector3, colour: RGB): AttributeData {
         const line = DebugGeometryTemplates.line(start, end, colour);
         const lineLength = Vector3.sub(end, start).magnitude();
-        const coneHeight = 0.1 * lineLength;
-        const coneRadius = 0.1 * coneHeight;
+        const coneHeight = 0.15 * lineLength;
+        const coneRadius = 0.15 * coneHeight;
 
         const normal = Vector3.sub(end, start).normalise();
         const cone = DebugGeometryTemplates.cone(end, coneHeight, normal, coneRadius, colour, 1);
@@ -228,35 +228,6 @@ export class DebugGeometryTemplates {
         const gridRadius = 9.5;
         const gridColourMinor = new RGB(0.15, 0.15, 0.15);
         const gridColourMajor = new RGB(0.3, 0.3, 0.3);
-
-        if (axes) {
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(-gridRadius, 0, 0),
-                new Vector3(gridRadius, 0, 0),
-                new RGB(0.44, 0.64, 0.11),
-            ));
-            buffer.add(DebugGeometryTemplates.cone(
-                new Vector3(gridRadius, 0, 0),
-                0.5,
-                new Vector3(1, 0, 0),
-                0.1,
-                new RGB(0.44, 0.64, 0.11),
-                8,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                new Vector3(0, 0, -gridRadius),
-                new Vector3(0, 0, gridRadius),
-                new RGB(0.96, 0.21, 0.32)),
-            );
-            buffer.add(DebugGeometryTemplates.cone(
-                new Vector3(0, 0, gridRadius),
-                0.5,
-                new Vector3(0, 0, 1),
-                0.1,
-                new RGB(0.96, 0.21, 0.32),
-                8,
-            ));
-        }
 
         if (bounds) {
             buffer.add(DebugGeometryTemplates.line(
