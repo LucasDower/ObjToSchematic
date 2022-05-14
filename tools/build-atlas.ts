@@ -172,6 +172,7 @@ async function buildAtlas() {
         CubeAll = 'minecraft:block/cube_all',
         CubeColumn = 'minecraft:block/cube_column',
         CubeColumnHorizontal = 'minecraft:block/cube_column_horizontal',
+        CubeBottomTop = 'minecraft:block/cube_bottom_top',
         TemplateSingleFace = 'minecraft:block/template_single_face',
         TemplateGlazedTerracotta = 'minecraft:block/template_glazed_terracotta',
     }
@@ -227,6 +228,16 @@ async function buildAtlas() {
                 faceData = {
                     up: { name: modelData.textures.end },
                     down: { name: modelData.textures.end },
+                    north: { name: modelData.textures.side },
+                    south: { name: modelData.textures.side },
+                    east: { name: modelData.textures.side },
+                    west: { name: modelData.textures.side },
+                };
+                break;
+            case parentModel.CubeBottomTop:
+                faceData = {
+                    up: { name: modelData.textures.top },
+                    down: { name: modelData.textures.bottom },
                     north: { name: modelData.textures.side },
                     south: { name: modelData.textures.side },
                     east: { name: modelData.textures.side },

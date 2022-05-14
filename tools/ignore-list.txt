@@ -27,3 +27,15 @@ brown_mushroom_block_inventory.json
 red_mushroom_block_inventory.json
 mushroom_stem_inventory.json
 redstone_lamp_on.json
+piston_inventory.json
+sticky_piston_inventory.json
+barrel_open.json
+respawn_anchor_0.json
+respawn_anchor_1.json
+respawn_anchor_2.json
+respawn_anchor_3.json
+respawn_anchor_4.json
+sculk_catalyst.json
+sculk_catalyst_bloom.json
+tnt.json
+grass_block_snow.json
