@@ -94,8 +94,32 @@ export class UI {
                     { id: 'rgb', displayText: 'RGB (faster)' },
                     { id: 'lab', displayText: 'LAB (recommended, slow)' },
                 ]),
+                'fallable': new ComboBoxElement('Fallable blocks', [
+                    {
+                        id: 'replace-falling',
+                        displayText: 'Replace falling with solid',
+                        tooltip: 'Replace all blocks that can fall with solid blocks',
+                    },
+                    {
+                        id: 'replace-fallable',
+                        displayText: 'Replace fallable with solid',
+                        tooltip: 'Replace all blocks that will fall with solid blocks',
+                    },
+                    /*
+                    {
+                        id: 'place-string',
+                        displayText: 'Place string under',
+                        tooltip: 'Place string blocks under all blocks that would fall otherwise',
+                    },
+                    */
+                    {
+                        id: 'do-nothing',
+                        displayText: 'Do nothing',
+                        tooltip: 'Let the block fall',
+                    },
+                ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -242,6 +266,9 @@ export class UI {
 
     constructor(appContext: AppContext) {
         this._appContext = appContext;
+
+        this._ui.assign.elements.textureAtlas.addDescription('Textures to use and colour-match with');
+        this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
     }
 
     public build() {

@@ -1,26 +1,35 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, AppError, ASSERT } from './util';
+import { ColourSpace, AppError, ASSERT, RESOURCES_DIR, LOG } from './util';
 import { Renderer } from './renderer';
 import { AppConstants } from './constants';
+
+import fs from 'fs';
+import path from 'path';
+import { StatusHandler } from './status';
+import { Vector3 } from './vector';
 
 interface Block {
     voxel: Voxel;
     blockInfo: BlockInfo;
 }
 
+export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
+
 export interface BlockMeshParams {
     textureAtlas: string,
     blockPalette: string,
     ditheringEnabled: boolean,
     colourSpace: ColourSpace,
+    fallable: FallableBehaviour,
 }
 
 export class BlockMesh {
     private _blockPalette: string[];
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
+    private _fallableBlocks: string[];
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
@@ -32,6 +41,9 @@ export class BlockMesh {
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
+
+        const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
+        this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
     }
     
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
@@ -40,10 +52,27 @@ export class BlockMesh {
 
         const blockAssigner = blockMeshParams.ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
         
+        let countFalling = 0;
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
             const voxel = voxels[voxelIndex];
-            const block = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace);
+            let block = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace);
+
+            const isFallable = this._fallableBlocks.includes(block.name);
+            const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
+            
+            if (isFallable && !isSupported) {
+                ++countFalling;
+            }
+
+            let shouldReplace = (blockMeshParams.fallable === 'replace-fallable' && isFallable);
+            shouldReplace ||= (blockMeshParams.fallable === 'replace-falling' && isFallable && !isSupported);
+
+            if (shouldReplace) {
+                const replacedBlock = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace, this._fallableBlocks);
+                // LOG(`Replacing ${block.name} with ${replacedBlock.name}`);
+                block = replacedBlock;
+            }
 
             this._blocks.push({
                 voxel: voxel,
@@ -52,6 +81,10 @@ export class BlockMesh {
             if (!this._blockPalette.includes(block.name)) {
                 this._blockPalette.push(block.name);
             }
+        }
+
+        if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
+            StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
         }
     }
 

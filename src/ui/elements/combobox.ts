@@ -4,6 +4,7 @@ import { ASSERT } from '../../util';
 export interface ComboBoxItem {
     id: string;
     displayText: string;
+    tooltip?: string;
 }
 
 export class ComboBoxElement extends LabelledElement<string> {
@@ -17,7 +18,7 @@ export class ComboBoxElement extends LabelledElement<string> {
     public generateInnerHTML() {
         let itemsHTML = '';
         for (const item of this._items) {
-            itemsHTML += `<option value="${item.id}">${item.displayText}</option>`;
+            itemsHTML += `<option value="${item.id}" title="${item.tooltip || ''}">${item.displayText}</option>`;
         }
 
         return `

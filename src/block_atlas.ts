@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR, AppError, LOG_WARN } from './util';
+import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR, AppError, LOG_WARN, LOG } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';
@@ -124,12 +124,12 @@ export class BlockAtlas {
         this._paletteLoaded = true;
     }
 
-    public getBlock(voxelColour: RGB, colourSpace: ColourSpace): BlockInfo {
+    public getBlock(voxelColour: RGB, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
         ASSERT(this._atlasLoaded, 'No atlas has been loaded');
         ASSERT(this._paletteLoaded, 'No palette has been loaded');
 
         const cachedBlockIndex = this._cachedBlocks.get(voxelColour.toVector3());
-        if (cachedBlockIndex) {
+        if (cachedBlockIndex && exclude === undefined) {
             return this._atlasBlocks[cachedBlockIndex];
         }
 
@@ -137,6 +137,10 @@ export class BlockAtlas {
         let blockChoiceIndex!: number;
 
         for (const paletteBlockName of this._palette) {
+            if (exclude?.includes(paletteBlockName)) {
+                continue;
+            }
+
             // TODO: Optimise Use hash map for  blockIndex instead of linear search
             const blockIndex: (number | undefined) = this._paletteBlockToBlockInfoIndex.get(paletteBlockName);
             ASSERT(blockIndex !== undefined);
@@ -155,7 +159,9 @@ export class BlockAtlas {
             throw new AppError('The chosen palette does not have suitable blocks');
         }
 
-        this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
+        if (exclude === undefined) {
+            this._cachedBlocks.add(voxelColour.toVector3(), blockChoiceIndex);
+        }
         return this._atlasBlocks[blockChoiceIndex];
     }
 

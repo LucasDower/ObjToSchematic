@@ -16,6 +16,7 @@ export const headlessConfig = {
             blockPalette: 'all-supported', // Must be a palette name that exists in /resources/palettes
             ditheringEnabled: true,
             colourSpace: 'rgb', // 'rgb' / 'lab';
+            fallable: 'replace-falling', // 'replace-fallable' / 'place-string';
         },
     },
     export: {

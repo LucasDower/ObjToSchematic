@@ -8,7 +8,7 @@ import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, LOG_WARN, TIME_START, TI
 
 import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
-import { BlockMesh, BlockMeshParams } from './block_mesh';
+import { BlockMesh, BlockMeshParams, FallableBehaviour } from './block_mesh';
 import { TextureFiltering } from './texture';
 import { RayVoxeliser } from './voxelisers/ray-voxeliser';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
@@ -193,6 +193,7 @@ export class AppContext {
             blockPalette: uiElements.blockPalette.getCachedValue(),
             ditheringEnabled: uiElements.dithering.getCachedValue() === 'on',
             colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
         };
 
         this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, blockMeshParams);

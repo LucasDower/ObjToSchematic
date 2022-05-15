@@ -6,6 +6,7 @@ export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
 
     public constructor(label: string) {
         super(label);
+        this._label = label;
         this._labelElement = new LabelElement(label);
     }
 
@@ -23,5 +24,9 @@ export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
 
     protected _onEnabledChanged() {
         this._labelElement.setEnabled(this._isEnabled);
+    }
+
+    public addDescription(text: string) {
+        this._labelElement = new LabelElement(this._label, text);
     }
 }

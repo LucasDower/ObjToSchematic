@@ -2,7 +2,7 @@ import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
 import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
-import { BlockMesh, BlockMeshParams } from '../src/block_mesh';
+import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
 import { Litematic } from '../src/exporters/litematic_exporter';
@@ -32,6 +32,7 @@ void async function main() {
             blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
             ditheringEnabled: headlessConfig.palette.blockMeshParams.ditheringEnabled,
             colourSpace: headlessConfig.palette.blockMeshParams.colourSpace === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
         },
     });
     _export(blockMesh, {

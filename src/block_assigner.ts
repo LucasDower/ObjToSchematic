@@ -3,12 +3,12 @@ import { ASSERT, ColourSpace, RGB } from './util';
 import { Vector3 } from './vector';
 
 interface IBlockAssigner {
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo;
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo;
 }
 
 export class BasicBlockAssigner implements IBlockAssigner {
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo {
-        return BlockAtlas.Get.getBlock(voxelColour, colourSpace);
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
+        return BlockAtlas.Get.getBlock(voxelColour, colourSpace, exclude);
     }
 }
 
@@ -36,7 +36,7 @@ export class OrderedDitheringBlockAssigner implements IBlockAssigner {
         return (OrderedDitheringBlockAssigner._mapMatrix[index] / (size * size * size)) - 0.5;
     }
 
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace): BlockInfo {
+    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
         const size = OrderedDitheringBlockAssigner._size;
         const map = this._getThresholdValue(
             Math.abs(voxelPosition.x % size),
@@ -50,6 +50,6 @@ export class OrderedDitheringBlockAssigner implements IBlockAssigner {
             ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
         );
 
-        return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace);
+        return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace, exclude);
     }
 }

@@ -141,6 +141,7 @@ select {
   color: var(--text-standard);
   background: var(--prop-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
+  max-width: 100%;
 }
 select:hover:enabled {
   color: #C6C6C6;
