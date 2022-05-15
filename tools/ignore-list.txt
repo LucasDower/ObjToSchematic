@@ -22,6 +22,7 @@ purple_stained_glass.json
 red_stained_glass.json
 white_stained_glass.json
 glass.json
+tinted_glass.json
 spawner.json
 brown_mushroom_block_inventory.json
 red_mushroom_block_inventory.json
