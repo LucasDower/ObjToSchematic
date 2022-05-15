@@ -199,7 +199,7 @@ export const TIME_END = console.timeEnd;
 export const REGEX_NZ_WS = /[ \t]+/;
 
 /** Regex for number */
-export const REGEX_NUMBER = /[0-9e+\.\-]+/;
+export const REGEX_NUMBER = /[0-9eE+\.\-]+/;
 
 export const REGEX_NZ_ANY = /.+/;
 
