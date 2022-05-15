@@ -308,7 +308,8 @@ export class ObjImporter extends IImporter {
     private _parseMTL() {
         for (const mtlLib of this._mtlLibs) {
             if (!fs.existsSync(mtlLib)) {
-                throw new AppError(`Could not find ${mtlLib}`);
+                StatusHandler.Get.add('warning', `Could not find ${mtlLib}`);
+                continue;
             }
             const fileContents = fs.readFileSync(mtlLib, 'utf8');
     
