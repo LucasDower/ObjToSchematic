@@ -126,6 +126,10 @@ export class SliderElement extends LabelledElement<number> {
         elementValue.innerHTML = this.getValue().toFixed(this._decimals);
     }
 
+    public getDisplayValue() {
+        return parseFloat(this.getValue().toFixed(this._decimals));
+    }
+
     protected _onEnabledChanged() {
         super._onEnabledChanged();
 

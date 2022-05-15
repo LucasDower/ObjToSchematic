@@ -1,5 +1,5 @@
 import { HashMap } from './hash_map';
-import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR, AppError, LOG_WARN, LOG } from './util';
+import { UV, RGB, ASSERT, fileExists, ColourSpace, ATLASES_DIR, PALETTES_DIR, AppError, LOG_WARN } from './util';
 import { Vector3 } from './vector';
 
 import fs from 'fs';

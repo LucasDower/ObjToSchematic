@@ -154,7 +154,7 @@ export class AppContext {
 
         const uiElements = this._ui.layout.build.elements;
         const voxelMeshParams: VoxelMeshParams = {
-            desiredHeight: uiElements.height.getCachedValue() as number,
+            desiredHeight: uiElements.height.getDisplayValue(),
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
             enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
