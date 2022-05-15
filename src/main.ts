@@ -62,7 +62,7 @@ function createWindow() {
         const commitHash: (string | Buffer) = require('child_process').execSync('git rev-parse --short HEAD').toString().replace('\n', '');
         mainWindow.setTitle(`${baseTitle} (git//${branchName.toString()}++${commitHash.toString().trim()})`);
     } catch (e: any) {
-        mainWindow.setTitle(`${baseTitle} (release//v0.5.0)`);
+        mainWindow.setTitle(`${baseTitle} (release//v0.5.1)`);
     }
     
     // Open the DevTools.

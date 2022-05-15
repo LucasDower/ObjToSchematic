@@ -1,5 +1,6 @@
 /node_modules
 ObjToSchematic-win32-x64
+ObjToSchematic-linux-x64
 ObjToSchematic-darwin-x64
 /res/atlases/*.atlas
 /res/atlases/*.png
