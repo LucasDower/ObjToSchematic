@@ -87,6 +87,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 
 0.6
+* 🟢 **Options for handling falling blocks**
 * ⚪ Support for simplifying complex meshes
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
