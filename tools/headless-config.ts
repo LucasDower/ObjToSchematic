@@ -13,7 +13,7 @@ export const headlessConfig = {
     palette: {
         blockMeshParams: {
             textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
-            blockPalette: 'all-supported', // Must be a palette name that exists in /resources/palettes
+            blockPalette: 'all-snapshot', // Must be a palette name that exists in /resources/palettes
             ditheringEnabled: true,
             colourSpace: 'rgb', // 'rgb' / 'lab';
             fallable: 'replace-falling', // 'replace-fallable' / 'place-string';
