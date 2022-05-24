@@ -1,4 +1,4 @@
-import { UV, ASSERT, AppError, LOG } from './util';
+import { UV, ASSERT, AppError } from './util';
 import { RGB } from './util';
 
 import * as fs from 'fs';

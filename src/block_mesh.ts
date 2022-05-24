@@ -1,7 +1,7 @@
 import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, AppError, ASSERT, RESOURCES_DIR, LOG } from './util';
+import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
 import { Renderer } from './renderer';
 import { AppConstants } from './constants';
 

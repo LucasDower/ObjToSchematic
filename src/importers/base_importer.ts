@@ -1,4 +1,4 @@
-import { Mesh } from './mesh';
+import { Mesh } from '../mesh';
 
 export abstract class IImporter {
     abstract parseFile(filePath: string): void;

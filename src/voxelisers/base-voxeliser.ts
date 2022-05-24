@@ -1,8 +1,8 @@
 import { UVTriangle, Triangle } from '../triangle';
-import { ASSERT, RGB, UV } from '../util';
+import { RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { Mesh } from '../mesh';
-import { VoxelMesh, VoxelMeshParams} from '../voxel_mesh';
+import { VoxelMesh, VoxelMeshParams } from '../voxel_mesh';
 import { TextureFiltering } from '../texture';
 import { StatusHandler } from '../status';
 

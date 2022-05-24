@@ -1,22 +1,20 @@
 import { UI } from './ui/layout';
-import { Schematic } from './exporters/schematic_exporter';
-import { Litematic } from './exporters/litematic_exporter';
 import { Renderer } from './renderer';
 import { Mesh } from './mesh';
 import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, LOG_WARN, TIME_START, TIME_END } from './util';
+import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, TIME_START, TIME_END } from './util';
 
 import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from './block_mesh';
 import { TextureFiltering } from './texture';
-import { RayVoxeliser } from './voxelisers/ray-voxeliser';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
-import { NormalCorrectedRayVoxeliser } from './voxelisers/normal-corrected-ray-voxeliser';
-import { BVHRayVoxeliser } from './voxelisers/bvh-ray-voxeliser';
 import { StatusHandler } from './status';
 import { UIMessageBuilder } from './ui/misc';
 import { OutputStyle } from './ui/elements/output';
+import { IExporter } from './exporters/base_exporter';
+import { TVoxelisers, VoxeliserFactory } from './voxelisers/voxelisers';
+import { ExporterFactory, TExporters } from './exporters/exporters';
 
 /* eslint-disable */
 export enum EAction {
@@ -160,16 +158,8 @@ export class AppContext {
             enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
 
-        const voxeliserID = uiElements.voxeliser.getCachedValue();
-        let voxeliser: IVoxeliser;
-        if (voxeliserID === 'raybased') {
-            voxeliser = new RayVoxeliser();
-        } else if (voxeliserID === 'bvhraybased') {
-            voxeliser = new BVHRayVoxeliser();
-        } else {
-            ASSERT(voxeliserID === 'normalcorrectedraybased');
-            voxeliser = new NormalCorrectedRayVoxeliser();
-        }
+        const voxeliserID: TVoxelisers = uiElements.voxeliser.getCachedValue();
+        const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(voxeliserID);
 
         TIME_START('Voxelising');
         {
@@ -201,8 +191,8 @@ export class AppContext {
     }
 
     private _export() {
-        const exportFormat = this._ui.layout.export.elements.export.getCachedValue() as string;
-        const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
+        const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
+        const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
         let filePath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
@@ -227,9 +217,5 @@ export class AppContext {
 
     public getLoadedMesh() {
         return this._loadedMesh;
-    }
-
-    public addWarning(warning: string) {
-        LOG_WARN(warning);
     }
 }

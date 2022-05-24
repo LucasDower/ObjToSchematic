@@ -1,4 +1,3 @@
-import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
 import { UV, ASSERT, RGB, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
@@ -7,6 +6,7 @@ import { checkFractional, checkNaN } from '../math';
 import fs from 'fs';
 import path from 'path';
 import { StatusHandler } from '../status';
+import { IImporter } from './base_importer';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];

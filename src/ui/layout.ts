@@ -12,6 +12,8 @@ import { ToolbarItemElement } from './elements/toolbar_item';
 import { EAppEvent } from '../event';
 import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
+import { TVoxelisers } from '../voxelisers/voxelisers';
+import { TExporters } from '../exporters/exporters';
 
 export interface Group {
     label: string;
@@ -57,10 +59,10 @@ export class UI {
             label: 'Build',
             elements: {
                 'height': new SliderElement('Desired height', 3, 320, 0, 80, 1),
-                'voxeliser': new ComboBoxElement('Algorithm', [
-                    { id: 'bvhraybased', displayText: 'BVH Ray-based' },
-                    { id: 'normalcorrectedraybased', displayText: 'NCRB' },
-                    { id: 'raybased', displayText: 'Ray-based (legacy)' },
+                'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
+                    { id: 'bvh-ray', displayText: 'BVH Ray-based' },
+                    { id: 'ncrb', displayText: 'NCRB' },
+                    { id: 'ray-based', displayText: 'Ray-based (legacy)' },
                 ]),
                 'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
                     { id: 'on', displayText: 'On (recommended)' },
@@ -128,7 +130,7 @@ export class UI {
         'export': {
             label: 'Export',
             elements: {
-                'export': new ComboBoxElement('File format', [
+                'export': new ComboBoxElement<TExporters>('File format', [
                     { id: 'litematic', displayText: 'Litematic' },
                     { id: 'schematic', displayText: 'Schematic' },
                 ]),
@@ -483,8 +485,8 @@ export class UI {
         return this._uiDull[key];
     }
 
-    private _getTextureAtlases(): ComboBoxItem[] {
-        const textureAtlases: ComboBoxItem[] = [];
+    private _getTextureAtlases(): ComboBoxItem<string>[] {
+        const textureAtlases: ComboBoxItem<string>[] = [];
 
         fs.readdirSync(ATLASES_DIR).forEach((file) => {
             if (file.endsWith('.atlas')) {
@@ -498,8 +500,8 @@ export class UI {
         return textureAtlases;
     }
 
-    private _getBlockPalettes(): ComboBoxItem[] {
-        const blockPalettes: ComboBoxItem[] = [];
+    private _getBlockPalettes(): ComboBoxItem<string>[] {
+        const blockPalettes: ComboBoxItem<string>[] = [];
 
         fs.readdirSync(PALETTES_DIR).forEach((file) => {
             if (file.endsWith('.palette')) {
