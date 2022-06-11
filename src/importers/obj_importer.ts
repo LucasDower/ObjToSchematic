@@ -1,12 +1,13 @@
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, RGB, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
+import { UV, ASSERT, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
 import path from 'path';
 import { StatusHandler } from '../status';
 import { IImporter } from './base_importer';
+import { RGBA, RGBAColours } from '../colour';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
@@ -15,7 +16,7 @@ export class ObjImporter extends IImporter {
     private _tris: Tri[] = [];
 
     private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {
-        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGB.white },
+        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE },
     };
     private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
@@ -187,7 +188,7 @@ export class ObjImporter extends IImporter {
         },
     ];
     
-    private _currentColour: RGB = RGB.black;
+    private _currentColour: RGBA = RGBAColours.BLACK;
     private _currentTexture: string = '';
     private _materialReady: boolean = false;
     private _mtlParsers = [
@@ -218,7 +219,7 @@ export class ObjImporter extends IImporter {
                 const b = parseFloat(match.b);
                 checkNaN(r, g, b);
                 checkFractional(r, g, b);
-                this._currentColour = new RGB(r, g, b);
+                this._currentColour = { r: r, g: g, b: b, a: 1.0 };
                 this._materialReady = true;
             },
         },

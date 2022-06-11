@@ -3,7 +3,7 @@ precision mediump float;
 uniform vec3 u_lightWorldPos;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
-uniform vec3 u_fillColour;
+uniform vec4 u_fillColour;
 
 attribute vec3 position;
 attribute vec2 texcoord;

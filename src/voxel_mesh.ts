@@ -1,15 +1,16 @@
 import { AttributeData } from './buffer';
+import { RGBA } from './colour';
 import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
 import { TextureFiltering } from './texture';
-import { Bounds, RGB } from './util';
+import { Bounds } from './util';
 import { Vector3 } from './vector';
 
 export interface Voxel {
     position: Vector3;
-    colour: RGB;
+    colour: RGBA;
     collisions: number;
 
 }
@@ -50,19 +51,18 @@ export class VoxelMesh {
         }
     }
 
-    public addVoxel(pos: Vector3, colour: RGB) {
+    public addVoxel(pos: Vector3, colour: RGBA) {
         pos.round();
 
         const voxelIndex = this._voxelsHash.get(pos);
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
-            const voxelColour = voxel.colour.toVector3();
-            voxelColour.mulScalar(voxel.collisions);
+            voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);
+            voxel.colour.g = ((voxel.colour.g * voxel.collisions) + colour.g) / (voxel.collisions + 1);
+            voxel.colour.b = ((voxel.colour.b * voxel.collisions) + colour.b) / (voxel.collisions + 1);
+            voxel.colour.a = ((voxel.colour.a * voxel.collisions) + colour.a) / (voxel.collisions + 1);
             ++voxel.collisions;
-            voxelColour.add(colour.toVector3());
-            voxelColour.divScalar(voxel.collisions);
-            voxel.colour = RGB.fromVector3(voxelColour);
         } else {
             // This is a new voxel
             this._voxels.push({
@@ -179,7 +179,7 @@ export class VoxelMesh {
         const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
         for (let i = 0; i < numVoxels; ++i) {
             const voxel = this._voxels[i];
-            const voxelColourArray = voxel.colour.toArray();
+            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
             const voxelPositionArray = voxel.position.toArray();
 
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
@@ -187,7 +187,7 @@ export class VoxelMesh {
             }
 
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
-                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 3];
+                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
             }
 
             for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {

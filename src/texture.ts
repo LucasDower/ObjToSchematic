@@ -1,12 +1,11 @@
 import { UV, ASSERT, AppError } from './util';
-import { RGB } from './util';
 
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
 import path from 'path';
-import { Vector3 } from './vector';
 import { clamp, wayThrough } from './math';
+import { RGBA, RGBAColours, RGBAUtil } from './colour';
 
 /* eslint-disable */
 export enum TextureFormat {
@@ -49,15 +48,15 @@ export class Texture {
         }
     }
 
-    getRGB(uv: UV, filtering: TextureFiltering): RGB {
+    public getRGBA(uv: UV, filtering: TextureFiltering): RGBA {
         if (filtering === TextureFiltering.Nearest) {
-            return this._getNearestRGB(uv);
+            return this._getNearestRGBA(uv);
         } else {
-            return this._getLinearRGB(uv);
+            return this._getLinearRGBA(uv);
         }
     }
 
-    private _getLinearRGB(uv: UV): RGB {
+    private _getLinearRGBA(uv: UV): RGBA {
         uv.v = 1.0 - uv.v;
 
         uv.u = uv.u % 1.0;
@@ -75,39 +74,39 @@ export class Texture {
         const v = wayThrough(y, yL, yU);
         
         if (!(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0)) {
-            return RGB.magenta;
+            return RGBAColours.MAGENTA;
         }
 
-        const A = this._getFromXY(xL, yU).toVector3();
-        const B = this._getFromXY(xU, yU).toVector3();
-        const midAB = Vector3.mulScalar(B, u).add(Vector3.mulScalar(A, 1.0-u));
+        const A = this._getFromXY(xL, yU);
+        const B = this._getFromXY(xU, yU);
+        const AB = RGBAUtil.lerp(A, B, u);
         
-        const C = this._getFromXY(xL, yL).toVector3();
-        const D = this._getFromXY(xU, yL).toVector3();
-        const midCD = Vector3.mulScalar(D, u).add(Vector3.mulScalar(C, 1.0-u));
+        const C = this._getFromXY(xL, yL);
+        const D = this._getFromXY(xU, yL);
+        const CD = RGBAUtil.lerp(C, D, u);
 
-        const mid = Vector3.mulScalar(midAB, v).add(Vector3.mulScalar(midCD, 1.0-v));
-        return RGB.fromVector3(mid);
+        return RGBAUtil.lerp(AB, CD, v);
     }
 
-    private _getNearestRGB(uv: UV): RGB {
+    private _getNearestRGBA(uv: UV): RGBA {
         const x = Math.floor(uv.u * this._image.width);
         const y = Math.floor((1 - uv.v) * this._image.height);
 
         return this._getFromXY(x, y);
     }
 
-    private _getFromXY(x: number, y: number): RGB {
+    private _getFromXY(x: number, y: number): RGBA {
         x = clamp(x, 0, this._image.width - 1);
         y = clamp(y, 0, this._image.height - 1);
         
         const index = 4 * (this._image.width * y + x);
         const rgba = this._image.data.slice(index, index + 4);
 
-        return new RGB(
-            rgba[0] / 255,
-            rgba[1] / 255,
-            rgba[2] / 255,
-        );
+        return {
+            r: rgba[0] / 255,
+            g: rgba[1] / 255,
+            b: rgba[2] / 255,
+            a: rgba[3] / 255,
+        };
     }
 }

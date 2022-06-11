@@ -1,4 +1,4 @@
-import { ATLASES_DIR, RGB, TOOLS_DIR, UV } from '../src/util';
+import { ATLASES_DIR, TOOLS_DIR, UV } from '../src/util';
 import { log, LogStyle } from './logging';
 import { isDirSetup, ASSERT, getAverageColour, getPermission, getMinecraftDir } from './misc';
 
@@ -8,6 +8,7 @@ import images from 'images';
 import { PNG } from 'pngjs';
 import chalk from 'chalk';
 import prompt from 'prompt';
+import { RGBA } from '../src/colour';
 const AdmZip = require('adm-zip');
 const copydir = require('copy-dir');
 
@@ -175,12 +176,13 @@ async function buildAtlas() {
         CubeBottomTop = 'minecraft:block/cube_bottom_top',
         TemplateSingleFace = 'minecraft:block/template_single_face',
         TemplateGlazedTerracotta = 'minecraft:block/template_glazed_terracotta',
+        Leaves = 'minecraft:block/leaves',
     }
     /* eslint-enable */
     
     interface Model {
         name: string,
-        colour?: RGB,
+        colour?: RGBA,
         faces: {
             [face: string]: Texture
         }
@@ -189,7 +191,7 @@ async function buildAtlas() {
     interface Texture {
         name: string,
         texcoord?: UV,
-        colour?: RGB
+        colour?: RGBA
     }
     
     log(LogStyle.Info, 'Loading block models...');
@@ -274,6 +276,16 @@ async function buildAtlas() {
                     west: { name: modelData.textures.pattern },
                 };
                 break;
+            case parentModel.Leaves:
+                faceData = {
+                    up: { name: modelData.textures.all },
+                    down: { name: modelData.textures.all },
+                    north: { name: modelData.textures.all },
+                    south: { name: modelData.textures.all },
+                    east: { name: modelData.textures.all },
+                    west: { name: modelData.textures.all },
+                };
+                break;
             default:
                 return;
         }
@@ -301,7 +313,7 @@ async function buildAtlas() {
     let offsetY = 0;
     const outputImage = images(atlasWidth * 3, atlasWidth * 3);
 
-    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGB } } = {};
+    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGBA } } = {};
 
     const { atlasName } = await prompt.get({
         properties: {
@@ -347,18 +359,22 @@ async function buildAtlas() {
     // Build up the output JSON
     log(LogStyle.Info, `Building ${atlasName}.atlas...\n`);
     for (const model of allModels) {
-        const blockColour = new RGB(0, 0, 0);
+        const blockColour: RGBA = {
+            r: 0.0, g: 0.0, b: 0.0, a: 0.0,
+        };
         for (const face of faces) {
             const faceTexture = textureDetails[model.faces[face].name];
             const faceColour = faceTexture.colour;
             blockColour.r += faceColour.r;
             blockColour.g += faceColour.g;
             blockColour.b += faceColour.b;
+            blockColour.a += faceColour.a;
             model.faces[face].texcoord = faceTexture.texcoord;
         }
         blockColour.r /= 6;
         blockColour.g /= 6;
         blockColour.b /= 6;
+        blockColour.a /= 6;
         model.colour = blockColour;
     }
 

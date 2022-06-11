@@ -1,10 +1,11 @@
 import { log, LogStyle } from './logging';
-import { RGB, TOOLS_DIR } from '../src/util';
+import { TOOLS_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
 import prompt from 'prompt';
+import { RGBA } from '../src/colour';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {
@@ -26,10 +27,12 @@ export function isDirSetup(relativePath: string, jarAssetDir: string) {
     return false;
 }
 
-export function getAverageColour(image: PNG) {
+export function getAverageColour(image: PNG): RGBA {
     let r = 0;
     let g = 0;
     let b = 0;
+    let a = 0;
+    let weight = 0;
     for (let x = 0; x < image.width; ++x) {
         for (let y = 0; y < image.height; ++y) {
             const index = 4 * (image.width * y + x);
@@ -37,10 +40,17 @@ export function getAverageColour(image: PNG) {
             r += rgba[0];
             g += rgba[1];
             b += rgba[2];
+            a += rgba[3];
+            weight += rgba[3];
         }
     }
     const numPixels = image.width * image.height;
-    return new RGB(r / (255 * numPixels), g / (255 * numPixels), b / (255 * numPixels));
+    return {
+        r: r / (255 * numPixels),
+        g: g / (255 * numPixels),
+        b: b / (255 * numPixels),
+        a: a / (255 * numPixels),
+    };
 }
 
 export async function getPermission() {

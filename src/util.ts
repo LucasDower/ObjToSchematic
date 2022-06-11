@@ -3,9 +3,6 @@ import { Vector3 } from './vector';
 import { clamp } from './math';
 
 import path from 'path';
-
-const convert = require('color-convert');
-
 import fs from 'fs';
 
 export class UV {
@@ -28,111 +25,6 @@ export enum ColourSpace {
     LAB
 }
 /* eslint-enable */
-
-export type RGBA = {
-    r: number,
-    g: number,
-    b: number,
-    a: number
-}
-
-export class RGB {
-    public r: number;
-    public g: number;
-    public b: number;
-
-    constructor(r: number, g: number, b: number) {
-        this.r = r;
-        this.g = g;
-        this.b = b;
-    }
-
-    // Note: Uses naive sRGB Euclidian distance
-    public static averageFrom(colours: RGB[]): RGB {
-        let r = 0.0;
-        let g = 0.0;
-        let b = 0.0;
-        for (const colour of colours) {
-            r += colour.r;
-            g += colour.g;
-            b += colour.b;
-        }
-        const n = colours.length;
-        return new RGB(r / n, g / n, b / n);
-    }
-
-    public static fromArray(array: number[]): RGB {
-        ASSERT(array.length === 3);
-        return new RGB(array[0], array[1], array[2]);
-    }
-
-    public toArray(): number[] {
-        return [this.r, this.g, this.b];
-    }
-
-    public toRGBA(a: number = 1.0): RGBA {
-        return { r: this.r, g: this.g, b: this.b, a: a };
-    }
-
-    public static distance(a: RGB, b: RGB, colourSpace: ColourSpace): number {
-        if (colourSpace === ColourSpace.LAB) {
-            const aLAB = convert.rgb.lab(a.r * 255, a.g * 255, a.b * 255);
-            const bLAB = convert.rgb.lab(b.r * 255, b.g * 255, b.b * 255);
-            const _a = Vector3.fromArray(aLAB);
-            const _b = Vector3.fromArray(bLAB);
-            return _a.sub(_b).magnitude();
-        } else {
-            ASSERT(colourSpace === ColourSpace.RGB);
-            const _a = a.toVector3();
-            const _b = b.toVector3();
-            return _a.sub(_b).magnitude();
-        }
-    }
-
-    public static get white(): RGB {
-        return new RGB(1.0, 1.0, 1.0);
-    }
-
-    public static get red(): RGB {
-        return new RGB(1.0, 0.0, 0.0);
-    }
-
-    public static get green(): RGB {
-        return new RGB(0.0, 1.0, 0.0);
-    }
-
-    public static get blue(): RGB {
-        return new RGB(0.0, 0.0, 1.0);
-    }
-
-    public static get yellow(): RGB {
-        return new RGB(1.0, 1.0, 0.0);
-    }
-
-    public static get cyan(): RGB {
-        return new RGB(0.0, 1.0, 1.0);
-    }
-
-    public static get magenta(): RGB {
-        return new RGB(1.0, 0.0, 1.0);
-    }
-
-    public static get black(): RGB {
-        return new RGB(0.0, 0.0, 0.0);
-    }
-
-    public static fromVector3(vec: Vector3): RGB {
-        return new RGB(vec.x, vec.y, vec.z);
-    }
-
-    public toVector3(): Vector3 {
-        return new Vector3(this.r, this.g, this.b);
-    }
-
-    public copy() {
-        return new RGB(this.r, this.g, this.b);
-    }
-}
 
 /**
  * A 3D cuboid volume defined by two opposing corners
