@@ -1,13 +1,10 @@
-import { Mesh } from '../src/mesh';
-import { TextureFiltering } from '../src/texture';
 import { Vector3 } from '../src/vector';
 import { VoxelMesh } from '../src/voxel_mesh';
-import { LOG, RGB } from '../src/util';
-import { OcclusionManager } from '../src/occlusion';
+import { RGBAColours } from '../src/colour';
 
 test('Voxel neighbours', () => {
     const voxelMesh = new VoxelMesh();
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.white);
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.WHITE);
 
     expect(voxelMesh.getNeighbours(new Vector3(1, 2, 3)).value).toBe(0);
 

@@ -1,10 +1,11 @@
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { TextureFiltering } from '../src/texture';
-import { ASSERT, RGB } from '../src/util';
+import { ASSERT } from '../src/util';
 import { Vector3 } from '../src/vector';
 
 import path from 'path';
+import { RGBAColours } from '../src/colour';
 
 test('Voxelise solid 2x2 cube', () => {
     const importer = new ObjImporter();
@@ -23,35 +24,35 @@ test('Voxelise solid 2x2 cube', () => {
     const expectedVoxels = [
         {
             position: new Vector3(0, 1, 0),
-            colour: new RGB(0, 0, 1),
+            colour: RGBAColours.BLUE,
         },
         {
             position: new Vector3(1, 1, 0),
-            colour: new RGB(0, 1, 0),
+            colour: RGBAColours.GREEN,
         },
         {
             position: new Vector3(1, 1, 1),
-            colour: new RGB(1, 0, 0),
+            colour: RGBAColours.RED,
         },
         {
             position: new Vector3(0, 1, 1),
-            colour: new RGB(1, 1, 1),
+            colour: RGBAColours.WHITE,
         },
         {
             position: new Vector3(1, 0, 1),
-            colour: new RGB(1, 1, 0),
+            colour: RGBAColours.YELLOW,
         },
         {
             position: new Vector3(1, 0, 0),
-            colour: new RGB(0, 1, 1),
+            colour: RGBAColours.CYAN,
         },
         {
             position: new Vector3(0, 0, 1),
-            colour: new RGB(0, 0, 0),
+            colour: RGBAColours.BLACK,
         },
         {
             position: new Vector3(0, 0, 0),
-            colour: new RGB(1, 0, 1),
+            colour: RGBAColours.MAGENTA,
         },
     ];
 
@@ -59,6 +60,9 @@ test('Voxelise solid 2x2 cube', () => {
         expect(voxelMesh.isVoxelAt(expected.position)).toBe(true);
         const voxel = voxelMesh.getVoxelAt(expected.position);
         expect(voxel).toBeDefined(); ASSERT(voxel);
-        expect(voxel.colour.toVector3().equals(expected.colour.toVector3()));
+        expect(voxel.colour.r).toBeCloseTo(expected.colour.r);
+        expect(voxel.colour.g).toBeCloseTo(expected.colour.g);
+        expect(voxel.colour.b).toBeCloseTo(expected.colour.b);
+        expect(voxel.colour.a).toBeCloseTo(expected.colour.a);
     }
 });
