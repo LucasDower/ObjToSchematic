@@ -12,6 +12,7 @@ import { BlockMesh } from './block_mesh';
 import * as twgl from 'twgl.js';
 import { EAppEvent, EventManager } from './event';
 import { RGBA, RGBAUtil } from './colour';
+import { Texture } from './texture';
 
 /* eslint-disable */
 export enum MeshType {
@@ -46,7 +47,7 @@ export class Renderer {
 
     private _materialBuffers: Array<{
         buffer: RenderBuffer,
-        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
+        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean }))
     }>;
     public _voxelBuffer?: twgl.BufferInfo;
     public _voxelBufferRaw?: any;
@@ -183,6 +184,11 @@ export class Renderer {
                             src: material.path,
                             mag: this._gl.LINEAR,
                         }),
+                        alpha: material.alphaPath ? twgl.createTexture(this._gl, {
+                            src: material.alphaPath,
+                            mag: this._gl.LINEAR,
+                        }) : undefined,
+                        useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
                 });
             }
@@ -285,6 +291,9 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
+                    u_alpha: materialBuffer.material.alpha,
+                    u_useAlphaMap: materialBuffer.material.alpha !== undefined,
+                    u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
                 });
             } else {
                 this._drawRegister(materialBuffer.buffer, ShaderManager.Get.solidTriProgram, {

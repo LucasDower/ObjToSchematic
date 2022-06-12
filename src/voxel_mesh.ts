@@ -52,6 +52,10 @@ export class VoxelMesh {
     }
 
     public addVoxel(pos: Vector3, colour: RGBA) {
+        if (colour.a === 0) {
+            return;
+        }
+
         pos.round();
 
         const voxelIndex = this._voxelsHash.get(pos);

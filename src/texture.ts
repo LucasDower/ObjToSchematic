@@ -1,4 +1,4 @@
-import { UV, ASSERT, AppError } from './util';
+import { UV, ASSERT, AppError, LOG } from './util';
 
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
@@ -21,27 +21,39 @@ export enum TextureFiltering {
 }
 /* eslint-enable */
 
-export class Texture {
-    private _image: {
-        data: Buffer,
-        width: number,
-        height: number
-    };
+type ImageData = {
+    data: Buffer,
+    width: number,
+    height: number
+}
 
-    constructor(filename: string) {
+export class Texture {
+    private _image: ImageData;
+    private _alphaImage?: ImageData;
+
+    constructor(filename: string, transparencyFilename?: string) {
+        ASSERT(path.isAbsolute(filename));
+        const filePath = path.parse(filename);
+
+        this._image = this._loadImageFile(filename);
+
+        if (transparencyFilename) {
+            this._alphaImage = this._loadImageFile(transparencyFilename);
+        }
+    }
+
+    private _loadImageFile(filename: string): ImageData {
         ASSERT(path.isAbsolute(filename));
         const filePath = path.parse(filename);
         try {
             const data = fs.readFileSync(filename);
             if (filePath.ext.toLowerCase() === '.png') {
-                this._image = PNG.sync.read(data);
+                return PNG.sync.read(data);
             } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
-                this._image = jpeg.decode(data);
+                this._useAlphaChannelValue = false;
+                return jpeg.decode(data);
             } else {
                 throw new AppError(`Failed to load ${filename}`);
-            }
-            if (this._image.width * this._image.height * 4 !== this._image.data.length) {
-                throw new AppError(`Unexpected image resolution mismatch: ${filename}`);
             }
         } catch (err) {
             throw new AppError(`Could not read ${filename}`);
@@ -96,11 +108,50 @@ export class Texture {
     }
 
     private _getFromXY(x: number, y: number): RGBA {
-        x = clamp(x, 0, this._image.width - 1);
-        y = clamp(y, 0, this._image.height - 1);
+        const diffuse = Texture._sampleImage(this._image, x, y);
+
+        if (this._alphaImage) {
+            const alpha = Texture._sampleImage(this._alphaImage, x, y);
+            return {
+                r: diffuse.r,
+                g: diffuse.g,
+                b: diffuse.b,
+                a: this._useAlphaChannel() ? alpha.a : alpha.r,
+            };
+        }
+
+        return diffuse;
+    }
+
+    public _useAlphaChannelValue?: boolean;
+    public _useAlphaChannel() {
+        ASSERT(this._alphaImage !== undefined);
+        if (this._useAlphaChannelValue !== undefined) {
+            return this._useAlphaChannelValue;
+        }
+
+        for (let i = 0; i < this._alphaImage.width; ++i) {
+            for (let j = 0; j < this._alphaImage.height; ++j) {
+                const value = Texture._sampleImage(this._alphaImage, i, j);
+                if (value.a != 1.0) {
+                    LOG(`Using alpha channel`);
+                    this._useAlphaChannelValue = true;
+                    return true;
+                }
+            }
+        }
         
-        const index = 4 * (this._image.width * y + x);
-        const rgba = this._image.data.slice(index, index + 4);
+        LOG(`Using red channel`);
+        this._useAlphaChannelValue = false;
+        return false;
+    }
+
+    private static _sampleImage(image: ImageData, x: number, y: number) {
+        x = clamp(x, 0, image.width - 1);
+        y = clamp(y, 0, image.height - 1);
+        
+        const index = 4 * (image.width * y + x);
+        const rgba = image.data.slice(index, index + 4);
 
         return {
             r: rgba[0] / 255,

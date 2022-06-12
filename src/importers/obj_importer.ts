@@ -190,6 +190,7 @@ export class ObjImporter extends IImporter {
     
     private _currentColour: RGBA = RGBAColours.BLACK;
     private _currentTexture: string = '';
+    private _currentTransparencyTexture: string = '';
     private _materialReady: boolean = false;
     private _mtlParsers = [
         {
@@ -233,6 +234,20 @@ export class ObjImporter extends IImporter {
                     mtlPath = path.join(this._objPath.dir, mtlPath);
                 }
                 this._currentTexture = mtlPath;
+                this._materialReady = true;
+            },
+        },
+        {
+            // Transparency map
+            // e.g. 'map_d my/path/to/file.png'
+            regex: new RegExpBuilder().add(/^map_d/).add(REGEX_NZ_ANY, 'path').toRegExp(),
+            delegate: (match: { [key: string]: string }) => {
+                let texturePath = match.path.trim();
+                if (!path.isAbsolute(texturePath)) {
+                    ASSERT(this._objPath, 'no obj path');
+                    texturePath = path.join(this._objPath.dir, texturePath);
+                }
+                this._currentTransparencyTexture = texturePath;
                 this._materialReady = true;
             },
         },
@@ -356,7 +371,9 @@ export class ObjImporter extends IImporter {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.textured,
                     path: this._currentTexture,
+                    alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
                 };
+                this._currentTransparencyTexture = '';
             } else {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.solid,

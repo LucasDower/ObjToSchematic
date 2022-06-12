@@ -25,7 +25,11 @@ export interface Tri {
 export enum MaterialType { solid, textured }
 /* eslint-enable */
 export interface SolidMaterial { colour: RGBA; type: MaterialType.solid }
-export interface TexturedMaterial { path: string; type: MaterialType.textured }
+export interface TexturedMaterial {
+    path: string;
+    type: MaterialType.textured;
+    alphaPath?: string;
+}
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
 export class Mesh {
@@ -227,7 +231,7 @@ export class Mesh {
             const material = this._materials[tri.material];
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
-                    this._loadedTextures[tri.material] = new Texture(material.path);
+                    this._loadedTextures[tri.material] = new Texture(material.path, material.alphaPath);
                 }
             }
         }

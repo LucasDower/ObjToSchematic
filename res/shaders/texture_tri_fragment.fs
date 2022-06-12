@@ -1,6 +1,9 @@
 precision mediump float;
 
 uniform sampler2D u_texture;
+uniform sampler2D u_alpha;
+uniform bool u_useAlphaMap;
+uniform bool u_useAlphaChannel;
 
 varying float v_lighting;
 varying vec2 v_texcoord;
@@ -98,7 +101,12 @@ void main() {
   vec2 tex = vec2(v_texcoord.x, 1.0 - v_texcoord.y);
   vec4 diffuse = texture2D(u_texture, tex).rgba;
 
-  float alpha = dither8x8(gl_FragCoord.xy, diffuse.a);
+  float alpha = diffuse.a;
+  if (u_useAlphaMap) {
+    alpha = u_useAlphaChannel ? texture2D(u_alpha, tex).a : texture2D(u_alpha, tex).r;
+  }
+
+  alpha = dither8x8(gl_FragCoord.xy, alpha);
   if (alpha < 0.5)
   {
     discard;
