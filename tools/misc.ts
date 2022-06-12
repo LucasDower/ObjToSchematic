@@ -37,19 +37,20 @@ export function getAverageColour(image: PNG): RGBA {
         for (let y = 0; y < image.height; ++y) {
             const index = 4 * (image.width * y + x);
             const rgba = image.data.slice(index, index + 4);
-            r += rgba[0];
-            g += rgba[1];
-            b += rgba[2];
-            a += rgba[3];
-            weight += rgba[3];
+            const alpha = rgba[3] / 255;
+            r += (rgba[0] / 255) * alpha;
+            g += (rgba[1] / 255) * alpha;
+            b += (rgba[2] / 255) * alpha;
+            a += alpha;
+            weight += alpha;
         }
     }
     const numPixels = image.width * image.height;
     return {
-        r: r / (255 * numPixels),
-        g: g / (255 * numPixels),
-        b: b / (255 * numPixels),
-        a: a / (255 * numPixels),
+        r: r / weight,
+        g: g / weight,
+        b: b / weight,
+        a: a / numPixels,
     };
 }
 
