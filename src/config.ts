@@ -21,4 +21,7 @@ export namespace AppConfig {
 
     /** Max size of Node's old space in MBs */
     export const OLD_SPACE_SIZE = 2048;
+
+    /** This value determines how much more important it is to closely match a block's transparency value than it's colour */
+    export const ALPHA_BIAS = 1.0;
 }

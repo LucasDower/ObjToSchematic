@@ -1,3 +1,5 @@
+import { AppConfig } from './config';
+
 export type RGBA = {
     r: number,
     g: number,
@@ -31,7 +33,7 @@ export namespace RGBAUtil {
         squaredDistance += Math.pow(a.r - b.r, 2);
         squaredDistance += Math.pow(a.g - b.g, 2);
         squaredDistance += Math.pow(a.b - b.b, 2);
-        squaredDistance += Math.pow(a.a - b.a, 2);
+        squaredDistance += Math.pow(a.a - b.a, 2) * AppConfig.ALPHA_BIAS;
         return squaredDistance;
     }
 
