@@ -94,6 +94,7 @@ export class UI {
                 'export': new ComboBoxElement('File format', [
                     { id: 'litematic', displayText: 'Litematic' },
                     { id: 'schematic', displayText: 'Schematic' },
+                    { id: 'obj', displayText: 'Wavefront Obj' },
                 ]),
             },
             elementsOrder: ['export'],

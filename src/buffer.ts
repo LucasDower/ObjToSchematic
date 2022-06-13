@@ -9,12 +9,12 @@ export interface Attribute {
     numComponents: number
 }
 
-interface BottomlessBufferData {
-    indices: BottomlessAttributeData,
-    [name: string]: BottomlessAttributeData
+export interface RenderBufferData {
+    indices: RenderBufferAttributeData,
+    [name: string]: RenderBufferAttributeData
 }
 
-interface BottomlessAttributeData {
+export interface RenderBufferAttributeData {
     numComponents: number,
     data: Array<number>
 }
@@ -31,9 +31,9 @@ export class RenderBuffer {
         buffer: twgl.BufferInfo,
         numElements: number
     };
-    private _buffer!: BottomlessBufferData;
+    private _buffer!: RenderBufferData;
     private _attributes: {[name: string]: Attribute};
-    private _maxIndex: number;
+    public _maxIndex: number;
     private _compiled: boolean;
     private _needsCompiling: boolean;
 
@@ -75,6 +75,12 @@ export class RenderBuffer {
         }
 
         this._needsCompiling = true;
+    }
+
+    public getAttribute(attributeName: string) {
+        if (attributeName in this._buffer) {
+            return this._buffer[attributeName].data;
+        }
     }
 
     public attachNewAttribute(attribute: Attribute, data: Array<number>) {

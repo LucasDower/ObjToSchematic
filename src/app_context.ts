@@ -9,6 +9,7 @@ import { remote } from 'electron';
 import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams } from './block_mesh';
 import { TextureFiltering } from './texture';
+import { ObjExporter } from './exporters/obj_exporter';
 
 /* eslint-disable */
 export enum ActionReturnType {
@@ -183,7 +184,14 @@ export class AppContext {
 
     private _export() {
         const exportFormat = this._ui.layout.export.elements.export.getCachedValue() as string;
-        const exporter = (exportFormat === 'schematic') ? new Schematic() : new Litematic();
+        let exporter: Schematic | Litematic | ObjExporter;
+        if (exportFormat === 'schematic') {
+            exporter = new Schematic();
+        } else if (exportFormat === 'litematic') {
+            exporter = new Litematic();
+        } else {
+            exporter = new ObjExporter();
+        }
 
         const filePath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',

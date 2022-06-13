@@ -20,6 +20,7 @@ export class BlockMesh {
     private _blockPalette: string[];
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
+    private _atlasUsed: string;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
@@ -33,6 +34,7 @@ export class BlockMesh {
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
+        this._atlasUsed = 'Vanilla';
     }
     
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
@@ -40,6 +42,7 @@ export class BlockMesh {
         
         BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
+        this._atlasUsed = blockMeshParams.textureAtlas;
 
         const blockAssigner = blockMeshParams.ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
         
@@ -90,5 +93,13 @@ export class BlockMesh {
         buffer.removeAttribute('colour');
 
         return buffer;
+    }
+
+    public getAtlasUsed() {
+        return this._atlasUsed;
+    }
+
+    public getAtlasSize() {
+        return BlockAtlas.Get.getAtlasSize();
     }
 }
