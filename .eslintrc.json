@@ -19,7 +19,8 @@
         "object-curly-spacing": "off",
         "max-len": "off",
         "require-jsdoc": "off",
-        "indent": ["error", 4],
+        "valid-jsdoc": "off",
+        "indent": ["error", 4, { "SwitchCase": 1 }],
         "no-multi-spaces": "off",
         "no-array-constructor": "off",
         "guard-for-in": "off",
@@ -27,6 +28,9 @@
         "no-trailing-spaces": "off",
         "new-cap": "off",
         "no-console": "warn",
-        "no-unused-vars": "warn"
+        "no-unused-vars": "warn",
+        "brace-style": [2, "1tbs", { "allowSingleLine": true }],
+        "block-spacing": [2, "always"],
+        "semi": "error"
     }
 }

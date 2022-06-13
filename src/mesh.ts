@@ -1,18 +1,23 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, LOG, ASSERT, CustomError, LOG_WARN, Warnable, getRandomID } from './util';
-import { UVTriangle } from './triangle';
+import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
+import { Triangle, UVTriangle } from './triangle';
 import { RGB } from './util';
 
 import path from 'path';
 import fs from 'fs';
+import { Texture, TextureFiltering } from './texture';
+import { StatusHandler } from './status';
+
+interface VertexIndices {
+    x: number;
+    y: number;
+    z: number;
+}
 
 export interface Tri {
-    iX: number;
-    iY: number;
-    iZ: number;
-    iXUV: number;
-    iYUV: number;
-    iZUV: number;
+    positionIndices: VertexIndices;
+    texcoordIndices?: VertexIndices;
+    normalIndices?: VertexIndices;
     material: string;
 }
 
@@ -23,79 +28,124 @@ export interface SolidMaterial { colour: RGB; type: MaterialType.solid }
 export interface TexturedMaterial { path: string; type: MaterialType.textured }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
-export class Mesh extends Warnable {
-    public vertices!: Vector3[];
-    public uvs!: UV[];
-    public tris!: Tri[];
-    public materials!: MaterialMap;
+export class Mesh {
     public readonly id: string;
 
+    public _vertices: Vector3[];
+    public _normals!: Vector3[];
+    public _uvs!: UV[];
+    public _tris!: Tri[];
+    
+    private _materials!: MaterialMap;
+    private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
 
-    constructor(vertices: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
-        super();
-        LOG('New mesh');
-
-        this.vertices = vertices;
-        this.uvs = uvs;
-        this.tris = tris;
-        this.materials = materials;
+    constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
         this.id = getRandomID();
 
+        this._vertices = vertices;
+        this._normals = normals;
+        this._uvs = uvs;
+        this._tris = tris;
+        this._materials = materials;
+        this._loadedTextures = {};
+    }
+
+    // TODO: Always check
+    public processMesh() {
         this._checkMesh();
         this._checkMaterials();
 
         this._centreMesh();
-        this._scaleMesh();
+        this._normaliseMesh();
 
-        LOG('Loaded mesh', this);
+        this._loadTextures();
     }
 
     public getBounds() {
         const bounds = Bounds.getInfiniteBounds();
-        for (const vertex of this.vertices) {
+        for (const vertex of this._vertices) {
             bounds.extendByPoint(vertex);
         }
         return bounds;
     }
 
+    public translateMesh(offset: Vector3) {
+        this._vertices.forEach((vertex) => {
+            vertex.add(offset);
+        });
+    }
+
+    public scaleMesh(scaleFactor: number) {
+        this._vertices.forEach((vertex) => {
+            vertex.mulScalar(scaleFactor);
+        });
+    }
+
     private _checkMesh() {
         // TODO: Check indices exist
 
-        if (this.vertices.length === 0) {
-            throw new CustomError('Loaded mesh has no vertices');
+        if (this._vertices.length === 0) {
+            throw new AppError('No vertices were loaded');
         }
 
-        if (this.tris.length === 0) {
-            throw new CustomError('Loaded mesh has no triangles');
+        if (this._tris.length === 0) {
+            throw new AppError('No triangles were loaded');
         }
 
-        // Check UVs are inside [0, 1]
-        for (const uv of this.uvs) {
-            if (uv.u < 0.0 || uv.u > 1.0) {
-                uv.u = Math.abs(uv.u % 1);
+        if (this._tris.length >= 100_000) {
+            StatusHandler.Get.add(
+                'warning',
+                `The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`,
+            );
+        }
+
+        StatusHandler.Get.add(
+            'info',
+            `${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`,
+        );
+
+        // Give warning if normals are not defined
+        let giveNormalsWarning = false;
+        for (let triIndex = 0; triIndex < this.getTriangleCount(); ++triIndex) {
+            const tri = this._tris[triIndex];
+            if (tri.normalIndices) {
+                const xWellDefined = tri.normalIndices.x < this._normals.length;
+                const yWellDefined = tri.normalIndices.y < this._normals.length;
+                const zWellDefined = tri.normalIndices.z < this._normals.length;
+                if (!xWellDefined || !yWellDefined || !zWellDefined) {
+                    giveNormalsWarning = true;
+                    break;
+                }
             }
-            if (uv.v < 0.0 || uv.v > 1.0) {
-                uv.v = Math.abs(uv.v % 1);
+            if (!tri.normalIndices) {
+                giveNormalsWarning = true;
+                break;
             }
         }
+        if (giveNormalsWarning) {
+            StatusHandler.Get.add(
+                'warning',
+                'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
+            );
+        };
     }
 
     private _checkMaterials() {
-        if (Object.keys(this.materials).length === 0) {
-            throw new CustomError('Loaded mesh has no materials');
+        if (Object.keys(this._materials).length === 0) {
+            throw new AppError('Loaded mesh has no materials');
         }
 
         // Check used materials exist
         let wasRemapped = false;
         let debugName = (Math.random() + 1).toString(36).substring(7);
-        while (debugName in this.materials) {
+        while (debugName in this._materials) {
             debugName = (Math.random() + 1).toString(36).substring(7);
         }
 
         const missingMaterials = new Set<string>();
-        for (const tri of this.tris) {
-            if (!(tri.material in this.materials)) {
+        for (const tri of this._tris) {
+            if (!(tri.material in this._materials)) {
                 missingMaterials.add(tri.material);
                 wasRemapped = true;
                 tri.material = debugName;
@@ -103,22 +153,28 @@ export class Mesh extends Warnable {
         }
         if (wasRemapped) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            this.addWarning('Some materials were not loaded correctly');
-            this.materials[debugName] = {
+            StatusHandler.Get.add(
+                'warning',
+                'Some materials were not loaded correctly',
+            );
+            this._materials[debugName] = {
                 type: MaterialType.solid,
                 colour: RGB.white,
             };
         }
         
         // Check texture paths are absolute and exist
-        for (const materialName in this.materials) {
-            const material = this.materials[materialName];
+        for (const materialName in this._materials) {
+            const material = this._materials[materialName];
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    this.addWarning(`Could not find ${material.path}`);
+                    StatusHandler.Get.add(
+                        'warning',
+                        `Could not find ${material.path}`,
+                    );
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
-                    this.materials[materialName] = {
+                    this._materials[materialName] = {
                         type: MaterialType.solid,
                         colour: RGB.white,
                     };
@@ -146,58 +202,114 @@ export class Mesh extends Warnable {
         const centre = this.getBounds().getCentre();
         
         if (!centre.isNumber()) {
-            throw new CustomError('Could not find centre of mesh');
+            throw new AppError('Could not find centre of mesh');
         }
-        LOG('Centre', centre);
 
         // Translate each triangle
-        this.vertices.forEach((vertex) => {
-            vertex.sub(centre);
-        });
+        this.translateMesh(centre.negate());
     }
 
-    private _scaleMesh() {
+    private _normaliseMesh() {
         const bounds = this.getBounds();
         const size = Vector3.sub(bounds.max, bounds.min);
         const scaleFactor = Mesh.desiredHeight / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
-            throw new CustomError('<b>Could not scale mesh correctly</b>: Mesh is likely 2D, rotate it so that it has a non-zero height');
+            throw new AppError('Could not scale mesh correctly - mesh is likely 2D, rotate it so that it has a non-zero height');
         } else {
-            this.vertices.forEach((vertex) => {
-                vertex.mulScalar(scaleFactor);
-            });
+            this.scaleMesh(scaleFactor);
+        }
+    }
+
+    private _loadTextures() {
+        this._loadedTextures = {};
+        for (const tri of this._tris) {
+            const material = this._materials[tri.material];
+            if (material.type == MaterialType.textured) {
+                if (!(tri.material in this._loadedTextures)) {
+                    this._loadedTextures[tri.material] = new Texture(material.path);
+                }
+            }
         }
     }
 
     public getVertices(triIndex: number) {
-        const tri = this.tris[triIndex];
+        const tri = this._tris[triIndex];
         return {
-            v0: this.vertices[tri.iX],
-            v1: this.vertices[tri.iY],
-            v2: this.vertices[tri.iZ],
+            v0: this._vertices[tri.positionIndices.x],
+            v1: this._vertices[tri.positionIndices.y],
+            v2: this._vertices[tri.positionIndices.z],
         };
     }
 
     public getUVs(triIndex: number) {
-        const tri = this.tris[triIndex];
+        const tri = this._tris[triIndex];
+        if (tri.texcoordIndices) {
+            return {
+                uv0: this._uvs[tri.texcoordIndices.x] || new UV(0.0, 0.0),
+                uv1: this._uvs[tri.texcoordIndices.y] || new UV(0.0, 0.0),
+                uv2: this._uvs[tri.texcoordIndices.z] || new UV(0.0, 0.0),
+            };
+        }
         return {
-            uv0: this.uvs[tri.iXUV],
-            uv1: this.uvs[tri.iYUV],
-            uv2: this.uvs[tri.iZUV],
+            uv0: new UV(0.0, 0.0),
+            uv1: new UV(0.0, 0.0),
+            uv2: new UV(0.0, 0.0),
+        };
+    }
+
+    public getNormals(triIndex: number) {
+        const vertexData = this.getVertices(triIndex);
+        const faceNormal = new Triangle(vertexData.v0, vertexData.v1, vertexData.v2).getNormal();
+        const tri = this._tris[triIndex];
+        if (tri.normalIndices) {
+            return {
+                v0: this._normals[tri.normalIndices.x] || faceNormal,
+                v1: this._normals[tri.normalIndices.y] || faceNormal,
+                v2: this._normals[tri.normalIndices.z] || faceNormal,
+            };
+        }
+        return {
+            v0: faceNormal,
+            v1: faceNormal,
+            v2: faceNormal,
         };
     }
 
     public getUVTriangle(triIndex: number): UVTriangle {
-        const tri = this.tris[triIndex];
+        const vertices = this.getVertices(triIndex);
+        const texcoords = this.getUVs(triIndex);
         return new UVTriangle(
-            this.vertices[tri.iX],
-            this.vertices[tri.iY],
-            this.vertices[tri.iZ],
-            this.uvs[tri.iXUV] || 0.0,
-            this.uvs[tri.iYUV] || 0.0,
-            this.uvs[tri.iZUV] || 0.0,
+            vertices.v0,
+            vertices.v1,
+            vertices.v2,
+            texcoords.uv0,
+            texcoords.uv1,
+            texcoords.uv2,
         );
+    }
+
+    public getMaterialByTriangle(triIndex: number) {
+        return this._tris[triIndex].material;
+    }
+
+    public getMaterialByName(materialName: string) {
+        return this._materials[materialName];
+    }
+
+    public getMaterials() {
+        return this._materials;
+    }
+
+    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
+        ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
+        const material = this._materials[materialName];
+        if (material.type === MaterialType.solid) {
+            return material.colour;
+        } else {
+            ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
+            return this._loadedTextures[materialName].getRGB(uv, textureFiltering);
+        }
     }
 
     /*
@@ -236,10 +348,47 @@ export class Mesh extends Warnable {
     */
 
     public copy(): Mesh {
-        return new Mesh(this.vertices, this.uvs, this.tris, this.materials);
+        const newVertices = new Array<Vector3>(this._vertices.length);
+        for (let i = 0; i < this._vertices.length; ++i) {
+            newVertices[i] = this._vertices[i].copy();
+        }
+
+        const newNormals = new Array<Vector3>(this._normals.length);
+        for (let i = 0; i < this._normals.length; ++i) {
+            newNormals[i] = this._normals[i].copy();
+        }
+
+        const newUVs = new Array<UV>(this._uvs.length);
+        for (let i = 0; i < this._uvs.length; ++i) {
+            newUVs[i] = this._uvs[i].copy();
+        }
+
+        const newTris = new Array<Tri>(this._tris.length);
+        for (let i = 0; i < this._tris.length; ++i) {
+            // FIXME: Replace
+            newTris[i] = JSON.parse(JSON.stringify(this._tris[i]));
+        }
+
+        const materials: { [materialName: string]: (SolidMaterial | TexturedMaterial) } = {}; // JSON.parse(JSON.stringify(this.materials));
+        for (const materialName in this._materials) {
+            const material = this._materials[materialName];
+            if (material.type === MaterialType.solid) {
+                materials[materialName] = {
+                    type: MaterialType.solid,
+                    colour: material.colour.copy(),
+                };
+            } else {
+                materials[materialName] = {
+                    type: MaterialType.textured,
+                    path: material.path,
+                };
+            };
+        }
+
+        return new Mesh(newVertices, newNormals, newUVs, newTris, materials);
     }
 
     public getTriangleCount(): number {
-        return this.tris.length;
+        return this._tris.length;
     }
 }

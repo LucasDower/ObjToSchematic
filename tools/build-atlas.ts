@@ -1,6 +1,6 @@
-import { RGB, UV } from '../src/util';
-import { log, logBreak, LogStyle } from './logging';
-import { isDirSetup, ASSERT, getAverageColour, getPermission } from './misc';
+import { ATLASES_DIR, RGB, TOOLS_DIR, UV } from '../src/util';
+import { log, LogStyle } from './logging';
+import { isDirSetup, ASSERT, getAverageColour, getPermission, getMinecraftDir } from './misc';
 
 import fs from 'fs';
 import path from 'path';
@@ -13,20 +13,31 @@ const copydir = require('copy-dir');
 
 void async function main() {
     await getPermission();
-    logBreak();
+    checkMinecraftInstallation();
     cleanupDirectories();
     await fetchModelsAndTextures();
     await buildAtlas();
     cleanupDirectories();
 }();
 
+function checkMinecraftInstallation() {
+    const dir = getMinecraftDir();
+    if (!fs.existsSync(dir)) {
+        log(LogStyle.Failure, `Could not find ${dir}`);
+        log(LogStyle.Failure, 'To use this tool you need to install Minecraft Java Edition');
+        process.exit(1);
+    } else {
+        log(LogStyle.Success, `Found Minecraft Java Edition installation at ${dir}`);
+    }
+}
+
 function cleanupDirectories() {
-    fs.rmSync(path.join(__dirname, '/blocks'), { recursive: true, force: true });
-    fs.rmSync(path.join(__dirname, '/models'), { recursive: true, force: true });
+    fs.rmSync(path.join(TOOLS_DIR, '/blocks'), { recursive: true, force: true });
+    fs.rmSync(path.join(TOOLS_DIR, '/models'), { recursive: true, force: true });
 }
 
 async function getResourcePack() {
-    const resourcePacksDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks');
+    const resourcePacksDir = path.join(getMinecraftDir(), './resourcepacks');
     if (!fs.existsSync(resourcePacksDir)) {
         log(LogStyle.Failure, 'Could not find .minecraft/resourcepacks\n');
         process.exit(1);
@@ -58,7 +69,7 @@ async function getResourcePack() {
 }
 
 function fetchVanillModelsAndTextures(fetchTextures: boolean) {
-    const versionsDir = path.join(process.env.APPDATA!, './.minecraft/versions');
+    const versionsDir = path.join(getMinecraftDir(), './versions');
     ASSERT(fs.existsSync(versionsDir), 'Could not find .minecraft/versions');
     log(LogStyle.Info, '.minecraft/versions found successfully');
 
@@ -85,9 +96,9 @@ function fetchVanillModelsAndTextures(fetchTextures: boolean) {
         const zipEntries = zip.getEntries();
         zipEntries.forEach((zipEntry: any) => {
             if (fetchTextures && zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './blocks'), false, true);
             } else if (zipEntry.entryName.startsWith('assets/minecraft/models/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './models'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './models'), false, true);
             }
         });
         log(LogStyle.Success, `Extracted textures and models successfully\n`);
@@ -97,7 +108,6 @@ function fetchVanillModelsAndTextures(fetchTextures: boolean) {
 
 async function fetchModelsAndTextures() {
     const resourcePack = await getResourcePack();
-    logBreak();
     await fetchVanillModelsAndTextures(true);
     if (resourcePack === 'Vanilla') {
         return;
@@ -105,11 +115,11 @@ async function fetchModelsAndTextures() {
 
     log(LogStyle.Warning, 'Non-16x16 texture packs are not supported');
 
-    const resourcePackDir = path.join(process.env.APPDATA!, './.minecraft/resourcepacks', resourcePack);
+    const resourcePackDir = path.join(getMinecraftDir(), './resourcepacks', resourcePack);
     if (fs.lstatSync(resourcePackDir).isDirectory()) {
         log(LogStyle.Info, `Resource pack '${resourcePack}' is a directory`);
         const blockTexturesSrc = path.join(resourcePackDir, 'assets/minecraft/textures/block');
-        const blockTexturesDst = path.join(__dirname, '../tools/blocks');
+        const blockTexturesDst = path.join(TOOLS_DIR, './blocks');
         log(LogStyle.Info, `Copying ${blockTexturesSrc} to ${blockTexturesDst}`);
         copydir(blockTexturesSrc, blockTexturesDst, {
             utimes: true,
@@ -124,7 +134,7 @@ async function fetchModelsAndTextures() {
         const zipEntries = zip.getEntries();
         zipEntries.forEach((zipEntry: any) => {
             if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-                zip.extractEntryTo(zipEntry.entryName, path.join(__dirname, './blocks'), false, true);
+                zip.extractEntryTo(zipEntry.entryName, path.join(TOOLS_DIR, './blocks'), false, true);
             }
         });
         log(LogStyle.Success, `Copied block textures successfully`);
@@ -134,10 +144,9 @@ async function fetchModelsAndTextures() {
 
 async function buildAtlas() {
     // Check /blocks and /models is setup correctly
-    logBreak();
     log(LogStyle.Info, 'Checking assets are provided...');   
     
-    const texturesDirSetup = isDirSetup('./models', 'assets/minecraft/textures/block');
+    const texturesDirSetup = isDirSetup('./blocks', 'assets/minecraft/textures/block');
     ASSERT(texturesDirSetup, '/blocks is not setup correctly');
     log(LogStyle.Success, '/tools/blocks/ setup correctly');   
     
@@ -146,10 +155,9 @@ async function buildAtlas() {
     log(LogStyle.Success, '/tools/models/ setup correctly');   
 
     // Load the ignore list
-    logBreak();
     log(LogStyle.Info, 'Loading ignore list...');
     let ignoreList: Array<string> = [];
-    const ignoreListPath = path.join(__dirname, './ignore-list.txt');
+    const ignoreListPath = path.join(TOOLS_DIR, './ignore-list.txt');
     if (fs.existsSync(ignoreListPath)) {
         log(LogStyle.Success, 'Found ignore list');
         ignoreList = fs.readFileSync(ignoreListPath, 'utf-8').replace(/\r/g, '').split('\n');
@@ -164,6 +172,7 @@ async function buildAtlas() {
         CubeAll = 'minecraft:block/cube_all',
         CubeColumn = 'minecraft:block/cube_column',
         CubeColumnHorizontal = 'minecraft:block/cube_column_horizontal',
+        CubeBottomTop = 'minecraft:block/cube_bottom_top',
         TemplateSingleFace = 'minecraft:block/template_single_face',
         TemplateGlazedTerracotta = 'minecraft:block/template_glazed_terracotta',
     }
@@ -186,13 +195,14 @@ async function buildAtlas() {
     log(LogStyle.Info, 'Loading block models...');
     const faces = ['north', 'south', 'up', 'down', 'east', 'west'];
     const allModels: Array<Model> = [];
+    const allBlockNames: Set<string> = new Set();
     const usedTextures: Set<string> = new Set();
-    fs.readdirSync(path.join(__dirname, './models')).forEach((filename) => {
+    fs.readdirSync(path.join(TOOLS_DIR, './models')).forEach((filename) => {
         if (path.extname(filename) !== '.json') {
             return;
         };
 
-        const filePath = path.join(__dirname, './models', filename);
+        const filePath = path.join(TOOLS_DIR, './models', filename);
         const fileData = fs.readFileSync(filePath, 'utf8');
         const modelData = JSON.parse(fileData);
         const parsedPath = path.parse(filePath);
@@ -204,58 +214,68 @@ async function buildAtlas() {
 
         let faceData: { [face: string]: Texture } = {};
         switch (modelData.parent) {
-        case parentModel.CubeAll:
-            faceData = {
-                up: { name: modelData.textures.all },
-                down: { name: modelData.textures.all },
-                north: { name: modelData.textures.all },
-                south: { name: modelData.textures.all },
-                east: { name: modelData.textures.all },
-                west: { name: modelData.textures.all },
-            };
-            break;
-        case parentModel.CubeColumn:
-            faceData = {
-                up: { name: modelData.textures.end },
-                down: { name: modelData.textures.end },
-                north: { name: modelData.textures.side },
-                south: { name: modelData.textures.side },
-                east: { name: modelData.textures.side },
-                west: { name: modelData.textures.side },
-            };
-            break;
-        case parentModel.Cube:
-            faceData = {
-                up: { name: modelData.textures.up },
-                down: { name: modelData.textures.down },
-                north: { name: modelData.textures.north },
-                south: { name: modelData.textures.south },
-                east: { name: modelData.textures.east },
-                west: { name: modelData.textures.west },
-            };
-            break;
-        case parentModel.TemplateSingleFace:
-            faceData = {
-                up: { name: modelData.textures.texture },
-                down: { name: modelData.textures.texture },
-                north: { name: modelData.textures.texture },
-                south: { name: modelData.textures.texture },
-                east: { name: modelData.textures.texture },
-                west: { name: modelData.textures.texture },
-            };
-            break;
-        case parentModel.TemplateGlazedTerracotta:
-            faceData = {
-                up: { name: modelData.textures.pattern },
-                down: { name: modelData.textures.pattern },
-                north: { name: modelData.textures.pattern },
-                south: { name: modelData.textures.pattern },
-                east: { name: modelData.textures.pattern },
-                west: { name: modelData.textures.pattern },
-            };
-            break;
-        default:
-            return;
+            case parentModel.CubeAll:
+                faceData = {
+                    up: { name: modelData.textures.all },
+                    down: { name: modelData.textures.all },
+                    north: { name: modelData.textures.all },
+                    south: { name: modelData.textures.all },
+                    east: { name: modelData.textures.all },
+                    west: { name: modelData.textures.all },
+                };
+                break;
+            case parentModel.CubeColumn:
+                faceData = {
+                    up: { name: modelData.textures.end },
+                    down: { name: modelData.textures.end },
+                    north: { name: modelData.textures.side },
+                    south: { name: modelData.textures.side },
+                    east: { name: modelData.textures.side },
+                    west: { name: modelData.textures.side },
+                };
+                break;
+            case parentModel.CubeBottomTop:
+                faceData = {
+                    up: { name: modelData.textures.top },
+                    down: { name: modelData.textures.bottom },
+                    north: { name: modelData.textures.side },
+                    south: { name: modelData.textures.side },
+                    east: { name: modelData.textures.side },
+                    west: { name: modelData.textures.side },
+                };
+                break;
+            case parentModel.Cube:
+                faceData = {
+                    up: { name: modelData.textures.up },
+                    down: { name: modelData.textures.down },
+                    north: { name: modelData.textures.north },
+                    south: { name: modelData.textures.south },
+                    east: { name: modelData.textures.east },
+                    west: { name: modelData.textures.west },
+                };
+                break;
+            case parentModel.TemplateSingleFace:
+                faceData = {
+                    up: { name: modelData.textures.texture },
+                    down: { name: modelData.textures.texture },
+                    north: { name: modelData.textures.texture },
+                    south: { name: modelData.textures.texture },
+                    east: { name: modelData.textures.texture },
+                    west: { name: modelData.textures.texture },
+                };
+                break;
+            case parentModel.TemplateGlazedTerracotta:
+                faceData = {
+                    up: { name: modelData.textures.pattern },
+                    down: { name: modelData.textures.pattern },
+                    north: { name: modelData.textures.pattern },
+                    south: { name: modelData.textures.pattern },
+                    east: { name: modelData.textures.pattern },
+                    west: { name: modelData.textures.pattern },
+                };
+                break;
+            default:
+                return;
         }
 
         for (const face of faces) {
@@ -266,6 +286,7 @@ async function buildAtlas() {
             name: modelName,
             faces: faceData,
         });
+        allBlockNames.add(modelName);
     });
     if (allModels.length === 0) {
         log(LogStyle.Failure, 'No blocks loaded');
@@ -296,7 +317,7 @@ async function buildAtlas() {
     log(LogStyle.Info, `Building ${atlasName}.png...`);
     usedTextures.forEach((textureName) => {
         const shortName = textureName.split('/')[1]; // Eww
-        const absolutePath = path.join(__dirname, './blocks', shortName + '.png');
+        const absolutePath = path.join(TOOLS_DIR, './blocks', shortName + '.png');
         const fileData = fs.readFileSync(absolutePath);
         const pngData = PNG.sync.read(fileData);
         const image = images(absolutePath);
@@ -308,10 +329,10 @@ async function buildAtlas() {
         }
 
         textureDetails[textureName] = {
-            texcoord: {
-                u: 16 * (3 * offsetX + 1) / (atlasWidth * 3),
-                v: 16 * (3 * offsetY + 1) / (atlasWidth * 3),
-            },
+            texcoord: new UV(
+                16 * (3 * offsetX + 1) / (atlasWidth * 3),
+                16 * (3 * offsetY + 1) / (atlasWidth * 3),
+            ),
             colour: getAverageColour(pngData),
         },
 
@@ -343,14 +364,15 @@ async function buildAtlas() {
 
 
     log(LogStyle.Info, 'Exporting...');
-    const atlasDir = path.join(__dirname, `../resources/atlases/${atlasName}.png`);
+    const atlasDir = path.join(ATLASES_DIR, `./${atlasName}.png`);
     outputImage.save(atlasDir);
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
         atlasSize: atlasSize,
         blocks: allModels,
+        supportedBlockNames: Array.from(allBlockNames),
     };
-    fs.writeFileSync(path.join(__dirname, `../resources/atlases/${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
+    fs.writeFileSync(path.join(ATLASES_DIR, `./${atlasName}.atlas`), JSON.stringify(outputJSON, null, 4));
     log(LogStyle.Success, `${atlasName}.atlas exported to /resources/atlases/\n`);
 
     /* eslint-disable */

@@ -3,16 +3,21 @@ import { ASSERT, getRandomID } from '../../util';
 export class LabelElement {
     private _id: string;
     private _text: string;
+    private _description?: string;
 
-    constructor(text: string) {
+    constructor(text: string, description?: string) {
         this._id = getRandomID();
         this._text = text;
+        this._description = description;
     }
 
     public generateHTML(): string {
+        const description = this._description ? `<br><div style="font-weight: 300; font-size: 85%; color: var(--text-disabled);">
+            ${this._description}
+        </div>` : '';
         return `
-            <div class="sub-left" id="${this._id}">
-                ${this._text}
+            <div class="prop-left" id="${this._id}">
+                ${this._text}${description}
             </div>
         `;
     }
@@ -22,9 +27,9 @@ export class LabelElement {
         ASSERT(element !== null);
 
         if (isEnabled) {
-            element.classList.remove('sub-left-disabled');
+            element.classList.remove('prop-left-disabled');
         } else {
-            element.classList.add('sub-left-disabled');
+            element.classList.add('prop-left-disabled');
         }
     }
 }

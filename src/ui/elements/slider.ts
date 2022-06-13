@@ -1,5 +1,5 @@
 import { ASSERT } from '../../util';
-import { clamp } from '../../math';
+import { clamp, mapRange, wayThrough } from '../../math';
 import { LabelledElement } from './labelled_element';
 
 export class SliderElement extends LabelledElement<number> {
@@ -7,14 +7,18 @@ export class SliderElement extends LabelledElement<number> {
     private _max: number;
     private _decimals: number;
     private _dragging: boolean;
+    private _step: number;
+    private _hovering: boolean;
 
-    public constructor(label: string, min: number, max: number, decimals: number, value: number) {
+    public constructor(label: string, min: number, max: number, decimals: number, value: number, step: number) {
         super(label);
         this._min = min;
         this._max = max;
         this._decimals = decimals;
         this._value = value;
+        this._step = step;
         this._dragging = false;
+        this._hovering = false;
     }
 
     public generateInnerHTML() {
@@ -38,6 +42,7 @@ export class SliderElement extends LabelledElement<number> {
         ASSERT(element !== null);
 
         element.onmouseenter = () => {
+            this._hovering = true;
             if (this._isEnabled) {
                 element.classList.add('new-slider-hover');
                 elementBar.classList.add('new-slider-bar-hover');
@@ -45,48 +50,84 @@ export class SliderElement extends LabelledElement<number> {
         };
 
         element.onmouseleave = () => {
-            element.classList.remove('new-slider-hover');
-            elementBar.classList.remove('new-slider-bar-hover');
+            this._hovering = false;
+            if (!this._dragging) {
+                element.classList.remove('new-slider-hover');
+                elementBar.classList.remove('new-slider-bar-hover');
+            }
         };
 
         element.onmousedown = () => {
             this._dragging = true;
         };
 
-        document.addEventListener('mousemove', (e: any) => {
+        document.addEventListener('mousemove', (e: MouseEvent) => {
             if (this._dragging) {
-                this._updateValue(e);
+                this._onDragSlider(e);
             }
         });
 
-        document.addEventListener('mouseup', (e: any) => {
+        document.addEventListener('mouseup', (e: MouseEvent) => {
             if (this._dragging) {
-                this._updateValue(e);
+                this._onDragSlider(e);
+            }
+            if (!this._hovering) {
+                element.classList.remove('new-slider-hover');
+                elementBar.classList.remove('new-slider-bar-hover');
             }
             this._dragging = false;
         });
+
+        element.addEventListener('wheel', (e: WheelEvent) => {
+            if (!this._dragging && this._isEnabled) {
+                e.preventDefault();
+                this._onScrollSlider(e);
+            }
+        });
     }
 
-    private _updateValue(e: MouseEvent) {
+    private _onScrollSlider(e: WheelEvent) {
+        if (!this._isEnabled) {
+            return;
+        }
+        ASSERT(this._value);
+
+        this._value -= (e.deltaY / 150) * this._step;
+        this._value = clamp(this._value, this._min, this._max);
+
+        this._onValueUpdated();
+    }
+
+    private _onDragSlider(e: MouseEvent) {
         if (!this._isEnabled) {
             return;
         }
 
         const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null);
+
+        const box = element.getBoundingClientRect();
+        const left = box.x;
+        const right = box.x + box.width;
+        
+        this._value = mapRange(e.clientX, left, right, this._min, this._max);
+        this._value = clamp(this._value, this._min, this._max);
+
+        this._onValueUpdated();
+    }
+
+    private _onValueUpdated() {
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
         const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        ASSERT(element !== null && elementBar !== null && elementValue !== null);
+        ASSERT(elementBar !== null && elementValue !== null);
 
-
-        const mouseEvent = e as MouseEvent;
-        const xOffset = mouseEvent.clientX - elementBar.getBoundingClientRect().x;
-        const width = element.clientWidth;
-        const norm = clamp(xOffset / width, 0.0, 1.0);
-        this._value = (norm * (this._max - this._min)) + this._min;
+        const norm = wayThrough(this.getValue(), this._min, this._max);
         elementBar.style.width = `${norm * 100}%`;
+        elementValue.innerHTML = this.getValue().toFixed(this._decimals);
+    }
 
-
-        elementValue.innerHTML = this._value.toFixed(this._decimals);
+    public getDisplayValue() {
+        return parseFloat(this.getValue().toFixed(this._decimals));
     }
 
     protected _onEnabledChanged() {

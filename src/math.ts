@@ -1,4 +1,4 @@
-import { CustomError, LOG_ERROR } from './util';
+import { AppError, LOG_ERROR } from './util';
 import { Vector3 } from './vector';
 
 
@@ -34,6 +34,10 @@ export const roundToNearest = (value: number, base: number) => {
     return Math.round(value / base) * base;
 };
 
+export const mapRange = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) => {
+    return (value - fromMin)/(fromMax - fromMin) * (toMax - toMin) + toMin;
+};
+
 export const wayThrough = (value: number, min: number, max: number) => {
     // ASSERT(value >= min && value <= max);
     return (value - min) / (max - min);
@@ -48,7 +52,7 @@ export const checkNaN = (...args: number[]) => {
     });
     if (existsNaN) {
         LOG_ERROR(args);
-        throw new CustomError('Found NaN');
+        throw new AppError('Found NaN');
     }
 };
 
@@ -60,7 +64,7 @@ export const checkFractional = (...args: number[]) => {
         return arg > 1.0 || arg < 0.0;
     });
     if (existsOutside) {
-        throw new CustomError('Found value outside of [0, 1]');
+        throw new AppError('Found value outside of [0, 1]');
     }
 };
 

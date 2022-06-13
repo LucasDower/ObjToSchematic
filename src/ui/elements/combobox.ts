@@ -1,15 +1,16 @@
 import { LabelledElement } from './labelled_element';
 import { ASSERT } from '../../util';
 
-export interface ComboBoxItem {
-    id: string;
+export type ComboBoxItem<T> = {
+    id: T;
     displayText: string;
+    tooltip?: string;
 }
 
-export class ComboBoxElement extends LabelledElement<string> {
-    private _items: ComboBoxItem[];
+export class ComboBoxElement<T> extends LabelledElement<T> {
+    private _items: ComboBoxItem<T>[];
 
-    public constructor(id: string, items: ComboBoxItem[]) {
+    public constructor(id: string, items: ComboBoxItem<T>[]) {
         super(id);
         this._items = items;
     }
@@ -17,7 +18,7 @@ export class ComboBoxElement extends LabelledElement<string> {
     public generateInnerHTML() {
         let itemsHTML = '';
         for (const item of this._items) {
-            itemsHTML += `<option value="${item.id}">${item.displayText}</option>`;
+            itemsHTML += `<option value="${item.id}" title="${item.tooltip || ''}">${item.displayText}</option>`;
         }
 
         return `

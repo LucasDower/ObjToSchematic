@@ -1,4 +1,4 @@
-import { UV, ASSERT, CustomError } from './util';
+import { UV, ASSERT, AppError } from './util';
 import { RGB } from './util';
 
 import * as fs from 'fs';
@@ -39,13 +39,13 @@ export class Texture {
             } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
                 this._image = jpeg.decode(data);
             } else {
-                throw new CustomError(`Failed to load: ${filename}`);
+                throw new AppError(`Failed to load ${filename}`);
             }
             if (this._image.width * this._image.height * 4 !== this._image.data.length) {
-                throw new CustomError(`Unexpected image resolution mismatch: ${filename}`);
+                throw new AppError(`Unexpected image resolution mismatch: ${filename}`);
             }
         } catch (err) {
-            throw new CustomError(`Could not read ${filename}`);
+            throw new AppError(`Could not read ${filename}`);
         }
     }
 
@@ -60,6 +60,9 @@ export class Texture {
     private _getLinearRGB(uv: UV): RGB {
         uv.v = 1.0 - uv.v;
 
+        uv.u = uv.u % 1.0;
+        uv.v = uv.v % 1.0;
+
         const x = uv.u * this._image.width;
         const y = uv.v * this._image.height;
 
@@ -70,7 +73,10 @@ export class Texture {
 
         const u = wayThrough(x, xL, xU);
         const v = wayThrough(y, yL, yU);
-        ASSERT(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0, `UV out of range (${u}, ${v})`);
+        
+        if (!(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0)) {
+            return RGB.magenta;
+        }
 
         const A = this._getFromXY(xL, yU).toVector3();
         const B = this._getFromXY(xU, yU).toVector3();

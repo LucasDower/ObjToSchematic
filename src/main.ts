@@ -1,6 +1,26 @@
+
+/**
+                ,d                            
+                88                            
+    ,adPPYba, MM88MMM ,adPPYba,  8b,dPPYba,   
+    I8[    ""   88   a8"     "8a 88P'    "8a  
+     `"Y8ba,    88   8b       d8 88       d8  
+    aa    ]8I   88,  "8a,   ,a8" 88b,   ,a8"  
+    `"YbbdP"'   "Y888 `"YbbdP"'  88`YbbdP"'   
+                                 88           
+                                 88
+
+    If you're interested in the code, I recommend starting in /src/AppContext.ts
+    The stuff here is boring Electron boilerplate \(•◡•)/
+*/
+
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import url from 'url';
+import { AppConfig } from './config';
+import { BASE_DIR, STATIC_DIR } from './util';
+
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -16,6 +36,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
+        icon: path.join(STATIC_DIR, process.platform === 'win32' ? './icon.ico' : './icon.png'),
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
@@ -24,16 +45,26 @@ function createWindow() {
             enableRemoteModule: true,
         },
     });
-    // mainWindow.removeMenu();
-
-
+    if (!AppConfig.DEBUG_ENABLED) {
+        mainWindow.removeMenu();
+    }
+    
     // Load index.html
     mainWindow.loadURL(url.format({
-        pathname: path.join(__dirname, '../index.html'),
+        pathname: path.join(BASE_DIR, './index.html'),
         protocol: 'file:',
         slashes: true,
     }));
 
+    const baseTitle = 'ObjToSchematic – Convert 3D models into Minecraft builds';
+    try {
+        const branchName: Buffer = require('child_process').execSync('git rev-parse --abbrev-ref HEAD').toString().replace('\n', '');
+        const commitHash: (string | Buffer) = require('child_process').execSync('git rev-parse --short HEAD').toString().replace('\n', '');
+        mainWindow.setTitle(`${baseTitle} (git//${branchName.toString()}++${commitHash.toString().trim()})`);
+    } catch (e: any) {
+        mainWindow.setTitle(`${baseTitle} (release//v0.5.1)`);
+    }
+    
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();
 

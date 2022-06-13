@@ -1,41 +1,46 @@
-import { IImporter } from '../importer';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, RGB, CustomError, LOG, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
+import { UV, ASSERT, RGB, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
 import path from 'path';
+import { StatusHandler } from '../status';
+import { IImporter } from './base_importer';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
+    private _normals: Vector3[] = [];
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
-    private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {};
-    
+
+    private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {
+        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGB.white },
+    };
     private _mtlLibs: string[] = [];
-    private _currentMaterialName: string = '';
+    private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
+
     private _objPath?: path.ParsedPath;
     private _objParsers = [
         {
             // e.g. 'mtllib my_file.mtl'
-            regex: new RegExpBuilder().add(/mtllib/).add(/ /).add(REGEX_NZ_ANY, 'path').toRegExp(),
+            regex: new RegExpBuilder().add(/^mtllib/).add(/ /).add(REGEX_NZ_ANY, 'path').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._mtlLibs.push(match.path.trim());
             },
         },
         {
             // e.g. 'usemtl my_material'
-            regex: new RegExpBuilder().add(/usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
+            regex: new RegExpBuilder().add(/^usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._currentMaterialName = match.name.trim();
-                ASSERT(this._currentMaterialName);
+                ASSERT(this._currentMaterialName, 'invalid material name');
             },
         },
         {
             // e.g. 'v 0.123 0.456 0.789'
             regex: new RegExpBuilder()
-                .add(/v/)
+                .add(/^v/)
                 .addNonzeroWhitespace()
                 .add(REGEX_NUMBER, 'x')
                 .addNonzeroWhitespace()
@@ -52,9 +57,28 @@ export class ObjImporter extends IImporter {
             },
         },
         {
+            // e.g. 'vn 0.123 0.456 0.789'
+            regex: new RegExpBuilder()
+                .add(/^vn/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'x')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'y')
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'z')
+                .toRegExp(),
+            delegate: (match: { [key: string]: string }) => {
+                const x = parseFloat(match.x);
+                const y = parseFloat(match.y);
+                const z = parseFloat(match.z);
+                checkNaN(x, y, z);
+                this._normals.push(new Vector3(x, y, z));
+            },
+        },
+        {
             // e.g. 'vt 0.123 0.456'
             regex: new RegExpBuilder()
-                .add(/vt/)
+                .add(/^vt/)
                 .addNonzeroWhitespace()
                 .add(REGEX_NUMBER, 'u')
                 .addNonzeroWhitespace()
@@ -68,78 +92,97 @@ export class ObjImporter extends IImporter {
             },
         },
         {
-            // e.g. 'f 1/2/3 4/5/6 7/8/9 10/11/12' or 'f 1/2 3/4 5/6 7/8'
+            // e.g. 'f 1/2/3 ...' or 'f 1/2 ...' or 'f 1 ...'
             regex: new RegExpBuilder()
-                .add(/f/)
+                .add(/^f/)
                 .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'xIndex').addMany(['/'], true).add(REGEX_NUMBER, 'xtIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'yIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ytIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'zIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ztIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'wIndex').addMany(['/'], true).add(REGEX_NUMBER, 'wtIndex', true).addMany(['/', REGEX_NUMBER], true)
+                .add(/.*/, 'line')
                 .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
-                const iX = parseInt(match.xIndex) - 1;
-                const iY = parseInt(match.yIndex) - 1;
-                const iZ = parseInt(match.zIndex) - 1;
-                const iW = parseInt(match.wIndex) - 1;
-                const iUVx = parseInt(match.xtIndex) - 1;
-                const iUVy = parseInt(match.ytIndex) - 1;
-                const iUVz = parseInt(match.ztIndex) - 1;
-                const iUVw = parseInt(match.wtIndex) - 1;
-                checkNaN(iX, iY, iZ, iW);
-                ASSERT(this._currentMaterialName);
-                this._tris.push({
-                    iX: iW,
-                    iY: iY,
-                    iZ: iX,
-                    iXUV: iUVw,
-                    iYUV: iUVy,
-                    iZUV: iUVx,
-                    material: this._currentMaterialName,
+                const line = match.line.trim();
+                
+                const vertices = line.split(' ').filter((x) => {
+                    return x.length !== 0;
                 });
-                this._tris.push({
-                    iX: iW,
-                    iY: iZ,
-                    iZ: iY,
-                    iXUV: iUVw,
-                    iYUV: iUVz,
-                    iZUV: iUVy,
-                    material: this._currentMaterialName,
-                });
-            },
-        },
-        {
-            // e.g. f 1/2/3 4/5/6 7/8/9 or 1/2 3/4 5/6
-            regex: new RegExpBuilder()
-                .add(/f/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'xIndex').addMany(['/'], true).add(REGEX_NUMBER, 'xtIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'yIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ytIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'zIndex').addMany(['/'], true).add(REGEX_NUMBER, 'ztIndex', true).addMany(['/', REGEX_NUMBER], true)
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const iX = parseInt(match.xIndex) - 1;
-                const iY = parseInt(match.yIndex) - 1;
-                const iZ = parseInt(match.zIndex) - 1;
-                const iUVx = parseInt(match.xtIndex) - 1;
-                const iUVy = parseInt(match.ytIndex) - 1;
-                const iUVz = parseInt(match.ztIndex) - 1;
-                checkNaN(iX, iY, iZ);
-                ASSERT(this._currentMaterialName);
-                this._tris.push({
-                    iX: iX,
-                    iY: iY,
-                    iZ: iZ,
-                    iXUV: iUVx,
-                    iYUV: iUVy,
-                    iZUV: iUVz,
-                    material: this._currentMaterialName,
-                });
+                
+                if (vertices.length < 3) {
+                    // this.addWarning('')
+                    // throw new AppError('Face data should have at least 3 vertices');
+                }
+                
+                const points: {
+                    positionIndex: number;
+                    texcoordIndex?: number;
+                    normalIndex?: number;
+                }[] = [];
+
+                for (const vertex of vertices) {
+                    const vertexData = vertex.split('/');
+                    switch (vertexData.length) {
+                        case 1: {
+                            const index = parseInt(vertexData[0]);
+                            points.push({
+                                positionIndex: index,
+                                texcoordIndex: index,
+                                normalIndex: index,
+                            });
+                            break;
+                        }
+                        case 2: {
+                            const positionIndex = parseInt(vertexData[0]);
+                            const texcoordIndex = parseInt(vertexData[1]);
+                            points.push({
+                                positionIndex: positionIndex,
+                                texcoordIndex: texcoordIndex,
+                            });
+                            break;
+                        }
+                        case 3: {
+                            const positionIndex = parseInt(vertexData[0]);
+                            const texcoordIndex = parseInt(vertexData[1]);
+                            const normalIndex = parseInt(vertexData[2]);
+                            points.push({
+                                positionIndex: positionIndex,
+                                texcoordIndex: texcoordIndex,
+                                normalIndex: normalIndex,
+                            });
+                            break;
+                        }
+                        default:
+                            throw new AppError(`Face data has unexpected number of vertex data: ${vertexData.length}`);
+                    }
+                }
+
+                const pointBase = points[0];
+                for (let i = 1; i < points.length - 1; ++i) {
+                    const pointA = points[i];
+                    const pointB = points[i+1];
+                    const tri: Tri = {
+                        positionIndices: {
+                            x: pointBase.positionIndex - 1,
+                            y: pointA.positionIndex - 1,
+                            z: pointB.positionIndex - 1,
+                        },
+                        material: this._currentMaterialName,
+                    };
+                    if (pointBase.normalIndex || pointA.normalIndex || pointB.normalIndex) {
+                        ASSERT(pointBase.normalIndex && pointA.normalIndex && pointB.normalIndex);
+                        tri.normalIndices = {
+                            x: pointBase.normalIndex - 1,
+                            y: pointA.normalIndex - 1,
+                            z: pointB.normalIndex - 1,
+                        };
+                    }
+                    if (pointBase.texcoordIndex || pointA.texcoordIndex || pointB.texcoordIndex) {
+                        ASSERT(pointBase.texcoordIndex && pointA.texcoordIndex && pointB.texcoordIndex);
+                        tri.texcoordIndices = {
+                            x: pointBase.texcoordIndex - 1,
+                            y: pointA.texcoordIndex - 1,
+                            z: pointB.texcoordIndex - 1,
+                        };
+                    }
+                    this._tris.push(tri);
+                }
             },
         },
     ];
@@ -150,7 +193,7 @@ export class ObjImporter extends IImporter {
     private _mtlParsers = [
         {
             // e.g. 'newmtl my_material'
-            regex: new RegExpBuilder().add(/newmtl/).add(REGEX_NZ_ANY, 'name').toRegExp(),
+            regex: new RegExpBuilder().add(/^newmtl/).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._addCurrentMaterial();
                 this._currentMaterialName = match.name.trim();
@@ -161,7 +204,7 @@ export class ObjImporter extends IImporter {
         {
             // e.g. 'Kd 0.123 0.456 0.789'
             regex: new RegExpBuilder()
-                .add(/Kd/)
+                .add(/^Kd/)
                 .addNonzeroWhitespace()
                 .add(REGEX_NUMBER, 'r')
                 .addNonzeroWhitespace()
@@ -181,11 +224,11 @@ export class ObjImporter extends IImporter {
         },
         {
             // e.g. 'map_Kd my/path/to/file.png'
-            regex: new RegExpBuilder().add(/map_Kd/).add(REGEX_NZ_ANY, 'path').toRegExp(),
+            regex: new RegExpBuilder().add(/^map_Kd/).add(REGEX_NZ_ANY, 'path').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 let mtlPath = match.path.trim();
                 if (!path.isAbsolute(mtlPath)) {
-                    ASSERT(this._objPath);
+                    ASSERT(this._objPath, 'no obj path');
                     mtlPath = path.join(this._objPath.dir, mtlPath);
                 }
                 this._currentTexture = mtlPath;
@@ -194,49 +237,50 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    override createMesh(filePath: string): Mesh {
-        ASSERT(path.isAbsolute(filePath));
-
+    override parseFile(filePath: string) {
+        ASSERT(path.isAbsolute(filePath), 'path not absolute');
+        
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
 
         if (this._mtlLibs.length === 0) {
-            this.addWarning('Could not find associated .mtl file');
+            StatusHandler.Get.add('warning', 'Could not find associated .mtl file');
         }
         for (let i = 0; i < this._mtlLibs.length; ++i) {
             const mtlLib = this._mtlLibs[i];
             if (!path.isAbsolute(mtlLib)) {
                 this._mtlLibs[i] = path.join(this._objPath.dir, mtlLib);
             }
-            ASSERT(path.isAbsolute(this._mtlLibs[i]));
+            ASSERT(path.isAbsolute(this._mtlLibs[i]), 'path not absolute');
         }
 
         this._parseMTL();
+    }
 
-        LOG(this);
-        return new Mesh(this._vertices, this._uvs, this._tris, this._materials);
+    override toMesh(): Mesh {
+        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, this._materials);
     }
 
     private _parseOBJ(path: string) {
         if (!fs.existsSync(path)) {
-            throw new CustomError(`Could not find ${path}`);
+            throw new AppError(`Could not find ${path}`);
         }
         const fileContents = fs.readFileSync(path, 'utf8');
         if (fileContents.includes('�')) {
-            throw new CustomError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
+            throw new AppError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
         }
 
         fileContents.replace('\r', ''); // Convert Windows carriage return
         const fileLines = fileContents.split('\n');
 
         for (const line of fileLines) {
-            this._parseOBJLine(line);
+            this.parseOBJLine(line);
         }
     }
 
-    private _parseOBJLine(line: string) {
-        const essentialTokens = ['mtllib ', 'usemtl ', 'v ', 'vt ', 'f '];
+    public parseOBJLine(line: string) {
+        const essentialTokens = ['mtllib ', 'usemtl ', 'v ', 'vt ', 'f ', 'vn '];
 
         for (const parser of this._objParsers) {
             const match = parser.regex.exec(line);
@@ -245,8 +289,8 @@ export class ObjImporter extends IImporter {
                     parser.delegate(match.groups);
                 } catch (error) {
                     LOG_ERROR('Caught', error);
-                    if (error instanceof CustomError) {
-                        throw new CustomError(`Failed attempt to parse '${line}', because '${error.message}'`);
+                    if (error instanceof AppError) {
+                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
                 }
                 return;
@@ -257,14 +301,15 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new CustomError(`Failed to parse essential token for <b>${line}</b>`);
+            throw new AppError(`Failed to parse essential token for <b>${line}</b>`);
         }
     }
 
     private _parseMTL() {
         for (const mtlLib of this._mtlLibs) {
             if (!fs.existsSync(mtlLib)) {
-                throw new CustomError(`Could not find ${mtlLib}`);
+                StatusHandler.Get.add('warning', `Could not find ${mtlLib}`);
+                continue;
             }
             const fileContents = fs.readFileSync(mtlLib, 'utf8');
     
@@ -288,8 +333,8 @@ export class ObjImporter extends IImporter {
                 try {
                     parser.delegate(match.groups);
                 } catch (error) {
-                    if (error instanceof CustomError) {
-                        throw new CustomError(`Failed attempt to parse '${line}', because '${error.message}'`);
+                    if (error instanceof AppError) {
+                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
                 }
                 return;
@@ -300,7 +345,7 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new CustomError(`Failed to parse essential token for ${line}`);
+            throw new AppError(`Failed to parse essential token for ${line}`);
         }
     }
 

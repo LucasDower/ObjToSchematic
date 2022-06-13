@@ -6,11 +6,15 @@ function addEvent(htmlElementID: string, event: string, delegate: (e: any) => vo
     document.getElementById(htmlElementID)?.addEventListener(event, delegate);
 }
 
+function addDocumentEvent(event: string, delegate: (e: any) => void) {
+    document.addEventListener(event, delegate);
+}
+
 const camera = ArcballCamera.Get;
 addEvent('canvas', 'mousedown', (e) => {
     camera.onMouseDown(e);
 });
-addEvent('canvas', 'mouseup',   (e) => {
+addDocumentEvent('mouseup',   (e) => {
     camera.onMouseUp(e);
 });
 addEvent('canvas', 'wheel',     (e) => {
@@ -18,7 +22,7 @@ addEvent('canvas', 'wheel',     (e) => {
 });
 
 const mouseManager = MouseManager.Get;
-addEvent('canvas', 'mousemove', (e) => {
+addDocumentEvent('mousemove', (e) => {
     mouseManager.onMouseMove(e);
 });
 

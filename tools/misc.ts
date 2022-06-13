@@ -1,5 +1,5 @@
 import { log, LogStyle } from './logging';
-import { RGB } from '../src/util';
+import { RGB, TOOLS_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
@@ -14,7 +14,7 @@ export const ASSERT = (condition: boolean, onFailMessage: string) => {
 };
 
 export function isDirSetup(relativePath: string, jarAssetDir: string) {
-    const dir = path.join(__dirname, relativePath);
+    const dir = path.join(TOOLS_DIR, relativePath);
     if (fs.existsSync(dir)) {
         if (fs.readdirSync(dir).length > 0) {
             return true;
@@ -44,7 +44,7 @@ export function getAverageColour(image: PNG) {
 }
 
 export async function getPermission() {
-    const directory = path.join(process.env.APPDATA!, '.minecraft');
+    const directory = getMinecraftDir();
     log(LogStyle.Info, `This script requires files inside of ${directory}`);
     const { permission } = await prompt.get({
         properties: {
@@ -59,5 +59,16 @@ export async function getPermission() {
     const responseYes = ['Y', 'y'].includes(permission as string);
     if (!responseYes) {
         process.exit(0);
+    }
+}
+
+export function getMinecraftDir(): string {
+    switch (process.platform) {
+        case 'darwin': // MacOS
+            return path.join(process.env.HOME!, './Library/Application Support/minecraft');
+        case 'win32': // Windows
+            return path.join(process.env.APPDATA!, './.minecraft');
+        default:
+            return path.join(require('os').homedir(), '/.minecraft');
     }
 }
