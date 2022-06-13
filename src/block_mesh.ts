@@ -30,6 +30,7 @@ export class BlockMesh {
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
+    private _atlasUsed: string;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
@@ -41,6 +42,7 @@ export class BlockMesh {
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
+        this._atlasUsed = 'Vanilla';
 
         const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
@@ -49,6 +51,7 @@ export class BlockMesh {
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
         BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
+        this._atlasUsed = blockMeshParams.textureAtlas;
 
         const blockAssigner = blockMeshParams.ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
         
@@ -152,5 +155,13 @@ export class BlockMesh {
         }
 
         return newBuffer;
+    }
+
+    public getAtlasSize() {
+        return BlockAtlas.Get.getAtlasSize();
+    }
+
+    public getAtlasUsed() {
+        return this._atlasUsed;
     }
 }

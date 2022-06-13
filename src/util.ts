@@ -36,6 +36,8 @@ export type RGBA = {
     a: number
 }
 
+export type TOptional<T> = T | undefined;
+
 export class RGB {
     public r: number;
     public g: number;

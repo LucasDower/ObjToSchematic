@@ -2,7 +2,9 @@ import { BlockMesh } from '../block_mesh';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
-import { NBT, TagType } from 'prismarine-nbt';
+import fs from 'fs';
+import { NBT, TagType, writeUncompressed } from 'prismarine-nbt';
+import * as zlib from 'zlib';
 
 type BlockID = number;
 type long = [number, number];
@@ -98,7 +100,7 @@ export class Litematic extends IExporter {
         return blockStatePalette;
     }
 
-    convertToNBT(blockMesh: BlockMesh) {
+    private _convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
         const blockMapping = this._createBlockMapping(blockMesh);
 
@@ -178,5 +180,25 @@ export class Litematic extends IExporter {
 
     getFileExtension(): string {
         return 'litematic';
+    }
+
+    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
+
+        const nbt = this._convertToNBT(blockMesh);
+
+        const outBuffer = fs.createWriteStream(filePath);
+        const newBuffer = writeUncompressed(nbt, 'big');
+
+        zlib.gzip(newBuffer, (err, buffer) => {
+            if (!err) {
+                outBuffer.write(buffer);
+                outBuffer.end();
+            }
+            return err;
+        });
+
+        return false;
     }
 }

@@ -133,6 +133,7 @@ export class UI {
                 'export': new ComboBoxElement<TExporters>('File format', [
                     { id: 'litematic', displayText: 'Litematic' },
                     { id: 'schematic', displayText: 'Schematic' },
+                    { id: 'obj', displayText: 'Wavefront OBJ' },
                 ]),
             },
             elementsOrder: ['export'],

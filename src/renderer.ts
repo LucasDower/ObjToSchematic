@@ -48,7 +48,7 @@ export class Renderer {
         material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
     }>;
     public _voxelBuffer?: twgl.BufferInfo;
-    public _voxelBufferRaw?: any;
+    public _voxelBufferRaw?: {[attribute: string]: { numComponents: number, data: Float32Array | Uint32Array }};
     private _blockBuffer?: twgl.BufferInfo;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
