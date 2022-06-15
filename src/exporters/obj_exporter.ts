@@ -43,17 +43,18 @@ export class ObjExporter extends IExporter {
         const blockTexcoordData = buffer.blockTexcoord.data as Float32Array;
         const indexData = buffer.indices.data as Uint32Array;
         
-        const objData: string[] = [];
-        objData.push('# Created with ObjToSchematic');
-        objData.push('# https://github.com/LucasDower/ObjToSchematic/');
+        const writeStream = fs.createWriteStream(filepath);
+
+        writeStream.write('# Created with ObjToSchematic\n');
+        writeStream.write('# https://github.com/LucasDower/ObjToSchematic/\n\n');
         
         if (positionData && normalData && texcoordData && indexData && blockTexcoordData) {
             const numTris = indexData.length / 3;
             // Add vertex data
-            objData.push(`mtllib ${mtlRelativePath}`);
-            objData.push(`o Object`);
+            writeStream.write(`mtllib ${mtlRelativePath}\n`);
+            writeStream.write(`o Object\n`);
             for (let i = 0; i < positionData.length / 3; ++i) {
-                objData.push(`v ${positionData[3 * i + 0]} ${positionData[3 * i + 1]} ${positionData[3 * i + 2]}`);
+                writeStream.write(`v ${positionData[3 * i + 0]} ${positionData[3 * i + 1]} ${positionData[3 * i + 2]}\n`);
             }
             // Add texcoord data
             const atlasSize = blockMesh.getAtlasSize(); 
@@ -61,25 +62,25 @@ export class ObjExporter extends IExporter {
                 // vec2 tex = v_blockTexcoord + (v_texcoord / (u_atlasSize * 3.0));
                 const u = blockTexcoordData[2 * i + 0] + (texcoordData[2 * i + 0] / (atlasSize * 3.0));
                 const v = blockTexcoordData[2 * i + 1] + (texcoordData[2 * i + 1] / (atlasSize * 3.0));
-                objData.push(`vt ${u} ${1.0 - v}`);
+                writeStream.write(`vt ${u} ${1.0 - v}\n`);
             }
             // Add normal data
             for (let i = 0; i < normalData.length / 3; ++i) {
-                objData.push(`vn ${normalData[3 * i + 0]} ${normalData[3 * i + 1]} ${normalData[3 * i + 2]}`);
+                writeStream.write(`vn ${normalData[3 * i + 0]} ${normalData[3 * i + 1]} ${normalData[3 * i + 2]}\n`);
             }
 
-            objData.push(`usemtl Default`);
+            writeStream.write(`usemtl Default\n`);
             // Add face data
             for (let i = 0; i < numTris * 3; i += 3) {
                 const a = indexData[i + 0] + 1;
                 const b = indexData[i + 1] + 1;
                 const c = indexData[i + 2] + 1;
-                objData.push(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}`);
+                writeStream.write(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}\n`);
             }
             // Export to file
-            const outputString = objData.join('\n');
-            fs.writeFileSync(filepath, outputString);
         }
+
+        writeStream.end();
     }
 
     private _exportMTL(filepathMTL: string, filepathTexture: string, blockMesh: BlockMesh) {
