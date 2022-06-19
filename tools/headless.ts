@@ -1,7 +1,7 @@
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
-import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
+import { VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
@@ -12,6 +12,7 @@ import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
+import { VoxeliseParams } from '../src/voxelisers/voxelisers';
 
 void async function main() {
     const mesh = _import({
@@ -19,10 +20,10 @@ void async function main() {
     });
     const voxelMesh = _voxelise(mesh, {
         voxeliser: headlessConfig.voxelise.voxeliser === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser(),
-        voxelMeshParams: {
-            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+        voxeliseParams: {
+            desiredHeight: headlessConfig.voxelise.voxeliseParams.desiredHeight,
+            useMultisampleColouring: headlessConfig.voxelise.voxeliseParams.useMultisampleColouring,
+            textureFiltering: headlessConfig.voxelise.voxeliseParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
             enableAmbientOcclusion: false,
         },
     });
@@ -46,9 +47,9 @@ interface ImportParams {
     absoluteFilePathLoad: string;
 }
 
-interface VoxeliseParams {
+interface ActionVoxeliseParams {
     voxeliser: IVoxeliser;
-    voxelMeshParams: VoxelMeshParams;
+    voxeliseParams: VoxeliseParams;
 }
 
 interface PaletteParams {
@@ -71,10 +72,10 @@ function _import(params: ImportParams): Mesh {
 }
 
 // TODO: Log status messages
-function _voxelise(mesh: Mesh, params: VoxeliseParams): VoxelMesh {
+function _voxelise(mesh: Mesh, params: ActionVoxeliseParams): VoxelMesh {
     log(LogStyle.Info, 'Voxelising...');
     const voxeliser: IVoxeliser = params.voxeliser;
-    return voxeliser.voxelise(mesh, params.voxelMeshParams);
+    return voxeliser.voxelise(mesh, params.voxeliseParams);
 }
 
 // TODO: Log status messages

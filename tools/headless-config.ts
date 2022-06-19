@@ -4,7 +4,7 @@ export const headlessConfig = {
     },
     voxelise: {
         voxeliser: 'raybased', // 'raybased' / 'ncrb'
-        voxelMeshParams: {
+        voxeliseParams: {
             desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
             textureFiltering: 'linear', // 'linear' / 'nearest'

@@ -1,9 +1,10 @@
-import { VoxelMeshParams, VoxelMesh } from '../voxel_mesh';
+import { VoxelMesh } from '../voxel_mesh';
 import { Mesh } from '../mesh';
 import { Axes, axesToDirection, Ray } from '../ray';
 import { ASSERT, LOG } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
+import { VoxeliseParams } from './voxelisers';
 
 const bvhtree = require('bvh-tree');
 
@@ -12,10 +13,10 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
         const voxelMesh = new VoxelMesh();
-        const scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
+        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
         const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
         
         useMesh.scaleMesh(scale);
@@ -88,7 +89,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
                     useMesh.getUVTriangle(intersection.triangleIndex),
                     useMesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
-                    voxelMeshParams.textureFiltering,
+                    voxeliseParams.textureFiltering,
                 );
 
                 if (voxelColour) {

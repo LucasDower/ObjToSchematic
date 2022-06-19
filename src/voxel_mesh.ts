@@ -3,21 +3,18 @@ import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
-import { TextureFiltering } from './texture';
 import { Bounds, RGB } from './util';
 import { Vector3 } from './vector';
 
-export interface Voxel {
+export type Voxel = {
     position: Vector3;
     colour: RGB;
     collisions: number;
-
 }
-export interface VoxelMeshParams {
-    desiredHeight: number,
-    useMultisampleColouring: boolean,
-    textureFiltering: TextureFiltering,
-    enableAmbientOcclusion: boolean,
+
+/** These are the parameters required to create a Voxel Mesh */
+export type VoxelMeshParams = {
+
 }
 
 export class VoxelMesh {

@@ -5,7 +5,7 @@ import { ObjImporter } from './importers/obj_importer';
 import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, TIME_START, TIME_END } from './util';
 
 import { remote } from 'electron';
-import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
+import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from './block_mesh';
 import { TextureFiltering } from './texture';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
@@ -13,7 +13,7 @@ import { StatusHandler } from './status';
 import { UIMessageBuilder } from './ui/misc';
 import { OutputStyle } from './ui/elements/output';
 import { IExporter } from './exporters/base_exporter';
-import { TVoxelisers, VoxeliserFactory } from './voxelisers/voxelisers';
+import { TVoxelisers, VoxeliseParams, VoxeliserFactory } from './voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from './exporters/exporters';
 
 /* eslint-disable */
@@ -151,7 +151,7 @@ export class AppContext {
         ASSERT(this._loadedMesh);
 
         const uiElements = this._ui.layout.build.elements;
-        const voxelMeshParams: VoxelMeshParams = {
+        const voxeliseParams: VoxeliseParams = {
             desiredHeight: uiElements.height.getDisplayValue(),
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
@@ -163,13 +163,13 @@ export class AppContext {
 
         TIME_START('Voxelising');
         {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxeliseParams);
         }
         TIME_END('Voxelising');
         TIME_START('Render Voxel Mesh');
         {
-            const voxelSize = 8.0 / voxelMeshParams.desiredHeight;
-            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxelMeshParams.enableAmbientOcclusion);
+            const voxelSize = 8.0 / voxeliseParams.desiredHeight;
+            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxeliseParams.enableAmbientOcclusion);
         }
         TIME_END('Render Voxel Mesh');
     }
