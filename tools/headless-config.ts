@@ -8,6 +8,7 @@ export const headlessConfig = {
             desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
             textureFiltering: 'linear', // 'linear' / 'nearest'
+            voxelOverlapRule: 'average', // See TVoxelOverlapRule
         },
     },
     palette: {

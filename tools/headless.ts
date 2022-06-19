@@ -1,7 +1,7 @@
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
-import { VoxelMesh } from '../src/voxel_mesh';
+import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
@@ -25,6 +25,8 @@ void async function main() {
             useMultisampleColouring: headlessConfig.voxelise.voxeliseParams.useMultisampleColouring,
             textureFiltering: headlessConfig.voxelise.voxeliseParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
             enableAmbientOcclusion: false,
+            voxelOverlapRule: headlessConfig.voxelise.voxeliseParams.voxelOverlapRule as TVoxelOverlapRule,
+            calculateNeighbours: false,
         },
     });
     const blockMesh = _palette(voxelMesh, {

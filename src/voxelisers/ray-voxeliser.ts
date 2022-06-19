@@ -21,7 +21,7 @@ export class RayVoxeliser extends IVoxeliser {
 
     protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
         this._mesh = mesh;
-        this._voxelMesh = new VoxelMesh();
+        this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
         this._scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
