@@ -59,7 +59,7 @@ export class UI {
         'build': {
             label: 'Build',
             elements: {
-                'height': new SliderElement('Desired height', 3, 320, 0, 80, 1),
+                'height': new SliderElement('Desired height', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
