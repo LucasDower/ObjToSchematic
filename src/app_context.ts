@@ -136,11 +136,20 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
         const filePath = uiElements.input.getCachedValue();
 
-        const importer = new ObjImporter();
-        importer.parseFile(filePath);
-        this._loadedMesh = importer.toMesh();
-        this._loadedMesh.processMesh();
-        Renderer.Get.useMesh(this._loadedMesh);
+        TIME_START('Load Mesh');
+        {
+            const importer = new ObjImporter();
+            importer.parseFile(filePath);
+            this._loadedMesh = importer.toMesh();
+            this._loadedMesh.processMesh();
+        }
+        TIME_END('Load Mesh');
+
+        TIME_START('Render Mesh');
+        {
+            Renderer.Get.useMesh(this._loadedMesh);
+        }
+        TIME_END('Render Mesh');
     }
 
     private _simplify() {

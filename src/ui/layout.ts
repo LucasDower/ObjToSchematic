@@ -266,6 +266,7 @@ export class UI {
         groups: {
             'debug': {
                 elements: {
+                    /*
                     'wireframe': new ToolbarItemElement('wireframe', () => {
                         Renderer.Get.toggleIsWireframeEnabled();
                     }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
@@ -294,8 +295,9 @@ export class UI {
                         const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
                         return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
                     }),
+                    */
                 },
-                elementsOrder: ['wireframe', 'normals', 'dev'],
+                elementsOrder: [], // ['wireframe', 'normals', 'dev'],
             },
         },
         groupsOrder: ['debug'],
