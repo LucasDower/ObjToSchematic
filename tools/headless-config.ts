@@ -1,5 +1,4 @@
 import { THeadlessConfig } from './headless';
-import { TVoxelisers } from '../src/voxelisers/voxelisers';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 
@@ -9,10 +8,10 @@ export const headlessConfig: THeadlessConfig = {
     },
     voxelise: {
         voxeliser: 'bvh-ray',
-        voxeliseParams: {
+        voxelMeshParams: {
             desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
-            textureFiltering: 'linear',
+            textureFiltering: TextureFiltering.Linear,
             voxelOverlapRule: 'average',
         },
     },

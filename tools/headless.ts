@@ -6,8 +6,6 @@ import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
 import { Litematic } from '../src/exporters/litematic_exporter';
-import { RayVoxeliser } from '../src/voxelisers/ray-voxeliser';
-import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
@@ -49,13 +47,13 @@ void async function main() {
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
+        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
         voxeliseParams: {
-            desiredHeight: headlessConfig.voxelise.voxeliseParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxeliseParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxeliseParams.textureFiltering,
+            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
+            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
+            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
             enableAmbientOcclusion: false,
-            voxelOverlapRule: voxelOverlapRule,
+            voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
             calculateNeighbours: false,
         },
     });

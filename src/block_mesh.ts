@@ -1,4 +1,4 @@
-import { BasicBlockAssigner, BlockAssignerFactory, OrderedDitheringBlockAssigner, RandomDitheringBlockAssigner, TBlockAssigners } from './block_assigner';
+import { BlockAssignerFactory, TBlockAssigners } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
 import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
