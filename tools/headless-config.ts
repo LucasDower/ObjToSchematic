@@ -9,10 +9,11 @@ export const headlessConfig: THeadlessConfig = {
     },
     voxelise: {
         voxeliser: 'bvh-ray',
-        voxelMeshParams: {
+        voxeliseParams: {
             desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
-            textureFiltering: TextureFiltering.Linear,
+            textureFiltering: 'linear',
+            voxelOverlapRule: 'average',
         },
     },
     palette: {

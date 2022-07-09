@@ -1,6 +1,6 @@
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';
-import { ASSERT, ATLASES_DIR, RESOURCES_DIR } from '../util';
+import { ASSERT, ATLASES_DIR } from '../util';
 
 import fs from 'fs';
 import path from 'path';

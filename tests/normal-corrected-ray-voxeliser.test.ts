@@ -18,6 +18,8 @@ test('Voxelise solid 2x2 cube', () => {
         useMultisampleColouring: false,
         textureFiltering: TextureFiltering.Nearest,
         enableAmbientOcclusion: false,
+        voxelOverlapRule: 'average',
+        calculateNeighbours: false,
     });
 
     const expectedVoxels = [

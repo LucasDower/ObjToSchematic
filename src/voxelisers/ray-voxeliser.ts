@@ -1,4 +1,4 @@
-import { VoxelMeshParams, VoxelMesh } from '../voxel_mesh';
+import { VoxelMesh } from '../voxel_mesh';
 import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
@@ -6,6 +6,7 @@ import { Triangle, UVTriangle } from '../triangle';
 import { Bounds, RGB, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
+import { VoxeliseParams } from './voxelisers';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -14,17 +15,17 @@ import { IVoxeliser } from './base-voxeliser';
 export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
-    private _voxelMeshParams?: VoxelMeshParams;
+    private _voxeliseParams?: VoxeliseParams;
     private _scale!: number;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, voxelMeshParams: VoxelMeshParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
         this._mesh = mesh;
-        this._voxelMesh = new VoxelMesh();
-        this._voxelMeshParams = voxelMeshParams;
+        this._voxelMesh = new VoxelMesh(voxeliseParams);
+        this._voxeliseParams = voxeliseParams;
 
-        this._scale = (voxelMeshParams.desiredHeight - 1) / Mesh.desiredHeight;
-        this._offset = (voxelMeshParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        this._scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
+        this._offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
         const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
 
         useMesh.scaleMesh(this._scale);
@@ -59,7 +60,7 @@ export class RayVoxeliser extends IVoxeliser {
                 }
 
                 let voxelColour: RGB;
-                if (this._voxelMeshParams!.useMultisampleColouring) {
+                if (this._voxeliseParams!.useMultisampleColouring) {
                     const samples: RGB[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
@@ -91,7 +92,7 @@ export class RayVoxeliser extends IVoxeliser {
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
         
-        return this._mesh!.sampleMaterial(materialName, uv, this._voxelMeshParams!.textureFiltering);
+        return this._mesh!.sampleMaterial(materialName, uv, this._voxeliseParams!.textureFiltering);
     }
 
     private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> {

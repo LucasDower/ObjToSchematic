@@ -1,7 +1,7 @@
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
-import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
+import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
@@ -14,6 +14,7 @@ import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
 import { TBlockAssigners } from '../src/block_assigner';
 import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
+import { VoxeliseParams } from '../src/voxelisers/voxelisers';
 
 export type THeadlessConfig = {
     import: {
@@ -24,7 +25,8 @@ export type THeadlessConfig = {
         voxelMeshParams: {
             desiredHeight: number
             useMultisampleColouring: boolean,
-            textureFiltering: TextureFiltering
+            textureFiltering: TextureFiltering,
+            voxelOverlapRule: TVoxelOverlapRule,
         },
     },
     palette: {
@@ -47,12 +49,14 @@ void async function main() {
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
-        voxelMeshParams: {
-            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
+        voxeliser: voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
+        voxeliseParams: {
+            desiredHeight: headlessConfig.voxelise.voxeliseParams.desiredHeight,
+            useMultisampleColouring: headlessConfig.voxelise.voxeliseParams.useMultisampleColouring,
+            textureFiltering: headlessConfig.voxelise.voxeliseParams.textureFiltering,
             enableAmbientOcclusion: false,
+            voxelOverlapRule: voxelOverlapRule,
+            calculateNeighbours: false,
         },
     });
     const blockMesh = _palette(voxelMesh, {
@@ -75,9 +79,9 @@ interface ImportParams {
     absoluteFilePathLoad: string;
 }
 
-interface VoxeliseParams {
+interface ActionVoxeliseParams {
     voxeliser: IVoxeliser;
-    voxelMeshParams: VoxelMeshParams;
+    voxeliseParams: VoxeliseParams;
 }
 
 interface PaletteParams {
@@ -100,10 +104,10 @@ function _import(params: ImportParams): Mesh {
 }
 
 // TODO: Log status messages
-function _voxelise(mesh: Mesh, params: VoxeliseParams): VoxelMesh {
+function _voxelise(mesh: Mesh, params: ActionVoxeliseParams): VoxelMesh {
     log(LogStyle.Info, 'Voxelising...');
     const voxeliser: IVoxeliser = params.voxeliser;
-    return voxeliser.voxelise(mesh, params.voxelMeshParams);
+    return voxeliser.voxelise(mesh, params.voxeliseParams);
 }
 
 // TODO: Log status messages
