@@ -36,6 +36,7 @@
     "@types/obj-file-parser": "^0.5.0",
     "@types/pngjs": "^6.0.1",
     "@types/prompt": "^1.1.2",
+    "@types/varint": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^5.9.1",
     "@typescript-eslint/parser": "^5.9.1",
     "adm-zip": "^0.5.9",
@@ -59,6 +60,7 @@
     "jpeg-js": "^0.4.4",
     "pngjs": "^6.0.0",
     "prismarine-nbt": "^1.6.0",
-    "twgl.js": "^4.19.1"
+    "twgl.js": "^4.19.1",
+    "varint-array": "^0.0.0"
   }
 }
