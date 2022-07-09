@@ -21,6 +21,12 @@ export class UIMessageBuilder {
         }
     }
 
+    public addItem(...messages: string[]) {
+        for (const message of messages) {
+            this._messages.push('• ' + message);
+        }
+    }
+
     public toString(): string {
         return this._messages.join('<br>');
     }

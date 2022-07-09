@@ -171,9 +171,10 @@ export class UI {
             label: 'Export',
             elements: {
                 'export': new ComboBoxElement<TExporters>('File format', [
-                    { id: 'litematic', displayText: 'Litematic' },
-                    { id: 'schematic', displayText: 'Schematic' },
-                    { id: 'obj', displayText: 'Wavefront OBJ' },
+                    { id: 'litematic', displayText: 'Litematic (.litematic)' },
+                    { id: 'schematic', displayText: 'Schematic (.schematic)' },
+                    { id: 'obj', displayText: 'Wavefront OBJ (.obj)' },
+                    { id: 'schem', displayText: 'Sponge Schematic (.schem)' },
                 ]),
             },
             elementsOrder: ['export'],
