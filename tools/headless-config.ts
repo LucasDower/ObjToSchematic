@@ -1,22 +1,27 @@
-export const headlessConfig = {
+import { THeadlessConfig } from './headless';
+import { TVoxelisers } from '../src/voxelisers/voxelisers';
+import { TextureFiltering } from '../src/texture';
+import { ColourSpace } from '../src/util';
+
+export const headlessConfig: THeadlessConfig = {
     import: {
         absoluteFilePathLoad: 'C:/Users/<Username>/Desktop/MyModel.obj', // Must be an absolute path to the file (can be anywhere)
     },
     voxelise: {
-        voxeliser: 'raybased', // 'raybased' / 'ncrb'
+        voxeliser: 'bvh-ray',
         voxelMeshParams: {
             desiredHeight: 80, // 5-320 inclusive
             useMultisampleColouring: false,
-            textureFiltering: 'linear', // 'linear' / 'nearest'
+            textureFiltering: TextureFiltering.Linear,
         },
     },
     palette: {
         blockMeshParams: {
             textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
             blockPalette: 'all-snapshot', // Must be a palette name that exists in /resources/palettes
-            ditheringEnabled: true,
-            colourSpace: 'rgb', // 'rgb' / 'lab';
-            fallable: 'replace-falling', // 'replace-fallable' / 'place-string';
+            blockAssigner: 'ordered-dithering',
+            colourSpace: ColourSpace.RGB,
+            fallable: 'replace-falling',
         },
     },
     export: {

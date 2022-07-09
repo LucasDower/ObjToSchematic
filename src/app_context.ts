@@ -181,7 +181,7 @@ export class AppContext {
         const blockMeshParams: BlockMeshParams = {
             textureAtlas: uiElements.textureAtlas.getCachedValue(),
             blockPalette: uiElements.blockPalette.getCachedValue(),
-            ditheringEnabled: uiElements.dithering.getCachedValue() === 'on',
+            blockAssigner: uiElements.dithering.getCachedValue(),
             colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
             fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
         };

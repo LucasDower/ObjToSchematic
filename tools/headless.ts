@@ -12,17 +12,46 @@ import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
+import { TBlockAssigners } from '../src/block_assigner';
+import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
+
+export type THeadlessConfig = {
+    import: {
+        absoluteFilePathLoad: string,
+    },
+    voxelise: {
+        voxeliser: TVoxelisers,
+        voxelMeshParams: {
+            desiredHeight: number
+            useMultisampleColouring: boolean,
+            textureFiltering: TextureFiltering
+        },
+    },
+    palette: {
+        blockMeshParams: {
+            textureAtlas: string,
+            blockPalette: string,
+            blockAssigner: TBlockAssigners,
+            colourSpace: ColourSpace,
+            fallable: FallableBehaviour,
+        },
+    },
+    export: {
+        absoluteFilePathSave: 'C:/Users/<Username>/AppData//Roaming/.minecraft/schematics/MySchematic.schematic', // Must be an absolute path to the file (can be anywhere)
+        exporter: 'schematic', // 'schematic' / 'litematic',
+    },
+}
 
 void async function main() {
     const mesh = _import({
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: headlessConfig.voxelise.voxeliser === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser(),
+        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
         voxelMeshParams: {
             desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
             useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
             enableAmbientOcclusion: false,
         },
     });
@@ -30,8 +59,8 @@ void async function main() {
         blockMeshParams: {
             textureAtlas: headlessConfig.palette.blockMeshParams.textureAtlas,
             blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
-            ditheringEnabled: headlessConfig.palette.blockMeshParams.ditheringEnabled,
-            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            blockAssigner: headlessConfig.palette.blockMeshParams.blockAssigner as TBlockAssigners,
+            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace,
             fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
         },
     });
