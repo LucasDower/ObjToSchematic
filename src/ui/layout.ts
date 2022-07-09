@@ -14,6 +14,7 @@ import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
+import { TBlockAssigners } from '../block_assigner';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 
 export interface Group {
@@ -128,9 +129,10 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement('Dithering', [
-                    { id: 'on', displayText: 'On (recommended)' },
-                    { id: 'off', displayText: 'Off' },
+                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
+                    { id: 'ordered-dithering', displayText: 'Ordered' },
+                    { id: 'random-dithering', displayText: 'Random' },
+                    { id: 'basic', displayText: 'Off' },
                 ]),
                 'colourSpace': new ComboBoxElement('Colour space', [
                     { id: 'rgb', displayText: 'RGB (faster)' },

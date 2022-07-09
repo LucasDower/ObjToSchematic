@@ -6,26 +6,54 @@ import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
 import { Litematic } from '../src/exporters/litematic_exporter';
-import { RayVoxeliser } from '../src/voxelisers/ray-voxeliser';
-import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
+import { TBlockAssigners } from '../src/block_assigner';
+import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
 import { VoxeliseParams } from '../src/voxelisers/voxelisers';
+
+export type THeadlessConfig = {
+    import: {
+        absoluteFilePathLoad: string,
+    },
+    voxelise: {
+        voxeliser: TVoxelisers,
+        voxelMeshParams: {
+            desiredHeight: number
+            useMultisampleColouring: boolean,
+            textureFiltering: TextureFiltering,
+            voxelOverlapRule: TVoxelOverlapRule,
+        },
+    },
+    palette: {
+        blockMeshParams: {
+            textureAtlas: string,
+            blockPalette: string,
+            blockAssigner: TBlockAssigners,
+            colourSpace: ColourSpace,
+            fallable: FallableBehaviour,
+        },
+    },
+    export: {
+        absoluteFilePathSave: 'C:/Users/<Username>/AppData//Roaming/.minecraft/schematics/MySchematic.schematic', // Must be an absolute path to the file (can be anywhere)
+        exporter: 'schematic', // 'schematic' / 'litematic',
+    },
+}
 
 void async function main() {
     const mesh = _import({
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: headlessConfig.voxelise.voxeliser === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser(),
+        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
         voxeliseParams: {
-            desiredHeight: headlessConfig.voxelise.voxeliseParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxeliseParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxeliseParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
+            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
+            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
             enableAmbientOcclusion: false,
-            voxelOverlapRule: headlessConfig.voxelise.voxeliseParams.voxelOverlapRule as TVoxelOverlapRule,
+            voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
             calculateNeighbours: false,
         },
     });
@@ -33,8 +61,8 @@ void async function main() {
         blockMeshParams: {
             textureAtlas: headlessConfig.palette.blockMeshParams.textureAtlas,
             blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
-            ditheringEnabled: headlessConfig.palette.blockMeshParams.ditheringEnabled,
-            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            blockAssigner: headlessConfig.palette.blockMeshParams.blockAssigner as TBlockAssigners,
+            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace,
             fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
         },
     });

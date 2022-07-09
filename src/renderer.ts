@@ -2,10 +2,10 @@ import { Vector3 } from './vector';
 import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
 import { RenderBuffer } from './buffer';
-import { DebugGeometryTemplates, GeometryTemplates } from './geometry';
+import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { ASSERT, LOG, RGB } from './util';
+import { LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 

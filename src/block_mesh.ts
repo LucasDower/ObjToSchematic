@@ -1,4 +1,4 @@
-import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
+import { BlockAssignerFactory, TBlockAssigners } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
 import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
@@ -20,7 +20,7 @@ export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-
 export interface BlockMeshParams {
     textureAtlas: string,
     blockPalette: string,
-    ditheringEnabled: boolean,
+    blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
 }
@@ -53,7 +53,7 @@ export class BlockMesh {
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
         this._atlasUsed = blockMeshParams.textureAtlas;
 
-        const blockAssigner = blockMeshParams.ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
+        const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
         
         let countFalling = 0;
         const voxels = this._voxelMesh.getVoxels();
