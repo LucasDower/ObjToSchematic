@@ -5,7 +5,7 @@ import { RenderBuffer } from './buffer';
 import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { LOG, RGB } from './util';
+import { ASSERT, LOG, RGB } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
@@ -51,7 +51,7 @@ export class Renderer {
     public _voxelBuffer?: twgl.BufferInfo;
     public _voxelBufferRaw?: {[attribute: string]: { numComponents: number, data: Float32Array | Uint32Array }};
     private _blockBuffer?: twgl.BufferInfo;
-    // private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
+    private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
@@ -71,13 +71,11 @@ export class Renderer {
         this._modelsAvailable = 0;
         this._materialBuffers = [];
 
-        /*
         this._debugBuffers = {};
         this._debugBuffers[MeshType.None] = {};
         this._debugBuffers[MeshType.TriangleMesh] = {};
         this._debugBuffers[MeshType.VoxelMesh] = {};
         this._debugBuffers[MeshType.BlockMesh] = {};
-        */
 
         this._isGridComponentEnabled = {};
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
@@ -248,13 +246,11 @@ export class Renderer {
             }
         });
 
-        /*
         const dimensions = mesh.getBounds().getDimensions();
         this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(dimensions);
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89).toRGBA());
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18).toRGBA());
-        delete this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev];
-        */
+        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89).toRGBA());
+        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18).toRGBA());
+        // delete this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev];
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
@@ -281,10 +277,8 @@ export class Renderer {
         );
         dimensions.add(1);
 
-        /*
         this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89).toRGBA(), this._voxelSize);
-        */
+        // this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89).toRGBA(), this._voxelSize);
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
@@ -304,9 +298,7 @@ export class Renderer {
             mag: this._gl.NEAREST,
         });
         
-        /*
         this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid];
-        */
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
@@ -317,8 +309,7 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        /*
-        const debugComponents = [EDebugBufferComponents.Grid, EDebugBufferComponents.Wireframe, EDebugBufferComponents.Normals, EDebugBufferComponents.Dev];
+        const debugComponents = [EDebugBufferComponents.Grid];
         for (const debugComp of debugComponents) {
             if (this._isGridComponentEnabled[debugComp]) {
                 ASSERT(this._debugBuffers[this._meshToUse]);
@@ -342,7 +333,6 @@ export class Renderer {
             });
             this._gl.enable(this._gl.DEPTH_TEST);
         }
-        */
     }
 
     private _drawMesh() {
