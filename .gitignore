@@ -8,6 +8,7 @@ ObjToSchematic-darwin-x64
 !/res/atlases/vanilla.png
 /res/palettes/empty.palette
 /dist
+/dev
 /tools/blocks
 /tools/models
 notes.txt

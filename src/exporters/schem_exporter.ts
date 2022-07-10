@@ -4,6 +4,7 @@ import { Vector3 } from '../vector';
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';
 import { saveNBT } from '../util/nbt_util';
+import { AppConstants } from '../constants';
 
 const varintarray = require('varint-array');
 
@@ -24,7 +25,6 @@ export class SchemExporter extends IExporter {
     }
 
     private static SCHEMA_VERSION = 2;
-    private static DATA_VERSION = 3105; // 3105 => 1.19, TODO: Remove hardcoded value
 
     public override export(blockMesh: BlockMesh, filePath: string): boolean {
         const bounds = blockMesh.getVoxelMesh().getBounds();
@@ -60,7 +60,7 @@ export class SchemExporter extends IExporter {
             name: 'Schematic',
             value: {
                 Version: { type: TagType.Int, value: SchemExporter.SCHEMA_VERSION },
-                DataVersion: { type: TagType.Int, value: SchemExporter.DATA_VERSION },
+                DataVersion: { type: TagType.Int, value: AppConstants.DATA_VERSION },
                 Width: { type: TagType.Short, value: sizeVector.x },
                 Height: { type: TagType.Short, value: sizeVector.y },
                 Length: { type: TagType.Short, value: sizeVector.z },
