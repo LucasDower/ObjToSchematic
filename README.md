@@ -6,7 +6,7 @@
   </p>
 </h1>
 <p align="center">
-  A visual tool to convert 3D .obj models into Minecraft Schematics or <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">Litematica</a>.
+  A visual tool to convert 3D .obj models into Minecraft structures (.schematic, <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">.litematic</a>, <a href="https://github.com/SpongePowered/Schematic-Specification">.schem</a>, .nbt)
   <br>
   <a href="#usage">Usage</a> •
   <a href="#progress">Progress</a> •
