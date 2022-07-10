@@ -87,16 +87,17 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 
 0.6
-* 🟢 **Options for handling falling blocks**
+* 🟢 **Options for handling falling blocks and overlapping voxels**
+* 🟢 **Sponge schematics exporter (.schem)**
+* 🟢 **Structure blocks exporter (.nbt)**
 * ⚪ Support for simplifying complex meshes
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
-* ⚪ Alpha support
+* 🟡 Alpha support (see [alpha-support](https://github.com/LucasDower/ObjToSchematic/tree/alpha-support))
   * Alpha texture maps
   * Transparent blocks
 * ⚪ Importers for .fbx and .gltf
-* ⚪ Exporters for .nbt (structure blocks)
 
 0.7
 * ⚪ Node.js C++ addons
