@@ -177,6 +177,7 @@ export class UI {
                     { id: 'schematic', displayText: 'Schematic (.schematic)' },
                     { id: 'obj', displayText: 'Wavefront OBJ (.obj)' },
                     { id: 'schem', displayText: 'Sponge Schematic (.schem)' },
+                    { id: 'nbt', displayText: 'Structure blocks (.nbt)' },
                 ]),
             },
             elementsOrder: ['export'],
