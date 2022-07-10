@@ -71,7 +71,7 @@ float dither8x8(vec2 position, float alpha) {
     if (index == 53) limit = 0.71875;
     if (index == 54) limit = 0.09375;
     if (index == 55) limit = 0.59375;
-    if (index == 56) limit = 1.0;
+    if (index == 56) limit = 0.9999;
     if (index == 57) limit = 0.5;
     if (index == 58) limit = 0.875;
     if (index == 59) limit = 0.375;
