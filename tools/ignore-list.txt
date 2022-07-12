@@ -21,3 +21,12 @@ sculk_catalyst.json
 sculk_catalyst_bloom.json
 tnt.json
 grass_block_snow.json
+acacia_leaves.json
+azalea_leaves.json
+birch_leaves.json
+dark_oak_leaves.json
+flowering_azalea_leaves.json
+jungle_leaves.json
+mangrove_leaves.json
+oak_leaves.json
+spruce_leaves.json
