@@ -33,7 +33,6 @@ export class Texture {
 
     constructor(filename: string, transparencyFilename?: string) {
         ASSERT(path.isAbsolute(filename));
-        const filePath = path.parse(filename);
 
         this._image = this._loadImageFile(filename);
 

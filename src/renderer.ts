@@ -184,7 +184,7 @@ export class Renderer {
                             src: material.path,
                             mag: this._gl.LINEAR,
                         }),
-                        alphaValue: material.alphaValue,
+                        alphaFactor: material.alphaFactor,
                         alpha: material.alphaPath ? twgl.createTexture(this._gl, {
                             src: material.alphaPath,
                             mag: this._gl.LINEAR,
@@ -295,7 +295,7 @@ export class Renderer {
                     u_alpha: materialBuffer.material.alpha,
                     u_useAlphaMap: materialBuffer.material.alpha !== undefined,
                     u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
-                    u_alphaValue: materialBuffer.material.alphaValue,
+                    u_alphaFactor: materialBuffer.material.alphaFactor,
                 });
             } else {
                 this._drawRegister(materialBuffer.buffer, ShaderManager.Get.solidTriProgram, {

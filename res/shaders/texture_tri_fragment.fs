@@ -4,7 +4,7 @@ uniform sampler2D u_texture;
 uniform sampler2D u_alpha;
 uniform bool u_useAlphaMap;
 uniform bool u_useAlphaChannel;
-uniform float u_alphaValue;
+uniform float u_alphaFactor;
 
 varying float v_lighting;
 varying vec2 v_texcoord;
@@ -107,7 +107,7 @@ void main() {
     alpha = u_useAlphaChannel ? texture2D(u_alpha, tex).a : texture2D(u_alpha, tex).r;
   }
 
-  alpha *= u_alphaValue;
+  alpha *= u_alphaFactor;
 
   alpha = dither8x8(gl_FragCoord.xy, alpha);
   if (alpha < 0.5)

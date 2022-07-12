@@ -389,7 +389,7 @@ export class ObjImporter extends IImporter {
                     type: MaterialType.textured,
                     path: this._currentTexture,
                     alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
-                    alphaValue: this._currentAlpha,
+                    alphaFactor: this._currentAlpha,
                 };
                 this._currentTransparencyTexture = '';
             } else {

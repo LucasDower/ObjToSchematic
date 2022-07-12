@@ -29,7 +29,7 @@ export interface TexturedMaterial {
     path: string;
     type: MaterialType.textured;
     alphaPath?: string;
-    alphaValue: number;
+    alphaFactor: number;
 }
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
@@ -314,7 +314,7 @@ export class Mesh {
         } else {
             ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
             const colour = this._loadedTextures[materialName].getRGBA(uv, textureFiltering);
-            colour.a *= material.alphaValue;
+            colour.a *= material.alphaFactor;
             return colour;
         }
     }
@@ -387,7 +387,7 @@ export class Mesh {
             } else {
                 materials[materialName] = {
                     type: MaterialType.textured,
-                    alphaValue: material.alphaValue,
+                    alphaFactor: material.alphaFactor,
                     alphaPath: material.alphaPath,
                     path: material.path,
                 };
