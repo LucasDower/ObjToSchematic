@@ -109,31 +109,33 @@ export class BlockMesh {
     public createBuffer() {
         ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
+        const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
+
         const numBlocks = this._blocks.length;
         const newBuffer = {
             position: {
                 numComponents: AppConstants.ComponentSize.POSITION,
-                data: Renderer.Get._voxelBufferRaw!.position.data,
+                data: voxelBufferRaw.position.data,
             },
             colour: {
                 numComponents: AppConstants.ComponentSize.COLOUR,
-                data: Renderer.Get._voxelBufferRaw!.colour.data,
+                data: voxelBufferRaw.colour.data,
             },
             occlusion: {
                 numComponents: AppConstants.ComponentSize.OCCLUSION,
-                data: Renderer.Get._voxelBufferRaw!.occlusion.data,
+                data: voxelBufferRaw.occlusion.data,
             },
             texcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: Renderer.Get._voxelBufferRaw!.texcoord.data,
+                data: voxelBufferRaw.texcoord.data,
             },
             normal: {
                 numComponents: AppConstants.ComponentSize.NORMAL,
-                data: Renderer.Get._voxelBufferRaw!.normal.data,
+                data: voxelBufferRaw.normal.data,
             },
             indices: {
                 numComponents: AppConstants.ComponentSize.INDICES,
-                data: Renderer.Get._voxelBufferRaw!.indices.data,
+                data: voxelBufferRaw.indices.data,
             },
             blockTexcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,

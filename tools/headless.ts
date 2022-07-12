@@ -13,6 +13,7 @@ import { headlessConfig } from './headless-config';
 import { TBlockAssigners } from '../src/block_assigner';
 import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
 import { VoxeliseParams } from '../src/voxelisers/voxelisers';
+import { ExporterFactory, TExporters } from '../src/exporters/exporters';
 
 export type THeadlessConfig = {
     import: {
@@ -37,8 +38,8 @@ export type THeadlessConfig = {
         },
     },
     export: {
-        absoluteFilePathSave: 'C:/Users/<Username>/AppData//Roaming/.minecraft/schematics/MySchematic.schematic', // Must be an absolute path to the file (can be anywhere)
-        exporter: 'schematic', // 'schematic' / 'litematic',
+        absoluteFilePathSave: string,
+        exporter: TExporters,
     },
 }
 
@@ -68,7 +69,7 @@ void async function main() {
     });
     _export(blockMesh, {
         absoluteFilePathSave: headlessConfig.export.absoluteFilePathSave,
-        exporter: headlessConfig.export.exporter === 'schematic' ? new Schematic() : new Litematic(),
+        exporter: ExporterFactory.GetExporter(headlessConfig.export.exporter),
     });
     log(LogStyle.Success, 'Finished!');
 }();

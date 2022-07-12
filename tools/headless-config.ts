@@ -4,7 +4,7 @@ import { ColourSpace } from '../src/util';
 
 export const headlessConfig: THeadlessConfig = {
     import: {
-        absoluteFilePathLoad: 'C:/Users/<Username>/Desktop/MyModel.obj', // Must be an absolute path to the file (can be anywhere)
+        absoluteFilePathLoad: 'C:/Users/<username>/Desktop/my_model.obj', // Must be an absolute path to the file (can be anywhere)
     },
     voxelise: {
         voxeliser: 'bvh-ray',
@@ -25,7 +25,7 @@ export const headlessConfig: THeadlessConfig = {
         },
     },
     export: {
-        absoluteFilePathSave: 'C:/Users/<Username>/AppData//Roaming/.minecraft/schematics/MySchematic.schematic', // Must be an absolute path to the file (can be anywhere)
+        absoluteFilePathSave: 'C:/Users/Lucas/Desktop/my_structure.schematic', // Must be an absolute path to the file (can be anywhere)
         exporter: 'schematic', // 'schematic' / 'litematic',
     },
 };
