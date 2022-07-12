@@ -1,6 +1,6 @@
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
+import { UV, ASSERT, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR, LOG } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
@@ -189,6 +189,7 @@ export class ObjImporter extends IImporter {
     ];
     
     private _currentColour: RGBA = RGBAColours.BLACK;
+    private _currentAlpha: number = 1.0;
     private _currentTexture: string = '';
     private _currentTransparencyTexture: string = '';
     private _materialReady: boolean = false;
@@ -220,7 +221,7 @@ export class ObjImporter extends IImporter {
                 const b = parseFloat(match.b);
                 checkNaN(r, g, b);
                 checkFractional(r, g, b);
-                this._currentColour = { r: r, g: g, b: b, a: 1.0 };
+                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha };
                 this._materialReady = true;
             },
         },
@@ -251,6 +252,21 @@ export class ObjImporter extends IImporter {
                 this._materialReady = true;
             },
         },
+        {
+            // Transparency value
+            // e.g. 'd 0.7500'
+            regex: new RegExpBuilder()
+                .add(/^d/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'alpha')
+                .toRegExp(),
+            delegate: (match: { [key: string]: string }) => {
+                const alpha = parseFloat(match.alpha);
+                checkNaN(alpha);
+                checkFractional(alpha);
+                this._currentAlpha = alpha;
+            },
+        },
     ];
 
     override parseFile(filePath: string) {
@@ -272,6 +288,7 @@ export class ObjImporter extends IImporter {
         }
 
         this._parseMTL();
+        LOG('Materials', this._materials);
     }
 
     override toMesh(): Mesh {
@@ -372,6 +389,7 @@ export class ObjImporter extends IImporter {
                     type: MaterialType.textured,
                     path: this._currentTexture,
                     alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
+                    alphaValue: this._currentAlpha,
                 };
                 this._currentTransparencyTexture = '';
             } else {
@@ -380,6 +398,7 @@ export class ObjImporter extends IImporter {
                     colour: this._currentColour,
                 };
             }
+            this._currentAlpha = 1.0;
         }
     }
 }
