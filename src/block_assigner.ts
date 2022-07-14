@@ -97,7 +97,7 @@ export class RandomDitheringBlockAssigner implements IBlockAssigner {
         return (this._mapMatrix[index] / (size * size * size)) - 0.5;
     }
 
-    assignBlock(voxelColour: RGB, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
+    assignBlock(voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
         this._mapMatrix = this._mapMatrix
             .map((value) => ({ value, sort: Math.random() }))
             .sort((a, b) => a.sort - b.sort)
@@ -110,11 +110,12 @@ export class RandomDitheringBlockAssigner implements IBlockAssigner {
             Math.abs(voxelPosition.z % size),
         );
 
-        const newVoxelColour = new RGB(
-            ((255 * voxelColour.r) + map * RandomDitheringBlockAssigner._threshold) / 255,
-            ((255 * voxelColour.g) + map * RandomDitheringBlockAssigner._threshold) / 255,
-            ((255 * voxelColour.b) + map * RandomDitheringBlockAssigner._threshold) / 255,
-        );
+        const newVoxelColour: RGBA = {
+            r: ((255 * voxelColour.r) + map * RandomDitheringBlockAssigner._threshold) / 255,
+            g: ((255 * voxelColour.g) + map * RandomDitheringBlockAssigner._threshold) / 255,
+            b: ((255 * voxelColour.b) + map * RandomDitheringBlockAssigner._threshold) / 255,
+            a: ((255 * voxelColour.a) + map * RandomDitheringBlockAssigner._threshold) / 255,
+        };
 
         return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace, exclude);
     }
