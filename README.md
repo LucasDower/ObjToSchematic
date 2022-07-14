@@ -94,7 +94,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
-* 🟡 Alpha support (see [alpha-support](https://github.com/LucasDower/ObjToSchematic/tree/alpha-support))
+* 🟢 Alpha support
   * Alpha texture maps
   * Transparent blocks
 * ⚪ Importers for .fbx and .gltf
