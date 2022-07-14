@@ -1,6 +1,7 @@
 import { BlockMesh } from '../block_mesh';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
+import { saveNBT } from '../util/nbt_util';
 
 import { NBT, TagType } from 'prismarine-nbt';
 
@@ -98,7 +99,7 @@ export class Litematic extends IExporter {
         return blockStatePalette;
     }
 
-    convertToNBT(blockMesh: BlockMesh) {
+    private _convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
         const blockMapping = this._createBlockMapping(blockMesh);
 
@@ -178,5 +179,15 @@ export class Litematic extends IExporter {
 
     getFileExtension(): string {
         return 'litematic';
+    }
+
+    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
+
+        const nbt = this._convertToNBT(blockMesh);
+        saveNBT(nbt, filePath);
+
+        return false;
     }
 }

@@ -5,7 +5,7 @@ import { ObjImporter } from './importers/obj_importer';
 import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, TIME_START, TIME_END } from './util';
 
 import { remote } from 'electron';
-import { VoxelMesh, VoxelMeshParams } from './voxel_mesh';
+import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from './block_mesh';
 import { TextureFiltering } from './texture';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
@@ -13,7 +13,7 @@ import { StatusHandler } from './status';
 import { UIMessageBuilder } from './ui/misc';
 import { OutputStyle } from './ui/elements/output';
 import { IExporter } from './exporters/base_exporter';
-import { TVoxelisers, VoxeliserFactory } from './voxelisers/voxelisers';
+import { TVoxelisers, VoxeliseParams, VoxeliserFactory } from './voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from './exporters/exporters';
 
 /* eslint-disable */
@@ -136,11 +136,20 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
         const filePath = uiElements.input.getCachedValue();
 
-        const importer = new ObjImporter();
-        importer.parseFile(filePath);
-        this._loadedMesh = importer.toMesh();
-        this._loadedMesh.processMesh();
-        Renderer.Get.useMesh(this._loadedMesh);
+        TIME_START('Load Mesh');
+        {
+            const importer = new ObjImporter();
+            importer.parseFile(filePath);
+            this._loadedMesh = importer.toMesh();
+            this._loadedMesh.processMesh();
+        }
+        TIME_END('Load Mesh');
+
+        TIME_START('Render Mesh');
+        {
+            Renderer.Get.useMesh(this._loadedMesh);
+        }
+        TIME_END('Render Mesh');
     }
 
     private _simplify() {
@@ -151,11 +160,13 @@ export class AppContext {
         ASSERT(this._loadedMesh);
 
         const uiElements = this._ui.layout.build.elements;
-        const voxelMeshParams: VoxelMeshParams = {
+        const voxeliseParams: VoxeliseParams = {
             desiredHeight: uiElements.height.getDisplayValue(),
             useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
             textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
             enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+            voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+            calculateNeighbours: uiElements.ambientOcclusion.getCachedValue() === 'on',
         };
 
         const voxeliserID: TVoxelisers = uiElements.voxeliser.getCachedValue();
@@ -163,13 +174,13 @@ export class AppContext {
 
         TIME_START('Voxelising');
         {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxelMeshParams);
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxeliseParams);
         }
         TIME_END('Voxelising');
         TIME_START('Render Voxel Mesh');
         {
-            const voxelSize = 8.0 / voxelMeshParams.desiredHeight;
-            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxelMeshParams.enableAmbientOcclusion);
+            const voxelSize = 8.0 / voxeliseParams.desiredHeight;
+            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxeliseParams.enableAmbientOcclusion);
         }
         TIME_END('Render Voxel Mesh');
     }
@@ -181,7 +192,7 @@ export class AppContext {
         const blockMeshParams: BlockMeshParams = {
             textureAtlas: uiElements.textureAtlas.getCachedValue(),
             blockPalette: uiElements.blockPalette.getCachedValue(),
-            ditheringEnabled: uiElements.dithering.getCachedValue() === 'on',
+            blockAssigner: uiElements.dithering.getCachedValue(),
             colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
             fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
         };

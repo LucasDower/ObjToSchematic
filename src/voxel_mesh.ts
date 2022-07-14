@@ -4,36 +4,36 @@ import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
-import { TextureFiltering } from './texture';
-import { Bounds } from './util';
+import { ASSERT, Bounds, TOptional } from './util';
 import { Vector3 } from './vector';
 
 export interface Voxel {
     position: Vector3;
     colour: RGBA;
     collisions: number;
-
 }
-export interface VoxelMeshParams {
-    desiredHeight: number,
-    useMultisampleColouring: boolean,
-    textureFiltering: TextureFiltering,
-    enableAmbientOcclusion: boolean,
+
+export type TVoxelOverlapRule = 'first' | 'average';
+
+/** These are the parameters required to create a Voxel Mesh */
+export type VoxelMeshParams = {
+    voxelOverlapRule: TVoxelOverlapRule,
+    calculateNeighbours: boolean,
 }
 
 export class VoxelMesh {
-    private _voxels: Voxel[];
+    private _voxels: (Voxel & { collisions: number })[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
-    private _calculateNeighbours: boolean;
+    private _voxelMeshParams: VoxelMeshParams;
 
-    public constructor(calculateNeighbours: boolean = true) {
+    public constructor(voxelMeshParams: VoxelMeshParams) {
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
-        this._calculateNeighbours = calculateNeighbours;
+        this._voxelMeshParams = voxelMeshParams;
     }
 
     public getVoxels() {
@@ -44,7 +44,7 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos);
     }
 
-    public getVoxelAt(pos: Vector3) {
+    public getVoxelAt(pos: Vector3): TOptional<Voxel> {
         const voxelIndex = this._voxelsHash.get(pos);
         if (voxelIndex !== undefined) {
             return this._voxels[voxelIndex];
@@ -112,7 +112,7 @@ export class VoxelMesh {
     ];
 
     private _updateNeighbours(pos: Vector3) {
-        if (this._calculateNeighbours) {
+        if (this._voxelMeshParams.calculateNeighbours) {
             for (const neighbourOffset of this._neighbours) {
                 const neighbour = Vector3.add(pos, neighbourOffset);
                 const inverseOffset = neighbourOffset.copy().negate();
@@ -127,6 +127,8 @@ export class VoxelMesh {
 
     private _stringified: string = '';
     public getNeighbours(pos: Vector3) {
+        ASSERT(this._voxelMeshParams.calculateNeighbours, 'Calculate neighbours is disabled');
+
         this._stringified = pos.stringify();
         const neighbours = this._neighbourMap.get(this._stringified);
         if (neighbours === undefined) {

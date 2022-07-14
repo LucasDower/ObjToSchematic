@@ -26,6 +26,8 @@ export enum ColourSpace {
 }
 /* eslint-enable */
 
+export type TOptional<T> = T | undefined;
+
 /**
  * A 3D cuboid volume defined by two opposing corners
  */

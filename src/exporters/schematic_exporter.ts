@@ -7,9 +7,10 @@ import { StatusHandler } from '../status';
 import path from 'path';
 import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
+import { saveNBT } from '../util/nbt_util';
 
 export class Schematic extends IExporter {
-    public override convertToNBT(blockMesh: BlockMesh) {
+    private _convertToNBT(blockMesh: BlockMesh) {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
 
         const blocksData = Array<number>(bufferSize);
@@ -84,5 +85,15 @@ export class Schematic extends IExporter {
 
     getFileExtension(): string {
         return 'schematic';
+    }
+
+    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
+
+        const nbt = this._convertToNBT(blockMesh);
+        saveNBT(nbt, filePath);
+
+        return false;
     }
 }

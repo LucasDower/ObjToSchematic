@@ -14,6 +14,8 @@ import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
+import { TBlockAssigners } from '../block_assigner';
+import { TVoxelOverlapRule } from '../voxel_mesh';
 
 export interface Group {
     label: string;
@@ -58,26 +60,65 @@ export class UI {
         'build': {
             label: 'Build',
             elements: {
-                'height': new SliderElement('Desired height', 3, 320, 0, 80, 1),
+                'height': new SliderElement('Desired height', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
-                    { id: 'bvh-ray', displayText: 'BVH Ray-based' },
-                    { id: 'ncrb', displayText: 'NCRB' },
-                    { id: 'ray-based', displayText: 'Ray-based (legacy)' },
+                    {
+                        id: 'bvh-ray',
+                        displayText: 'BVH Ray-based',
+                    },
+                    {
+                        id: 'ncrb',
+                        displayText: 'NCRB',
+                    },
+                    {
+                        id: 'ray-based',
+                        displayText: 'Ray-based (legacy)',
+                    },
                 ]),
                 'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
-                    { id: 'on', displayText: 'On (recommended)' },
-                    { id: 'off', displayText: 'Off (faster)' },
+                    {
+                        id: 'on',
+                        displayText: 'On (recommended)',
+                    },
+                    {
+                        id: 'off',
+                        displayText: 'Off (faster)',
+                    },
                 ]),
                 'multisampleColouring': new ComboBoxElement('Multisample colouring', [
-                    { id: 'on', displayText: 'On (recommended)' },
-                    { id: 'off', displayText: 'Off (faster)' },
+                    {
+                        id: 'on',
+                        displayText: 'On (recommended)',
+                    },
+                    {
+                        id: 'off',
+                        displayText: 'Off (faster)',
+                    },
                 ]),
                 'textureFiltering': new ComboBoxElement('Texture filtering', [
-                    { id: 'linear', displayText: 'Linear (recommended)' },
-                    { id: 'nearest', displayText: 'Nearest (faster)' },
+                    {
+                        id: 'linear',
+                        displayText: 'Linear (recommended)',
+                    },
+                    {
+                        id: 'nearest',
+                        displayText: 'Nearest (faster)',
+                    },
+                ]),
+                'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>('Voxel overlap', [
+                    {
+                        id: 'average',
+                        displayText: 'Average (recommended)',
+                        tooltip: 'If multiple voxels are placed in the same location, take the average of their colours',
+                    },
+                    {
+                        id: 'first',
+                        displayText: 'First',
+                        tooltip: 'If multiple voxels are placed in the same location, use the first voxel\'s colour',
+                    },
                 ]),
             },
-            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering'],
+            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),
@@ -88,9 +129,10 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement('Dithering', [
-                    { id: 'on', displayText: 'On (recommended)' },
-                    { id: 'off', displayText: 'Off' },
+                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
+                    { id: 'ordered-dithering', displayText: 'Ordered' },
+                    { id: 'random-dithering', displayText: 'Random' },
+                    { id: 'basic', displayText: 'Off' },
                 ]),
                 'colourSpace': new ComboBoxElement('Colour space', [
                     { id: 'rgb', displayText: 'RGB (faster)' },
@@ -131,8 +173,11 @@ export class UI {
             label: 'Export',
             elements: {
                 'export': new ComboBoxElement<TExporters>('File format', [
-                    { id: 'litematic', displayText: 'Litematic' },
-                    { id: 'schematic', displayText: 'Schematic' },
+                    { id: 'litematic', displayText: 'Litematic (.litematic)' },
+                    { id: 'schematic', displayText: 'Schematic (.schematic)' },
+                    { id: 'obj', displayText: 'Wavefront OBJ (.obj)' },
+                    { id: 'schem', displayText: 'Sponge Schematic (.schem)' },
+                    { id: 'nbt', displayText: 'Structure blocks (.nbt)' },
                 ]),
             },
             elementsOrder: ['export'],
@@ -159,7 +204,7 @@ export class UI {
                         const isCached = args[0][0][1] as boolean;
                         return modelType >= MeshType.TriangleMesh && isCached;
                     }),
-                    
+
                     'voxelMesh': new ToolbarItemElement('voxel', () => {
                         Renderer.Get.setModelToUse(MeshType.VoxelMesh);
                     }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
@@ -225,6 +270,7 @@ export class UI {
         groups: {
             'debug': {
                 elements: {
+                    /*
                     'wireframe': new ToolbarItemElement('wireframe', () => {
                         Renderer.Get.toggleIsWireframeEnabled();
                     }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
@@ -253,8 +299,9 @@ export class UI {
                         const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
                         return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
                     }),
+                    */
                 },
-                elementsOrder: ['wireframe', 'normals', 'dev'],
+                elementsOrder: [], // ['wireframe', 'normals', 'dev'],
             },
         },
         groupsOrder: ['debug'],
@@ -302,7 +349,7 @@ export class UI {
 
         document.getElementById('properties')!.innerHTML = `<div class="container">
         ` + itemHTML + `</div>`;
-        
+
         // Build toolbar
         let toolbarHTML = '';
         // Left
@@ -405,14 +452,14 @@ export class UI {
             for (const groupElementName of toolbarGroup.elementsOrder) {
                 toolbarGroup.elements[groupElementName].registerEvents();
             }
-        } 
+        }
         // Register toolbar right
         for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
             const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
             for (const groupElementName of toolbarGroup.elementsOrder) {
                 toolbarGroup.elements[groupElementName].registerEvents();
             }
-        } 
+        }
     }
 
     public get layout() {

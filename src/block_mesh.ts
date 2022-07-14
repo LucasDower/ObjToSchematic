@@ -1,4 +1,4 @@
-import { BasicBlockAssigner, OrderedDitheringBlockAssigner } from './block_assigner';
+import { BlockAssignerFactory, TBlockAssigners } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockAtlas, BlockInfo } from './block_atlas';
 import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
@@ -20,7 +20,7 @@ export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-
 export interface BlockMeshParams {
     textureAtlas: string,
     blockPalette: string,
-    ditheringEnabled: boolean,
+    blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
 }
@@ -30,6 +30,7 @@ export class BlockMesh {
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
+    private _atlasUsed: string;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
@@ -41,6 +42,7 @@ export class BlockMesh {
         this._blockPalette = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
+        this._atlasUsed = 'Vanilla';
 
         const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
@@ -49,8 +51,9 @@ export class BlockMesh {
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
         BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
         BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
+        this._atlasUsed = blockMeshParams.textureAtlas;
 
-        const blockAssigner = blockMeshParams.ditheringEnabled ? new OrderedDitheringBlockAssigner() : new BasicBlockAssigner();
+        const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
         
         let countFalling = 0;
         const voxels = this._voxelMesh.getVoxels();
@@ -106,31 +109,33 @@ export class BlockMesh {
     public createBuffer() {
         ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
+        const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
+
         const numBlocks = this._blocks.length;
         const newBuffer = {
             position: {
                 numComponents: AppConstants.ComponentSize.POSITION,
-                data: Renderer.Get._voxelBufferRaw!.position.data,
+                data: voxelBufferRaw.position.data,
             },
             colour: {
                 numComponents: AppConstants.ComponentSize.COLOUR,
-                data: Renderer.Get._voxelBufferRaw!.colour.data,
+                data: voxelBufferRaw.colour.data,
             },
             occlusion: {
                 numComponents: AppConstants.ComponentSize.OCCLUSION,
-                data: Renderer.Get._voxelBufferRaw!.occlusion.data,
+                data: voxelBufferRaw.occlusion.data,
             },
             texcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: Renderer.Get._voxelBufferRaw!.texcoord.data,
+                data: voxelBufferRaw.texcoord.data,
             },
             normal: {
                 numComponents: AppConstants.ComponentSize.NORMAL,
-                data: Renderer.Get._voxelBufferRaw!.normal.data,
+                data: voxelBufferRaw.normal.data,
             },
             indices: {
                 numComponents: AppConstants.ComponentSize.INDICES,
-                data: Renderer.Get._voxelBufferRaw!.indices.data,
+                data: voxelBufferRaw.indices.data,
             },
             blockTexcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,
@@ -152,5 +157,13 @@ export class BlockMesh {
         }
 
         return newBuffer;
+    }
+
+    public getAtlasSize() {
+        return BlockAtlas.Get.getAtlasSize();
+    }
+
+    public getAtlasUsed() {
+        return this._atlasUsed;
     }
 }

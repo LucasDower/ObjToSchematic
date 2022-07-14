@@ -1,43 +1,75 @@
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
-import { VoxelMesh, VoxelMeshParams } from '../src/voxel_mesh';
+import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
 import { Schematic } from '../src/exporters/schematic_exporter';
 import { Litematic } from '../src/exporters/litematic_exporter';
-import { RayVoxeliser } from '../src/voxelisers/ray-voxeliser';
-import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
+import { TBlockAssigners } from '../src/block_assigner';
+import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
+import { VoxeliseParams } from '../src/voxelisers/voxelisers';
+import { ExporterFactory, TExporters } from '../src/exporters/exporters';
+
+export type THeadlessConfig = {
+    import: {
+        absoluteFilePathLoad: string,
+    },
+    voxelise: {
+        voxeliser: TVoxelisers,
+        voxelMeshParams: {
+            desiredHeight: number
+            useMultisampleColouring: boolean,
+            textureFiltering: TextureFiltering,
+            voxelOverlapRule: TVoxelOverlapRule,
+        },
+    },
+    palette: {
+        blockMeshParams: {
+            textureAtlas: string,
+            blockPalette: string,
+            blockAssigner: TBlockAssigners,
+            colourSpace: ColourSpace,
+            fallable: FallableBehaviour,
+        },
+    },
+    export: {
+        absoluteFilePathSave: string,
+        exporter: TExporters,
+    },
+}
 
 void async function main() {
     const mesh = _import({
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: headlessConfig.voxelise.voxeliser === 'raybased' ? new RayVoxeliser() : new NormalCorrectedRayVoxeliser(),
-        voxelMeshParams: {
+        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
+        voxeliseParams: {
             desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
             useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
             enableAmbientOcclusion: false,
+            voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
+            calculateNeighbours: false,
         },
     });
     const blockMesh = _palette(voxelMesh, {
         blockMeshParams: {
             textureAtlas: headlessConfig.palette.blockMeshParams.textureAtlas,
             blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
-            ditheringEnabled: headlessConfig.palette.blockMeshParams.ditheringEnabled,
-            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            blockAssigner: headlessConfig.palette.blockMeshParams.blockAssigner as TBlockAssigners,
+            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace,
             fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
         },
     });
     _export(blockMesh, {
         absoluteFilePathSave: headlessConfig.export.absoluteFilePathSave,
-        exporter: headlessConfig.export.exporter === 'schematic' ? new Schematic() : new Litematic(),
+        exporter: ExporterFactory.GetExporter(headlessConfig.export.exporter),
     });
     log(LogStyle.Success, 'Finished!');
 }();
@@ -46,9 +78,9 @@ interface ImportParams {
     absoluteFilePathLoad: string;
 }
 
-interface VoxeliseParams {
+interface ActionVoxeliseParams {
     voxeliser: IVoxeliser;
-    voxelMeshParams: VoxelMeshParams;
+    voxeliseParams: VoxeliseParams;
 }
 
 interface PaletteParams {
@@ -71,10 +103,10 @@ function _import(params: ImportParams): Mesh {
 }
 
 // TODO: Log status messages
-function _voxelise(mesh: Mesh, params: VoxeliseParams): VoxelMesh {
+function _voxelise(mesh: Mesh, params: ActionVoxeliseParams): VoxelMesh {
     log(LogStyle.Info, 'Voxelising...');
     const voxeliser: IVoxeliser = params.voxeliser;
-    return voxeliser.voxelise(mesh, params.voxelMeshParams);
+    return voxeliser.voxelise(mesh, params.voxeliseParams);
 }
 
 // TODO: Log status messages

@@ -18,7 +18,9 @@ export namespace AppConstants {
         export const POSITION = ComponentSize.POSITION * COMPONENT_PER_SIZE_OFFSET;
         export const COLOUR = ComponentSize.COLOUR * COMPONENT_PER_SIZE_OFFSET;
         export const NORMAL = ComponentSize.NORMAL * COMPONENT_PER_SIZE_OFFSET;
-        export const INDICES = ComponentSize.INDICES * COMPONENT_PER_SIZE_OFFSET;
+        export const INDICES = 36;
         export const OCCLUSION = ComponentSize.OCCLUSION * COMPONENT_PER_SIZE_OFFSET;
     }
+
+    export const DATA_VERSION = 3105; // 1.19
 }
