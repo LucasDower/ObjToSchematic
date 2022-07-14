@@ -2,9 +2,10 @@ import * as twgl from 'twgl.js';
 import { Triangle, UVTriangle } from './triangle';
 import { Vector3 } from './vector';
 import { AttributeData, MergeAttributeData, RenderBuffer } from './buffer';
-import { ASSERT, Bounds, RGB, RGBA } from './util';
+import { ASSERT, Bounds } from './util';
 import { Mesh } from './mesh';
 import { VoxelMesh } from './voxel_mesh';
+import { RGBA } from './colour';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
@@ -223,8 +224,8 @@ export class DebugGeometryTemplates {
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 4 },
         ]);
-        const COLOUR_MINOR: RGBA = new RGB(0.5, 0.5, 0.5).toRGBA(0.3);
-        const COLOUR_MAJOR: RGBA = RGB.white.toRGBA(0.3);
+        const COLOUR_MINOR: RGBA = { r: 0.5, g: 0.5, b: 0.5, a: 0.3 };
+        const COLOUR_MAJOR: RGBA = { r: 1.0, g: 1.0, b: 1.0, a: 0.3 };
         
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(-dimensions.x / 2, 0, -dimensions.z / 2),

@@ -1,10 +1,11 @@
 import { UVTriangle, Triangle } from '../triangle';
-import { RGB, UV } from '../util';
+import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { Mesh } from '../mesh';
 import { VoxelMesh } from '../voxel_mesh';
 import { TextureFiltering } from '../texture';
 import { StatusHandler } from '../status';
+import { RGBA } from '../colour';
 import { VoxeliseParams } from './voxelisers';
 
 export abstract class IVoxeliser {
@@ -21,7 +22,7 @@ export abstract class IVoxeliser {
 
     protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh;
 
-    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): (RGB | undefined) {
+    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): (RGBA | undefined) {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
         const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();

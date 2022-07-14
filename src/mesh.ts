@@ -1,12 +1,12 @@
 import { Vector3 } from './vector';
 import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
-import { RGB } from './util';
 
 import path from 'path';
 import fs from 'fs';
 import { Texture, TextureFiltering } from './texture';
 import { StatusHandler } from './status';
+import { RGBA, RGBAColours, RGBAUtil } from './colour';
 
 interface VertexIndices {
     x: number;
@@ -24,8 +24,13 @@ export interface Tri {
 /* eslint-disable */
 export enum MaterialType { solid, textured }
 /* eslint-enable */
-export interface SolidMaterial { colour: RGB; type: MaterialType.solid }
-export interface TexturedMaterial { path: string; type: MaterialType.textured }
+export interface SolidMaterial { colour: RGBA; type: MaterialType.solid }
+export interface TexturedMaterial {
+    path: string;
+    type: MaterialType.textured;
+    alphaPath?: string;
+    alphaFactor: number;
+}
 export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
 
 export class Mesh {
@@ -159,7 +164,7 @@ export class Mesh {
             );
             this._materials[debugName] = {
                 type: MaterialType.solid,
-                colour: RGB.white,
+                colour: RGBAColours.WHITE,
             };
         }
         
@@ -176,7 +181,7 @@ export class Mesh {
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {
                         type: MaterialType.solid,
-                        colour: RGB.white,
+                        colour: RGBAColours.WHITE,
                     };
                 }
             }
@@ -227,7 +232,7 @@ export class Mesh {
             const material = this._materials[tri.material];
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
-                    this._loadedTextures[tri.material] = new Texture(material.path);
+                    this._loadedTextures[tri.material] = new Texture(material.path, material.alphaPath);
                 }
             }
         }
@@ -301,14 +306,16 @@ export class Mesh {
         return this._materials;
     }
 
-    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering) {
+    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering): RGBA {
         ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
         const material = this._materials[materialName];
         if (material.type === MaterialType.solid) {
             return material.colour;
         } else {
             ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
-            return this._loadedTextures[materialName].getRGB(uv, textureFiltering);
+            const colour = this._loadedTextures[materialName].getRGBA(uv, textureFiltering);
+            colour.a *= material.alphaFactor;
+            return colour;
         }
     }
 
@@ -375,11 +382,13 @@ export class Mesh {
             if (material.type === MaterialType.solid) {
                 materials[materialName] = {
                     type: MaterialType.solid,
-                    colour: material.colour.copy(),
+                    colour: RGBAUtil.copy(material.colour),
                 };
             } else {
                 materials[materialName] = {
                     type: MaterialType.textured,
+                    alphaFactor: material.alphaFactor,
+                    alphaPath: material.alphaPath,
                     path: material.path,
                 };
             };

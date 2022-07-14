@@ -1,10 +1,11 @@
 import { log, LogStyle } from './logging';
-import { RGB, TOOLS_DIR } from '../src/util';
+import { TOOLS_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
 import prompt from 'prompt';
+import { RGBA } from '../src/colour';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {
@@ -26,21 +27,31 @@ export function isDirSetup(relativePath: string, jarAssetDir: string) {
     return false;
 }
 
-export function getAverageColour(image: PNG) {
+export function getAverageColour(image: PNG): RGBA {
     let r = 0;
     let g = 0;
     let b = 0;
+    let a = 0;
+    let weight = 0;
     for (let x = 0; x < image.width; ++x) {
         for (let y = 0; y < image.height; ++y) {
             const index = 4 * (image.width * y + x);
             const rgba = image.data.slice(index, index + 4);
-            r += rgba[0];
-            g += rgba[1];
-            b += rgba[2];
+            const alpha = rgba[3] / 255;
+            r += (rgba[0] / 255) * alpha;
+            g += (rgba[1] / 255) * alpha;
+            b += (rgba[2] / 255) * alpha;
+            a += alpha;
+            weight += alpha;
         }
     }
     const numPixels = image.width * image.height;
-    return new RGB(r / (255 * numPixels), g / (255 * numPixels), b / (255 * numPixels));
+    return {
+        r: r / weight,
+        g: g / weight,
+        b: b / weight,
+        a: a / numPixels,
+    };
 }
 
 export async function getPermission() {

@@ -1,13 +1,14 @@
 import { Vector3 } from '../src/vector';
 import { VoxelMesh } from '../src/voxel_mesh';
-import { ASSERT, RGB } from '../src/util';
+import { RGBAColours } from '../src/colour';
+import { ASSERT } from '../src/util';
 
 test('Voxel neighbours', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
         calculateNeighbours: true,
     });
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.white);
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.WHITE);
 
     expect(voxelMesh.getNeighbours(new Vector3(1, 2, 3)).value).toBe(0);
 
@@ -27,14 +28,14 @@ test('Add voxel', () => {
         calculateNeighbours: true,
     });
 
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.red);
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.RED);
 
     expect(voxelMesh.isVoxelAt(new Vector3(1, 2, 3))).toBe(true);
     expect(voxelMesh.getVoxelCount()).toBe(1);
     const voxel = voxelMesh.getVoxelAt(new Vector3(1, 2, 3));
     expect(voxel).toBeDefined(); ASSERT(voxel);
     expect(voxel.position.equals(new Vector3(1, 2, 3))).toBe(true);
-    expect(voxel.colour).toEqual(RGB.red);
+    expect(voxel.colour).toEqual(RGBAColours.RED);
 });
 
 test('Voxel overlap first', () => {
@@ -43,10 +44,10 @@ test('Voxel overlap first', () => {
         calculateNeighbours: false,
     });
 
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.red);
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGB.blue);
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.RED);
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.BLUE);
 
-    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual(RGB.red);
+    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual(RGBAColours.RED);
 });
 
 test('Voxel overlap average', () => {
@@ -55,8 +56,8 @@ test('Voxel overlap average', () => {
         calculateNeighbours: false,
     });
 
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), new RGB(1.0, 0.5, 0.25));
-    voxelMesh.addVoxel(new Vector3(1, 2, 3), new RGB(0.0, 0.5, 0.75));
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), { r: 1.0, g: 0.5, b: 0.25, a: 1.0 });
+    voxelMesh.addVoxel(new Vector3(1, 2, 3), { r: 0.0, g: 0.5, b: 0.75, a: 1.0 });
 
-    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual(new RGB(0.5, 0.5, 0.5));
+    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual({ r: 0.5, g: 0.5, b: 0.5, a: 1.0});
 });

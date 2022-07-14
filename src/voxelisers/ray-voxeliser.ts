@@ -3,9 +3,10 @@ import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
-import { Bounds, RGB, UV } from '../util';
+import { Bounds, UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
+import { RGBA, RGBAUtil } from '../colour';
 import { VoxeliseParams } from './voxelisers';
 
 /**
@@ -59,14 +60,14 @@ export class RayVoxeliser extends IVoxeliser {
                         break;
                 }
 
-                let voxelColour: RGB;
+                let voxelColour: RGBA;
                 if (this._voxeliseParams!.useMultisampleColouring) {
-                    const samples: RGB[] = [];
+                    const samples: RGBA[] = [];
                     for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
                         samples.push(this.__getVoxelColour(triangle, materialName, samplePosition));
                     }
-                    voxelColour = RGB.averageFrom(samples);
+                    voxelColour = RGBAUtil.average(...samples);
                 } else {
                     voxelColour = this.__getVoxelColour(triangle, materialName, voxelPosition);
                 }
@@ -77,7 +78,7 @@ export class RayVoxeliser extends IVoxeliser {
     }
 
     // TODO: Remove
-    private __getVoxelColour(triangle: UVTriangle, materialName: string, location: Vector3): RGB {
+    private __getVoxelColour(triangle: UVTriangle, materialName: string, location: Vector3): RGBA {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
         const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();

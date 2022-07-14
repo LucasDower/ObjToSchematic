@@ -5,12 +5,14 @@ import { RenderBuffer } from './buffer';
 import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { BlockAtlas } from './block_atlas';
-import { ASSERT, LOG, RGB } from './util';
+import { ASSERT, LOG } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
 import * as twgl from 'twgl.js';
 import { EAppEvent, EventManager } from './event';
+import { RGBA, RGBAUtil } from './colour';
+import { Texture } from './texture';
 
 /* eslint-disable */
 export enum MeshType {
@@ -34,7 +36,7 @@ enum EDebugBufferComponents {
 export class Renderer {
     public _gl: WebGLRenderingContext;
 
-    private _backgroundColour = new RGB(0.125, 0.125, 0.125);
+    private _backgroundColour: RGBA = { r: 0.125, g: 0.125, b: 0.125, a: 1.0 };
     private _atlasTexture?: WebGLTexture;
 
     private _meshToUse: MeshType = MeshType.None;
@@ -44,8 +46,8 @@ export class Renderer {
     private _modelsAvailable: number;
 
     private _materialBuffers: Array<{
+        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean }))
         buffer: twgl.BufferInfo,
-        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture }))
         numElements: number,
     }>;
     public _voxelBuffer?: twgl.BufferInfo;
@@ -85,9 +87,9 @@ export class Renderer {
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 4 },
         ]);
-        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(1, 0, 0), new RGB(0.96, 0.21, 0.32).toRGBA()));
-        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 1, 0), new RGB(0.44, 0.64, 0.11).toRGBA()));
-        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 0, 1), new RGB(0.18, 0.52, 0.89).toRGBA()));
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(1, 0, 0), { r: 0.96, g: 0.21, b: 0.32, a: 1.0 }));
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 1, 0), { r: 0.44, g: 0.64, b: 0.11, a: 1.0 }));
+        this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 0, 1), { r: 0.18, g: 0.52, b: 0.89, a: 1.0 }));
     }
 
     public update() {
@@ -240,6 +242,12 @@ export class Renderer {
                             src: material.path,
                             mag: this._gl.LINEAR,
                         }),
+                        alphaFactor: material.alphaFactor,
+                        alpha: material.alphaPath ? twgl.createTexture(this._gl, {
+                            src: material.alphaPath,
+                            mag: this._gl.LINEAR,
+                        }) : undefined,
+                        useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
                     numElements: materialBuffer.indices.data.length,
                 });
@@ -343,13 +351,17 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
+                    u_alpha: materialBuffer.material.alpha,
+                    u_useAlphaMap: materialBuffer.material.alpha !== undefined,
+                    u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
+                    u_alphaFactor: materialBuffer.material.alphaFactor,
                 });
             } else {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram, {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_fillColour: materialBuffer.material.colour.toArray(),
+                    u_fillColour: RGBAUtil.toArray(materialBuffer.material.colour),
                 });
             }
         }
@@ -371,6 +383,7 @@ export class Renderer {
     }
 
     private _drawBlockMesh() {
+        this._gl.enable(this._gl.CULL_FACE);
         const shader = ShaderManager.Get.blockProgram;
         const uniforms = {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
@@ -385,6 +398,7 @@ export class Renderer {
             twgl.setUniforms(shader, uniforms);
             this._gl.drawElements(this._gl.TRIANGLES, this._blockBuffer.numElements, this._gl.UNSIGNED_INT, 0);
         }
+        this._gl.disable(this._gl.CULL_FACE);
     }
 
     // /////////////////////////////////////////////////////////////////////////

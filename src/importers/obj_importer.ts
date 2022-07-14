@@ -1,12 +1,13 @@
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, RGB, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR } from '../util';
+import { UV, ASSERT, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR, LOG } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
 import path from 'path';
 import { StatusHandler } from '../status';
 import { IImporter } from './base_importer';
+import { RGBA, RGBAColours } from '../colour';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
@@ -15,7 +16,7 @@ export class ObjImporter extends IImporter {
     private _tris: Tri[] = [];
 
     private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {
-        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGB.white },
+        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE },
     };
     private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
@@ -187,8 +188,10 @@ export class ObjImporter extends IImporter {
         },
     ];
     
-    private _currentColour: RGB = RGB.black;
+    private _currentColour: RGBA = RGBAColours.BLACK;
+    private _currentAlpha: number = 1.0;
     private _currentTexture: string = '';
+    private _currentTransparencyTexture: string = '';
     private _materialReady: boolean = false;
     private _mtlParsers = [
         {
@@ -218,7 +221,7 @@ export class ObjImporter extends IImporter {
                 const b = parseFloat(match.b);
                 checkNaN(r, g, b);
                 checkFractional(r, g, b);
-                this._currentColour = new RGB(r, g, b);
+                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha };
                 this._materialReady = true;
             },
         },
@@ -233,6 +236,35 @@ export class ObjImporter extends IImporter {
                 }
                 this._currentTexture = mtlPath;
                 this._materialReady = true;
+            },
+        },
+        {
+            // Transparency map
+            // e.g. 'map_d my/path/to/file.png'
+            regex: new RegExpBuilder().add(/^map_d/).add(REGEX_NZ_ANY, 'path').toRegExp(),
+            delegate: (match: { [key: string]: string }) => {
+                let texturePath = match.path.trim();
+                if (!path.isAbsolute(texturePath)) {
+                    ASSERT(this._objPath, 'no obj path');
+                    texturePath = path.join(this._objPath.dir, texturePath);
+                }
+                this._currentTransparencyTexture = texturePath;
+                this._materialReady = true;
+            },
+        },
+        {
+            // Transparency value
+            // e.g. 'd 0.7500'
+            regex: new RegExpBuilder()
+                .add(/^d/)
+                .addNonzeroWhitespace()
+                .add(REGEX_NUMBER, 'alpha')
+                .toRegExp(),
+            delegate: (match: { [key: string]: string }) => {
+                const alpha = parseFloat(match.alpha);
+                checkNaN(alpha);
+                checkFractional(alpha);
+                this._currentAlpha = alpha;
             },
         },
     ];
@@ -256,6 +288,7 @@ export class ObjImporter extends IImporter {
         }
 
         this._parseMTL();
+        LOG('Materials', this._materials);
     }
 
     override toMesh(): Mesh {
@@ -355,13 +388,17 @@ export class ObjImporter extends IImporter {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.textured,
                     path: this._currentTexture,
+                    alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
+                    alphaFactor: this._currentAlpha,
                 };
+                this._currentTransparencyTexture = '';
             } else {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.solid,
                     colour: this._currentColour,
                 };
             }
+            this._currentAlpha = 1.0;
         }
     }
 }

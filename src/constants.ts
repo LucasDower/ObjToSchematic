@@ -7,7 +7,7 @@ export namespace AppConstants {
     export namespace ComponentSize {
         export const TEXCOORD = 2;
         export const POSITION = 3;
-        export const COLOUR = 3;
+        export const COLOUR = 4;
         export const NORMAL = 3;
         export const INDICES = 3;
         export const OCCLUSION = 4;

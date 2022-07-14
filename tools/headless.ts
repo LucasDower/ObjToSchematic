@@ -4,8 +4,6 @@ import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
 import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
-import { Schematic } from '../src/exporters/schematic_exporter';
-import { Litematic } from '../src/exporters/litematic_exporter';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
