@@ -262,8 +262,23 @@ export class UI {
                 },
                 elementsOrder: ['grid', 'axes'],
             },
+            'camera': {
+                elements: {
+                    'perspective': new ToolbarItemElement('perspective', () => {
+                        ArcballCamera.Get.setCameraMode('perspective');
+                    }, EAppEvent.onCameraViewModeChanged, (...args: any[]) => {
+                        return ArcballCamera.Get.isPerspective();
+                    }),
+                    'orthographic': new ToolbarItemElement('orthographic', () => {
+                        ArcballCamera.Get.setCameraMode('orthographic');
+                    }, EAppEvent.onCameraViewModeChanged, (...args: any[]) => {
+                        return ArcballCamera.Get.isOrthographic();
+                    }),
+                },
+                elementsOrder: ['perspective', 'orthographic'],
+            },
         },
-        groupsOrder: ['viewmode', 'zoom', 'debug'],
+        groupsOrder: ['viewmode', 'zoom', 'debug', 'camera'],
     };
 
     private _toolbarRight = {

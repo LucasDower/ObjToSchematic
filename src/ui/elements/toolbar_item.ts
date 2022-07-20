@@ -12,6 +12,15 @@ export class ToolbarItemElement {
     private _isActive: boolean;
     private _onClick: () => void;
     
+    /**
+     * 
+     * @param iconName The name of the icon for this button
+     * @param onClick The function to call when this button is clicked
+     * @param _activeChangedEvent The name of the event to listen for to change active state
+     * @param _activeChangedDelegate The function to call when the active event has been broadcast
+     * @param _enableChangedEvent The name of the event to listen for to change enable state
+     * @param _enableChangedDelegate The function to call when the enable event has been broadcast
+     */
     public constructor(iconName: string, onClick: () => void,
         _activeChangedEvent?: EAppEvent, _activeChangedDelegate?: (...args: any[]) => boolean,
         _enableChangedEvent?: EAppEvent, _enableChangedDelegate?: (...args: any[]) => boolean,

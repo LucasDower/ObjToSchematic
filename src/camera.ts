@@ -4,6 +4,7 @@ import { degreesToRadians } from './math';
 import { Renderer } from './renderer';
 import { SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
+import { EAppEvent, EventManager } from './event';
 
 export class ArcballCamera {
     public isUserRotating = false;
@@ -13,6 +14,8 @@ export class ArcballCamera {
     private readonly zNear: number;
     private readonly zFar: number;
     public aspect: number;
+
+    private _isPerspective: boolean = true;
     
     private readonly _defaultDistance = 18.0;
     private readonly _defaultAzimuth = -1.0;
@@ -45,6 +48,21 @@ export class ArcballCamera {
 
         this._elevation.setClamp(0.01, Math.PI - 0.01);
         this._distance.setClamp(1.0, 100.0);
+
+        this.setCameraMode('perspective');
+    }
+
+    public isPerspective() {
+        return this._isPerspective;
+    }
+
+    public isOrthographic() {
+        return !this._isPerspective;
+    }
+
+    public setCameraMode(mode: 'perspective' | 'orthographic') {
+        this._isPerspective = mode === 'perspective';
+        EventManager.Get.broadcast(EAppEvent.onCameraViewModeChanged);
     }
 
     public updateCamera() {
@@ -114,7 +132,12 @@ export class ArcballCamera {
     }
 
     public getProjectionMatrix() {
-        return m4.perspective(this.fov, this.aspect, this.zNear, this.zFar);
+        if (this._isPerspective) {
+            return m4.perspective(this.fov, this.aspect, this.zNear, this.zFar);
+        } else {
+            const zoom = this._distance.getActual() / 3.6;
+            return m4.ortho(-zoom * this.aspect, zoom * this.aspect, -zoom, zoom, -1000, 1000);
+        }
     }
 
     public getCameraMatrix() {

@@ -9,6 +9,7 @@ export enum EAppEvent {
     onWireframeEnabledChanged,
     onNormalsEnabledChanged,
     onDevViewEnabledChanged,
+    onCameraViewModeChanged
 }
 /* eslint-enable */
 

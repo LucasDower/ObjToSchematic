@@ -4,6 +4,7 @@ import { clamp } from './math';
 
 import path from 'path';
 import fs from 'fs';
+import { m4 } from 'twgl.js';
 
 export class UV {
     public u: number;
