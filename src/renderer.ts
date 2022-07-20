@@ -10,7 +10,6 @@ import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
 import * as twgl from 'twgl.js';
-import { EAppEvent, EventManager } from './event';
 import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 
@@ -119,48 +118,43 @@ export class Renderer {
     public toggleIsGridEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Grid];
         this._isGridComponentEnabled[EDebugBufferComponents.Grid] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, isEnabled);
+    }
+
+    public isGridEnabled() {
+        return this._isGridComponentEnabled[EDebugBufferComponents.Grid];
+    }
+
+    public isAxesEnabled() {
+        return this._axesEnabled;
     }
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
-        EventManager.Get.broadcast(EAppEvent.onAxesEnabledChanged, this._axesEnabled);
     }
 
     public toggleIsWireframeEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Wireframe];
         this._isGridComponentEnabled[EDebugBufferComponents.Wireframe] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onWireframeEnabledChanged, isEnabled);
     }
 
     public toggleIsNormalsEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
         this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onNormalsEnabledChanged, isEnabled);
     }
 
     public toggleIsDevDebugEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Dev];
         this._isGridComponentEnabled[EDebugBufferComponents.Dev] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onDevViewEnabledChanged, isEnabled);
     }
 
     public clearMesh() {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         this._materialBuffers = [];
 
         this._modelsAvailable = 0;
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(mesh: Mesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-        
+    public useMesh(mesh: Mesh) {       
         LOG('Using mesh');
         this._materialBuffers = [];
 
@@ -262,14 +256,9 @@ export class Renderer {
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
     
     public useVoxelMesh(voxelMesh: VoxelMesh, voxelSize: number, ambientOcclusionEnabled: boolean) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         LOG('Using voxel mesh');
         LOG(voxelMesh);
 
@@ -290,13 +279,9 @@ export class Renderer {
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, true);
     }
     
     public useBlockMesh(blockMesh: BlockMesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         LOG('Using block mesh');
         LOG(blockMesh);
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
@@ -310,8 +295,6 @@ export class Renderer {
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, true);
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -411,7 +394,6 @@ export class Renderer {
         const isModelAvailable = this._modelsAvailable >= meshType;
         if (isModelAvailable) {
             this._meshToUse = meshType;
-            EventManager.Get.broadcast(EAppEvent.onModelActiveChanged, meshType);
         }
     }
 

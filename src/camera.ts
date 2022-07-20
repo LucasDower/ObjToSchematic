@@ -2,9 +2,8 @@ import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
 import { between, degreesToRadians, roundToNearest } from './math';
 import { Renderer } from './renderer';
-import { LOG, SmoothVariable, SmoothVectorVariable } from './util';
+import { SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
-import { EAppEvent, EventManager } from './event';
 
 export class ArcballCamera {
     public isUserRotating = false;
@@ -66,7 +65,6 @@ export class ArcballCamera {
 
     public setCameraMode(mode: 'perspective' | 'orthographic') {
         this._isPerspective = mode === 'perspective';
-        EventManager.Get.broadcast(EAppEvent.onCameraViewModeChanged);
     }
 
     private _angleSnap = false;
@@ -78,8 +76,6 @@ export class ArcballCamera {
             this._azimuthRelief = 0.0;
             this._elevationRelief = 0.0;
         }
-
-        EventManager.Get.broadcast(EAppEvent.onCameraAngleSnapToggled);
     }
     public isAngleSnapEnabled() {
         return this._angleSnap;

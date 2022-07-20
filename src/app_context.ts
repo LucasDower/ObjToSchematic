@@ -226,6 +226,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
+        this._ui.tick();
         Renderer.Get.draw();
     }
 
