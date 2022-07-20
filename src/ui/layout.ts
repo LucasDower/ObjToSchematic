@@ -274,8 +274,15 @@ export class UI {
                     }, EAppEvent.onCameraViewModeChanged, (...args: any[]) => {
                         return ArcballCamera.Get.isOrthographic();
                     }),
+                    'angleSnap': new ToolbarItemElement('magnet', () => {
+                        ArcballCamera.Get.toggleAngleSnap();
+                    }, EAppEvent.onCameraAngleSnapToggled, (...args: any[]) => {
+                        return ArcballCamera.Get.isAngleSnapEnabled();
+                    }, EAppEvent.onCameraViewModeChanged, (...args: any[]) => {
+                        return ArcballCamera.Get.isOrthographic();
+                    }),
                 },
-                elementsOrder: ['perspective', 'orthographic'],
+                elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
             },
         },
         groupsOrder: ['viewmode', 'zoom', 'debug', 'camera'],

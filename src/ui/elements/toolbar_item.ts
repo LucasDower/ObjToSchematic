@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { EAppEvent, EventManager } from '../../event';
 
+export type TToolbarBooleanProperty = 'enabled' | 'active';
+
 export class ToolbarItemElement {
     private _id: string;
     private _iconName: string;
@@ -49,6 +51,17 @@ export class ToolbarItemElement {
                 this.setActive(isActive);
             });
         }
+    }
+
+    public on(event: EAppEvent, prop: TToolbarBooleanProperty, delegate: (...args: any[]) => boolean) {
+        EventManager.Get.add(event, (...args: any[]) => {
+            const bool = delegate(args);
+            if (prop === 'active') {
+                this.setActive(bool);
+            } else {
+                this.setEnabled(bool);
+            }
+        });
     }
 
     public generateHTML() {

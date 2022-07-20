@@ -85,6 +85,7 @@ export class AppContext {
         Renderer.Get.toggleIsGridEnabled();
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
+        ArcballCamera.Get.toggleAngleSnap();
     }
 
     public do(action: EAction) {

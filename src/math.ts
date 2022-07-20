@@ -34,6 +34,10 @@ export const roundToNearest = (value: number, base: number) => {
     return Math.round(value / base) * base;
 };
 
+export const between = (value: number, min: number, max: number) => {
+    return min <= value && value <= max;
+};
+
 export const mapRange = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) => {
     return (value - fromMin)/(fromMax - fromMin) * (toMax - toMin) + toMin;
 };
