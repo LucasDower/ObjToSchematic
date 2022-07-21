@@ -2,7 +2,7 @@ import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
 import { between, degreesToRadians, roundToNearest } from './math';
 import { Renderer } from './renderer';
-import { SmoothVariable, SmoothVectorVariable } from './util';
+import { LOG, SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
 
 export class ArcballCamera {
@@ -49,7 +49,7 @@ export class ArcballCamera {
         this.gl = Renderer.Get._gl;
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
-        this._elevation.setClamp(0.01, Math.PI - 0.01);
+        this._elevation.setClamp(0.001, Math.PI - 0.01);
         this._distance.setClamp(1.0, 100.0);
 
         this.setCameraMode('perspective');
