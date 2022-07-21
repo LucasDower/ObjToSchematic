@@ -1,9 +1,10 @@
 import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
-import { between, degreesToRadians, roundToNearest } from './math';
+import { between, clamp, degreesToRadians, roundToNearest } from './math';
 import { Renderer } from './renderer';
-import { LOG, SmoothVariable, SmoothVectorVariable } from './util';
+import { SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
+import { AppConfig } from './config';
 
 export class ArcballCamera {
     public isUserRotating = false;
@@ -109,7 +110,7 @@ export class ArcballCamera {
             this._target.addToTarget(new Vector3(dx * mx, 0.0, dz * mx));
         }
 
-        const axisSnapRadius = 10 * degreesToRadians;
+        const axisSnapRadius = clamp(AppConfig.ANGLE_SNAP_RADIUS_DEGREES, 0.0, 90.0) * degreesToRadians;
 
         if (this._shouldSnapCameraAngle()) {
             let shouldSnapToAzimuth = false;

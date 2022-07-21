@@ -224,23 +224,6 @@ export class UI {
                 },
                 elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
-            'zoom': {
-                elements: {
-                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
-                        .onClick(() => {
-                            ArcballCamera.Get.onZoomOut();
-                        }),
-                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
-                        .onClick(() => {
-                            ArcballCamera.Get.onZoomIn();
-                        }),
-                    'reset': new ToolbarItemElement({ icon: 'centre' })
-                        .onClick(() => {
-                            ArcballCamera.Get.reset();
-                        }),
-                },
-                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
-            },
             'debug': {
                 elements: {
                     'grid': new ToolbarItemElement({ icon: 'grid' })
@@ -262,6 +245,30 @@ export class UI {
                         }),
                 },
                 elementsOrder: ['grid', 'axes'],
+            },
+            
+        },
+        groupsOrder: ['viewmode', 'debug'],
+    };
+
+    private _toolbarRight = {
+        groups: {
+            'zoom': {
+                elements: {
+                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomOut();
+                        }),
+                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomIn();
+                        }),
+                    'reset': new ToolbarItemElement({ icon: 'centre' })
+                        .onClick(() => {
+                            ArcballCamera.Get.reset();
+                        }),
+                },
+                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
             },
             'camera': {
                 elements: {
@@ -294,48 +301,7 @@ export class UI {
                 elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
             },
         },
-        groupsOrder: ['viewmode', 'zoom', 'debug', 'camera'],
-    };
-
-    private _toolbarRight = {
-        groups: {
-            'debug': {
-                elements: {
-                    /*
-                    'wireframe': new ToolbarItemElement('wireframe', () => {
-                        Renderer.Get.toggleIsWireframeEnabled();
-                    }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh || modelUsed === MeshType.VoxelMesh;
-                    }),
-                    'normals': new ToolbarItemElement('normal', () => {
-                        Renderer.Get.toggleIsNormalsEnabled();
-                    }, EAppEvent.onNormalsEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
-                    }),
-                    'dev': new ToolbarItemElement('debug', () => {
-                        Renderer.Get.toggleIsDevDebugEnabled();
-                    }, EAppEvent.onDevViewEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
-                        return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
-                    }),
-                    */
-                },
-                elementsOrder: [], // ['wireframe', 'normals', 'dev'],
-            },
-        },
-        groupsOrder: ['debug'],
+        groupsOrder: ['camera', 'zoom'],
     };
 
     private _uiDull: { [key: string]: Group } = this._ui;
@@ -354,6 +320,13 @@ export class UI {
     public tick() {
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
+            for (const toolbarItem of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[toolbarItem].tick();
+            }
+        }
+
+        for (const groupName in this._toolbarRightDull) {
+            const toolbarGroup = this._toolbarRightDull[groupName];
             for (const toolbarItem of toolbarGroup.elementsOrder) {
                 toolbarGroup.elements[toolbarItem].tick();
             }
