@@ -1,6 +1,20 @@
 import { AppError, LOG_ERROR } from './util';
 import { Vector3 } from './vector';
 
+export namespace AppMath {
+    export const RADIANS_0 = degreesToRadians(0.0);
+    export const RADIANS_90 = degreesToRadians(90.0);
+    export const RADIANS_180 = degreesToRadians(180.0);
+    export const RADIANS_270 = degreesToRadians(270.0);
+
+    export function nearlyEqual(a: number, b: number, tolerance: number = 0.0001) {
+        return Math.abs(a - b) < tolerance;
+    }
+
+    export function degreesToRadians(degrees: number) {
+        return degrees * (Math.PI / 180.0);
+    }
+}
 
 export const argMax = (array: [number]) => {
     return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];

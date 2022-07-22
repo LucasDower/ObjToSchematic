@@ -1,8 +1,8 @@
 import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
-import { between, clamp, degreesToRadians, roundToNearest } from './math';
+import { AppMath, between, clamp, degreesToRadians, roundToNearest } from './math';
 import { Renderer } from './renderer';
-import { SmoothVariable, SmoothVectorVariable } from './util';
+import { LOG, SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
 import { AppConfig } from './config';
 
@@ -50,7 +50,7 @@ export class ArcballCamera {
         this.gl = Renderer.Get._gl;
         this.aspect = this.gl.canvas.width / this.gl.canvas.height;
 
-        this._elevation.setClamp(0.001, Math.PI - 0.01);
+        this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);
 
         this.setCameraMode('perspective');
@@ -62,6 +62,20 @@ export class ArcballCamera {
 
     public isOrthographic() {
         return !this._isPerspective;
+    }
+
+    public isAlignedWithAxis(axis: 'x' | 'y' | 'z'): boolean {
+        const azimuth = Math.abs(this._azimuth.getTarget() % (Math.PI * 2));
+        const elevation = this._elevation.getTarget();
+
+        switch (axis) {
+            case 'x':
+                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_0) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_180);
+            case 'y':
+                return AppMath.nearlyEqual(elevation, AppMath.RADIANS_0, 0.002) || AppMath.nearlyEqual(elevation, AppMath.RADIANS_180, 0.002);
+            case 'z':
+                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_90) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_270);
+        }
     }
 
     public setCameraMode(mode: 'perspective' | 'orthographic') {
