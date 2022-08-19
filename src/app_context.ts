@@ -193,7 +193,7 @@ export class AppContext {
             textureAtlas: uiElements.textureAtlas.getCachedValue(),
             blockPalette: uiElements.blockPalette.getCachedValue(),
             blockAssigner: uiElements.dithering.getCachedValue(),
-            colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            colourSpace: ColourSpace.RGB,
             fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
         };
 

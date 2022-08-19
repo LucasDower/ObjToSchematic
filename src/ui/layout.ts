@@ -135,10 +135,6 @@ export class UI {
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
                 ]),
-                'colourSpace': new ComboBoxElement('Colour space', [
-                    { id: 'rgb', displayText: 'RGB (faster)' },
-                    { id: 'lab', displayText: 'LAB (recommended, slow)' },
-                ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
                         id: 'replace-falling',
@@ -164,7 +160,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
