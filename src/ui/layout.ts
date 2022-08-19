@@ -16,6 +16,7 @@ import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
 import { TBlockAssigners } from '../block_assigner';
 import { TVoxelOverlapRule } from '../voxel_mesh';
+import { PaletteManager } from '../palette';
 
 export interface Group {
     label: string;
@@ -550,14 +551,13 @@ export class UI {
     private _getBlockPalettes(): ComboBoxItem<string>[] {
         const blockPalettes: ComboBoxItem<string>[] = [];
 
-        fs.readdirSync(PALETTES_DIR).forEach((file) => {
-            if (file.endsWith('.palette')) {
-                const paletteID = file.split('.')[0];
-                let paletteName = paletteID.replace('-', ' ').toLowerCase();
-                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                blockPalettes.push({ id: paletteID, displayText: paletteName });
-            }
-        });
+        const palettes = PaletteManager.getPalettesInfo();
+        for (const palette of palettes) {
+            blockPalettes.push({
+                id: palette.paletteID,
+                displayText: palette.paletteDisplayName,
+            });
+        }
 
         return blockPalettes;
     }
