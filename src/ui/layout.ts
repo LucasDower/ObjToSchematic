@@ -5,7 +5,7 @@ import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { EAction, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG, PALETTES_DIR } from '../util';
+import { ASSERT, ATLASES_DIR, LOG } from '../util';
 
 import fs from 'fs';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -14,9 +14,9 @@ import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
-import { TBlockAssigners } from '../block_assigner';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { PaletteManager } from '../palette';
+import { TBlockAssigners } from '../assigners/assigners';
 
 export interface Group {
     label: string;

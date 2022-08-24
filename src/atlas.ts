@@ -1,8 +1,8 @@
-import { AppError, AppTypes, AppUtil, ASSERT, ATLASES_DIR, TOptional, UV } from './util';
+import { AppError, AppTypes, AppUtil, ASSERT, ATLASES_DIR, LOG, TOptional, UV } from './util';
 
 import fs from 'fs';
 import path from 'path';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { RGBA, RGBAUtil } from './colour';
 import { Palette } from './palette';
 
 export type TAtlasBlockFace = {
@@ -48,6 +48,7 @@ export class Atlas {
         }
 
         const atlasPath = Atlas._getAtlasPath(atlasName);
+        LOG(atlasPath);
         if (!fs.existsSync(atlasPath)) {
             return;
         }
@@ -83,6 +84,16 @@ export class Atlas {
         return path.join(ATLASES_DIR, `./${this._atlasName}.png`);
     }
 
+    /*
+    public getBlocks(): TAtlasBlock[] {
+        return Array.from(this._blocks.values());
+    }
+    */
+
+    public hasBlock(blockName: AppTypes.TNamespacedBlockName): boolean {
+        return this._blocks.has(blockName);
+    }
+
     public getBlock(voxelColour: RGBA, palette: Palette, blocksToExclude?: AppTypes.TNamespacedBlockName[]) {
         const blocksToUse = palette.getBlocks();
 
@@ -116,6 +127,10 @@ export class Atlas {
         }
 
         throw new AppError('Could not find a suitable block');
+    }
+
+    public static getVanillaAtlas(): TOptional<Atlas> {
+        return Atlas.load('vanilla');
     }
 
     private static _isValidAtlasName(atlasName: string): boolean {

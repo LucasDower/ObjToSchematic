@@ -1,6 +1,6 @@
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';
-import { ASSERT, ATLASES_DIR } from '../util';
+import { ASSERT } from '../util';
 
 import fs from 'fs';
 import path from 'path';
@@ -57,7 +57,7 @@ export class ObjExporter extends IExporter {
                 writeStream.write(`v ${positionData[3 * i + 0]} ${positionData[3 * i + 1]} ${positionData[3 * i + 2]}\n`);
             }
             // Add texcoord data
-            const atlasSize = blockMesh.getAtlasSize(); 
+            const atlasSize = blockMesh.getAtlas().getAtlasSize();
             for (let i = 0; i < texcoordData.length / 2; ++i) {
                 // vec2 tex = v_blockTexcoord + (v_texcoord / (u_atlasSize * 3.0));
                 const u = blockTexcoordData[2 * i + 0] + (texcoordData[2 * i + 0] / (atlasSize * 3.0));
@@ -100,7 +100,7 @@ export class ObjExporter extends IExporter {
         fs.writeFileSync(filepathMTL, outputString);
 
         // Export texture
-        const filepathAtlasTexture = path.join(ATLASES_DIR, blockMesh.getAtlasUsed() + '.png');
+        const filepathAtlasTexture = blockMesh.getAtlas().getAtlasTexturePath();
         fs.copyFileSync(filepathAtlasTexture, filepathTexture);
     }
 }

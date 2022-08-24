@@ -2,8 +2,8 @@ import { AppTypes, AppUtil, ASSERT, LOG_WARN, PALETTES_DIR, TOptional } from './
 
 import fs from 'fs';
 import path from 'path';
-import { BlockInfo } from './block_atlas';
 import { StatusHandler } from './status';
+import { Atlas } from './atlas';
 
 export class PaletteManager {
     public static getPalettesInfo(): { paletteID: string, paletteDisplayName: string }[] {
@@ -119,20 +119,19 @@ export class Palette {
         return this._blocks;
     }
 
-    /**
-     * Checks if each block in this block palette has texture data in the given
-     * atlas. If not, the block is removed from the palette.
-     */
-    public removeMissingAtlasBlocks(atlasBlocks: BlockInfo[]) {
-        const atlasBlockNames = new Array<AppTypes.TNamespacedBlockName>(atlasBlocks.length);
-        atlasBlocks.forEach((atlasBlock, index) => {
-            atlasBlockNames[index] = AppUtil.Text.namespaceBlock(atlasBlock.name);
-        });
+    public static getAllPalette(): TOptional<Palette> {
+        return Palette.load('all-release');
+    }
 
+    /**
+     * atlas. If not, the block is removed from the palette.
+     * Checks if each block in this block palette has texture data in the given
+     */
+    public removeMissingAtlasBlocks(atlas: Atlas) {
         const missingBlocks: AppTypes.TNamespacedBlockName[] = [];
         for (let blockIndex = this._blocks.length-1; blockIndex >= 0; --blockIndex) {
             const blockName = this._blocks[blockIndex];
-            if (!atlasBlockNames.includes(blockName)) {
+            if (!atlas.hasBlock(blockName)) {
                 missingBlocks.push(blockName);
                 this.remove(blockName);
             }
