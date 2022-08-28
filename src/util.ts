@@ -210,7 +210,7 @@ export class SmoothVariable {
     }
 
     public setTarget(target: number) {
-        this._target = target;
+        this._target = clamp(target, this._min, this._max);
     }
 
     public setActual(actual: number) {

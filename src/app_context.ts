@@ -15,6 +15,7 @@ import { OutputStyle } from './ui/elements/output';
 import { IExporter } from './exporters/base_exporter';
 import { TVoxelisers, VoxeliseParams, VoxeliserFactory } from './voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from './exporters/exporters';
+import { ArcballCamera } from './camera';
 
 /* eslint-disable */
 export enum EAction {
@@ -81,8 +82,9 @@ export class AppContext {
 
         this._ui.disable(EAction.Simplify);
 
-        Renderer.Get.toggleIsGridEnabled();
         Renderer.Get.toggleIsAxesEnabled();
+        ArcballCamera.Get.setCameraMode('perspective');
+        ArcballCamera.Get.toggleAngleSnap();
     }
 
     public do(action: EAction) {
@@ -223,6 +225,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
+        this._ui.tick();
         Renderer.Get.draw();
     }
 

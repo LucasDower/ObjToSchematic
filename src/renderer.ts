@@ -10,7 +10,6 @@ import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
 import * as twgl from 'twgl.js';
-import { EAppEvent, EventManager } from './event';
 import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 
@@ -25,7 +24,6 @@ export enum MeshType {
 
 /* eslint-disable */
 enum EDebugBufferComponents {
-    Grid,
     Wireframe,
     Normals,
     Bounds,
@@ -59,6 +57,13 @@ export class Renderer {
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
 
+    private _gridBuffers: {
+        x: { [meshType: string]: RenderBuffer};
+        y: { [meshType: string]: RenderBuffer};
+        z: { [meshType: string]: RenderBuffer};
+    };
+    private _gridEnabled: boolean;
+
     private static _instance: Renderer;
     public static get Get() {
         return this._instance || (this._instance = new this());
@@ -73,6 +78,9 @@ export class Renderer {
         this._modelsAvailable = 0;
         this._materialBuffers = [];
 
+        this._gridBuffers = { x: {}, y: {}, z: {} };
+        this._gridEnabled = true;
+
         this._debugBuffers = {};
         this._debugBuffers[MeshType.None] = {};
         this._debugBuffers[MeshType.TriangleMesh] = {};
@@ -80,7 +88,6 @@ export class Renderer {
         this._debugBuffers[MeshType.BlockMesh] = {};
 
         this._isGridComponentEnabled = {};
-        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
         this._axesEnabled = false;
 
         this._axisBuffer = new RenderBuffer([
@@ -117,50 +124,44 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     public toggleIsGridEnabled() {
-        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Grid];
-        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, isEnabled);
+        this._gridEnabled = !this._gridEnabled;
+    }
+
+    public isGridEnabled() {
+        return this._gridEnabled;
+    }
+
+    public isAxesEnabled() {
+        return this._axesEnabled;
     }
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
-        EventManager.Get.broadcast(EAppEvent.onAxesEnabledChanged, this._axesEnabled);
     }
 
     public toggleIsWireframeEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Wireframe];
         this._isGridComponentEnabled[EDebugBufferComponents.Wireframe] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onWireframeEnabledChanged, isEnabled);
     }
 
     public toggleIsNormalsEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
         this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onNormalsEnabledChanged, isEnabled);
     }
 
     public toggleIsDevDebugEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Dev];
         this._isGridComponentEnabled[EDebugBufferComponents.Dev] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onDevViewEnabledChanged, isEnabled);
     }
 
     public clearMesh() {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         this._materialBuffers = [];
 
         this._modelsAvailable = 0;
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(mesh: Mesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-        
+    public useMesh(mesh: Mesh) {       
         LOG('Using mesh');
         this._materialBuffers = [];
 
@@ -255,21 +256,16 @@ export class Renderer {
         });
 
         const dimensions = mesh.getBounds().getDimensions();
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(dimensions);
-        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89).toRGBA());
-        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18).toRGBA());
-        // delete this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev];
+
+        this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(dimensions);
+        this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(dimensions);
+        this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(dimensions);
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
     
     public useVoxelMesh(voxelMesh: VoxelMesh, voxelSize: number, ambientOcclusionEnabled: boolean) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         LOG('Using voxel mesh');
         LOG(voxelMesh);
 
@@ -285,18 +281,15 @@ export class Renderer {
         );
         dimensions.add(1);
 
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        // this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89).toRGBA(), this._voxelSize);
+        this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+        this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+        this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
         
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, true);
     }
     
     public useBlockMesh(blockMesh: BlockMesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         LOG('Using block mesh');
         LOG(blockMesh);
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
@@ -306,18 +299,17 @@ export class Renderer {
             mag: this._gl.NEAREST,
         });
         
-        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid];
+        this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, true);
     }
 
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        const debugComponents = [EDebugBufferComponents.Grid];
+        /*
+        const debugComponents = [EDebugBufferComponents.GridY];
         for (const debugComp of debugComponents) {
             if (this._isGridComponentEnabled[debugComp]) {
                 ASSERT(this._debugBuffers[this._meshToUse]);
@@ -326,6 +318,9 @@ export class Renderer {
                     if (debugComp === EDebugBufferComponents.Dev) {
                         this._gl.disable(this._gl.DEPTH_TEST);
                     }
+                    if (debugComp === EDebugBufferComponents.GridY && !ArcballCamera.Get.isAlignedWithAxis('y')) {
+                        continue;
+                    }
                     this._drawBuffer(this._gl.LINES, buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
@@ -333,6 +328,33 @@ export class Renderer {
                 }
             }
         }
+        */
+        // Draw grid
+        if (this._gridEnabled) {
+            if (ArcballCamera.Get.isAlignedWithAxis('x') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
+                const gridBuffer = this._gridBuffers.x[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            } else if (ArcballCamera.Get.isAlignedWithAxis('z') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
+                const gridBuffer = this._gridBuffers.z[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            } else {
+                const gridBuffer = this._gridBuffers.y[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            }
+        }
+
         // Draw axis
         if (this._axesEnabled) {
             this._gl.disable(this._gl.DEPTH_TEST);
@@ -411,7 +433,6 @@ export class Renderer {
         const isModelAvailable = this._modelsAvailable >= meshType;
         if (isModelAvailable) {
             this._meshToUse = meshType;
-            EventManager.Get.broadcast(EAppEvent.onModelActiveChanged, meshType);
         }
     }
 
