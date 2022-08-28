@@ -2,13 +2,6 @@ import { ASSERT, LOG } from './util';
 
 /* eslint-disable */
 export enum EAppEvent {
-    onModelActiveChanged,
-    onModelAvailableChanged,
-    onGridEnabledChanged,
-    onAxesEnabledChanged,
-    onWireframeEnabledChanged,
-    onNormalsEnabledChanged,
-    onDevViewEnabledChanged,
 }
 /* eslint-enable */
 

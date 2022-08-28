@@ -9,7 +9,6 @@ import { ASSERT, ATLASES_DIR, LOG } from '../util';
 
 import fs from 'fs';
 import { ToolbarItemElement } from './elements/toolbar_item';
-import { EAppEvent } from '../event';
 import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
@@ -189,119 +188,117 @@ export class UI {
         groups: {
             'viewmode': {
                 elements: {
-                    'mesh': new ToolbarItemElement('mesh', () => {
-                        Renderer.Get.setModelToUse(MeshType.TriangleMesh);
-                    },
-                    EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
-                    },
-                    EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.TriangleMesh && isCached;
-                    }),
-
-                    'voxelMesh': new ToolbarItemElement('voxel', () => {
-                        Renderer.Get.setModelToUse(MeshType.VoxelMesh);
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.VoxelMesh;
-                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.VoxelMesh && isCached;
-                    }),
-
-                    'blockMesh': new ToolbarItemElement('block', () => {
-                        Renderer.Get.setModelToUse(MeshType.BlockMesh);
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.BlockMesh;
-                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.BlockMesh && isCached;
-                    }),
+                    'mesh': new ToolbarItemElement({ icon: 'mesh' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.TriangleMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.TriangleMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
+                        }),
+                    'voxelMesh': new ToolbarItemElement({ icon: 'voxel' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.VoxelMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.VoxelMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
+                        }),
+                    'blockMesh': new ToolbarItemElement({ icon: 'block' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.BlockMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.BlockMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
+                        }),
                 },
                 elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
-            'zoom': {
-                elements: {
-                    'zoomOut': new ToolbarItemElement('minus', () => {
-                        ArcballCamera.Get.onZoomOut();
-                    }),
-                    'zoomIn': new ToolbarItemElement('plus', () => {
-                        ArcballCamera.Get.onZoomIn();
-                    }),
-                    'centre': new ToolbarItemElement('centre', () => {
-                        ArcballCamera.Get.reset();
-                    }),
-                },
-                elementsOrder: ['zoomOut', 'zoomIn', 'centre'],
-            },
             'debug': {
                 elements: {
-                    'grid': new ToolbarItemElement('grid', () => {
-                        Renderer.Get.toggleIsGridEnabled();
-                    }, EAppEvent.onGridEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        return Renderer.Get.getActiveMeshType() !== MeshType.None;
-                    }),
-                    'axes': new ToolbarItemElement('axes', () => {
-                        Renderer.Get.toggleIsAxesEnabled();
-                    }, EAppEvent.onAxesEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }),
+                    'grid': new ToolbarItemElement({ icon: 'grid' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsGridEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isGridEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getActiveMeshType() !== MeshType.None;
+                        }),
+                    'axes': new ToolbarItemElement({ icon: 'axes' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsAxesEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isAxesEnabled();
+                        }),
                 },
                 elementsOrder: ['grid', 'axes'],
             },
+            
         },
-        groupsOrder: ['viewmode', 'zoom', 'debug'],
+        groupsOrder: ['viewmode', 'debug'],
     };
 
     private _toolbarRight = {
         groups: {
-            'debug': {
+            'zoom': {
                 elements: {
-                    /*
-                    'wireframe': new ToolbarItemElement('wireframe', () => {
-                        Renderer.Get.toggleIsWireframeEnabled();
-                    }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh || modelUsed === MeshType.VoxelMesh;
-                    }),
-                    'normals': new ToolbarItemElement('normal', () => {
-                        Renderer.Get.toggleIsNormalsEnabled();
-                    }, EAppEvent.onNormalsEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
-                    }),
-                    'dev': new ToolbarItemElement('debug', () => {
-                        Renderer.Get.toggleIsDevDebugEnabled();
-                    }, EAppEvent.onDevViewEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
-                        return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
-                    }),
-                    */
+                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomOut();
+                        }),
+                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomIn();
+                        }),
+                    'reset': new ToolbarItemElement({ icon: 'centre' })
+                        .onClick(() => {
+                            ArcballCamera.Get.reset();
+                        }),
                 },
-                elementsOrder: [], // ['wireframe', 'normals', 'dev'],
+                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
+            },
+            'camera': {
+                elements: {
+                    'perspective': new ToolbarItemElement({ icon: 'perspective' })
+                        .onClick(() => {
+                            ArcballCamera.Get.setCameraMode('perspective');
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isPerspective();
+                        }),
+                    'orthographic': new ToolbarItemElement({ icon: 'orthographic' })
+                        .onClick(() => {
+                            ArcballCamera.Get.setCameraMode('orthographic');
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isOrthographic();
+                        }),
+                    'angleSnap': new ToolbarItemElement({ icon: 'magnet' })
+                        .onClick(() => {
+                            ArcballCamera.Get.toggleAngleSnap();
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isAngleSnapEnabled();
+                        })
+                        .isEnabled(() => {
+                            return ArcballCamera.Get.isOrthographic();
+                        }),
+
+                },
+                elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
             },
         },
-        groupsOrder: ['debug'],
+        groupsOrder: ['camera', 'zoom'],
     };
 
     private _uiDull: { [key: string]: Group } = this._ui;
@@ -315,6 +312,22 @@ export class UI {
 
         this._ui.assign.elements.textureAtlas.addDescription('Textures to use and colour-match with');
         this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
+    }
+
+    public tick() {
+        for (const groupName in this._toolbarLeftDull) {
+            const toolbarGroup = this._toolbarLeftDull[groupName];
+            for (const toolbarItem of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[toolbarItem].tick();
+            }
+        }
+
+        for (const groupName in this._toolbarRightDull) {
+            const toolbarGroup = this._toolbarRightDull[groupName];
+            for (const toolbarItem of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[toolbarItem].tick();
+            }
+        }
     }
 
     public build() {
