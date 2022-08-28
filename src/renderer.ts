@@ -4,7 +4,6 @@ import { ShaderManager } from './shaders';
 import { RenderBuffer } from './buffer';
 import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-import { BlockAtlas } from './block_atlas';
 import { ASSERT, LOG } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
@@ -37,6 +36,7 @@ export class Renderer {
     private _backgroundColour: RGBA = { r: 0.125, g: 0.125, b: 0.125, a: 1.0 };
     private _atlasTexture?: WebGLTexture;
 
+    private _atlasSize: number = 1.0;
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _gridOffset: Vector3 = new Vector3(0, 0, 0);
@@ -295,10 +295,12 @@ export class Renderer {
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
         
         this._atlasTexture = twgl.createTexture(this._gl, {
-            src: BlockAtlas.Get.getAtlasTexturePath(),
+            src: blockMesh.getAtlas().getAtlasTexturePath(),
             mag: this._gl.NEAREST,
         });
         
+        this._atlasSize = blockMesh.getAtlas().getAtlasSize();
+
         this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
         
         this._modelsAvailable = 3;
@@ -411,7 +413,7 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,
-            u_atlasSize: BlockAtlas.Get.getAtlasSize(),
+            u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
         };
         if (this._blockBuffer) {

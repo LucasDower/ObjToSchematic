@@ -5,7 +5,7 @@ import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
 import { EAction, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG, PALETTES_DIR } from '../util';
+import { ASSERT, ATLASES_DIR, LOG } from '../util';
 
 import fs from 'fs';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -13,8 +13,9 @@ import { MeshType, Renderer } from '../renderer';
 import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
-import { TBlockAssigners } from '../block_assigner';
 import { TVoxelOverlapRule } from '../voxel_mesh';
+import { PaletteManager } from '../palette';
+import { TBlockAssigners } from '../assigners/assigners';
 
 export interface Group {
     label: string;
@@ -133,10 +134,6 @@ export class UI {
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
                 ]),
-                'colourSpace': new ComboBoxElement('Colour space', [
-                    { id: 'rgb', displayText: 'RGB (faster)' },
-                    { id: 'lab', displayText: 'LAB (recommended, slow)' },
-                ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
                         id: 'replace-falling',
@@ -162,7 +159,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -563,14 +560,13 @@ export class UI {
     private _getBlockPalettes(): ComboBoxItem<string>[] {
         const blockPalettes: ComboBoxItem<string>[] = [];
 
-        fs.readdirSync(PALETTES_DIR).forEach((file) => {
-            if (file.endsWith('.palette')) {
-                const paletteID = file.split('.')[0];
-                let paletteName = paletteID.replace('-', ' ').toLowerCase();
-                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                blockPalettes.push({ id: paletteID, displayText: paletteName });
-            }
-        });
+        const palettes = PaletteManager.getPalettesInfo();
+        for (const palette of palettes) {
+            blockPalettes.push({
+                id: palette.paletteID,
+                displayText: palette.paletteDisplayName,
+            });
+        }
 
         return blockPalettes;
     }

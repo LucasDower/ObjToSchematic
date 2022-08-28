@@ -1,9 +1,12 @@
 import { log, LogStyle } from './logging';
-import { TOOLS_DIR, PALETTES_DIR } from '../src/util';
+import { TOOLS_DIR } from '../src/util';
+import { Palette } from '../src/palette';
 
 import fs from 'fs';
 import path from 'path';
 import prompt from 'prompt';
+
+const PALETTE_NAME_REGEX = /^[a-zA-Z\-]+$/;
 
 void async function main() {
     log(LogStyle.Info, 'Creating a new palette...');
@@ -29,7 +32,7 @@ void async function main() {
     const schema: prompt.Schema = {
         properties: {
             paletteName: {
-                pattern: /^[a-zA-Z\-]+$/,
+                pattern: PALETTE_NAME_REGEX,
                 description: 'What do you want to call this block palette? (e.g. my-block-palette)',
                 message: 'Must be only letters or dash',
                 required: true,
@@ -39,10 +42,24 @@ void async function main() {
 
     const promptUser = await prompt.get(schema);
 
-    const paletteJSON = {
-        blocks: blocksToUse,
-    };
+    log(LogStyle.Info, 'Creating palette...');
+    const palette = Palette.create();
+    if (palette === undefined) {
+        log(LogStyle.Failure, 'Invalid palette name');
+        return;
+    }
 
-    fs.writeFileSync(path.join(PALETTES_DIR, `./${promptUser.paletteName}.palette`), JSON.stringify(paletteJSON, null, 4));
-    log(LogStyle.Success, `Successfully created ${promptUser.paletteName}.palette in /resources/palettes/`);
+    log(LogStyle.Info, 'Adding blocks to palette...');
+    for (const blockNames of blocksToUse) {
+        palette.add(blockNames);
+    }
+
+    log(LogStyle.Info, 'Saving palette...');
+    const success = palette.save(promptUser.paletteName as string);
+
+    if (success) {
+        log(LogStyle.Success, 'Palette saved.');
+    } else {
+        log(LogStyle.Failure, 'Could not save palette.');
+    }
 }();

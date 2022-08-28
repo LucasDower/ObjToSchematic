@@ -15,6 +15,8 @@ import { OutputStyle } from './ui/elements/output';
 import { IExporter } from './exporters/base_exporter';
 import { TVoxelisers, VoxeliseParams, VoxeliserFactory } from './voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from './exporters/exporters';
+import { Atlas } from './atlas';
+import { Palette } from './palette';
 import { ArcballCamera } from './camera';
 
 /* eslint-disable */
@@ -191,11 +193,20 @@ export class AppContext {
         ASSERT(this._loadedVoxelMesh);
 
         const uiElements = this._ui.layout.assign.elements;
+
+        const atlasId = uiElements.textureAtlas.getCachedValue();
+        const atlas = Atlas.load(atlasId);
+        ASSERT(atlas, 'Could not load atlas');
+
+        const paletteId = uiElements.blockPalette.getCachedValue();
+        const palette = Palette.load(paletteId);
+        ASSERT(palette);
+
         const blockMeshParams: BlockMeshParams = {
-            textureAtlas: uiElements.textureAtlas.getCachedValue(),
-            blockPalette: uiElements.blockPalette.getCachedValue(),
+            textureAtlas: atlas,
+            blockPalette: palette,
             blockAssigner: uiElements.dithering.getCachedValue(),
-            colourSpace: uiElements.colourSpace.getCachedValue() === 'rgb' ? ColourSpace.RGB : ColourSpace.LAB,
+            colourSpace: ColourSpace.RGB,
             fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
         };
 

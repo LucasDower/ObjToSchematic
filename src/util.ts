@@ -5,6 +5,27 @@ import { clamp } from './math';
 import path from 'path';
 import fs from 'fs';
 
+export namespace AppUtil {
+    export namespace Text {
+        export function capitaliseFirstLetter(text: string) {
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        /** 
+         * Namespaces a block name if it is not already namespaced
+         * For example `namespaceBlock('stone')` returns `'minecraft:stone'`
+         */
+        export function namespaceBlock(blockName: string): AppTypes.TNamespacedBlockName {
+            // https://minecraft.fandom.com/wiki/Resource_location#Namespaces
+            return blockName.includes(':') ? blockName : ('minecraft:' + blockName);
+        }
+    }
+}
+
+export namespace AppTypes {
+    export type TNamespacedBlockName = string;
+}
+
 export class UV {
     public u: number;
     public v: number;

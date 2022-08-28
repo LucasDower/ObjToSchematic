@@ -1,6 +1,5 @@
-import { BlockAssignerFactory, TBlockAssigners } from './block_assigner';
 import { Voxel, VoxelMesh } from './voxel_mesh';
-import { BlockAtlas, BlockInfo } from './block_atlas';
+import { BlockInfo } from './block_atlas';
 import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
 import { Renderer } from './renderer';
 import { AppConstants } from './constants';
@@ -9,6 +8,10 @@ import fs from 'fs';
 import path from 'path';
 import { StatusHandler } from './status';
 import { Vector3 } from './vector';
+import { Atlas } from './atlas';
+import { Palette } from './palette';
+import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
+import { AtlasPalette } from './block_assigner';
 
 interface Block {
     voxel: Voxel;
@@ -18,19 +21,19 @@ interface Block {
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
-    textureAtlas: string,
-    blockPalette: string,
+    textureAtlas: Atlas,
+    blockPalette: Palette,
     blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
 }
 
 export class BlockMesh {
-    private _blockPalette: string[];
+    private _blocksUsed: string[];
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
-    private _atlasUsed: string;
+    private _atlas: Atlas;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
@@ -39,19 +42,18 @@ export class BlockMesh {
     }
 
     private constructor(voxelMesh: VoxelMesh) {
-        this._blockPalette = [];
+        this._blocksUsed = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
-        this._atlasUsed = 'Vanilla';
+        this._atlas = Atlas.getVanillaAtlas()!;
 
         const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
     }
-    
+
     private _assignBlocks(blockMeshParams: BlockMeshParams) {
-        BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
-        BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
-        this._atlasUsed = blockMeshParams.textureAtlas;
+        const atlasPalette = new AtlasPalette(blockMeshParams.textureAtlas, blockMeshParams.blockPalette);
+        this._atlas = blockMeshParams.textureAtlas;
 
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
         
@@ -59,7 +61,7 @@ export class BlockMesh {
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
             const voxel = voxels[voxelIndex];
-            let block = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace);
+            let block = blockAssigner.assignBlock(atlasPalette, voxel.colour, voxel.position, blockMeshParams.colourSpace);
 
             const isFallable = this._fallableBlocks.includes(block.name);
             const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
@@ -72,7 +74,7 @@ export class BlockMesh {
             shouldReplace ||= (blockMeshParams.fallable === 'replace-falling' && isFallable && !isSupported);
 
             if (shouldReplace) {
-                const replacedBlock = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace, this._fallableBlocks);
+                const replacedBlock = blockAssigner.assignBlock(atlasPalette, voxel.colour, voxel.position, blockMeshParams.colourSpace, this._fallableBlocks);
                 // LOG(`Replacing ${block.name} with ${replacedBlock.name}`);
                 block = replacedBlock;
             }
@@ -81,8 +83,8 @@ export class BlockMesh {
                 voxel: voxel,
                 blockInfo: block,
             });
-            if (!this._blockPalette.includes(block.name)) {
-                this._blockPalette.push(block.name);
+            if (!this._blocksUsed.includes(block.name)) {
+                this._blocksUsed.push(block.name);
             }
         }
 
@@ -96,7 +98,7 @@ export class BlockMesh {
     }
 
     public getBlockPalette() {
-        return this._blockPalette;
+        return this._blocksUsed;
     }
 
     public getVoxelMesh() {
@@ -159,11 +161,7 @@ export class BlockMesh {
         return newBuffer;
     }
 
-    public getAtlasSize() {
-        return BlockAtlas.Get.getAtlasSize();
-    }
-
-    public getAtlasUsed() {
-        return this._atlasUsed;
+    public getAtlas() {
+        return this._atlas;
     }
 }

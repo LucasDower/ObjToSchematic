@@ -8,10 +8,12 @@ import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
-import { TBlockAssigners } from '../src/block_assigner';
 import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
 import { VoxeliseParams } from '../src/voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from '../src/exporters/exporters';
+import { TBlockAssigners } from '../src/assigners/assigners';
+import { Atlas } from '../src/atlas';
+import { Palette } from '../src/palette';
 
 export type THeadlessConfig = {
     import: {
@@ -56,10 +58,23 @@ void async function main() {
             calculateNeighbours: false,
         },
     });
+
+    const atlasId = headlessConfig.palette.blockMeshParams.textureAtlas;
+    const atlas = Atlas.load(atlasId);
+    if (atlas === undefined) {
+        return 'Could not load atlas';
+    }
+
+    const paletteId = headlessConfig.palette.blockMeshParams.blockPalette;
+    const palette = Palette.load(paletteId);
+    if (palette === undefined) {
+        return 'Could not load palette';
+    }
+
     const blockMesh = _palette(voxelMesh, {
         blockMeshParams: {
-            textureAtlas: headlessConfig.palette.blockMeshParams.textureAtlas,
-            blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
+            textureAtlas: atlas,
+            blockPalette: palette,
             blockAssigner: headlessConfig.palette.blockMeshParams.blockAssigner as TBlockAssigners,
             colourSpace: headlessConfig.palette.blockMeshParams.colourSpace,
             fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
