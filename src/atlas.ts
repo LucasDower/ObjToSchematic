@@ -42,6 +42,10 @@ export class Atlas {
         this._atlasName = atlasName;
     }
 
+    public getBlocks() {
+        return this._blocks;
+    }
+
     public static load(atlasName: string): TOptional<Atlas> {
         if (!Atlas._isValidAtlasName(atlasName)) {
             return;

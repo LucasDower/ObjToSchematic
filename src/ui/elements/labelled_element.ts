@@ -2,10 +2,11 @@ import { BaseUIElement } from './base';
 import { LabelElement } from './label';
 
 export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
+    protected _label: string;
     private _labelElement: LabelElement;
 
     public constructor(label: string) {
-        super(label);
+        super();
         this._label = label;
         this._labelElement = new LabelElement(label);
     }

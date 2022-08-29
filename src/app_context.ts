@@ -18,6 +18,7 @@ import { ExporterFactory, TExporters } from './exporters/exporters';
 import { Atlas } from './atlas';
 import { Palette } from './palette';
 import { ArcballCamera } from './camera';
+import { ToggleableIcon } from './ui/elements/toggleable_icon';
 
 /* eslint-disable */
 export enum EAction {
@@ -37,8 +38,9 @@ export class AppContext {
     private _ui: UI;
 
     private _actionMap = new Map<EAction, {
-        action: () => void;
-        onFailure?: () => void
+        action: () => void,
+        onSuccess?: () => void,
+        onFailure?: () => void,
     }>();
 
     public constructor() {
@@ -62,6 +64,7 @@ export class AppContext {
             [
                 EAction.Voxelise, {
                     action: () => { return this._voxelise(); },
+                    onSuccess: () => { this._loadPaletteBlocks(); },
                     onFailure: () => { this._loadedVoxelMesh = undefined; },
                 },
             ],
@@ -87,6 +90,25 @@ export class AppContext {
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
+
+        this._ui.layout.assign.elements.textureAtlas.addOnSelectedChangedListener(() => {
+            this._loadPaletteBlocks();
+        });
+    }
+
+    private _loadPaletteBlocks() {
+        const atlasId = this._ui.layout.assign.elements.textureAtlas.getValue();
+
+        const atlas = Atlas.load(atlasId);
+        ASSERT(atlas);
+
+        const items: ToggleableIcon[] = [];
+        atlas.getBlocks().forEach((block) => {
+            items.push(new ToggleableIcon('C:\\Users\\Lucas\\Desktop\\stone.png', 32, false, block.name));
+        });
+
+
+        this._ui.layout.assign.elements.blockSelector.setItems(items);
     }
 
     public do(action: EAction) {
@@ -113,6 +135,8 @@ export class AppContext {
             delegate.onFailure?.();
             return;
         }
+
+        delegate.onSuccess?.();
 
         // On success...
         const message = new UIMessageBuilder();

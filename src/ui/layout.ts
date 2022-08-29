@@ -14,8 +14,9 @@ import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
 import { TVoxelOverlapRule } from '../voxel_mesh';
-import { PaletteManager } from '../palette';
+import { Palette, PaletteManager } from '../palette';
 import { TBlockAssigners } from '../assigners/assigners';
+import { PaletteElement } from './elements/grid_element';
 
 export interface Group {
     label: string;
@@ -134,6 +135,7 @@ export class UI {
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
                 ]),
+                'blockSelector': new PaletteElement(),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
                         id: 'replace-falling',
@@ -159,7 +161,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'blockSelector', 'dithering', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),

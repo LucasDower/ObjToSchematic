@@ -3,9 +3,11 @@ import { ASSERT } from '../../util';
 
 export class ButtonElement extends BaseUIElement<any> {
     private _onClick: () => void;
+    private _label: string;
 
     public constructor(label: string, onClick: () => void) {
-        super(label);
+        super();
+        this._label = label;
         this._onClick = onClick;
         this._isEnabled = true;
     }

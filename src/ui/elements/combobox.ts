@@ -29,9 +29,14 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
     }
 
     public registerEvents(): void {
+        this.getElement().addEventListener('change', () => {
+            this._onSelectedChangedDelegates.forEach((delegate) => {
+                delegate();
+            });
+        });
     }
 
-    protected getValue() {
+    public getValue() {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         return this._items[element.selectedIndex].id;
@@ -43,5 +48,10 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         element.disabled = !this._isEnabled;
+    }
+
+    private _onSelectedChangedDelegates: Array<() => void> = [];
+    public addOnSelectedChangedListener(delegate: () => void) {
+        this._onSelectedChangedDelegates.push(delegate);
     }
 }
