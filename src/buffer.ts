@@ -1,7 +1,7 @@
 import { Renderer } from './renderer';
-import { ASSERT } from './util';
 
 import * as twgl from 'twgl.js';
+import { ASSERT } from './util/error_util';
 
 export interface Attribute {
     name: string,

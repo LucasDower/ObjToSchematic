@@ -1,10 +1,10 @@
 import { VoxelMesh } from '../voxel_mesh';
 import { Mesh } from '../mesh';
 import { Axes, axesToDirection, Ray } from '../ray';
-import { ASSERT, LOG } from '../util';
 import { Vector3 } from '../vector';
-import { IVoxeliser } from './base-voxeliser';
-import { VoxeliseParams } from './voxelisers';
+import { IVoxeliser, VoxeliseParams } from './base-voxeliser';
+import { ASSERT } from '../util/error_util';
+import { LOG } from '../util/log_util';
 
 const bvhtree = require('bvh-tree');
 

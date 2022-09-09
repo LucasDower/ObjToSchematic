@@ -1,5 +1,5 @@
-import { EAction } from './app_context';
-import { LOG, LOG_WARN } from './util';
+import { EAction } from './util';
+import { LOG, LOG_WARN } from './util/log_util';
 
 export type StatusType = 'warning' | 'info';
 
@@ -37,6 +37,10 @@ export class StatusHandler {
     public getStatusMessages(statusType: StatusType): string[] {
         const messagesToReturn = (statusType !== undefined) ? this._statusMessages.filter((m) => m.status === statusType ): this._statusMessages;
         return messagesToReturn.map((m) => m.message);
+    }
+
+    public getAllStatusMessages(): StatusMessage[] {
+        return this._statusMessages;
     }
 
     public getDefaultSuccessMessage(action: EAction): string {

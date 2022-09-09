@@ -1,5 +1,5 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
+import { UV, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
 
 import path from 'path';
@@ -7,6 +7,9 @@ import fs from 'fs';
 import { Texture, TextureFiltering } from './texture';
 import { StatusHandler } from './status';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { AppError, ASSERT } from './util/error_util';
+import { LOG_WARN } from './util/log_util';
+import { Bounds } from './bounds';
 
 interface VertexIndices {
     x: number;

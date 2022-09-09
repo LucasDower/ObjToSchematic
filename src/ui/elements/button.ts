@@ -1,13 +1,11 @@
 import { BaseUIElement } from './base';
-import { ASSERT } from '../../util';
+import { ASSERT } from "../../util/error_util";
 
 export class ButtonElement extends BaseUIElement<any> {
     private _onClick: () => void;
-    private _label: string;
 
     public constructor(label: string, onClick: () => void) {
-        super();
-        this._label = label;
+        super(label);
         this._onClick = onClick;
         this._isEnabled = true;
     }
@@ -40,5 +38,19 @@ export class ButtonElement extends BaseUIElement<any> {
         } else {
             element.classList.add('button-disabled');
         }
+    }
+
+    public setLabelOverride(label: string) {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null, 'Updating label override of element that does not exist');
+
+        element.innerHTML = label;
+    }
+
+    public removeLabelOverride() {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null, 'Removing label override of element that does not exist');
+
+        element.innerHTML = this._label;
     }
 }

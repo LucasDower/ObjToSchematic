@@ -1,6 +1,5 @@
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { Vector3 } from '../vector';
-import { UV, ASSERT, AppError, REGEX_NUMBER, RegExpBuilder, REGEX_NZ_ANY, LOG_ERROR, LOG } from '../util';
 import { checkFractional, checkNaN } from '../math';
 
 import fs from 'fs';
@@ -8,6 +7,13 @@ import path from 'path';
 import { StatusHandler } from '../status';
 import { IImporter } from './base_importer';
 import { RGBA, RGBAColours } from '../colour';
+import { AppError, ASSERT } from '../util/error_util';
+import { RegExpBuilder } from '../util/regex_util';
+import { REGEX_NZ_ANY } from '../util/regex_util';
+import { REGEX_NUMBER } from '../util/regex_util';
+import { UV } from '../util';
+import { LOG } from '../util/log_util';
+import { LOG_ERROR } from '../util/log_util';
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];

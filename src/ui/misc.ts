@@ -30,4 +30,10 @@ export class UIMessageBuilder {
     public toString(): string {
         return this._messages.join('<br>');
     }
+
+    public static fromString(string: string): UIMessageBuilder {
+        const builder = new UIMessageBuilder();
+        builder.addItem(string);
+        return builder;
+    }
 }

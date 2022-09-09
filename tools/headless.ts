@@ -1,6 +1,6 @@
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
-import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
+import { IVoxeliser, VoxeliseParams } from '../src/voxelisers/base-voxeliser';
 import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
@@ -9,7 +9,6 @@ import { ColourSpace } from '../src/util';
 import { log, LogStyle } from './logging';
 import { headlessConfig } from './headless-config';
 import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
-import { VoxeliseParams } from '../src/voxelisers/voxelisers';
 import { ExporterFactory, TExporters } from '../src/exporters/exporters';
 import { TBlockAssigners } from '../src/assigners/assigners';
 import { Atlas } from '../src/atlas';

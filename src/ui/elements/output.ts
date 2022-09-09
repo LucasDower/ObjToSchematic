@@ -1,4 +1,4 @@
-import { ASSERT } from '../../util';
+import { ASSERT } from "../../util/error_util";
 import { UIMessageBuilder } from '../misc';
 
 export type OutputStyle = 'success' | 'warning' | 'error';

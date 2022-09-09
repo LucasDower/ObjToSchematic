@@ -4,8 +4,7 @@ import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { EAction, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG } from '../util';
+import { AppContext } from '../app_context';
 
 import fs from 'fs';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -14,9 +13,11 @@ import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
 import { TVoxelOverlapRule } from '../voxel_mesh';
-import { Palette, PaletteManager } from '../palette';
+import { PaletteManager } from '../palette';
 import { TBlockAssigners } from '../assigners/assigners';
-import { PaletteElement } from './elements/grid_element';
+import { ATLASES_DIR, EAction } from '../util';
+import { ASSERT } from '../util/error_util';
+import { LOG } from '../util/log_util';
 
 export interface Group {
     label: string;
@@ -135,7 +136,6 @@ export class UI {
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
                 ]),
-                'blockSelector': new PaletteElement(),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
                         id: 'replace-falling',
@@ -161,7 +161,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'blockSelector', 'dithering', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -439,6 +439,16 @@ export class UI {
                 ${element.generateHTML()}
             </div>
         `;
+    }
+    
+    public getActionOutput(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.output;
+    }
+
+    public getActionButton(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.submitButton;
     }
 
     public registerEvents() {

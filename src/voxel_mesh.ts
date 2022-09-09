@@ -1,10 +1,12 @@
+import { Bounds } from './bounds';
 import { AttributeData } from './buffer';
 import { RGBA } from './colour';
 import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
-import { ASSERT, Bounds, TOptional } from './util';
+import { TOptional } from './util';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
 export interface Voxel {

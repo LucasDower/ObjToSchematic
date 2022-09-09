@@ -4,13 +4,13 @@ import { ShaderManager } from './shaders';
 import { RenderBuffer } from './buffer';
 import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-import { ASSERT, LOG } from './util';
 import { VoxelMesh } from './voxel_mesh';
 import { BlockMesh } from './block_mesh';
 
 import * as twgl from 'twgl.js';
 import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
+import { LOG } from './util/log_util';
 
 /* eslint-disable */
 export enum MeshType {

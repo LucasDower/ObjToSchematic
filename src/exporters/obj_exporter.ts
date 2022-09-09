@@ -1,6 +1,6 @@
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';
-import { ASSERT } from '../util';
+import { ASSERT } from '../util/error_util';
 
 import fs from 'fs';
 import path from 'path';

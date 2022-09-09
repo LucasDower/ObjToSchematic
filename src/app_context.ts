@@ -1,114 +1,36 @@
 import { UI } from './ui/layout';
 import { Renderer } from './renderer';
-import { Mesh } from './mesh';
-import { ObjImporter } from './importers/obj_importer';
-import { ASSERT, ColourSpace, AppError, LOG, LOG_ERROR, TIME_START, TIME_END } from './util';
-
-import { remote } from 'electron';
-import { VoxelMesh } from './voxel_mesh';
-import { BlockMesh, BlockMeshParams, FallableBehaviour } from './block_mesh';
-import { TextureFiltering } from './texture';
-import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { StatusHandler } from './status';
 import { UIMessageBuilder } from './ui/misc';
 import { OutputStyle } from './ui/elements/output';
-import { IExporter } from './exporters/base_exporter';
-import { TVoxelisers, VoxeliseParams, VoxeliserFactory } from './voxelisers/voxelisers';
-import { ExporterFactory, TExporters } from './exporters/exporters';
-import { Atlas } from './atlas';
-import { Palette } from './palette';
 import { ArcballCamera } from './camera';
-import { ToggleableIcon } from './ui/elements/toggleable_icon';
 
-/* eslint-disable */
-export enum EAction {
-    Import = 0,
-    Simplify = 1,
-    Voxelise = 2,
-    Assign = 3,
-    Export = 4,
-    MAX = 5,
-}
-/* eslint-enable */
+import path from 'path';
+import { TWorkerJob, WorkerController } from './worker_controller';
+import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { LOG } from './util/log_util';
+import { ASSERT } from './util/error_util';
+import { EAction } from './util';
 
 export class AppContext {
-    private _loadedMesh?: Mesh;
-    private _loadedVoxelMesh?: VoxelMesh;
-    private _loadedBlockMesh?: BlockMesh;
     private _ui: UI;
-
-    private _actionMap = new Map<EAction, {
-        action: () => void,
-        onSuccess?: () => void,
-        onFailure?: () => void,
-    }>();
-
+    private _workerController: WorkerController;
     public constructor() {
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
         }
 
-        this._actionMap = new Map([
-            [
-                EAction.Import, {
-                    action: () => { return this._import(); },
-                    onFailure: () => { this._loadedMesh = undefined; },
-                },
-            ],
-            [
-                EAction.Simplify, {
-                    action: () => { return this._simplify(); },
-                },
-            ],
-            [
-                EAction.Voxelise, {
-                    action: () => { return this._voxelise(); },
-                    onSuccess: () => { this._loadPaletteBlocks(); },
-                    onFailure: () => { this._loadedVoxelMesh = undefined; },
-                },
-            ],
-            [
-                EAction.Assign, {
-                    action: () => { return this._assign(); },
-                    onFailure: () => { this._loadedBlockMesh = undefined; },
-                },
-            ],
-            [
-                EAction.Export, {
-                    action: () => { return this._export(); },
-                },
-            ],
-        ]);
-
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
-
         this._ui.disable(EAction.Simplify);
 
+        this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
+        
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
-
-        this._ui.layout.assign.elements.textureAtlas.addOnSelectedChangedListener(() => {
-            this._loadPaletteBlocks();
-        });
-    }
-
-    private _loadPaletteBlocks() {
-        const atlasId = this._ui.layout.assign.elements.textureAtlas.getValue();
-
-        const atlas = Atlas.load(atlasId);
-        ASSERT(atlas);
-
-        const items: ToggleableIcon[] = [];
-        atlas.getBlocks().forEach((block) => {
-            items.push(new ToggleableIcon('C:\\Users\\Lucas\\Desktop\\stone.png', 32, false, block.name));
-        });
-
-
-        this._ui.layout.assign.elements.blockSelector.setItems(items);
     }
 
     public do(action: EAction) {
@@ -118,68 +40,81 @@ export class AppContext {
         this._ui.cacheValues(action);
         StatusHandler.Get.clear();
 
-        const delegate = this._actionMap.get(action)!;
-        try {
-            delegate.action();
-        } catch (error: any) {
-            // On failure...
-            LOG_ERROR(error);
-            const message = new UIMessageBuilder();
-            if (error instanceof AppError) {
-                message.addHeading(StatusHandler.Get.getDefaultFailureMessage(action));
-                message.add(error.message);
+        const actionCommand = this._getWorkerJob(action);
+        const uiOutput = this._ui.getActionOutput(action);
+
+        const jobCallback = (payload: TFromWorkerMessage) => {
+            if (payload.action === 'KnownError') {
+                uiOutput.setMessage(UIMessageBuilder.fromString(payload.error.message), 'error');
+            } else if (payload.action === 'UnknownError') {
+                uiOutput.setMessage(UIMessageBuilder.fromString('Something went wrong...'), 'error');
             } else {
-                message.addBold(StatusHandler.Get.getDefaultFailureMessage(action));
+                // The job was successful
+                const builder = new UIMessageBuilder();
+                builder.addHeading(StatusHandler.Get.getDefaultSuccessMessage(action));
+                
+                const infoStatuses = payload.statusMessages
+                    .filter(x => x.status === 'info')
+                    .map(x => x.message);
+                builder.addItem(...infoStatuses);
+
+                const warningStatuses = payload.statusMessages
+                    .filter(x => x.status === 'warning')
+                    .map(x => x.message);
+                const hasWarnings = warningStatuses.length > 0;
+
+                if (hasWarnings) {
+                    builder.addHeading('There were some warnings:');
+                    builder.addItem(...warningStatuses);
+                }
+
+                uiOutput.setMessage(builder, hasWarnings ? 'warning' : 'success');
+                this._ui.getActionButton(action).removeLabelOverride();
+                this._ui.enable(action);
+                this._ui.enable(action + 1);
             }
-            this._ui.layoutDull[groupName].output.setMessage(message, 'error');
-            delegate.onFailure?.();
-            return;
         }
 
-        delegate.onSuccess?.();
+        this._workerController.addJob({
+            id: actionCommand.id,
+            payload: actionCommand.payload,
+            callback: jobCallback,
+        });
 
-        // On success...
-        const message = new UIMessageBuilder();
-        if (StatusHandler.Get.hasStatusMessages('info')) {
-            message.addHeading(StatusHandler.Get.getDefaultSuccessMessage(action));
-            message.add(...StatusHandler.Get.getStatusMessages('info'));
-        } else {
-            message.addBold(StatusHandler.Get.getDefaultSuccessMessage(action));
-        }
-
-        let returnStyle: OutputStyle = 'success';
-        if (StatusHandler.Get.hasStatusMessages('warning')) {
-            message.addHeading('There were some warnings');
-            message.add(...StatusHandler.Get.getStatusMessages('warning'));
-            returnStyle = 'warning';
-        }
-        
-        this._ui.layoutDull[groupName].output.setMessage(message, returnStyle);
-
-        this._ui.enable(action + 1);
-        LOG(`Finished ${action}`);
+        this._ui.getActionButton(action).setLabelOverride('Loading...');
+        this._ui.disable(action);
     }
 
-    private _import() {
+    private _getWorkerJob(action: EAction): TWorkerJob {
+        switch(action) {
+            case EAction.Import:
+                return this._import();
+        }
+        ASSERT(false);
+    }
+
+    private _import(): TWorkerJob {
         const uiElements = this._ui.layout.import.elements;
-        const filePath = uiElements.input.getCachedValue();
 
-        TIME_START('Load Mesh');
-        {
-            const importer = new ObjImporter();
-            importer.parseFile(filePath);
-            this._loadedMesh = importer.toMesh();
-            this._loadedMesh.processMesh();
-        }
-        TIME_END('Load Mesh');
+        const payload: TToWorkerMessage = {
+            action: 'Import',
+            params: { 
+                filepath: uiElements.input.getCachedValue()
+            }
+        };
 
-        TIME_START('Render Mesh');
-        {
-            Renderer.Get.useMesh(this._loadedMesh);
-        }
-        TIME_END('Render Mesh');
+        const callback = (payload: TFromWorkerMessage) => {
+            ASSERT(payload.action === 'Import');
+
+            if (payload.result.triangleCount < 100_000) {
+                // TODO: Queue render if appropriate
+            }
+        };
+
+        return { id: 'Import', payload: payload, callback: callback };
     }
 
+    /*
     private _simplify() {
         ASSERT(false);
     }
@@ -257,14 +192,11 @@ export class AppContext {
             exporter.export(this._loadedBlockMesh, filePath);
         }
     }
+    */
 
     public draw() {
         Renderer.Get.update();
         this._ui.tick();
         Renderer.Get.draw();
-    }
-
-    public getLoadedMesh() {
-        return this._loadedMesh;
     }
 }

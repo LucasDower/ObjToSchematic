@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { ASSERT } from '../../util';
+import { ASSERT } from "../../util/error_util";
 
 export type ComboBoxItem<T> = {
     id: T;
@@ -29,14 +29,9 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
     }
 
     public registerEvents(): void {
-        this.getElement().addEventListener('change', () => {
-            this._onSelectedChangedDelegates.forEach((delegate) => {
-                delegate();
-            });
-        });
     }
 
-    public getValue() {
+    protected getValue() {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         return this._items[element.selectedIndex].id;
@@ -48,10 +43,5 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         element.disabled = !this._isEnabled;
-    }
-
-    private _onSelectedChangedDelegates: Array<() => void> = [];
-    public addOnSelectedChangedListener(delegate: () => void) {
-        this._onSelectedChangedDelegates.push(delegate);
     }
 }

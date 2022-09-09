@@ -1,5 +1,5 @@
 import { AppConfig } from './config';
-import { ASSERT } from './util';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 

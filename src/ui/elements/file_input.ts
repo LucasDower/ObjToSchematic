@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { ASSERT } from '../../util';
+import { ASSERT } from "../../util/error_util";
 
 import { remote } from 'electron';
 import * as path from 'path';

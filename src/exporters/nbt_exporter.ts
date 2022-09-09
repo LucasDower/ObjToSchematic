@@ -1,5 +1,5 @@
 import { NBT, TagType } from 'prismarine-nbt';
-import { LOG } from '../util';
+import { LOG } from '../util/log_util';
 import { Vector3 } from '../vector';
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';

@@ -1,6 +1,6 @@
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
-import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
+import { ColourSpace, RESOURCES_DIR } from './util';
 import { Renderer } from './renderer';
 import { AppConstants } from './constants';
 
@@ -12,6 +12,7 @@ import { Atlas } from './atlas';
 import { Palette } from './palette';
 import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { AtlasPalette } from './block_assigner';
+import { AppError, ASSERT } from './util/error_util';
 
 interface Block {
     voxel: Voxel;

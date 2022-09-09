@@ -3,11 +3,11 @@ import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
-import { Bounds, UV } from '../util';
+import { UV } from '../util';
 import { Vector3 } from '../vector';
-import { IVoxeliser } from './base-voxeliser';
+import { IVoxeliser, VoxeliseParams } from './base-voxeliser';
 import { RGBA, RGBAUtil } from '../colour';
-import { VoxeliseParams } from './voxelisers';
+import { Bounds } from '../bounds';
 
 /**
  * This voxeliser works by projecting rays onto each triangle

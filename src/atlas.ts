@@ -1,9 +1,10 @@
-import { AppError, AppTypes, AppUtil, ASSERT, ATLASES_DIR, LOG, TOptional, UV } from './util';
+import { AppTypes, AppUtil, ATLASES_DIR, TOptional, UV } from './util';
 
 import fs from 'fs';
 import path from 'path';
-import { RGBA, RGBAUtil } from './colour';
-import { Palette } from './palette';
+import { RGBA } from './colour';
+import { ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 
 export type TAtlasBlockFace = {
     name: string;
@@ -96,41 +97,6 @@ export class Atlas {
 
     public hasBlock(blockName: AppTypes.TNamespacedBlockName): boolean {
         return this._blocks.has(blockName);
-    }
-
-    public getBlock(voxelColour: RGBA, palette: Palette, blocksToExclude?: AppTypes.TNamespacedBlockName[]) {
-        const blocksToUse = palette.getBlocks();
-
-        // Remove excluded blocks
-        if (blocksToExclude !== undefined) {
-            for (const blockToExclude of blocksToExclude) {
-                const index = blocksToUse.indexOf(blockToExclude);
-                if (index != -1) {
-                    blocksToUse.splice(index, 1);
-                }
-            }
-        }
-
-        // Find closest block in colour
-        let minDistance = Infinity;
-        let blockChoice: TOptional<AppTypes.TNamespacedBlockName>;
-
-        for (const blockName of blocksToUse) {
-            const blockData = this._blocks.get(blockName);
-            ASSERT(blockData);
-
-            const colourDistance = RGBAUtil.squaredDistance(voxelColour, blockData.colour);
-            if (colourDistance < minDistance) {
-                minDistance = colourDistance;
-                blockChoice = blockName;
-            }
-        }
-
-        if (blockChoice !== undefined) {
-            return this._blocks.get(blockChoice)!;
-        }
-
-        throw new AppError('Could not find a suitable block');
     }
 
     public static getVanillaAtlas(): TOptional<Atlas> {
