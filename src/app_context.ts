@@ -24,7 +24,7 @@ export class AppContext {
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
-        this._ui.disable(EAction.Simplify);
+        this._ui.disable(EAction.Voxelise);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
         
@@ -50,18 +50,21 @@ export class AppContext {
                 uiOutput.setMessage(UIMessageBuilder.fromString('Something went wrong...'), 'error');
             } else {
                 // The job was successful
-                const builder = new UIMessageBuilder();
-                builder.addHeading(StatusHandler.Get.getDefaultSuccessMessage(action));
+                
                 
                 const infoStatuses = payload.statusMessages
                     .filter(x => x.status === 'info')
                     .map(x => x.message);
-                builder.addItem(...infoStatuses);
+                const hasInfos = infoStatuses.length > 0;
 
                 const warningStatuses = payload.statusMessages
                     .filter(x => x.status === 'warning')
                     .map(x => x.message);
                 const hasWarnings = warningStatuses.length > 0;
+
+                const builder = new UIMessageBuilder();
+                builder.addBold(StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : ''));
+                builder.addItem(...infoStatuses);
 
                 if (hasWarnings) {
                     builder.addHeading('There were some warnings:');
@@ -115,10 +118,6 @@ export class AppContext {
     }
 
     /*
-    private _simplify() {
-        ASSERT(false);
-    }
-
     private _voxelise() {
         ASSERT(this._loadedMesh);
 

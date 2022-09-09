@@ -35,7 +35,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'simplify', 'build', 'assign', 'export'];
+    public uiOrder = ['import', 'build', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -45,17 +45,6 @@ export class UI {
             elementsOrder: ['input'],
             submitButton: new ButtonElement('Load mesh', () => {
                 this._appContext.do(EAction.Import);
-            }),
-            output: new OutputElement(),
-        },
-        'simplify': {
-            label: 'Simplify',
-            elements: {
-                'ratio': new SliderElement('Ratio', 0.0, 1.0, 2, 0.5, 0.01),
-            },
-            elementsOrder: ['ratio'],
-            submitButton: new ButtonElement('Simplify mesh', () => {
-                this._appContext.do(EAction.Simplify);
             }),
             output: new OutputElement(),
         },
@@ -498,10 +487,6 @@ export class UI {
         }
 
         LOG('enabling', action);
-        // TODO: Remove once Simplify has been implemented
-        if (action === EAction.Simplify) {
-            action = EAction.Voxelise;
-        }
         const group = this._getEActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);

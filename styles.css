@@ -252,13 +252,14 @@ select:disabled {
   padding: 6px 0px 0px 10px;
   border: 1px solid rgb(255, 255, 255, 0);
 }
-.input-text:hover {
+.input-text-hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
   background: var(--prop-hovered);
   cursor: pointer;
 }
 .input-text-disabled {
-  background: rgb(156, 27, 27) !important;
+  background: var(--prop-disabled) !important;
+  color: var(--text-disabled) !important;
 }
 
 .h-div {

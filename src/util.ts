@@ -20,11 +20,10 @@ export namespace AppUtil {
 /* eslint-disable */
 export enum EAction {
     Import = 0,
-    Simplify = 1,
-    Voxelise = 2,
-    Assign = 3,
-    Export = 4,
-    MAX = 5,
+    Voxelise = 1,
+    Assign = 2,
+    Export = 3,
+    MAX = 4,
 }
 /* eslint-enable */
 

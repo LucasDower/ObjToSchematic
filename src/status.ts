@@ -47,8 +47,6 @@ export class StatusHandler {
         switch (action) {
             case EAction.Import:
                 return 'Successfully loaded mesh';
-            case EAction.Simplify:
-                return 'Successfully simplified mesh';
             case EAction.Voxelise:
                 return 'Successfully voxelised mesh';
             case EAction.Assign:
@@ -64,8 +62,6 @@ export class StatusHandler {
         switch (action) {
             case EAction.Import:
                 return 'Failed to load mesh';
-            case EAction.Simplify:
-                return 'Failed to simplify mesh';
             case EAction.Voxelise:
                 return 'Failed to voxelise mesh';
             case EAction.Assign:
