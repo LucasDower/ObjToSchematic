@@ -5,7 +5,7 @@ import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 export type TWorkerJob = {
     id: string,
     payload: TToWorkerMessage,
-    callback: (payload: TFromWorkerMessage) => void, // Called only if the job is successful
+    callback?: (payload: TFromWorkerMessage) => void, // Called only if the job is successful
 }
 
 export class WorkerController {
@@ -39,9 +39,11 @@ export class WorkerController {
 
     private _onWorkerMessage(payload: any) {
         ASSERT(this._jobPending !== undefined, `Received worker message when no job is pending`);
-        LOG(`[WorkerController]: Job '${this._jobPending.id}' finished`);
+        LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`, payload.data);
 
-        this._jobPending.callback(payload.data);
+        if (this._jobPending.callback) {
+            this._jobPending.callback(payload.data);
+        }
         this._jobPending = undefined;
 
         this._tryStartNextJob();

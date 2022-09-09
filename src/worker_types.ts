@@ -1,3 +1,4 @@
+import { TMeshBufferDescription } from "./buffer"
 import { StatusMessage } from "./status"
 import { AppError } from "./util/error_util"
 
@@ -17,7 +18,7 @@ export namespace RenderMeshParams {
     }
 
     export type Output = {
-
+        buffers: TMeshBufferDescription[],
     }
 }
 

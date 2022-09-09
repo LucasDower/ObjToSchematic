@@ -2,7 +2,6 @@ import { UI } from './ui/layout';
 import { Renderer } from './renderer';
 import { StatusHandler } from './status';
 import { UIMessageBuilder } from './ui/misc';
-import { OutputStyle } from './ui/elements/output';
 import { ArcballCamera } from './camera';
 
 import path from 'path';
@@ -11,6 +10,7 @@ import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 import { LOG } from './util/log_util';
 import { ASSERT } from './util/error_util';
 import { EAction } from './util';
+import { AppConfig } from './config';
 
 export class AppContext {
     private _ui: UI;
@@ -35,7 +35,6 @@ export class AppContext {
 
     public do(action: EAction) {
         LOG(`Doing ${action}`);
-        const groupName = this._ui.uiOrder[action];
         this._ui.disable(action + 1);
         this._ui.cacheValues(action);
         StatusHandler.Get.clear();
@@ -50,8 +49,6 @@ export class AppContext {
                 uiOutput.setMessage(UIMessageBuilder.fromString('Something went wrong...'), 'error');
             } else {
                 // The job was successful
-                
-                
                 const infoStatuses = payload.statusMessages
                     .filter(x => x.status === 'info')
                     .map(x => x.message);
@@ -77,6 +74,10 @@ export class AppContext {
                     .stopLoading();
                 this._ui.enable(action);
                 this._ui.enable(action + 1);
+
+                if (actionCommand.callback) {
+                    actionCommand.callback(payload);
+                }
             }
         }
 
@@ -111,14 +112,57 @@ export class AppContext {
         };
 
         const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Import');
 
-            if (payload.result.triangleCount < 100_000) {
-                // TODO: Queue render if appropriate
+            if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
+                this._workerController.addJob(this._renderMesh());
+            } else {
+                this._ui.getActionOutput(EAction.Import)
+                    .addMessage(UIMessageBuilder.fromString(`Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`))
+                    .setStyle('warning');
             }
         };
 
         return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _renderMesh(): TWorkerJob {
+        const payload: TToWorkerMessage = {
+            action: 'RenderMesh',
+            params: {}
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is not managed through `AppContext::do`, therefore
+            // we need to check the payload is not an error
+            if (payload.action === 'KnownError') {
+                const builder = UIMessageBuilder
+                    .create()
+                    .addHeading('Could not draw the mesh')
+                    .addItem(payload.error.message);
+
+                this._ui.getActionOutput(EAction.Import)
+                    .addMessage(builder)
+                    .setStyle('warning');
+
+            } else if (payload.action === 'UnknownError') {
+                const builder = UIMessageBuilder
+                    .create()
+                    .addBold('Could not draw the mesh')
+
+                this._ui.getActionOutput(EAction.Import)
+                    .addMessage(builder)
+                    .setStyle('warning');
+
+            } else {
+                ASSERT(payload.action === 'RenderMesh');
+                Renderer.Get.useMesh(payload.result.buffers);
+            }
+        };
+
+        return { id: 'RenderMesh', payload: payload, callback: callback };
     }
 
     /*

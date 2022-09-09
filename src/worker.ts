@@ -5,6 +5,7 @@ import { StatusHandler } from './status';
 import { AppError } from './util/error_util';
 
 export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
+    StatusHandler.Get.clear();
     try {
         switch (message.action) {
             case 'Import':
@@ -13,6 +14,12 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.import(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            case 'RenderMesh':
+                return {
+                    action: 'RenderMesh',
+                    result: WorkerClient.Get.renderMesh(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                }
         }
     } catch (e: any) {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };

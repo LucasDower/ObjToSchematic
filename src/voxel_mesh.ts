@@ -1,5 +1,5 @@
 import { Bounds } from './bounds';
-import { AttributeData } from './buffer';
+import { AttributeData } from './render_buffer';
 import { RGBA } from './colour';
 import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';

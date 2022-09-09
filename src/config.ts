@@ -27,4 +27,7 @@ export namespace AppConfig {
 
     /** The angle radius (in degrees) around a snapping point the viewport camera must be within to snap. Must be between 0.0 and 90.0 */
     export const ANGLE_SNAP_RADIUS_DEGREES = 10.0;
+
+    /** If the loaded mesh exceeds this number of triangles, the renderer will not attempt to draw it. */
+    export const RENDER_TRIANGLE_THRESHOLD = 100_000;
 }

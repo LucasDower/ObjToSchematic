@@ -1,7 +1,7 @@
 import { Vector3 } from './vector';
 import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
-import { RenderBuffer } from './buffer';
+import { RenderBuffer } from './render_buffer';
 import { DebugGeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 import { VoxelMesh } from './voxel_mesh';
@@ -11,6 +11,7 @@ import * as twgl from 'twgl.js';
 import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 import { LOG } from './util/log_util';
+import { TMeshBufferDescription } from './buffer';
 
 /* eslint-disable */
 export enum MeshType {
@@ -30,6 +31,10 @@ enum EDebugBufferComponents {
 }
 /* eslint-enable */
 
+export type TextureMaterialRenderAddons = {
+    texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean,
+}
+
 export class Renderer {
     public _gl: WebGLRenderingContext;
 
@@ -44,7 +49,7 @@ export class Renderer {
     private _modelsAvailable: number;
 
     private _materialBuffers: Array<{
-        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean }))
+        material: SolidMaterial | (TexturedMaterial & TextureMaterialRenderAddons)
         buffer: twgl.BufferInfo,
         numElements: number,
     }>;
@@ -161,81 +166,20 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(mesh: Mesh) {       
+    public useMesh(meshDescription: TMeshBufferDescription[]) {       
         LOG('Using mesh');
         this._materialBuffers = [];
 
-        const materialTriangleCount = new Map<string, number>();
-        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-            const materialName = mesh.getMaterialByTriangle(triIndex);
-            const triangleCount = materialTriangleCount.get(materialName) ?? 0;
-            materialTriangleCount.set(materialName, triangleCount + 1);
-        }
-
-        materialTriangleCount.forEach((triangleCount: number, materialName: string) => {
-            const materialBuffer = {
-                'position': {
-                    numComponents: 3,
-                    data: new Float32Array(triangleCount * 3 * 3),
-                },
-                'texcoord': {
-                    numComponents: 2,
-                    data: new Float32Array(triangleCount * 3 * 2),
-                },
-                'normal': {
-                    numComponents: 3,
-                    data: new Float32Array(triangleCount * 3 * 3),
-                },
-                'indices': {
-                    numComponents: 3,
-                    data: new Uint32Array(triangleCount * 3),
-                },
-            };
-
-            let insertIndex = 0;
-            for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-                const material = mesh.getMaterialByTriangle(triIndex);
-                if (material === materialName) {
-                    const uiTriangle = mesh.getUVTriangle(triIndex);
-                    // const tmp = GeometryTemplates.getTriangleBufferData(uiTriangle);
-
-                    materialBuffer.position.data.set(uiTriangle.v0.toArray(), insertIndex * 9 + 0);
-                    materialBuffer.position.data.set(uiTriangle.v1.toArray(), insertIndex * 9 + 3);
-                    materialBuffer.position.data.set(uiTriangle.v2.toArray(), insertIndex * 9 + 6);
-
-                    materialBuffer.texcoord.data.set([uiTriangle.uv0.u, uiTriangle.uv0.v], insertIndex * 6 + 0);
-                    materialBuffer.texcoord.data.set([uiTriangle.uv1.u, uiTriangle.uv1.v], insertIndex * 6 + 2);
-                    materialBuffer.texcoord.data.set([uiTriangle.uv2.u, uiTriangle.uv2.v], insertIndex * 6 + 4);
-
-                    const normalArray = uiTriangle.getNormal().toArray();
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
-
-                    // materialBuffer.position.data.set(tmp.custom['position'], insertIndex * 9);
-                    // materialBuffer.normal.data.set(tmp.custom['normal'], insertIndex * 9);
-                    // materialBuffer.texcoord.data.set(tmp.custom['texcoord'], insertIndex * 6);
-                    
-                    materialBuffer.indices.data.set([
-                        insertIndex * 3 + 0,
-                        insertIndex * 3 + 1,
-                        insertIndex * 3 + 2,
-                    ], insertIndex * 3);
-
-                    ++insertIndex;
-                }
-            }
-            
-            const material = mesh.getMaterialByName(materialName);
+        for (const { material, buffer, numElements } of meshDescription) {
             if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, materialBuffer),
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: material,
-                    numElements: materialBuffer.indices.data.length,
+                    numElements: numElements,
                 });
             } else {
                 this._materialBuffers.push({
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, materialBuffer),
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: {
                         type: MaterialType.textured,
                         path: material.path,
@@ -250,12 +194,13 @@ export class Renderer {
                         }) : undefined,
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
-                    numElements: materialBuffer.indices.data.length,
+                    numElements: numElements,
                 });
             }
-        });
+        }
 
-        const dimensions = mesh.getBounds().getDimensions();
+        // TODO: const dimensions = mesh.getBounds().getDimensions();
+        const dimensions = new Vector3(1, 1, 1);
 
         this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(dimensions);
         this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(dimensions);
@@ -367,6 +312,9 @@ export class Renderer {
         }
     }
 
+    public parseRawMeshData(buffer: string, dimensions: Vector3) {
+    }
+
     private _drawMesh() {
         for (const materialBuffer of this._materialBuffers) {
             if (materialBuffer.material.type === MaterialType.textured) {
@@ -375,7 +323,7 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
-                    u_alpha: materialBuffer.material.alpha,
+                    u_alpha: materialBuffer.material.alpha || materialBuffer.material.texture,
                     u_useAlphaMap: materialBuffer.material.alpha !== undefined,
                     u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
                     u_alphaFactor: materialBuffer.material.alphaFactor,

@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 import { Triangle, UVTriangle } from './triangle';
 import { Vector3 } from './vector';
-import { AttributeData, MergeAttributeData, RenderBuffer } from './buffer';
+import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
 import { Mesh } from './mesh';
 import { VoxelMesh } from './voxel_mesh';
 import { RGBA } from './colour';

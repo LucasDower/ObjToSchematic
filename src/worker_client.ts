@@ -1,23 +1,20 @@
-//import { BlockMesh } from "./block_mesh";
-//import { Mesh } from "./mesh";
-//import { VoxelMesh } from "./voxel_mesh";
-import { ImportParams } from "./worker_types";
-//import { ObjImporter } from "./importers/obj_importer";
-//import { isMainThread } from 'worker_threads';
+import { RenderBuffer } from "./render_buffer";
+import { GeometryTemplates } from "./geometry";
+import { ObjImporter } from "./importers/obj_importer";
+import { MaterialType, Mesh, SolidMaterial, TexturedMaterial } from "./mesh";
+import { ASSERT } from "./util/error_util";
+import { ImportParams, RenderMeshParams } from "./worker_types";
+import { BufferGenerator } from "./buffer";
 
 export class WorkerClient {
     private static _instance: WorkerClient;
     public static get Get() {
-        //ASSERT(!isMainThread, 'Worker function called from main thread');
         return this._instance || (this._instance = new this());
     }
 
-    //private _loadedMesh?: Mesh;
-    //private _loadedVoxelMesh?: VoxelMesh;
-    //private _loadedBlockMesh?: BlockMesh;
+    private _loadedMesh?: Mesh;
 
     public import(params: ImportParams.Input): ImportParams.Output {
-        /*
         const importer = new ObjImporter();
         importer.parseFile(params.filepath);
         this._loadedMesh = importer.toMesh();
@@ -26,8 +23,13 @@ export class WorkerClient {
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
         };
-        */
+    }
 
-        return { triangleCount: 0 };
+    public renderMesh(params: RenderMeshParams.Input): RenderMeshParams.Output {
+        ASSERT(this._loadedMesh !== undefined);
+
+        return {
+            buffers: BufferGenerator.fromMesh(this._loadedMesh) 
+        };
     }
 }
