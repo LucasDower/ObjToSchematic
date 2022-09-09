@@ -45,6 +45,7 @@ export class ButtonElement extends BaseUIElement<any> {
         ASSERT(element !== null, 'Updating label override of element that does not exist');
 
         element.innerHTML = label;
+        return this;
     }
 
     public removeLabelOverride() {
@@ -52,5 +53,22 @@ export class ButtonElement extends BaseUIElement<any> {
         ASSERT(element !== null, 'Removing label override of element that does not exist');
 
         element.innerHTML = this._label;
+        return this;
+    }
+
+    public startLoading() {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null);
+
+        element.classList.add('button-loading');
+        return this;
+    }
+
+    public stopLoading() {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null);
+
+        element.classList.remove('button-loading');
+        return this;
     }
 }

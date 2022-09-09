@@ -72,7 +72,9 @@ export class AppContext {
                 }
 
                 uiOutput.setMessage(builder, hasWarnings ? 'warning' : 'success');
-                this._ui.getActionButton(action).removeLabelOverride();
+                this._ui.getActionButton(action)
+                    .removeLabelOverride() 
+                    .stopLoading();
                 this._ui.enable(action);
                 this._ui.enable(action + 1);
             }
@@ -84,7 +86,9 @@ export class AppContext {
             callback: jobCallback,
         });
 
-        this._ui.getActionButton(action).setLabelOverride('Loading...');
+        this._ui.getActionButton(action)
+            .setLabelOverride('Loading...')
+            .startLoading();
         this._ui.disable(action);
     }
 
