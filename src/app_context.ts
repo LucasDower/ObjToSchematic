@@ -44,24 +44,14 @@ export class AppContext {
         const jobCallback = (payload: TFromWorkerMessage) => {
             this._ui.enable(action);
             switch (payload.action) {
-                case 'KnownError': {
-                    const builder = uiOutput.getMessage();
-                    {
-                        builder.clear('action');
-                        builder.addHeading('action', StatusHandler.Get.getDefaultFailureMessage(action), 'error')
-                        builder.addItem('action', [ payload.error.message ], 'error');
-                    }
-                    uiOutput.setMessage(builder);
-                    break;
-                }
+                case 'KnownError':
                 case 'UnknownError': {
-                    const builder = uiOutput.getMessage();
-                    {
-                        builder.clear('action');
-                        builder.addHeading('action', StatusHandler.Get.getDefaultFailureMessage(action), 'error')
-                        builder.addItem('action', [ 'Something unexpectedly went wrong...' ], 'error');
-                    }
-                    uiOutput.setMessage(builder);
+                    uiOutput.setTaskComplete(
+                        'action',
+                        StatusHandler.Get.getDefaultFailureMessage(action),
+                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
+                        'error'
+                    );
                     break;
                 }
                 default: {
@@ -69,9 +59,6 @@ export class AppContext {
                     
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
-                    this._ui.getActionButton(action)
-                        .removeLabelOverride()
-                        .stopLoading();
 
                     if (workerJob.callback) {
                         workerJob.callback(payload);
@@ -120,6 +107,9 @@ export class AppContext {
 
     private _import(): TWorkerJob {
         const uiElements = this._ui.layout.import.elements;
+        const builder = new UIMessageBuilder();
+        builder.addTask('action', '[Mesh]: Loading...');
+        this._ui.getActionOutput(EAction.Import).setMessage(builder, 'none');
 
         const payload: TToWorkerMessage = {
             action: 'Import',
@@ -132,26 +122,16 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Import');
+            const outputElement = this._ui.getActionOutput(EAction.Import);
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
                 this._workerController.addJob(this._renderMesh());
-
-                const builder = this._ui.getActionOutput(EAction.Import).getMessage();
-                builder.clear('render');
-                builder.addTask('render', `Rendering mesh...`);
-                this._ui.getActionOutput(EAction.Import).setMessage(builder);
+                outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
             } else {
-                const builder = this._ui.getActionOutput(EAction.Import).getMessage();
-                builder.clear('render');
-                builder.addHeading('render', 'Render', 'warning');
-                builder.addItem('render', [`Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`], 'warning');
-                this._ui.getActionOutput(EAction.Import).setMessage(builder);
+                const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`;
+                outputElement.setTaskComplete('render', '[Renderer]', [ message ], 'warning')
             }
         };
-
-        const builder = new UIMessageBuilder();
-        builder.addTask('action', 'Loading mesh...');
-        this._ui.getActionOutput(EAction.Import).setMessage(builder, 'none');
 
         return { id: 'Import', payload: payload, callback: callback };
     }
@@ -165,29 +145,28 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            if (payload.action === 'KnownError') {
-                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
-                    .clear('render')
-                    .addHeading('render', 'Could not draw the mesh', 'error')
-                    .addItem('render', [payload.error.message], 'error');
+            switch (payload.action) {
+                case 'KnownError':
+                case 'UnknownError': {
+                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
+                        'render',
+                        '[Renderer]: Failed',
+                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
+                        'error'
+                    );
+                    break;
+                }
+                default: {
+                    ASSERT(payload.action === 'RenderMesh');
+                    Renderer.Get.useMesh(payload.result);
 
-                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'warning');
-
-            } else if (payload.action === 'UnknownError') {
-                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
-                    .clear('render')
-                    .addBold('render', ['Could not draw the mesh'], 'error');
-
-                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'warning');
-            } else {
-                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
-                    .clear('render')
-                    .addBold('render', [ 'Rendered mesh' ], 'success');
-
-                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'success');
-
-                ASSERT(payload.action === 'RenderMesh');
-                Renderer.Get.useMesh(payload.result);
+                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
+                        'render',
+                        '[Renderer]: Succeeded',
+                        [],
+                        'success'
+                    )
+                }
             }
         };
 

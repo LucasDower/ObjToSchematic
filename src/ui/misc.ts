@@ -26,7 +26,7 @@ export class UIMessageBuilder {
             const cssColourClass = this._getStatusCSSClass(style);
             this._messages.push({ groupId: groupId, body: `
                 <div style="display: flex; align-items: center;" ${cssColourClass ? `class="${cssColourClass}"` : ''}>
-                    <div style="margin-right: 8px;" class="loader-circle"></div> 
+                    <div style="margin-right: 8px;" class="loader-circle"></div>
                     <b>${message}</b>
                 </div>
             `});

@@ -55,6 +55,36 @@ export class OutputElement {
         return this._message;
     }
 
+    public setTaskInProgress(taskId: string, taskHeading: string) {
+        this.getMessage()
+            .clear(taskId)
+            .addTask(taskId, taskHeading);
+
+        this.updateMessage();
+    }
+
+    public setTaskComplete(taskId: string, taskHeading: string, taskItems: string[], style: OutputStyle) {
+        const builder = this.getMessage().clear(taskId);
+
+        if (taskItems.length > 0) {
+            builder.addHeading(taskId, taskId + taskHeading, style);
+        } else {
+            builder.addBold(taskId, [ taskHeading ], style);
+        }
+
+        builder.addItem(taskId, taskItems, style);
+
+        this.updateMessage();
+    }
+
+    public updateMessage() {
+        const element = document.getElementById(this._id) as HTMLDivElement;
+        ASSERT(element !== null);
+
+        this.clearMessage();
+        element.innerHTML = this._message.toString();
+    }
+
     /*
     public addMessage(message: UIMessageBuilder) {
         this._message.join(message);

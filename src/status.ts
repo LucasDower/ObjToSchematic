@@ -46,7 +46,7 @@ export class StatusHandler {
     public getDefaultSuccessMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Loaded mesh';
+                return '[Mesh]: Loaded';
             case EAction.Voxelise:
                 return 'Voxelised mesh';
             case EAction.Assign:
@@ -61,7 +61,7 @@ export class StatusHandler {
     public getDefaultFailureMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Failed to load mesh';
+                return 'Mesh: Failed';
             case EAction.Voxelise:
                 return 'Failed to voxelise mesh';
             case EAction.Assign:
