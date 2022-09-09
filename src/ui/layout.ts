@@ -502,7 +502,11 @@ export class UI {
         }
     }
 
-    public disable(action: EAction) {
+    public disableAll() {
+        this.disable(EAction.Import, false);
+    }
+
+    public disable(action: EAction, clearOutput: boolean = true) {
         if (action < 0) {
             return;
         }
@@ -514,7 +518,9 @@ export class UI {
                 group.elements[compName].setEnabled(false);
             }
             group.submitButton.setEnabled(false);
-            group.output.clearMessage();
+            if (clearOutput) {
+                group.output.clearMessage();
+            }
             if (group.postElements) {
                 LOG(group.label, 'has post-element');
                 ASSERT(group.postElementsOrder);

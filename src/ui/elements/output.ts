@@ -1,7 +1,7 @@
 import { ASSERT } from "../../util/error_util";
 import { UIMessageBuilder } from '../misc';
 
-export type OutputStyle = 'success' | 'warning' | 'error';
+export type OutputStyle = 'success' | 'warning' | 'error' | 'none';
 
 export class OutputElement {
     private _id: string;
@@ -30,7 +30,7 @@ export class OutputElement {
 
     private _message: UIMessageBuilder;
 
-    public setMessage(message: UIMessageBuilder, style: OutputStyle) {
+    public setMessage(message: UIMessageBuilder, style?: OutputStyle) {
         const element = document.getElementById(this._id) as HTMLDivElement;
         ASSERT(element !== null);
 
@@ -40,17 +40,22 @@ export class OutputElement {
         element.innerHTML = this._message.toString();
         switch (style) {
             case 'success':
-                element.classList.add('border-success');
+                //element.classList.add('border-success');
                 break;
             case 'warning':
-                element.classList.add('border-warning');
+                //element.classList.add('border-warning');
                 break;
             case 'error':
-                element.classList.add('border-error');
+                //element.classList.add('border-error');
                 break;
         }
     }
 
+    public getMessage() {
+        return this._message;
+    }
+
+    /*
     public addMessage(message: UIMessageBuilder) {
         this._message.join(message);
 
@@ -60,6 +65,7 @@ export class OutputElement {
         element.innerHTML = this._message.toString();
         return this;
     }
+    */
 
     public setStyle(style: OutputStyle) {
         const element = document.getElementById(this._id) as HTMLDivElement;

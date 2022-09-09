@@ -1,6 +1,7 @@
 import { TMeshBufferDescription } from "./buffer"
 import { StatusMessage } from "./status"
 import { AppError } from "./util/error_util"
+import { Vector3 } from "./vector"
 
 export namespace ImportParams {
     export type Input = {
@@ -19,6 +20,7 @@ export namespace RenderMeshParams {
 
     export type Output = {
         buffers: TMeshBufferDescription[],
+        dimensions: Vector3
     }
 }
 

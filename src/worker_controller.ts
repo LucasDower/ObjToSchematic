@@ -5,7 +5,7 @@ import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 export type TWorkerJob = {
     id: string,
     payload: TToWorkerMessage,
-    callback?: (payload: TFromWorkerMessage) => void, // Called only if the job is successful
+    callback?: (payload: TFromWorkerMessage) => void, // Called with the payload of the next message received by the worker
 }
 
 export class WorkerController {

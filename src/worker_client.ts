@@ -29,7 +29,8 @@ export class WorkerClient {
         ASSERT(this._loadedMesh !== undefined);
 
         return {
-            buffers: BufferGenerator.fromMesh(this._loadedMesh) 
+            buffers: BufferGenerator.fromMesh(this._loadedMesh),
+            dimensions: this._loadedMesh.getBounds().getDimensions(),
         };
     }
 }

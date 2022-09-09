@@ -314,21 +314,18 @@ select:disabled {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.border-warning {
-  border: 1.5px solid orange;
-  transition-duration: 1s;
+.status-warning {
+  transition-duration: 0.5s;
   color: orange;
 }
 
-.border-success {
-  border: 1.5px solid green;
-  transition-duration: 1s;
-  color: green;
+.status-success {
+  transition-duration: 0.5s;
+  color: var(--prop-accent-standard);
 }
 
-.border-error {
-  border: 1.5px solid rgb(156, 27, 27);
-  transition-duration: 1s;
+.status-error {
+  transition-duration: 0.5s;
   color: rgb(156, 27, 27);
 }
 
@@ -552,5 +549,30 @@ svg {
 
   100% {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+
+
+.loader-circle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.spin {
+  animation: blinker 0.75s ease-in-out infinite;
+}
+
+@keyframes blinker {
+  0% {
+    opacity: 100%;
+  }
+  50% {
+    opacity: 50%;
+  }
+  100% {
+    opacity: 100%;
   }
 }

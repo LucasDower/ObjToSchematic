@@ -12,6 +12,7 @@ import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 import { LOG } from './util/log_util';
 import { TMeshBufferDescription } from './buffer';
+import { RenderMeshParams } from './worker_types';
 
 /* eslint-disable */
 export enum MeshType {
@@ -166,11 +167,11 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(meshDescription: TMeshBufferDescription[]) {       
+    public useMesh(params: RenderMeshParams.Output) {       
         LOG('Using mesh');
         this._materialBuffers = [];
 
-        for (const { material, buffer, numElements } of meshDescription) {
+        for (const { material, buffer, numElements } of params.buffers) {
             if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
@@ -199,12 +200,9 @@ export class Renderer {
             }
         }
 
-        // TODO: const dimensions = mesh.getBounds().getDimensions();
-        const dimensions = new Vector3(1, 1, 1);
-
-        this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(dimensions);
-        this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(dimensions);
-        this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(dimensions);
+        this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(params.dimensions);
+        this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(params.dimensions);
+        this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(params.dimensions);
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);

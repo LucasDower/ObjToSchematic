@@ -5,6 +5,6 @@ addEventListener('message', (e) => {
     // TODO: Remove
     setTimeout(() => {
         postMessage(workerInstance.doWork(e.data));
-    }, 2000);
+    }, 3000);
     //postMessage(workerInstance.doWork(e.data));
 });

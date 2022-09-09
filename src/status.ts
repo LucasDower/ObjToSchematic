@@ -46,15 +46,15 @@ export class StatusHandler {
     public getDefaultSuccessMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Successfully loaded mesh';
+                return 'Loaded mesh';
             case EAction.Voxelise:
-                return 'Successfully voxelised mesh';
+                return 'Voxelised mesh';
             case EAction.Assign:
-                return 'Successfully assigned blocks';
+                return 'Assigned blocks';
             case EAction.Export:
-                return 'Successfully exported mesh';
+                return 'Exported mesh';
             default:
-                return 'Successfully performed action';
+                return 'Performed action';
         }
     }
 

@@ -1,6 +1,6 @@
 import { UI } from './ui/layout';
 import { Renderer } from './renderer';
-import { StatusHandler } from './status';
+import { StatusHandler, StatusMessage } from './status';
 import { UIMessageBuilder } from './ui/misc';
 import { ArcballCamera } from './camera';
 
@@ -11,6 +11,7 @@ import { LOG } from './util/log_util';
 import { ASSERT } from './util/error_util';
 import { EAction } from './util';
 import { AppConfig } from './config';
+import { OutputStyle } from './ui/elements/output';
 
 export class AppContext {
     private _ui: UI;
@@ -27,74 +28,90 @@ export class AppContext {
         this._ui.disable(EAction.Voxelise);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
-        
+
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
     }
 
     public do(action: EAction) {
-        LOG(`Doing ${action}`);
-        this._ui.disable(action + 1);
+        this._ui.disable(action);
         this._ui.cacheValues(action);
-        StatusHandler.Get.clear();
 
-        const actionCommand = this._getWorkerJob(action);
+        const workerJob = this._getWorkerJob(action);
         const uiOutput = this._ui.getActionOutput(action);
 
         const jobCallback = (payload: TFromWorkerMessage) => {
-            if (payload.action === 'KnownError') {
-                uiOutput.setMessage(UIMessageBuilder.fromString(payload.error.message), 'error');
-            } else if (payload.action === 'UnknownError') {
-                uiOutput.setMessage(UIMessageBuilder.fromString('Something went wrong...'), 'error');
-            } else {
-                // The job was successful
-                const infoStatuses = payload.statusMessages
-                    .filter(x => x.status === 'info')
-                    .map(x => x.message);
-                const hasInfos = infoStatuses.length > 0;
-
-                const warningStatuses = payload.statusMessages
-                    .filter(x => x.status === 'warning')
-                    .map(x => x.message);
-                const hasWarnings = warningStatuses.length > 0;
-
-                const builder = new UIMessageBuilder();
-                builder.addBold(StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : ''));
-                builder.addItem(...infoStatuses);
-
-                if (hasWarnings) {
-                    builder.addHeading('There were some warnings:');
-                    builder.addItem(...warningStatuses);
+            this._ui.enable(action);
+            switch (payload.action) {
+                case 'KnownError': {
+                    const builder = uiOutput.getMessage();
+                    {
+                        builder.clear('action');
+                        builder.addHeading('action', StatusHandler.Get.getDefaultFailureMessage(action), 'error')
+                        builder.addItem('action', [ payload.error.message ], 'error');
+                    }
+                    uiOutput.setMessage(builder);
+                    break;
                 }
+                case 'UnknownError': {
+                    const builder = uiOutput.getMessage();
+                    {
+                        builder.clear('action');
+                        builder.addHeading('action', StatusHandler.Get.getDefaultFailureMessage(action), 'error')
+                        builder.addItem('action', [ 'Something unexpectedly went wrong...' ], 'error');
+                    }
+                    uiOutput.setMessage(builder);
+                    break;
+                }
+                default: {
+                    this._ui.enable(action + 1);
+                    
+                    const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
+                    uiOutput.setMessage(builder, style as OutputStyle);
+                    this._ui.getActionButton(action)
+                        .removeLabelOverride()
+                        .stopLoading();
 
-                uiOutput.setMessage(builder, hasWarnings ? 'warning' : 'success');
-                this._ui.getActionButton(action)
-                    .removeLabelOverride() 
-                    .stopLoading();
-                this._ui.enable(action);
-                this._ui.enable(action + 1);
-
-                if (actionCommand.callback) {
-                    actionCommand.callback(payload);
+                    if (workerJob.callback) {
+                        workerJob.callback(payload);
+                    }
                 }
             }
         }
 
         this._workerController.addJob({
-            id: actionCommand.id,
-            payload: actionCommand.payload,
+            id: workerJob.id,
+            payload: workerJob.payload,
             callback: jobCallback,
         });
+    }
 
-        this._ui.getActionButton(action)
-            .setLabelOverride('Loading...')
-            .startLoading();
-        this._ui.disable(action);
+    private _getActionMessageBuilder(action: EAction, statusMessages: StatusMessage[]) {
+        const infoStatuses = statusMessages
+            .filter(x => x.status === 'info')
+            .map(x => x.message);
+        const hasInfos = infoStatuses.length > 0;
+
+        const warningStatuses = statusMessages
+            .filter(x => x.status === 'warning')
+            .map(x => x.message);
+        const hasWarnings = warningStatuses.length > 0;
+
+        const builder = new UIMessageBuilder();
+        builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
+        builder.addItem('action', infoStatuses, 'success');
+
+        if (hasWarnings) {
+            builder.addHeading('action', 'There were some warnings:', 'warning');
+            builder.addItem('action', warningStatuses, 'warning');
+        }
+
+        return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
     }
 
     private _getWorkerJob(action: EAction): TWorkerJob {
-        switch(action) {
+        switch (action) {
             case EAction.Import:
                 return this._import();
         }
@@ -106,7 +123,7 @@ export class AppContext {
 
         const payload: TToWorkerMessage = {
             action: 'Import',
-            params: { 
+            params: {
                 filepath: uiElements.input.getCachedValue()
             }
         };
@@ -118,12 +135,23 @@ export class AppContext {
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
                 this._workerController.addJob(this._renderMesh());
+
+                const builder = this._ui.getActionOutput(EAction.Import).getMessage();
+                builder.clear('render');
+                builder.addTask('render', `Rendering mesh...`);
+                this._ui.getActionOutput(EAction.Import).setMessage(builder);
             } else {
-                this._ui.getActionOutput(EAction.Import)
-                    .addMessage(UIMessageBuilder.fromString(`Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`))
-                    .setStyle('warning');
+                const builder = this._ui.getActionOutput(EAction.Import).getMessage();
+                builder.clear('render');
+                builder.addHeading('render', 'Render', 'warning');
+                builder.addItem('render', [`Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`], 'warning');
+                this._ui.getActionOutput(EAction.Import).setMessage(builder);
             }
         };
+
+        const builder = new UIMessageBuilder();
+        builder.addTask('action', 'Loading mesh...');
+        this._ui.getActionOutput(EAction.Import).setMessage(builder, 'none');
 
         return { id: 'Import', payload: payload, callback: callback };
     }
@@ -138,27 +166,28 @@ export class AppContext {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
             if (payload.action === 'KnownError') {
-                const builder = UIMessageBuilder
-                    .create()
-                    .addHeading('Could not draw the mesh')
-                    .addItem(payload.error.message);
+                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
+                    .clear('render')
+                    .addHeading('render', 'Could not draw the mesh', 'error')
+                    .addItem('render', [payload.error.message], 'error');
 
-                this._ui.getActionOutput(EAction.Import)
-                    .addMessage(builder)
-                    .setStyle('warning');
+                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'warning');
 
             } else if (payload.action === 'UnknownError') {
-                const builder = UIMessageBuilder
-                    .create()
-                    .addBold('Could not draw the mesh')
+                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
+                    .clear('render')
+                    .addBold('render', ['Could not draw the mesh'], 'error');
 
-                this._ui.getActionOutput(EAction.Import)
-                    .addMessage(builder)
-                    .setStyle('warning');
-
+                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'warning');
             } else {
+                const builder = this._ui.getActionOutput(EAction.Import).getMessage()
+                    .clear('render')
+                    .addBold('render', [ 'Rendered mesh' ], 'success');
+
+                this._ui.getActionOutput(EAction.Import).setMessage(builder, 'success');
+
                 ASSERT(payload.action === 'RenderMesh');
-                Renderer.Get.useMesh(payload.result.buffers);
+                Renderer.Get.useMesh(payload.result);
             }
         };
 
