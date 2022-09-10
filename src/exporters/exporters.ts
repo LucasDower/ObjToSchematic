@@ -1,7 +1,7 @@
 import { IExporter } from './base_exporter';
 import { Schematic } from './schematic_exporter';
 import { Litematic } from './litematic_exporter';
-import { ASSERT } from '../util';
+import { ASSERT } from '../util/error_util';
 import { ObjExporter } from './obj_exporter';
 import { SchemExporter } from './schem_exporter';
 import { NBTExporter } from './nbt_exporter';

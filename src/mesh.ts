@@ -1,5 +1,5 @@
 import { Vector3 } from './vector';
-import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
+import { UV, getRandomID } from './util';
 import { Triangle, UVTriangle } from './triangle';
 
 import path from 'path';
@@ -7,6 +7,9 @@ import fs from 'fs';
 import { Texture, TextureFiltering } from './texture';
 import { StatusHandler } from './status';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { AppError, ASSERT } from './util/error_util';
+import { LOG_WARN } from './util/log_util';
+import { Bounds } from './bounds';
 
 interface VertexIndices {
     x: number;
@@ -318,41 +321,6 @@ export class Mesh {
             return colour;
         }
     }
-
-    /*
-    public simplify(ratio: number) {
-        ASSERT(ratio > 0.0 && ratio <= 1.0);
-        const cells: Array<number[]> = Array(this.tris.length);
-        this.tris.forEach((tris, index) => {
-            cells[index] = [tris.iX, tris.iY, tris.iZ];
-        });
-        const positions: Array<number[]> = Array(this.vertices.length);
-        this.vertices.forEach((vertex, index) => {
-            positions[index] = vertex.toArray();
-        });
-        const targetNumTris = positions.length * ratio;
-        const simplified = meshSimplify(cells, positions)(targetNumTris);
-
-        const placeHolderMat = this.tris[0].material;
-        this.tris = new Array(simplified.cells.length);
-        simplified.cells.forEach((cell: number[], index: number) => {
-            this.tris[index] = {
-                iX: cell[0],
-                iY: cell[1],
-                iZ: cell[2],
-                iXUV: 0.5,
-                iYUV: 0.5,
-                iZUV: 0.5,
-                material: placeHolderMat,
-            };
-        });
-
-        this.vertices = new Array(simplified.positions.length);
-        simplified.positions.forEach((position: number[], index: number) => {
-            this.vertices[index] = Vector3.fromArray(position);
-        });
-    }
-    */
 
     public copy(): Mesh {
         const newVertices = new Array<Vector3>(this._vertices.length);

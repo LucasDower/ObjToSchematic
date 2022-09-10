@@ -1,3 +1,4 @@
+/*
 import { THeadlessConfig } from './headless';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
@@ -29,3 +30,5 @@ export const headlessConfig: THeadlessConfig = {
         exporter: 'schematic', // 'schematic' / 'litematic',
     },
 };
+
+*/

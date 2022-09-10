@@ -1,5 +1,6 @@
-import { EAction } from './app_context';
-import { LOG, LOG_WARN } from './util';
+import { EAction } from './util';
+import { ASSERT } from './util/error_util';
+import { LOG, LOG_WARN } from './util/log_util';
 
 export type StatusType = 'warning' | 'info';
 
@@ -39,37 +40,37 @@ export class StatusHandler {
         return messagesToReturn.map((m) => m.message);
     }
 
+    public getAllStatusMessages(): StatusMessage[] {
+        return this._statusMessages;
+    }
+
     public getDefaultSuccessMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Successfully loaded mesh';
-            case EAction.Simplify:
-                return 'Successfully simplified mesh';
+                return '[Importer]: Loaded';
             case EAction.Voxelise:
-                return 'Successfully voxelised mesh';
+                return '[Voxeliser]: Succeeded';
             case EAction.Assign:
-                return 'Successfully assigned blocks';
+                return '[Assigner]: Succeeded';
             case EAction.Export:
-                return 'Successfully exported mesh';
+                return '[Exporter]: Saved';
             default:
-                return 'Successfully performed action';
+                ASSERT(false)
         }
     }
 
     public getDefaultFailureMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Failed to load mesh';
-            case EAction.Simplify:
-                return 'Failed to simplify mesh';
+                return '[Importer]: Failed';
             case EAction.Voxelise:
-                return 'Failed to voxelise mesh';
+                return '[Voxeliser]: Failed';
             case EAction.Assign:
-                return 'Failed to assign blocks';
+                return '[Assigner]: Failed';
             case EAction.Export:
-                return 'Failed to export mesh';
+                return '[Exporter]: Failed';
             default:
-                return 'Failed to perform action';
+                ASSERT(false);
         }
     }
 }

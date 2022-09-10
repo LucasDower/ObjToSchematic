@@ -1,4 +1,5 @@
-import { ASSERT, RegExpBuilder, REGEX_NUMBER, REGEX_NZ_ANY } from '../src/util';
+import { RegExpBuilder, REGEX_NUMBER, REGEX_NZ_ANY } from '../src/util/regex_util';
+import { ASSERT } from '../src/util/error_util';
 
 test('RegExpBuilder', () => {
     const regex = new RegExpBuilder()

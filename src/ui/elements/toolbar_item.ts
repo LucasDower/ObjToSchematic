@@ -1,7 +1,8 @@
-import { ASSERT, getRandomID, STATIC_DIR } from '../../util';
+import { getRandomID, STATIC_DIR } from '../../util';
 
 import path from 'path';
 import fs from 'fs';
+import { ASSERT } from '../../util/error_util';
 
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 

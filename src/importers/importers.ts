@@ -1,4 +1,4 @@
-import { ASSERT } from '../util';
+import { ASSERT } from '../util/error_util';
 import { IImporter } from './base_importer';
 import { ObjImporter } from './obj_importer';
 

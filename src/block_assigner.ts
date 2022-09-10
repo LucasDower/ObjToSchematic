@@ -15,6 +15,6 @@ export class AtlasPalette {
     }
 
     public getBlock(colour: RGBA, exclude?: AppTypes.TNamespacedBlockName[]) {
-        return this._atlas.getBlock(colour, this._palette, exclude);
+        return this._palette.getBlock(colour, this._atlas, exclude);
     }
 }

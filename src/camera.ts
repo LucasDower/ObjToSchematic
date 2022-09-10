@@ -1,8 +1,7 @@
 import { m4, v3 } from 'twgl.js';
 import { MouseManager } from './mouse';
-import { AppMath, between, clamp, degreesToRadians, roundToNearest } from './math';
+import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from './math';
 import { Renderer } from './renderer';
-import { LOG, SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
 import { AppConfig } from './config';
 

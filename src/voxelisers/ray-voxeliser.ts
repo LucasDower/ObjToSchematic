@@ -3,11 +3,12 @@ import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
-import { Bounds, UV } from '../util';
+import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IVoxeliser } from './base-voxeliser';
 import { RGBA, RGBAUtil } from '../colour';
-import { VoxeliseParams } from './voxelisers';
+import { Bounds } from '../bounds';
+import { VoxeliseParams } from '../worker_types';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -16,11 +17,11 @@ import { VoxeliseParams } from './voxelisers';
 export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
-    private _voxeliseParams?: VoxeliseParams;
+    private _voxeliseParams?: VoxeliseParams.Input;
     private _scale!: number;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;

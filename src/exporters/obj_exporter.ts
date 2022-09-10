@@ -1,9 +1,10 @@
 import { BlockMesh } from '../block_mesh';
 import { IExporter } from './base_exporter';
-import { ASSERT } from '../util';
+import { ASSERT } from '../util/error_util';
 
 import fs from 'fs';
 import path from 'path';
+import { TBlockMeshBuffer } from '../buffer';
 
 export class ObjExporter extends IExporter {
     public override getFormatFilter(): Electron.FileFilter {
@@ -21,7 +22,7 @@ export class ObjExporter extends IExporter {
         return 'Wavefront OBJ';
     }
 
-    public override export(blockMesh: BlockMesh, filepath: string) {
+    public override export(blockMesh: BlockMesh, filepath: string, blockMeshBuffer: TBlockMeshBuffer) {
         ASSERT(path.isAbsolute(filepath));
         const parsedPath = path.parse(filepath);
         
@@ -29,14 +30,13 @@ export class ObjExporter extends IExporter {
         const filepathMTL = path.join(parsedPath.dir, parsedPath.name + '.mtl');
         const filepathTexture = path.join(parsedPath.dir, parsedPath.name + '.png');
 
-        this._exportOBJ(filepathOBJ, blockMesh, parsedPath.name + '.mtl');
+        this._exportOBJ(filepathOBJ, blockMesh, blockMeshBuffer, parsedPath.name + '.mtl');
         this._exportMTL(filepathMTL, filepathTexture, blockMesh);
 
         return true;
     }
 
-    private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
-        const buffer = blockMesh.createBuffer();
+    private _exportOBJ(filepath: string, blockMesh: BlockMesh, buffer: TBlockMeshBuffer, mtlRelativePath: string) {
         const positionData = buffer.position.data as Float32Array;
         const normalData = buffer.normal.data as Float32Array;
         const texcoordData = buffer.texcoord.data as Float32Array;

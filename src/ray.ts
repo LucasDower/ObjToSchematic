@@ -1,5 +1,5 @@
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { ASSERT } from './util';
 
 const EPSILON = 0.0000001;
 

@@ -90,7 +90,6 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Options for handling falling blocks and overlapping voxels**
 * 🟢 **Sponge schematics exporter (.schem)**
 * 🟢 **Structure blocks exporter (.nbt)**
-* ⚪ Support for simplifying complex meshes
 * 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
   * Progress bar
   * Prevent UI hanging
@@ -100,6 +99,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * ⚪ Importers for .fbx and .gltf
 
 0.7
+* ⚪ Support for simplifying complex meshes
 * ⚪ Node.js C++ addons
 * ⚪ Block painting
 * ⚪ Building guides
@@ -116,7 +116,7 @@ This is an non-commercial **unofficial** tool that is neither approved, endorsed
 ## Contributing
 Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` and pass the CI build task.
 
-Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_simplify()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also. 
+Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also. 
 
 If you have any questions or need help getting started then feel free to join the [Discord](https://discord.gg/McS2VrBZPD) or message me **SinJi#4165**.
 

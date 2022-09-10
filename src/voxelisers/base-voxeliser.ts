@@ -6,10 +6,10 @@ import { VoxelMesh } from '../voxel_mesh';
 import { TextureFiltering } from '../texture';
 import { StatusHandler } from '../status';
 import { RGBA } from '../colour';
-import { VoxeliseParams } from './voxelisers';
+import { VoxeliseParams } from '../worker_types';
 
 export abstract class IVoxeliser {
-    public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
+    public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = this._voxelise(mesh, voxeliseParams);
 
         StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
@@ -20,7 +20,7 @@ export abstract class IVoxeliser {
         return voxelMesh;
     }
 
-    protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh;
+    protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh;
 
     protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): (RGBA | undefined) {
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();

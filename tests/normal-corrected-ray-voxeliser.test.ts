@@ -1,11 +1,11 @@
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
 import { ObjImporter } from '../src/importers/obj_importer';
 import { TextureFiltering } from '../src/texture';
-import { ASSERT } from '../src/util';
 import { Vector3 } from '../src/vector';
 
 import path from 'path';
 import { RGBAColours } from '../src/colour';
+import { ASSERT } from '../src/util/error_util';
 
 test('Voxelise solid 2x2 cube', () => {
     const importer = new ObjImporter();
@@ -21,6 +21,7 @@ test('Voxelise solid 2x2 cube', () => {
         enableAmbientOcclusion: false,
         voxelOverlapRule: 'average',
         calculateNeighbours: false,
+        voxeliser: 'ncrb',
     });
 
     const expectedVoxels = [

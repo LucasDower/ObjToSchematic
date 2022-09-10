@@ -1,4 +1,5 @@
-import { AppError, LOG_ERROR } from './util';
+import { AppError } from './util/error_util';
+import { LOG_ERROR } from './util/log_util';
 import { Vector3 } from './vector';
 
 export namespace AppMath {
@@ -18,18 +19,6 @@ export namespace AppMath {
 
 export const argMax = (array: [number]) => {
     return array.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
-};
-
-export const fastCrossXAxis = (vec: Vector3) => {
-    return new Vector3(0.0, -vec.z, vec.y);
-};
-
-export const fastCrossYAxis = (vec: Vector3) => {
-    return new Vector3(vec.z, 0.0, -vec.x);
-};
-
-export const fastCrossZAxis = (vec: Vector3) => {
-    return new Vector3(-vec.y, vec.x, 0.0);
 };
 
 export const clamp = (value: number, min: number, max: number) => {
@@ -87,3 +76,80 @@ export const checkFractional = (...args: number[]) => {
 };
 
 export const degreesToRadians = Math.PI / 180;
+
+export class SmoothVariable {
+    private _actual: number;
+    private _target: number;
+    private _smoothing: number;
+    private _min: number;
+    private _max: number;
+
+    public constructor(value: number, smoothing: number) {
+        this._actual = value;
+        this._target = value;
+        this._smoothing = smoothing;
+        this._min = -Infinity;
+        this._max = Infinity;
+    }
+
+    public setClamp(min: number, max: number) {
+        this._min = min;
+        this._max = max;
+    }
+
+    public addToTarget(delta: number) {
+        this._target = clamp(this._target + delta, this._min, this._max);
+    }
+
+    public setTarget(target: number) {
+        this._target = clamp(target, this._min, this._max);
+    }
+
+    public setActual(actual: number) {
+        this._actual = actual;
+    }
+
+    public tick() {
+        this._actual += (this._target - this._actual) * this._smoothing;
+    }
+
+    public getActual() {
+        return this._actual;
+    }
+
+    public getTarget() {
+        return this._target;
+    }
+}
+
+export class SmoothVectorVariable {
+    private _actual: Vector3;
+    private _target: Vector3;
+    private _smoothing: number;
+
+    public constructor(value: Vector3, smoothing: number) {
+        this._actual = value;
+        this._target = value;
+        this._smoothing = smoothing;
+    }
+
+    public addToTarget(delta: Vector3) {
+        this._target = Vector3.add(this._target, delta);
+    }
+
+    public setTarget(target: Vector3) {
+        this._target = target;
+    }
+
+    public tick() {
+        this._actual.add(Vector3.sub(this._target, this._actual).mulScalar(this._smoothing));
+    }
+
+    public getActual() {
+        return this._actual;
+    }
+
+    public getTarget() {
+        return this._target;
+    }
+}

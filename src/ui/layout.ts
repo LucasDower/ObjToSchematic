@@ -4,8 +4,7 @@ import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { EAction, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG } from '../util';
+import { AppContext } from '../app_context';
 
 import fs from 'fs';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -14,9 +13,11 @@ import { ArcballCamera } from '../camera';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { TExporters } from '../exporters/exporters';
 import { TVoxelOverlapRule } from '../voxel_mesh';
-import { Palette, PaletteManager } from '../palette';
+import { PaletteManager } from '../palette';
 import { TBlockAssigners } from '../assigners/assigners';
-import { PaletteElement } from './elements/grid_element';
+import { ATLASES_DIR, EAction } from '../util';
+import { ASSERT } from '../util/error_util';
+import { LOG } from '../util/log_util';
 
 export interface Group {
     label: string;
@@ -34,7 +35,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'simplify', 'build', 'assign', 'export'];
+    public uiOrder = ['import', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -47,21 +48,10 @@ export class UI {
             }),
             output: new OutputElement(),
         },
-        'simplify': {
-            label: 'Simplify',
+        'voxelise': {
+            label: 'Voxelise',
             elements: {
-                'ratio': new SliderElement('Ratio', 0.0, 1.0, 2, 0.5, 0.01),
-            },
-            elementsOrder: ['ratio'],
-            submitButton: new ButtonElement('Simplify mesh', () => {
-                this._appContext.do(EAction.Simplify);
-            }),
-            output: new OutputElement(),
-        },
-        'build': {
-            label: 'Build',
-            elements: {
-                'height': new SliderElement('Desired height', 3, 380, 0, 80, 1),
+                'desiredHeight': new SliderElement('Desired height', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
@@ -119,7 +109,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
+            elementsOrder: ['desiredHeight', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),
@@ -135,7 +125,6 @@ export class UI {
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
                 ]),
-                'blockSelector': new PaletteElement(),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
                         id: 'replace-falling',
@@ -161,7 +150,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'blockSelector', 'dithering', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -395,7 +384,7 @@ export class UI {
     public cacheValues(action: EAction) {
         const group = this._getEActionGroup(action);
         for (const elementName of group.elementsOrder) {
-            LOG(`Caching ${elementName}`);
+            LOG(`[UI]: Caching ${elementName}`);
             const element = group.elements[elementName];
             element.cacheValue();
         }
@@ -439,6 +428,16 @@ export class UI {
                 ${element.generateHTML()}
             </div>
         `;
+    }
+    
+    public getActionOutput(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.output;
+    }
+
+    public getActionButton(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.submitButton;
     }
 
     public registerEvents() {
@@ -487,11 +486,7 @@ export class UI {
             return;
         }
 
-        LOG('enabling', action);
-        // TODO: Remove once Simplify has been implemented
-        if (action === EAction.Simplify) {
-            action = EAction.Voxelise;
-        }
+        LOG('[UI]: Enabling', action);
         const group = this._getEActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);
@@ -507,19 +502,25 @@ export class UI {
         }
     }
 
-    public disable(action: EAction) {
+    public disableAll() {
+        this.disable(EAction.Import, false);
+    }
+
+    public disable(action: EAction, clearOutput: boolean = true) {
         if (action < 0) {
             return;
         }
 
         for (let i = action; i < EAction.MAX; ++i) {
             const group = this._getEActionGroup(i);
-            LOG('disabling', group.label);
+            LOG('[UI]: Disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
             }
             group.submitButton.setEnabled(false);
-            group.output.clearMessage();
+            if (clearOutput) {
+                group.output.clearMessage();
+            }
             if (group.postElements) {
                 LOG(group.label, 'has post-element');
                 ASSERT(group.postElementsOrder);

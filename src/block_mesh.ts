@@ -1,6 +1,6 @@
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
-import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
+import { ColourSpace, RESOURCES_DIR } from './util';
 import { Renderer } from './renderer';
 import { AppConstants } from './constants';
 
@@ -12,6 +12,8 @@ import { Atlas } from './atlas';
 import { Palette } from './palette';
 import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { AtlasPalette } from './block_assigner';
+import { AppError, ASSERT } from './util/error_util';
+import { AssignParams } from './worker_types';
 
 interface Block {
     voxel: Voxel;
@@ -35,7 +37,7 @@ export class BlockMesh {
     private _fallableBlocks: string[];
     private _atlas: Atlas;
 
-    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
+    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
         blockMesh._assignBlocks(blockMeshParams);
         return blockMesh;
@@ -51,9 +53,15 @@ export class BlockMesh {
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
     }
 
-    private _assignBlocks(blockMeshParams: BlockMeshParams) {
-        const atlasPalette = new AtlasPalette(blockMeshParams.textureAtlas, blockMeshParams.blockPalette);
-        this._atlas = blockMeshParams.textureAtlas;
+    private _assignBlocks(blockMeshParams: AssignParams.Input) {
+        const atlas = Atlas.load(blockMeshParams.textureAtlas);
+        ASSERT(atlas !== undefined, 'Could not load atlas');
+        this._atlas = atlas;
+
+        const palette = Palette.load(blockMeshParams.blockPalette);
+        ASSERT(palette !== undefined, 'Could not load palette');
+
+        const atlasPalette = new AtlasPalette(atlas, palette);
 
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
         
@@ -108,9 +116,11 @@ export class BlockMesh {
         return this._voxelMesh;
     }
 
+    /*
     public createBuffer() {
         ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
+        // FIXME: Too hacky
         const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
 
         const numBlocks = this._blocks.length;
@@ -160,6 +170,7 @@ export class BlockMesh {
 
         return newBuffer;
     }
+    */
 
     public getAtlas() {
         return this._atlas;

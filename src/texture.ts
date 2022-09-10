@@ -1,4 +1,4 @@
-import { UV, ASSERT, AppError, LOG } from './util';
+import { UV } from './util';
 
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
@@ -6,6 +6,8 @@ import { PNG } from 'pngjs';
 import path from 'path';
 import { clamp, wayThrough } from './math';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { AppError, ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 
 /* eslint-disable */
 export enum TextureFormat {

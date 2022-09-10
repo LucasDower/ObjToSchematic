@@ -1,5 +1,6 @@
 import { Vector3 } from './vector';
-import { Bounds, UV } from './util';
+import { UV } from './util';
+import { Bounds } from './bounds';
 export class Triangle {
     public v0: Vector3;
     public v1: Vector3;

@@ -1,7 +1,7 @@
 import { Ray, Axes, rayIntersectTriangle } from '../src/ray';
 import { Vector3 } from '../src/vector';
 import { Triangle } from '../src/triangle';
-import { ASSERT } from '../src/util';
+import { ASSERT } from '../src/util/error_util';
 
 test('rayIntersectTriangle x-axis #1', () => {
     const ray: Ray = {
