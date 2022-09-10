@@ -1,5 +1,7 @@
 const workerInstance = require('./worker');
 
 addEventListener('message', (e) => {
-    postMessage(workerInstance.doWork(e.data));
+    setTimeout(() => {
+        postMessage(workerInstance.doWork(e.data));
+    }, 1000);
 });

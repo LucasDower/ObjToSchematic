@@ -67,7 +67,7 @@ export class OutputElement {
         const builder = this.getMessage().clear(taskId);
 
         if (taskItems.length > 0) {
-            builder.addHeading(taskId, taskId + taskHeading, style);
+            builder.addHeading(taskId, taskHeading, style);
         } else {
             builder.addBold(taskId, [ taskHeading ], style);
         }

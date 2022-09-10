@@ -53,9 +53,6 @@ export class FileInputElement extends LabelledElement<string> {
                 const filePath = files[0];
                 this._loadedFilePath = filePath;
                 this._value = filePath;
-            } else {
-                this._loadedFilePath = '';
-                this._value = '';
             }
             const parsedPath = path.parse(this._loadedFilePath);
             element.innerHTML = parsedPath.name + parsedPath.ext;

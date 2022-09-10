@@ -1,6 +1,7 @@
 import { TBlockAssigners } from "./assigners/assigners"
 import { FallableBehaviour } from "./block_mesh"
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "./buffer"
+import { TExporters } from "./exporters/exporters"
 import { StatusMessage } from "./status"
 import { TextureFiltering } from "./texture"
 import { ColourSpace } from "./util"
@@ -91,7 +92,8 @@ export namespace RenderBlockMeshParams {
 
 export namespace ExportParams {
     export type Input = {
-
+        filepath: string,
+        exporter: TExporters,
     }
 
     export type Output = {

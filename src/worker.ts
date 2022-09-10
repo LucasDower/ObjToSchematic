@@ -44,6 +44,12 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.renderBlockMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            case 'Export': 
+                return {
+                    action: 'Export',
+                    result: WorkerClient.Get.export(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
         }
     } catch (e: any) {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };

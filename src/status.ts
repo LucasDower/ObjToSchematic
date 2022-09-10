@@ -1,4 +1,5 @@
 import { EAction } from './util';
+import { ASSERT } from './util/error_util';
 import { LOG, LOG_WARN } from './util/log_util';
 
 export type StatusType = 'warning' | 'info';
@@ -46,30 +47,30 @@ export class StatusHandler {
     public getDefaultSuccessMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return '[Mesh]: Loaded';
+                return '[Importer]: Loaded';
             case EAction.Voxelise:
-                return 'Voxelised mesh';
+                return '[Voxeliser]: Succeeded';
             case EAction.Assign:
-                return 'Assigned blocks';
+                return '[Assigner]: Succeeded';
             case EAction.Export:
-                return 'Exported mesh';
+                return '[Exporter]: Saved';
             default:
-                return 'Performed action';
+                ASSERT(false)
         }
     }
 
     public getDefaultFailureMessage(action: EAction): string {
         switch (action) {
             case EAction.Import:
-                return 'Mesh: Failed';
+                return '[Importer]: Failed';
             case EAction.Voxelise:
-                return 'Failed to voxelise mesh';
+                return '[Voxeliser]: Failed';
             case EAction.Assign:
-                return 'Failed to assign blocks';
+                return '[Assigner]: Failed';
             case EAction.Export:
-                return 'Failed to export mesh';
+                return '[Exporter]: Failed';
             default:
-                return 'Failed to perform action';
+                ASSERT(false);
         }
     }
 }

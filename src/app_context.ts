@@ -14,6 +14,9 @@ import { AppConfig } from './config';
 import { OutputStyle } from './ui/elements/output';
 import { TextureFiltering } from './texture';
 import { FallableBehaviour } from './block_mesh';
+import { remote } from 'electron';
+import { ExporterFactory, TExporters } from './exporters/exporters';
+import { IExporter } from './exporters/base_exporter';
 
 export class AppContext {
     private _ui: UI;
@@ -37,10 +40,15 @@ export class AppContext {
     }
 
     public do(action: EAction) {
-        this._ui.disable(action);
         this._ui.cacheValues(action);
+        this._ui.disable(action);
 
         const workerJob = this._getWorkerJob(action);
+        if (workerJob === undefined) {
+            this._ui.enable(action);
+            return;
+        }
+        
         const uiOutput = this._ui.getActionOutput(action);
 
         const jobCallback = (payload: TFromWorkerMessage) => {
@@ -92,14 +100,14 @@ export class AppContext {
         builder.addItem('action', infoStatuses, 'success');
 
         if (hasWarnings) {
-            builder.addHeading('action', 'There were some warnings:', 'warning');
+            builder.addHeading('action', 'There were some warnings', 'warning');
             builder.addItem('action', warningStatuses, 'warning');
         }
 
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
     }
 
-    private _getWorkerJob(action: EAction): TWorkerJob {
+    private _getWorkerJob(action: EAction): (TWorkerJob | undefined) {
         switch (action) {
             case EAction.Import:
                 return this._import();
@@ -107,6 +115,8 @@ export class AppContext {
                 return this._voxelise();
             case EAction.Assign:
                 return this._assign();
+            case EAction.Export:
+                return this._export();
         }
         ASSERT(false);
     }
@@ -115,7 +125,7 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
         
         this._ui.getActionOutput(EAction.Import)
-            .setTaskInProgress('action', '[Voxel Mesh]: Loading...');
+            .setTaskInProgress('action', '[Importer]: Loading...');
 
         const payload: TToWorkerMessage = {
             action: 'Import',
@@ -135,7 +145,7 @@ export class AppContext {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
             } else {
                 const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`;
-                outputElement.setTaskComplete('render', '[Renderer]', [ message ], 'warning')
+                outputElement.setTaskComplete('render', '[Renderer]: Stopped.', [ message ], 'warning')
             }
         };
 
@@ -324,52 +334,38 @@ export class AppContext {
         return { id: 'RenderBlockMesh', payload: payload, callback: callback };
     }
 
-    /*
-    private _assign() {
-        ASSERT(this._loadedVoxelMesh);
-
-        const uiElements = this._ui.layout.assign.elements;
-
-        const atlasId = uiElements.textureAtlas.getCachedValue();
-        const atlas = Atlas.load(atlasId);
-        ASSERT(atlas, 'Could not load atlas');
-
-        const paletteId = uiElements.blockPalette.getCachedValue();
-        const palette = Palette.load(paletteId);
-        ASSERT(palette);
-
-        const blockMeshParams: BlockMeshParams = {
-            textureAtlas: atlas,
-            blockPalette: palette,
-            blockAssigner: uiElements.dithering.getCachedValue(),
-            colourSpace: ColourSpace.RGB,
-            fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
-        };
-
-        this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, blockMeshParams);
-        Renderer.Get.useBlockMesh(this._loadedBlockMesh);
-    }
-
-    private _export() {
+    private _export(): (TWorkerJob | undefined) {
         const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
-        let filePath = remote.dialog.showSaveDialogSync({
+        let filepath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',
             filters: [exporter.getFormatFilter()],
         });
 
-        ASSERT(this._loadedBlockMesh);
-        if (filePath) {
-            const fileExtension = '.' + exporter.getFileExtension();
-            if (!filePath.endsWith(fileExtension)) {
-                filePath += fileExtension;
-            }
-            exporter.export(this._loadedBlockMesh, filePath);
+        if (filepath === undefined) {
+            return undefined;
         }
+
+        this._ui.getActionOutput(EAction.Export)
+            .setTaskInProgress('action', '[Exporter]: Saving...');
+
+        const payload: TToWorkerMessage = {
+            action: 'Export',
+            params: {
+                filepath: filepath,
+                exporter: exporterID,
+            }
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+        };
+
+        return { id: 'Export', payload: payload, callback: callback };
     }
-    */
 
     public draw() {
         Renderer.Get.update();
