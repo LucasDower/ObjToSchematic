@@ -18,8 +18,7 @@
     "headless": "node ./dist/tools/headless.js",
     "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --app-version=0.5.1 --prune=true",
     "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --app-version=0.5.1 --prune=true",
-    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --app-version=0.5.1 --prune=true",
-    "dependencies": "depcruise --config .dependency-cruiser.js --include-only src --output-type dot src | dot -T svg > dependencygraph.svg"
+    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --app-version=0.5.1 --prune=true"
   },
   "repository": {
     "type": "git",
