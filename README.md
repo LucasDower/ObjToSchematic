@@ -90,8 +90,8 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Options for handling falling blocks and overlapping voxels**
 * 🟢 **Sponge schematics exporter (.schem)**
 * 🟢 **Structure blocks exporter (.nbt)**
-* 🟡 Web workers (see [web-workers](https://github.com/LucasDower/ObjToSchematic/tree/web-workers))
-  * Progress bar
+* 🟢 **Web workers**
+  * Processing UI animation
   * Prevent UI hanging
 * 🟢 Alpha support
   * Alpha texture maps
