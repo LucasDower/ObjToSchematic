@@ -6,6 +6,7 @@ import { VoxelMesh } from "./voxel_mesh";
 import { AppConstants } from "./constants";
 import { RenderVoxelMeshParams } from "./worker_types";
 import { OcclusionManager } from "./occlusion";
+import { BlockMesh } from "./block_mesh";
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
@@ -31,6 +32,21 @@ export type TVoxelMeshBuffer = {
 
 export type TVoxelMeshBufferDescription = {
     buffer: TVoxelMeshBuffer,
+    numElements: number,
+}
+
+export type TBlockMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    blockTexcoord: { numComponents: 2, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TBlockMeshBufferDescription = {
+    buffer: TBlockMeshBuffer,
     numElements: number,
 }
 
@@ -152,11 +168,34 @@ export class BufferGenerator {
         };
     }
 
-    /*
-    public static fromBlockMesh(blockMesh: BlockMesh) {
+    public static fromBlockMesh(blockMesh: BlockMesh, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBufferDescription {
+        //ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
+        //const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
+
+        const blocks = blockMesh.getBlocks();
+        const numBlocks = blocks.length;
+
+        const newBuffer = this.createBlockMeshBuffer(numBlocks, voxelMeshBuffer);
+
+        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+        let insertIndex = 0;
+        for (let i = 0; i < numBlocks; ++i) {
+            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
+                const faceName = faceOrder[f];
+                const texcoord = blocks[i].blockInfo.faces[faceName].texcoord;
+                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
+                }
+            }
+        }
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+        };
     }
-    */
 
     private static createMaterialBuffer(triangleCount: number): TMeshBuffer {
         return {
@@ -204,6 +243,39 @@ export class BufferGenerator {
             indices: {
                 numComponents: 3,
                 data: new Uint32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.INDICES),
+            },
+        };
+    }
+
+    private static createBlockMeshBuffer(numBlocks: number, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBuffer {
+        return {
+            position: {
+                numComponents: AppConstants.ComponentSize.POSITION,
+                data: voxelMeshBuffer.position.data,
+            },
+            colour: {
+                numComponents: AppConstants.ComponentSize.COLOUR,
+                data: voxelMeshBuffer.colour.data,
+            },
+            occlusion: {
+                numComponents: AppConstants.ComponentSize.OCCLUSION,
+                data: voxelMeshBuffer.occlusion.data,
+            },
+            texcoord: {
+                numComponents: AppConstants.ComponentSize.TEXCOORD,
+                data: voxelMeshBuffer.texcoord.data,
+            },
+            normal: {
+                numComponents: AppConstants.ComponentSize.NORMAL,
+                data: voxelMeshBuffer.normal.data,
+            },
+            indices: {
+                numComponents: AppConstants.ComponentSize.INDICES,
+                data: voxelMeshBuffer.indices.data,
+            },
+            blockTexcoord: {
+                numComponents: AppConstants.ComponentSize.TEXCOORD,
+                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
             },
         };
     }

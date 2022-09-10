@@ -12,7 +12,7 @@ import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 import { LOG } from './util/log_util';
 import { TMeshBufferDescription } from './buffer';
-import { RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
+import { RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
 
 /* eslint-disable */
 export enum MeshType {
@@ -232,24 +232,20 @@ export class Renderer {
         this.setModelToUse(MeshType.VoxelMesh);
     }
     
-    public useBlockMesh(blockMesh: BlockMesh) {
-        /*
-        LOG('Using block mesh');
-        LOG(blockMesh);
-        this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
+    public useBlockMesh(params: RenderBlockMeshParams.Output) {
+        this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer);
         
         this._atlasTexture = twgl.createTexture(this._gl, {
-            src: blockMesh.getAtlas().getAtlasTexturePath(),
+            src: params.atlasTexturePath,
             mag: this._gl.NEAREST,
         });
         
-        this._atlasSize = blockMesh.getAtlas().getAtlasSize();
+        this._atlasSize = params.atlasSize,
 
         this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
-        */
     }
 
     // /////////////////////////////////////////////////////////////////////////

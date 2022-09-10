@@ -32,6 +32,18 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.renderVoxelMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            case 'Assign': 
+                return {
+                    action: 'Assign',
+                    result: WorkerClient.Get.assign(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
+            case 'RenderBlockMesh':
+                return {
+                    action: 'RenderBlockMesh',
+                    result: WorkerClient.Get.renderBlockMesh(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
         }
     } catch (e: any) {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };

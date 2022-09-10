@@ -1,6 +1,9 @@
-import { TMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "./buffer"
+import { TBlockAssigners } from "./assigners/assigners"
+import { FallableBehaviour } from "./block_mesh"
+import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "./buffer"
 import { StatusMessage } from "./status"
 import { TextureFiltering } from "./texture"
+import { ColourSpace } from "./util"
 import { AppError } from "./util/error_util"
 import { Vector3 } from "./vector"
 import { TVoxelisers } from "./voxelisers/voxelisers"
@@ -56,9 +59,16 @@ export namespace RenderVoxelMeshParams {
     }
 }
 
+export type TAtlasId = string;
+export type TPaletteId = string;
+
 export namespace AssignParams {
     export type Input = {
-
+        textureAtlas: TAtlasId,
+        blockPalette: TPaletteId,
+        blockAssigner: TBlockAssigners,
+        colourSpace: ColourSpace,
+        fallable: FallableBehaviour,
     }
 
     export type Output = {
@@ -68,11 +78,14 @@ export namespace AssignParams {
 
 export namespace RenderBlockMeshParams {
     export type Input = {
-
+        textureAtlas: TAtlasId,
     }
 
     export type Output = {
-
+        buffer: TBlockMeshBufferDescription,
+        dimensions: Vector3,
+        atlasTexturePath: string,
+        atlasSize: number,
     }
 }
 

@@ -9,10 +9,11 @@ import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 import { LOG } from './util/log_util';
 import { ASSERT } from './util/error_util';
-import { EAction } from './util';
+import { ColourSpace, EAction } from './util';
 import { AppConfig } from './config';
 import { OutputStyle } from './ui/elements/output';
 import { TextureFiltering } from './texture';
+import { FallableBehaviour } from './block_mesh';
 
 export class AppContext {
     private _ui: UI;
@@ -104,6 +105,8 @@ export class AppContext {
                 return this._import();
             case EAction.Voxelise:
                 return this._voxelise();
+            case EAction.Assign:
+                return this._assign();
         }
         ASSERT(false);
     }
@@ -225,7 +228,7 @@ export class AppContext {
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
-                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
+                    this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                         'render',
                         '[Renderer]: Failed',
                         [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
@@ -235,7 +238,6 @@ export class AppContext {
                 }
                 default: {
                     ASSERT(payload.action === 'RenderVoxelMesh');
-                    //Renderer.Get.useMesh(payload.result);
                     Renderer.Get.useVoxelMesh(payload.result)
 
                     this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
@@ -248,39 +250,81 @@ export class AppContext {
             }
         };
 
-        return { id: 'RenderMesh', payload: payload, callback: callback };
+        return { id: 'RenderVoxelMesh', payload: payload, callback: callback };
+    }
+
+    private _assign(): TWorkerJob {
+        const uiElements = this._ui.layout.assign.elements;
+
+        this._ui.getActionOutput(EAction.Assign)
+            .setTaskInProgress('action', '[Block Mesh]: Loading...');
+
+        const payload: TToWorkerMessage = {
+            action: 'Assign',
+            params: {
+                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+                blockPalette: uiElements.blockPalette.getCachedValue(),
+                blockAssigner: uiElements.dithering.getCachedValue(),
+                colourSpace: ColourSpace.RGB,
+                fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'Assign');
+            const outputElement = this._ui.getActionOutput(EAction.Assign);
+
+            this._workerController.addJob(this._renderBlockMesh());
+            outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
+        };
+
+        return { id: 'Assign', payload: payload, callback: callback };
+    }
+
+    private _renderBlockMesh(): TWorkerJob {
+        const uiElements = this._ui.layout.assign.elements;
+
+        const payload: TToWorkerMessage = {
+            action: 'RenderBlockMesh',
+            params: {
+                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is not managed through `AppContext::do`, therefore
+            // we need to check the payload is not an error
+            switch (payload.action) {
+                case 'KnownError':
+                case 'UnknownError': {
+                    this._ui.getActionOutput(EAction.Assign).setTaskComplete(
+                        'render',
+                        '[Renderer]: Failed',
+                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
+                        'error'
+                    );
+                    break;
+                }
+                default: {
+                    ASSERT(payload.action === 'RenderBlockMesh');
+                    Renderer.Get.useBlockMesh(payload.result)
+
+                    this._ui.getActionOutput(EAction.Assign).setTaskComplete(
+                        'render',
+                        '[Renderer]: Succeeded',
+                        [],
+                        'success'
+                    )
+                }
+            }
+        };
+
+        return { id: 'RenderBlockMesh', payload: payload, callback: callback };
     }
 
     /*
-    private _voxelise() {
-        ASSERT(this._loadedMesh);
-
-        const uiElements = this._ui.layout.build.elements;
-        const voxeliseParams: VoxeliseParams = {
-            desiredHeight: uiElements.height.getDisplayValue(),
-            useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
-            textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-            enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-            voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
-            calculateNeighbours: uiElements.ambientOcclusion.getCachedValue() === 'on',
-        };
-
-        const voxeliserID: TVoxelisers = uiElements.voxeliser.getCachedValue();
-        const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(voxeliserID);
-
-        TIME_START('Voxelising');
-        {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, voxeliseParams);
-        }
-        TIME_END('Voxelising');
-        TIME_START('Render Voxel Mesh');
-        {
-            const voxelSize = 8.0 / voxeliseParams.desiredHeight;
-            Renderer.Get.useVoxelMesh(this._loadedVoxelMesh, voxelSize, voxeliseParams.enableAmbientOcclusion);
-        }
-        TIME_END('Render Voxel Mesh');
-    }
-
     private _assign() {
         ASSERT(this._loadedVoxelMesh);
 
