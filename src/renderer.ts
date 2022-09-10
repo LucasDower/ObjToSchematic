@@ -168,7 +168,6 @@ export class Renderer {
     }
 
     public useMesh(params: RenderMeshParams.Output) {       
-        LOG('Using mesh');
         this._materialBuffers = [];
 
         for (const { material, buffer, numElements } of params.buffers) {

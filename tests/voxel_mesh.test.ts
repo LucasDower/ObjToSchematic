@@ -1,12 +1,13 @@
 import { Vector3 } from '../src/vector';
 import { VoxelMesh } from '../src/voxel_mesh';
 import { RGBAColours } from '../src/colour';
-import { ASSERT } from '../src/util';
+import { ASSERT } from '../src/util/error_util';
 
 test('Voxel neighbours', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
         calculateNeighbours: true,
+
     });
     voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.WHITE);
 

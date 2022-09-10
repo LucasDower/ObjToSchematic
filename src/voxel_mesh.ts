@@ -18,14 +18,16 @@ export interface Voxel {
 
 export type TVoxelOverlapRule = 'first' | 'average';
 
+export type TVoxelMeshParams = Pick<VoxeliseParams.Input, "voxelOverlapRule" | "calculateNeighbours">;
+
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
     private _voxelsHash: HashMap<Vector3, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
-    private _voxelMeshParams: VoxeliseParams.Input;
+    private _voxelMeshParams: TVoxelMeshParams;
 
-    public constructor(voxelMeshParams: VoxeliseParams.Input) {
+    public constructor(voxelMeshParams: TVoxelMeshParams) {
         this._voxels = [];
         this._voxelsHash = new HashMap(2048);
         this._neighbourMap = new Map();

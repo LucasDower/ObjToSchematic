@@ -1,5 +1,5 @@
 import { ObjImporter } from '../src/importers/obj_importer';
-import { ASSERT } from '../src/util';
+import { ASSERT } from '../src/util/error_util';
 import { Vector3 } from '../src/vector';
 
 test('Parse vertex #1', () => {

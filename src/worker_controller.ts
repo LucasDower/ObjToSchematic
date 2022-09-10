@@ -1,5 +1,5 @@
 import { ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
+import { LOG, TIME_END, TIME_START } from './util/log_util';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export type TWorkerJob = {
@@ -39,7 +39,8 @@ export class WorkerController {
 
     private _onWorkerMessage(payload: any) {
         ASSERT(this._jobPending !== undefined, `Received worker message when no job is pending`);
-        LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`, payload.data);
+        TIME_END(this._jobPending.id);
+        LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`);
 
         if (this._jobPending.callback) {
             this._jobPending.callback(payload.data);
@@ -60,6 +61,7 @@ export class WorkerController {
         }
 
         LOG('[WorkerController]: Starting Job', this._jobPending.id, `(${this._jobQueue.length} remaining)`);
+        TIME_START(this._jobPending.id);
         this._worker.postMessage(this._jobPending.payload);
     }
 }
