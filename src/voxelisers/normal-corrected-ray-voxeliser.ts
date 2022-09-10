@@ -5,9 +5,10 @@ import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
-import { IVoxeliser, VoxeliseParams } from './base-voxeliser';
+import { IVoxeliser } from './base-voxeliser';
 import { RGBA, RGBAUtil } from '../colour';
 import { Bounds } from '../bounds';
+import { VoxeliseParams } from '../worker_types';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -16,12 +17,12 @@ import { Bounds } from '../bounds';
 export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
-    private _voxeliseParams?: VoxeliseParams;
+    private _voxeliseParams?: VoxeliseParams.Input;
     private _scale!: number;
     private _size!: Vector3;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;

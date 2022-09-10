@@ -1,6 +1,7 @@
+/*
 import { Mesh } from '../src/mesh';
 import { ObjImporter } from '../src/importers/obj_importer';
-import { IVoxeliser, VoxeliseParams } from '../src/voxelisers/base-voxeliser';
+import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
 import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
 import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
 import { IExporter} from '../src/exporters/base_exporter';
@@ -13,6 +14,7 @@ import { ExporterFactory, TExporters } from '../src/exporters/exporters';
 import { TBlockAssigners } from '../src/assigners/assigners';
 import { Atlas } from '../src/atlas';
 import { Palette } from '../src/palette';
+import { VoxeliseParams } from '../src/worker_types';
 
 export type THeadlessConfig = {
     import: {
@@ -47,15 +49,13 @@ void async function main() {
         absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
     });
     const voxelMesh = _voxelise(mesh, {
-        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
-        voxeliseParams: {
-            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
-            enableAmbientOcclusion: false,
-            voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
-            calculateNeighbours: false,
-        },
+        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser)
+        desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
+        useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
+        textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
+        enableAmbientOcclusion: false,
+        voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
+        calculateNeighbours: false,
     });
 
     const atlasId = headlessConfig.palette.blockMeshParams.textureAtlas;
@@ -86,24 +86,6 @@ void async function main() {
     log(LogStyle.Success, 'Finished!');
 }();
 
-interface ImportParams {
-    absoluteFilePathLoad: string;
-}
-
-interface ActionVoxeliseParams {
-    voxeliser: IVoxeliser;
-    voxeliseParams: VoxeliseParams;
-}
-
-interface PaletteParams {
-    blockMeshParams: BlockMeshParams;
-}
-
-interface ExportParams {
-    absoluteFilePathSave: string;
-    exporter: IExporter;
-}
-
 // TODO: Log status messages
 function _import(params: ImportParams): Mesh {
     log(LogStyle.Info, 'Importing...');
@@ -132,3 +114,5 @@ function _export(blockMesh: BlockMesh, params: ExportParams) {
     log(LogStyle.Info, 'Exporting...');
     params.exporter.export(blockMesh, params.absoluteFilePathSave);
 }
+
+*/

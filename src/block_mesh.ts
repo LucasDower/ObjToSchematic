@@ -109,9 +109,11 @@ export class BlockMesh {
         return this._voxelMesh;
     }
 
+    /*
     public createBuffer() {
         ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
 
+        // FIXME: Too hacky
         const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
 
         const numBlocks = this._blocks.length;
@@ -161,6 +163,7 @@ export class BlockMesh {
 
         return newBuffer;
     }
+    */
 
     public getAtlas() {
         return this._atlas;

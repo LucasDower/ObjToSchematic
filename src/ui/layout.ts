@@ -35,7 +35,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'build', 'assign', 'export'];
+    public uiOrder = ['import', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -48,10 +48,10 @@ export class UI {
             }),
             output: new OutputElement(),
         },
-        'build': {
-            label: 'Build',
+        'voxelise': {
+            label: 'Voxelise',
             elements: {
-                'height': new SliderElement('Desired height', 3, 380, 0, 80, 1),
+                'desiredHeight': new SliderElement('Desired height', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
@@ -109,7 +109,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
+            elementsOrder: ['desiredHeight', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),
@@ -384,7 +384,7 @@ export class UI {
     public cacheValues(action: EAction) {
         const group = this._getEActionGroup(action);
         for (const elementName of group.elementsOrder) {
-            LOG(`Caching ${elementName}`);
+            LOG(`[UI]: Caching ${elementName}`);
             const element = group.elements[elementName];
             element.cacheValue();
         }
@@ -486,7 +486,7 @@ export class UI {
             return;
         }
 
-        LOG('enabling', action);
+        LOG('[UI]: Enabling', action);
         const group = this._getEActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);
@@ -513,7 +513,7 @@ export class UI {
 
         for (let i = action; i < EAction.MAX; ++i) {
             const group = this._getEActionGroup(i);
-            LOG('disabling', group.label);
+            LOG('[UI]: Disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
             }

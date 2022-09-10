@@ -12,7 +12,7 @@ import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
 import { LOG } from './util/log_util';
 import { TMeshBufferDescription } from './buffer';
-import { RenderMeshParams } from './worker_types';
+import { RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
 
 /* eslint-disable */
 export enum MeshType {
@@ -207,16 +207,16 @@ export class Renderer {
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
     }
-    
-    public useVoxelMesh(voxelMesh: VoxelMesh, voxelSize: number, ambientOcclusionEnabled: boolean) {
-        LOG('Using voxel mesh');
-        LOG(voxelMesh);
 
-        this._voxelBufferRaw = voxelMesh.createBuffer(ambientOcclusionEnabled);
-        this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, this._voxelBufferRaw);
-        this._voxelSize = voxelSize;
+    public useVoxelMesh(params: RenderVoxelMeshParams.Output) {
+        this._voxelBufferRaw = params.buffer.buffer;
+        this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer);
+        this._voxelSize = params.voxelSize;
 
-        const dimensions = voxelMesh.getBounds().getDimensions();
+        const voxelSize = this._voxelSize;
+        const dimensions = new Vector3(0, 0, 0);
+        dimensions.setFrom(params.dimensions);
+
         this._gridOffset = new Vector3(
             dimensions.x % 2 === 0 ? 0 : -0.5,
             dimensions.y % 2 === 0 ? 0 : -0.5,
@@ -233,6 +233,7 @@ export class Renderer {
     }
     
     public useBlockMesh(blockMesh: BlockMesh) {
+        /*
         LOG('Using block mesh');
         LOG(blockMesh);
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
@@ -248,6 +249,7 @@ export class Renderer {
         
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
+        */
     }
 
     // /////////////////////////////////////////////////////////////////////////

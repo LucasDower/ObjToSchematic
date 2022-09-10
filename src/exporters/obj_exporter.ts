@@ -36,6 +36,7 @@ export class ObjExporter extends IExporter {
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
+        /*
         const buffer = blockMesh.createBuffer();
         const positionData = buffer.position.data as Float32Array;
         const normalData = buffer.normal.data as Float32Array;
@@ -81,6 +82,7 @@ export class ObjExporter extends IExporter {
         }
 
         writeStream.end();
+        */
     }
 
     private _exportMTL(filepathMTL: string, filepathTexture: string, blockMesh: BlockMesh) {

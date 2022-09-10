@@ -1,15 +1,36 @@
+import { GeometryTemplates } from "./geometry";
 import { Mesh, SolidMaterial, TexturedMaterial } from "./mesh";
+import { AttributeData } from "./render_buffer";
+import { Vector3 } from "./vector";
+import { VoxelMesh } from "./voxel_mesh";
+import { AppConstants } from "./constants";
+import { RenderVoxelMeshParams } from "./worker_types";
+import { OcclusionManager } from "./occlusion";
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
     texcoord: { numComponents: 2, data: Float32Array },
-    normal:   { numComponents: 3, data: Float32Array },
-    indices:  { numComponents: 3, data: Uint32Array  },
-}
+    normal: { numComponents: 3, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
 
 export type TMeshBufferDescription = {
     material: SolidMaterial | (TexturedMaterial)
     buffer: TMeshBuffer,
+    numElements: number,
+};
+
+export type TVoxelMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TVoxelMeshBufferDescription = {
+    buffer: TVoxelMeshBuffer,
     numElements: number,
 }
 
@@ -61,7 +82,7 @@ export class BufferGenerator {
                         materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
                         materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
                     }
-                    
+
                     // Indices
                     {
                         materialBuffer.indices.data.set([
@@ -86,11 +107,52 @@ export class BufferGenerator {
         return materialBuffers;
     }
 
-    /*
-    public static fromVoxelMesh(voxelMesh: VoxelMesh) {
+    public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderVoxelMeshParams.Input): TVoxelMeshBufferDescription {
+        const numVoxels = voxelMesh.getVoxelCount();
+        const newBuffer: TVoxelMeshBuffer = this.createVoxelMeshBuffer(numVoxels);
 
+        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
+        const voxels = voxelMesh.getVoxels();
+        for (let i = 0; i < numVoxels; ++i) {
+            const voxel = voxels[i];
+            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
+            const voxelPositionArray = voxel.position.toArray();
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
+                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {
+                newBuffer.normal.data[i * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL + j] = cube.custom.normal[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD; ++j) {
+                newBuffer.texcoord.data[i * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD + j] = cube.custom.texcoord[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
+                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
+            }
+
+            if (params.enableAmbientOcclusion) {
+                const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, voxelMesh);
+                for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
+                    newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];
+                }
+            }
+        }
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+        };
     }
 
+    /*
     public static fromBlockMesh(blockMesh: BlockMesh) {
 
     }
@@ -113,6 +175,35 @@ export class BufferGenerator {
             indices: {
                 numComponents: 3,
                 data: new Uint32Array(triangleCount * 3),
+            },
+        };
+    }
+
+    private static createVoxelMeshBuffer(numVoxels: number): TVoxelMeshBuffer {
+        return {
+            position: {
+                numComponents: 3,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.POSITION),
+            },
+            colour: {
+                numComponents: 4,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR),
+            },
+            occlusion: {
+                numComponents: 4,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION).fill(1.0),
+            },
+            texcoord: {
+                numComponents: 2,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+            normal: {
+                numComponents: 3,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL),
+            },
+            indices: {
+                numComponents: 3,
+                data: new Uint32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.INDICES),
             },
         };
     }

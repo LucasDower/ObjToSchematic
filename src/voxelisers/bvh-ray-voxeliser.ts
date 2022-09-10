@@ -2,9 +2,10 @@ import { VoxelMesh } from '../voxel_mesh';
 import { Mesh } from '../mesh';
 import { Axes, axesToDirection, Ray } from '../ray';
 import { Vector3 } from '../vector';
-import { IVoxeliser, VoxeliseParams } from './base-voxeliser';
+import { IVoxeliser } from './base-voxeliser';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
+import { VoxeliseParams } from '../worker_types';
 
 const bvhtree = require('bvh-tree');
 
@@ -13,7 +14,7 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
         const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);

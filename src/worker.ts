@@ -19,7 +19,19 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     action: 'RenderMesh',
                     result: WorkerClient.Get.renderMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
-                }
+                };
+            case 'Voxelise': 
+                return {
+                    action: 'Voxelise',
+                    result: WorkerClient.Get.voxelise(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
+            case 'RenderVoxelMesh':
+                return {
+                    action: 'RenderVoxelMesh',
+                    result: WorkerClient.Get.renderVoxelMesh(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
         }
     } catch (e: any) {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };

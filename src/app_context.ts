@@ -12,6 +12,7 @@ import { ASSERT } from './util/error_util';
 import { EAction } from './util';
 import { AppConfig } from './config';
 import { OutputStyle } from './ui/elements/output';
+import { TextureFiltering } from './texture';
 
 export class AppContext {
     private _ui: UI;
@@ -101,15 +102,17 @@ export class AppContext {
         switch (action) {
             case EAction.Import:
                 return this._import();
+            case EAction.Voxelise:
+                return this._voxelise();
         }
         ASSERT(false);
     }
 
     private _import(): TWorkerJob {
         const uiElements = this._ui.layout.import.elements;
-        const builder = new UIMessageBuilder();
-        builder.addTask('action', '[Mesh]: Loading...');
-        this._ui.getActionOutput(EAction.Import).setMessage(builder, 'none');
+        
+        this._ui.getActionOutput(EAction.Import)
+            .setTaskInProgress('action', '[Voxel Mesh]: Loading...');
 
         const payload: TToWorkerMessage = {
             action: 'Import',
@@ -161,6 +164,81 @@ export class AppContext {
                     Renderer.Get.useMesh(payload.result);
 
                     this._ui.getActionOutput(EAction.Import).setTaskComplete(
+                        'render',
+                        '[Renderer]: Succeeded',
+                        [],
+                        'success'
+                    )
+                }
+            }
+        };
+
+        return { id: 'RenderMesh', payload: payload, callback: callback };
+    }
+
+    private _voxelise(): TWorkerJob {
+        const uiElements = this._ui.layout.voxelise.elements;
+
+        this._ui.getActionOutput(EAction.Voxelise)
+            .setTaskInProgress('action', '[Voxel Mesh]: Loading...');
+
+        const payload: TToWorkerMessage = {
+            action: 'Voxelise',
+            params: {
+                voxeliser: uiElements.voxeliser.getCachedValue(),
+                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
+                textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+                voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+                calculateNeighbours: uiElements.ambientOcclusion.getCachedValue() === 'on',
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'Voxelise');
+            const outputElement = this._ui.getActionOutput(EAction.Voxelise);
+
+            this._workerController.addJob(this._renderVoxelMesh());
+            outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
+        };
+
+        return { id: 'Voxelise', payload: payload, callback: callback };
+    }
+
+    private _renderVoxelMesh(): TWorkerJob {
+        const uiElements = this._ui.layout.voxelise.elements;
+
+        const payload: TToWorkerMessage = {
+            action: 'RenderVoxelMesh',
+            params: {
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is not managed through `AppContext::do`, therefore
+            // we need to check the payload is not an error
+            switch (payload.action) {
+                case 'KnownError':
+                case 'UnknownError': {
+                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
+                        'render',
+                        '[Renderer]: Failed',
+                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
+                        'error'
+                    );
+                    break;
+                }
+                default: {
+                    ASSERT(payload.action === 'RenderVoxelMesh');
+                    //Renderer.Get.useMesh(payload.result);
+                    Renderer.Get.useVoxelMesh(payload.result)
+
+                    this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                         'render',
                         '[Renderer]: Succeeded',
                         [],

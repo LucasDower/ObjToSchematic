@@ -1,7 +1,10 @@
-import { TMeshBufferDescription } from "./buffer"
+import { TMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "./buffer"
 import { StatusMessage } from "./status"
+import { TextureFiltering } from "./texture"
 import { AppError } from "./util/error_util"
 import { Vector3 } from "./vector"
+import { TVoxelisers } from "./voxelisers/voxelisers"
+import { TVoxelOverlapRule } from "./voxel_mesh"
 
 export namespace ImportParams {
     export type Input = {
@@ -25,8 +28,14 @@ export namespace RenderMeshParams {
 }
 
 export namespace VoxeliseParams {
-    export type Input = {
-
+    export type Input =  {
+        voxeliser: TVoxelisers,
+        desiredHeight: number,
+        useMultisampleColouring: boolean,
+        textureFiltering: TextureFiltering,
+        enableAmbientOcclusion: boolean,
+        voxelOverlapRule: TVoxelOverlapRule,
+        calculateNeighbours: boolean,
     }
 
     export type Output = {
@@ -36,11 +45,14 @@ export namespace VoxeliseParams {
 
 export namespace RenderVoxelMeshParams {
     export type Input = {
-
+        desiredHeight: number,
+        enableAmbientOcclusion: boolean,
     }
 
     export type Output = {
-
+        buffer: TVoxelMeshBufferDescription,
+        dimensions: Vector3,
+        voxelSize: number,
     }
 }
 
