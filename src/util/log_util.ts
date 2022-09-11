@@ -18,7 +18,15 @@ export const LOG_MAJOR = (...data: any[]) => {
     }
 }
 
-export const LOG_WARN = console.warn;
+/**
+ * Performs console.warn if logging LOG_WARN is enabled
+ */
+export const LOG_WARN = (...data: any[]) => {
+    if (Logger.Get.isLOGWARNEnabled()) {
+        console.log(...data);
+    }
+}
+
 export const LOG_ERROR = console.error;
 export const TIME_START = console.time;
 export const TIME_END = console.timeEnd;
@@ -33,6 +41,7 @@ export class Logger {
 
     private _enabledLOG = false;
     private _enabledLOGMAJOR = false;
+    private _enabledLOGWARN = false;
 
     private constructor() {
     }
@@ -53,11 +62,23 @@ export class Logger {
         this._enabledLOGMAJOR = false;
     }
 
+    public enableLOGWARN() {
+        this._enabledLOGWARN = true;
+    }
+
+    public disableLOGWARN() {
+        this._enabledLOGWARN = false;
+    }
+
     public isLOGEnabled() {
         return this._enabledLOG;
     }
 
     public isLOGMAJOREnabled() {
         return this._enabledLOGMAJOR;
+    }
+
+    public isLOGWARNEnabled() {
+        return this._enabledLOGWARN;
     }
 }

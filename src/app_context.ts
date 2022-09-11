@@ -24,6 +24,7 @@ export class AppContext {
     public constructor() {
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
+        Logger.Get.enableLOGWARN();
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
