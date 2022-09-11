@@ -15,10 +15,9 @@
 */
 
 import { app, BrowserWindow } from 'electron';
-import path from 'path';
 import url from 'url';
 import { AppConfig } from './config';
-import { BASE_DIR, STATIC_DIR } from './util';
+import { AppPaths, PathUtil } from './util/path_util';
 
 app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
 
@@ -36,7 +35,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
-        icon: path.join(STATIC_DIR, process.platform === 'win32' ? './icon.ico' : './icon.png'),
+        icon: PathUtil.join(AppPaths.Get.static, process.platform === 'win32' ? './icon.ico' : './icon.png'),
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
@@ -49,10 +48,10 @@ function createWindow() {
     if (!AppConfig.DEBUG_ENABLED) {
         mainWindow.removeMenu();
     }
-    
+
     // Load index.html
     mainWindow.loadURL(url.format({
-        pathname: path.join(BASE_DIR, './index.html'),
+        pathname: PathUtil.join(AppPaths.Get.base, './index.html'),
         protocol: 'file:',
         slashes: true,
     }));
@@ -65,12 +64,12 @@ function createWindow() {
     } catch (e: any) {
         mainWindow.setTitle(`${baseTitle} (release//v0.5.1)`);
     }
-    
+
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();
 
     // Emitted when the window is closed.
-    mainWindow.on('closed', function() {
+    mainWindow.on('closed', function () {
         app.quit();
     });
 }
@@ -81,7 +80,7 @@ function createWindow() {
 app.on('ready', createWindow);
 
 // Quit when all windows are closed.
-app.on('window-all-closed', function() {
+app.on('window-all-closed', function () {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
@@ -89,7 +88,7 @@ app.on('window-all-closed', function() {
     }
 });
 
-app.on('activate', function() {
+app.on('activate', function () {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {

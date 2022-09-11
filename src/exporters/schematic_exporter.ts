@@ -1,13 +1,12 @@
 import { BlockMesh } from '../block_mesh';
-import { RESOURCES_DIR } from '../util';
 import { IExporter } from './base_exporter';
 import { Vector3 } from '../vector';
 import { StatusHandler } from '../status';
 
-import path from 'path';
 import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
 import { saveNBT } from '../util/nbt_util';
+import { AppPaths, PathUtil } from '../util/path_util';
 
 export class Schematic extends IExporter {
     private _convertToNBT(blockMesh: BlockMesh) {
@@ -18,7 +17,7 @@ export class Schematic extends IExporter {
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
         const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(
-            fs.readFileSync(path.join(RESOURCES_DIR, './block_ids.json'), 'utf8'),
+            fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './block_ids.json'), 'utf8'),
         );
 
         const blocks = blockMesh.getBlocks();

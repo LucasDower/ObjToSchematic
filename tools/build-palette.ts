@@ -1,23 +1,25 @@
 import { log, LogStyle } from './logging';
-import { TOOLS_DIR } from '../src/util';
 import { Palette } from '../src/palette';
 
 import fs from 'fs';
 import path from 'path';
 import prompt from 'prompt';
+import { AppPaths, PathUtil } from '../src/util/path_util';
 
 const PALETTE_NAME_REGEX = /^[a-zA-Z\-]+$/;
 
 void async function main() {
+    AppPaths.Get.setBaseDir(PathUtil.join(__dirname, '../..'));
+
     log(LogStyle.Info, 'Creating a new palette...');
-    
-    const paletteBlocksDir = path.join(TOOLS_DIR, './new-palette-blocks.txt');
+
+    const paletteBlocksDir = path.join(AppPaths.Get.tools, './new-palette-blocks.txt');
     if (!fs.existsSync(paletteBlocksDir)) {
         log(LogStyle.Failure, 'Could not find /tools/new-palette-blocks.txt');
         return;
     }
     log(LogStyle.Success, 'Found list of blocks to use in /tools/new-palette-blocks.txt');
-    
+
     let blocksToUse: string[] = fs.readFileSync(paletteBlocksDir, 'utf8').replace(/\r/g, '').split('\n');
     blocksToUse = blocksToUse.filter((block) => {
         return block.length !== 0;
@@ -28,7 +30,7 @@ void async function main() {
         return;
     }
     log(LogStyle.Info, `Found ${blocksToUse.length} blocks to use`);
-    
+
     const schema: prompt.Schema = {
         properties: {
             paletteName: {

@@ -1,10 +1,11 @@
-import { AppTypes, AppUtil, ATLASES_DIR, TOptional, UV } from './util';
+import { AppTypes, AppUtil, TOptional, UV } from './util';
 
 import fs from 'fs';
 import path from 'path';
 import { RGBA } from './colour';
 import { ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
+import { AppPaths } from './util/path_util';
 
 export type TAtlasBlockFace = {
     name: string;
@@ -32,7 +33,7 @@ export type TAtlasBlock = {
 export class Atlas {
     public static ATLAS_NAME_REGEX: RegExp = /^[a-zA-Z\-]+$/;
     private static _FILE_VERSION: number = 1;
-    
+
     private _blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>;
     private _atlasSize: number;
     private _atlasName: string;
@@ -86,7 +87,7 @@ export class Atlas {
     }
 
     public getAtlasTexturePath() {
-        return path.join(ATLASES_DIR, `./${this._atlasName}.png`);
+        return path.join(AppPaths.Get.atlases, `./${this._atlasName}.png`);
     }
 
     /*
@@ -108,6 +109,6 @@ export class Atlas {
     }
 
     private static _getAtlasPath(atlasName: string): string {
-        return path.join(ATLASES_DIR, `./${atlasName}.atlas`);
+        return path.join(AppPaths.Get.atlases, `./${atlasName}.atlas`);
     }
 }

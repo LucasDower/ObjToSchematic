@@ -1,4 +1,4 @@
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 
 export abstract class BaseUIElement<Type> {
     protected _id: string;
@@ -34,7 +34,7 @@ export abstract class BaseUIElement<Type> {
 
     public abstract generateHTML(): string;
     public abstract registerEvents(): void;
-    
+
 
     protected abstract _onEnabledChanged(): void;
 }

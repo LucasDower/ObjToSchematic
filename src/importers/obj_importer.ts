@@ -21,7 +21,7 @@ export class ObjImporter extends IImporter {
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
 
-    private _materials: {[key: string]: (SolidMaterial | TexturedMaterial)} = {
+    private _materials: { [key: string]: (SolidMaterial | TexturedMaterial) } = {
         'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE },
     };
     private _mtlLibs: string[] = [];
@@ -107,16 +107,16 @@ export class ObjImporter extends IImporter {
                 .toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 const line = match.line.trim();
-                
+
                 const vertices = line.split(' ').filter((x) => {
                     return x.length !== 0;
                 });
-                
+
                 if (vertices.length < 3) {
                     // this.addWarning('')
                     // throw new AppError('Face data should have at least 3 vertices');
                 }
-                
+
                 const points: {
                     positionIndex: number;
                     texcoordIndex?: number;
@@ -163,7 +163,7 @@ export class ObjImporter extends IImporter {
                 const pointBase = points[0];
                 for (let i = 1; i < points.length - 1; ++i) {
                     const pointA = points[i];
-                    const pointB = points[i+1];
+                    const pointB = points[i + 1];
                     const tri: Tri = {
                         positionIndices: {
                             x: pointBase.positionIndex - 1,
@@ -193,7 +193,7 @@ export class ObjImporter extends IImporter {
             },
         },
     ];
-    
+
     private _currentColour: RGBA = RGBAColours.BLACK;
     private _currentAlpha: number = 1.0;
     private _currentTexture: string = '';
@@ -276,8 +276,8 @@ export class ObjImporter extends IImporter {
     ];
 
     override parseFile(filePath: string) {
-        ASSERT(path.isAbsolute(filePath), 'path not absolute');
-        
+        ASSERT(path.isAbsolute(filePath), `ObjImporter: ${filePath} not absolute`);
+
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
@@ -351,10 +351,10 @@ export class ObjImporter extends IImporter {
                 continue;
             }
             const fileContents = fs.readFileSync(mtlLib, 'utf8');
-    
+
             fileContents.replace('\r', ''); // Convert Windows carriage return
             const fileLines = fileContents.split('\n');
-    
+
             for (const line of fileLines) {
                 this._parseMTLLine(line);
             }

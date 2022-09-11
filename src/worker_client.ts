@@ -17,6 +17,9 @@ export class WorkerClient {
         return this._instance || (this._instance = new this());
     }
 
+    private constructor() {
+    }
+
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;

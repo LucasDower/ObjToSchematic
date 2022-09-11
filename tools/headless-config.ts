@@ -26,6 +26,7 @@ export const headlessConfig: THeadlessConfig = {
         exporter: 'obj', // 'schematic' / 'litematic',
     },
     debug: {
-        logging: true,
+        showLogs: true,
+        showWarnings: true,
     },
 };

@@ -1,11 +1,11 @@
 import { log, LogStyle } from './logging';
-import { TOOLS_DIR } from '../src/util';
 
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
 import prompt from 'prompt';
 import { RGBA } from '../src/colour';
+import { AppPaths } from '../src/util/path_util';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {
@@ -15,7 +15,7 @@ export const ASSERT = (condition: boolean, onFailMessage: string) => {
 };
 
 export function isDirSetup(relativePath: string, jarAssetDir: string) {
-    const dir = path.join(TOOLS_DIR, relativePath);
+    const dir = path.join(AppPaths.Get.tools, relativePath);
     if (fs.existsSync(dir)) {
         if (fs.readdirSync(dir).length > 0) {
             return true;

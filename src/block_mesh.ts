@@ -1,9 +1,8 @@
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
-import { ColourSpace, RESOURCES_DIR } from './util';
+import { ColourSpace } from './util';
 
 import fs from 'fs';
-import path from 'path';
 import { StatusHandler } from './status';
 import { Vector3 } from './vector';
 import { Atlas } from './atlas';
@@ -13,6 +12,7 @@ import { AtlasPalette } from './block_assigner';
 import { AppError, ASSERT } from './util/error_util';
 import { AssignParams } from './worker_types';
 import { BufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { AppPaths, PathUtil } from './util/path_util';
 
 interface Block {
     voxel: Voxel;
@@ -49,7 +49,7 @@ export class BlockMesh {
         this._atlas = Atlas.getVanillaAtlas()!;
         //this._recreateBuffer = true;
 
-        const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
+        const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
     }
 

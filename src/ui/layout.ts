@@ -15,9 +15,10 @@ import { TExporters } from '../exporters/exporters';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { PaletteManager } from '../palette';
 import { TBlockAssigners } from '../assigners/assigners';
-import { ATLASES_DIR, EAction } from '../util';
+import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
+import { AppPaths } from '../util/path_util';
 
 export interface Group {
     label: string;
@@ -234,7 +235,7 @@ export class UI {
                 },
                 elementsOrder: ['grid', 'axes'],
             },
-            
+
         },
         groupsOrder: ['viewmode', 'debug'],
     };
@@ -429,7 +430,7 @@ export class UI {
             </div>
         `;
     }
-    
+
     public getActionOutput(action: EAction) {
         const group = this._getEActionGroup(action);
         return group.output;
@@ -548,7 +549,7 @@ export class UI {
     private _getTextureAtlases(): ComboBoxItem<string>[] {
         const textureAtlases: ComboBoxItem<string>[] = [];
 
-        fs.readdirSync(ATLASES_DIR).forEach((file) => {
+        fs.readdirSync(AppPaths.Get.atlases).forEach((file) => {
             if (file.endsWith('.atlas')) {
                 const paletteID = file.split('.')[0];
                 let paletteName = paletteID.replace('-', ' ').toLowerCase();

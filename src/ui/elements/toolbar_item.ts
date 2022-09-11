@@ -1,8 +1,9 @@
-import { getRandomID, STATIC_DIR } from '../../util';
+import { getRandomID } from '../../util';
 
-import path from 'path';
 import fs from 'fs';
 import { ASSERT } from '../../util/error_util';
+import { AppPaths } from '../../util/path_util';
+import { PathUtil } from '../../util/path_util';
 
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 
@@ -20,9 +21,9 @@ export class ToolbarItemElement {
 
     public constructor(params: TToolbarItemParams) {
         this._id = getRandomID();
-        
+
         this._iconName = params.icon;
-        this._iconPath = path.join(STATIC_DIR, params.icon + '.svg');
+        this._iconPath = PathUtil.join(AppPaths.Get.static, params.icon + '.svg');
 
         this._isEnabled = true;
         this._isActive = false;
@@ -80,7 +81,7 @@ export class ToolbarItemElement {
                 element.classList.add('toolbar-item-hover');
             }
         });
-        
+
         element.addEventListener('mouseleave', () => {
             if (this._isEnabled) {
                 element.classList.remove('toolbar-item-hover');

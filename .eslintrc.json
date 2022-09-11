@@ -33,6 +33,7 @@
         "block-spacing": [2, "always"],
         "semi": "error",
         "spaced-comment": "off",
-        "keyword-spacing": "off"
+        "keyword-spacing": "off",
+        "space-before-function-paren": "off"
     }
 }

@@ -1,4 +1,4 @@
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 import { clamp, mapRange, wayThrough } from '../../math';
 import { LabelledElement } from './labelled_element';
 

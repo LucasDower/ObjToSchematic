@@ -1,4 +1,3 @@
-import { headlessConfig } from './headless-config';
 import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/worker_types';
 import { WorkerClient } from '../src/worker_client';
 import { StatusHandler } from '../src/status';
@@ -15,7 +14,7 @@ export type THeadlessConfig = {
     }
 }
 
-export function runHeadless() {
+export function runHeadless(headlessConfig: THeadlessConfig) {
     if (headlessConfig.debug.showLogs) {
         Logger.Get.enableLOGMAJOR();
     }

@@ -1,4 +1,4 @@
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 import { UIMessageBuilder } from '../misc';
 
 export type OutputStyle = 'success' | 'warning' | 'error' | 'none';
@@ -69,7 +69,7 @@ export class OutputElement {
         if (taskItems.length > 0) {
             builder.addHeading(taskId, taskHeading, style);
         } else {
-            builder.addBold(taskId, [ taskHeading ], style);
+            builder.addBold(taskId, [taskHeading], style);
         }
 
         builder.addItem(taskId, taskItems, style);

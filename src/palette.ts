@@ -1,4 +1,4 @@
-import { AppTypes, AppUtil, PALETTES_DIR, TOptional } from './util';
+import { AppTypes, AppUtil, TOptional } from './util';
 
 import fs from 'fs';
 import path from 'path';
@@ -7,19 +7,20 @@ import { Atlas } from './atlas';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
 import { RGBA, RGBAUtil } from './colour';
+import { AppPaths, PathUtil } from './util/path_util';
 
 export class PaletteManager {
     public static getPalettesInfo(): { paletteID: string, paletteDisplayName: string }[] {
         const palettes: { paletteID: string, paletteDisplayName: string }[] = [];
 
-        fs.readdirSync(PALETTES_DIR).forEach((file) => {
+        fs.readdirSync(AppPaths.Get.palettes).forEach((file) => {
             const paletteFilePath = path.parse(file);
             if (paletteFilePath.ext === Palette.PALETTE_FILE_EXT) {
                 const paletteID = paletteFilePath.name;
-                
+
                 let paletteDisplayName = paletteID.replace('-', ' ').toLowerCase();
                 paletteDisplayName = AppUtil.Text.capitaliseFirstLetter(paletteDisplayName);
-                
+
                 palettes.push({ paletteID: paletteID, paletteDisplayName: paletteDisplayName });
             }
         });
@@ -168,7 +169,7 @@ export class Palette {
      */
     public removeMissingAtlasBlocks(atlas: Atlas) {
         const missingBlocks: AppTypes.TNamespacedBlockName[] = [];
-        for (let blockIndex = this._blocks.length-1; blockIndex >= 0; --blockIndex) {
+        for (let blockIndex = this._blocks.length - 1; blockIndex >= 0; --blockIndex) {
             const blockName = this._blocks[blockIndex];
             if (!atlas.hasBlock(blockName)) {
                 missingBlocks.push(blockName);
@@ -187,6 +188,6 @@ export class Palette {
     }
 
     private static _getPalettePath(paletteName: string): string {
-        return path.join(PALETTES_DIR, `./${paletteName}.palette`);
+        return PathUtil.join(AppPaths.Get.palettes, `./${paletteName}.palette`);
     }
 }

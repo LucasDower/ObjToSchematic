@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 
 import { remote } from 'electron';
 import * as path from 'path';
@@ -30,11 +30,11 @@ export class FileInputElement extends LabelledElement<string> {
 
         element.onmouseenter = () => {
             this._hovering = true;
-        }
+        };
 
         element.onmouseleave = () => {
             this._hovering = false;
-        }
+        };
 
         element.onclick = () => {
             if (!this._isEnabled) {
@@ -69,7 +69,7 @@ export class FileInputElement extends LabelledElement<string> {
             } else {
                 element.classList.add('input-text-disabled');
             }
-        }
+        };
     }
 
     protected _onEnabledChanged() {

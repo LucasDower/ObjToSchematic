@@ -1,5 +1,5 @@
 import { LabelledElement } from './labelled_element';
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 
 export type ComboBoxItem<T> = {
     id: T;

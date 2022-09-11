@@ -1,5 +1,5 @@
 import { BaseUIElement } from './base';
-import { ASSERT } from "../../util/error_util";
+import { ASSERT } from '../../util/error_util';
 
 export class ButtonElement extends BaseUIElement<any> {
     private _onClick: () => void;
