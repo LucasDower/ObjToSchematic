@@ -2,6 +2,7 @@ import { TextureFiltering } from '../../src/texture';
 import { ColourSpace } from '../../src/util';
 import { AppPaths, PathUtil } from '../../src/util/path_util';
 import { runHeadless, THeadlessConfig } from '../../tools/headless';
+import { FileUtil } from '../../src/util/file_util';
 
 const baseConfig: THeadlessConfig = {
     import: {
@@ -34,6 +35,7 @@ const baseConfig: THeadlessConfig = {
 
 test('FULL Obj->Obj', () => {
     AppPaths.Get.setBaseDir(PathUtil.join(__dirname, '../..'));
+    FileUtil.mkdirSyncIfNotExist(PathUtil.join(AppPaths.Get.testData, '../out/'));
 
     const config: THeadlessConfig = baseConfig;
 
