@@ -9,7 +9,8 @@
   "scripts": {
     "lint": "eslint --fix src tools --ext .ts",
     "build": "tsc",
-    "test": "jest --config jestconfig.json --runInBand",
+    "test": "jest --config jestconfig.json",
+    "test-full": "jest --config jestconfig.full.json --runInBand",
     "start": "npm run build && electron ./dist/src/main.js --enable-logging",
     "atlas": "node ./dist/tools/build-atlas.js",
     "palette": "node ./dist/tools/build-palette.js",
