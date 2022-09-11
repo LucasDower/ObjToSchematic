@@ -29,5 +29,5 @@ export namespace AppConfig {
     export const ANGLE_SNAP_RADIUS_DEGREES = 10.0;
 
     /** If the loaded mesh exceeds this number of triangles, the renderer will not attempt to draw it. */
-    export const RENDER_TRIANGLE_THRESHOLD = 100_000;
+    export const RENDER_TRIANGLE_THRESHOLD = 1_000_000;
 }
