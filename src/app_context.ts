@@ -207,7 +207,6 @@ export class AppContext {
                 textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
                 voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
-                calculateNeighbours: uiElements.ambientOcclusion.getCachedValue() === 'on',
             },
         };
 

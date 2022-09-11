@@ -13,7 +13,7 @@
     "start": "npm run build && electron ./dist/src/main.js --enable-logging",
     "atlas": "node ./dist/tools/build-atlas.js",
     "palette": "node ./dist/tools/build-palette.js",
-    "headless": "tsc && node ./dist/tools/headless.js",
+    "headless": "tsc && node ./dist/tools/run-headless.js",
     "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --app-version=0.5.1 --prune=true",
     "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --app-version=0.5.1 --prune=true",
     "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --app-version=0.5.1 --prune=true"

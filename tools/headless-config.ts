@@ -13,7 +13,6 @@ export const headlessConfig: THeadlessConfig = {
         textureFiltering: TextureFiltering.Linear,
         voxelOverlapRule: 'average',
         enableAmbientOcclusion: false, // Only want true if exporting to .obj
-        calculateNeighbours: false, // Only want true if exporting to .obj
     },
     assign: {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases

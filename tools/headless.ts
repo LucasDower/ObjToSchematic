@@ -2,7 +2,7 @@ import { headlessConfig } from './headless-config';
 import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/worker_types';
 import { WorkerClient } from '../src/worker_client';
 import { StatusHandler } from '../src/status';
-import { Logger, LOG_MAJOR } from '../src/util/log_util';
+import { LOG_MAJOR } from '../src/util/log_util';
 
 export type THeadlessConfig = {
     import: ImportParams.Input,
@@ -14,11 +14,7 @@ export type THeadlessConfig = {
     }
 }
 
-void async function main() {
-    if (headlessConfig.debug.logging) {
-        Logger.Get.enableLOGMAJOR();
-    }
-
+export function runHeadless() {
     const worker = WorkerClient.Get;
     {
         LOG_MAJOR('Importing...');
@@ -51,5 +47,4 @@ void async function main() {
         worker.export(headlessConfig.export);
         StatusHandler.Get.dump().clear();
     }
-    LOG_MAJOR('Finished!');
-}();
+}

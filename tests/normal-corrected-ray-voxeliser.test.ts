@@ -20,7 +20,6 @@ test('Voxelise solid 2x2 cube', () => {
         textureFiltering: TextureFiltering.Nearest,
         enableAmbientOcclusion: false,
         voxelOverlapRule: 'average',
-        calculateNeighbours: false,
         voxeliser: 'ncrb',
     });
 

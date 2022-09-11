@@ -16,7 +16,7 @@ export interface Voxel {
 
 export type TVoxelOverlapRule = 'first' | 'average';
 
-export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | 'calculateNeighbours'>;
+export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | 'enableAmbientOcclusion'>;
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
@@ -110,7 +110,7 @@ export class VoxelMesh {
     ];
 
     private _updateNeighbours(pos: Vector3) {
-        if (this._voxelMeshParams.calculateNeighbours) {
+        if (this._voxelMeshParams.enableAmbientOcclusion) {
             for (const neighbourOffset of this._neighbours) {
                 const neighbour = Vector3.add(pos, neighbourOffset);
                 const inverseOffset = neighbourOffset.copy().negate();
@@ -125,7 +125,7 @@ export class VoxelMesh {
 
     private _stringified: string = '';
     public getNeighbours(pos: Vector3) {
-        ASSERT(this._voxelMeshParams.calculateNeighbours, 'Calculate neighbours is disabled');
+        ASSERT(this._voxelMeshParams.enableAmbientOcclusion, 'Ambient occlusion is disabled');
 
         this._stringified = pos.stringify();
         const neighbours = this._neighbourMap.get(this._stringified);

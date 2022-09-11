@@ -6,7 +6,7 @@ import { ASSERT } from '../src/util/error_util';
 test('Voxel neighbours', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
-        calculateNeighbours: true,
+        enableAmbientOcclusion: true,
 
     });
     voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.WHITE);
@@ -26,7 +26,7 @@ test('Voxel neighbours', () => {
 test('Add voxel', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
-        calculateNeighbours: true,
+        enableAmbientOcclusion: true,
     });
 
     voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.RED);
@@ -42,7 +42,7 @@ test('Add voxel', () => {
 test('Voxel overlap first', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
-        calculateNeighbours: false,
+        enableAmbientOcclusion: false,
     });
 
     voxelMesh.addVoxel(new Vector3(1, 2, 3), RGBAColours.RED);
@@ -54,11 +54,11 @@ test('Voxel overlap first', () => {
 test('Voxel overlap average', () => {
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'average',
-        calculateNeighbours: false,
+        enableAmbientOcclusion: false,
     });
 
     voxelMesh.addVoxel(new Vector3(1, 2, 3), { r: 1.0, g: 0.5, b: 0.25, a: 1.0 });
     voxelMesh.addVoxel(new Vector3(1, 2, 3), { r: 0.0, g: 0.5, b: 0.75, a: 1.0 });
 
-    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual({ r: 0.5, g: 0.5, b: 0.5, a: 1.0});
+    expect(voxelMesh.getVoxelAt(new Vector3(1, 2, 3))?.colour).toEqual({ r: 0.5, g: 0.5, b: 0.5, a: 1.0 });
 });

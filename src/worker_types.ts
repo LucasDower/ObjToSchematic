@@ -39,7 +39,6 @@ export namespace VoxeliseParams {
         textureFiltering: TextureFiltering,
         enableAmbientOcclusion: boolean,
         voxelOverlapRule: TVoxelOverlapRule,
-        calculateNeighbours: boolean,
     }
 
     export type Output = {
