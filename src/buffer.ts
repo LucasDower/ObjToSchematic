@@ -1,12 +1,12 @@
-import { GeometryTemplates } from "./geometry";
-import { Mesh, SolidMaterial, TexturedMaterial } from "./mesh";
-import { AttributeData } from "./render_buffer";
-import { Vector3 } from "./vector";
-import { VoxelMesh } from "./voxel_mesh";
-import { AppConstants } from "./constants";
-import { RenderVoxelMeshParams } from "./worker_types";
-import { OcclusionManager } from "./occlusion";
-import { BlockMesh } from "./block_mesh";
+import { GeometryTemplates } from './geometry';
+import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
+import { AttributeData } from './render_buffer';
+import { Vector3 } from './vector';
+import { VoxelMesh } from './voxel_mesh';
+import { AppConstants } from './constants';
+import { RenderVoxelMeshParams } from './worker_types';
+import { OcclusionManager } from './occlusion';
+import { BlockMesh } from './block_mesh';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
@@ -53,7 +53,6 @@ export type TBlockMeshBufferDescription = {
 type TMaterialID = string;
 
 export class BufferGenerator {
-
     public static fromMesh(mesh: Mesh): TMeshBufferDescription[] {
         // Count the number of triangles that use each material
         const materialTriangleCount = new Map<TMaterialID, number>();
@@ -168,15 +167,11 @@ export class BufferGenerator {
         };
     }
 
-    public static fromBlockMesh(blockMesh: BlockMesh, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBufferDescription {
-        //ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
-
-        //const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
-
+    public static fromBlockMesh(blockMesh: BlockMesh): TBlockMeshBufferDescription {
         const blocks = blockMesh.getBlocks();
         const numBlocks = blocks.length;
 
-        const newBuffer = this.createBlockMeshBuffer(numBlocks, voxelMeshBuffer);
+        const newBuffer = this.createBlockMeshBuffer(numBlocks, blockMesh.getVoxelMesh().getBuffer().buffer);
 
         const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
         let insertIndex = 0;
@@ -279,5 +274,4 @@ export class BufferGenerator {
             },
         };
     }
-
 }

@@ -1,5 +1,5 @@
-import { ASSERT } from "./util/error_util";
-import { LOG } from "./util/log_util";
+import { ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 
 /* eslint-disable */
 export enum EAppEvent {

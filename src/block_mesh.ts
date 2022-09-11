@@ -1,8 +1,6 @@
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { BlockInfo } from './block_atlas';
 import { ColourSpace, RESOURCES_DIR } from './util';
-import { Renderer } from './renderer';
-import { AppConstants } from './constants';
 
 import fs from 'fs';
 import path from 'path';
@@ -14,6 +12,7 @@ import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { AtlasPalette } from './block_assigner';
 import { AppError, ASSERT } from './util/error_util';
 import { AssignParams } from './worker_types';
+import { BufferGenerator, TBlockMeshBufferDescription } from './buffer';
 
 interface Block {
     voxel: Voxel;
@@ -48,6 +47,7 @@ export class BlockMesh {
         this._blocks = [];
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
+        //this._recreateBuffer = true;
 
         const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
@@ -64,7 +64,7 @@ export class BlockMesh {
         const atlasPalette = new AtlasPalette(atlas, palette);
 
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
-        
+
         let countFalling = 0;
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
@@ -73,7 +73,7 @@ export class BlockMesh {
 
             const isFallable = this._fallableBlocks.includes(block.name);
             const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
-            
+
             if (isFallable && !isSupported) {
                 ++countFalling;
             }
@@ -116,63 +116,26 @@ export class BlockMesh {
         return this._voxelMesh;
     }
 
+    public getAtlas() {
+        return this._atlas;
+    }
+
     /*
-    public createBuffer() {
-        ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
-
-        // FIXME: Too hacky
-        const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
-
-        const numBlocks = this._blocks.length;
-        const newBuffer = {
-            position: {
-                numComponents: AppConstants.ComponentSize.POSITION,
-                data: voxelBufferRaw.position.data,
-            },
-            colour: {
-                numComponents: AppConstants.ComponentSize.COLOUR,
-                data: voxelBufferRaw.colour.data,
-            },
-            occlusion: {
-                numComponents: AppConstants.ComponentSize.OCCLUSION,
-                data: voxelBufferRaw.occlusion.data,
-            },
-            texcoord: {
-                numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: voxelBufferRaw.texcoord.data,
-            },
-            normal: {
-                numComponents: AppConstants.ComponentSize.NORMAL,
-                data: voxelBufferRaw.normal.data,
-            },
-            indices: {
-                numComponents: AppConstants.ComponentSize.INDICES,
-                data: voxelBufferRaw.indices.data,
-            },
-            blockTexcoord: {
-                numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
-            },
-        };
-
-        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
-        let insertIndex = 0;
-        for (let i = 0; i < numBlocks; ++i) {
-            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
-                const faceName = faceOrder[f];
-                const texcoord = this._blocks[i].blockInfo.faces[faceName].texcoord;
-                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
-                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
-                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
-                }
-            }
-        }
-
-        return newBuffer;
+    private _renderParams?: RenderBlockMeshParams.Input;
+    private _recreateBuffer: boolean;
+    public setRenderParams(params: RenderBlockMeshParams.Input) {
+        this._renderParams = params;
+        this._recreateBuffer = true;
     }
     */
 
-    public getAtlas() {
-        return this._atlas;
+    private _buffer?: TBlockMeshBufferDescription;
+    public getBuffer(): TBlockMeshBufferDescription {
+        //ASSERT(this._renderParams, 'Called BlockMesh.getBuffer() without setting render params');
+        if (this._buffer === undefined) {
+            this._buffer = BufferGenerator.fromBlockMesh(this);
+            //this._recreateBuffer = false;
+        }
+        return this._buffer;
     }
 }

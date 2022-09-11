@@ -1,14 +1,12 @@
 import { Bounds } from './bounds';
-import { AttributeData } from './render_buffer';
 import { RGBA } from './colour';
-import { AppConstants } from './constants';
-import { GeometryTemplates } from './geometry';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { VoxeliseParams } from './worker_types';
+import { RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { BufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 
 export interface Voxel {
     position: Vector3;
@@ -18,7 +16,7 @@ export interface Voxel {
 
 export type TVoxelOverlapRule = 'first' | 'average';
 
-export type TVoxelMeshParams = Pick<VoxeliseParams.Input, "voxelOverlapRule" | "calculateNeighbours">;
+export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | 'calculateNeighbours'>;
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
@@ -33,6 +31,7 @@ export class VoxelMesh {
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
         this._voxelMeshParams = voxelMeshParams;
+        this._recreateBuffer = true;
     }
 
     public getVoxels() {
@@ -148,5 +147,22 @@ export class VoxelMesh {
      */
     public hasNeighbour(pos: Vector3, offset: Vector3): boolean {
         return (this.getNeighbours(pos).value & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
+    }
+
+    private _renderParams?: RenderVoxelMeshParams.Input;
+    private _recreateBuffer: boolean;
+    public setRenderParams(params: RenderVoxelMeshParams.Input) {
+        this._renderParams = params;
+        this._recreateBuffer = true;
+    }
+
+    private _buffer?: TVoxelMeshBufferDescription;
+    public getBuffer(): TVoxelMeshBufferDescription {
+        ASSERT(this._renderParams, 'Called VoxelMesh.getBuffer() without setting render params');
+        if (this._buffer === undefined || this._recreateBuffer) {
+            this._buffer = BufferGenerator.fromVoxelMesh(this, this._renderParams);
+            this._recreateBuffer = false;
+        }
+        return this._buffer;
     }
 }

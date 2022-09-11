@@ -1,6 +1,6 @@
 import { EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { LOG, LOG_WARN } from './util/log_util';
+import { LOG, LOG_MAJOR, LOG_WARN } from './util/log_util';
 
 export type StatusType = 'warning' | 'info';
 
@@ -15,7 +15,7 @@ export class StatusHandler {
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
-    
+
     private _statusMessages: StatusMessage[];
 
     private constructor() {
@@ -36,7 +36,7 @@ export class StatusHandler {
     }
 
     public getStatusMessages(statusType: StatusType): string[] {
-        const messagesToReturn = (statusType !== undefined) ? this._statusMessages.filter((m) => m.status === statusType ): this._statusMessages;
+        const messagesToReturn = (statusType !== undefined) ? this._statusMessages.filter((m) => m.status === statusType) : this._statusMessages;
         return messagesToReturn.map((m) => m.message);
     }
 
@@ -55,7 +55,7 @@ export class StatusHandler {
             case EAction.Export:
                 return '[Exporter]: Saved';
             default:
-                ASSERT(false)
+                ASSERT(false);
         }
     }
 
@@ -72,5 +72,16 @@ export class StatusHandler {
             default:
                 ASSERT(false);
         }
+    }
+
+    public dump() {
+        for (const { message, status } of this._statusMessages) {
+            if (status === 'warning') {
+                LOG_WARN(message);
+            } else {
+                LOG_MAJOR('  - ' + message);
+            }
+        }
+        return this;
     }
 }

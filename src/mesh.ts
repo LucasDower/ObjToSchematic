@@ -34,7 +34,7 @@ export interface TexturedMaterial {
     alphaPath?: string;
     alphaFactor: number;
 }
-export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
+export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
 
 export class Mesh {
     public readonly id: string;
@@ -43,7 +43,7 @@ export class Mesh {
     public _normals!: Vector3[];
     public _uvs!: UV[];
     public _tris!: Tri[];
-    
+
     private _materials!: MaterialMap;
     private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
@@ -170,7 +170,7 @@ export class Mesh {
                 colour: RGBAColours.WHITE,
             };
         }
-        
+
         // Check texture paths are absolute and exist
         for (const materialName in this._materials) {
             const material = this._materials[materialName];
@@ -208,7 +208,7 @@ export class Mesh {
         centre.divScalar(totalWeight);
         */
         const centre = this.getBounds().getCentre();
-        
+
         if (!centre.isNumber()) {
             throw new AppError('Could not find centre of mesh');
         }

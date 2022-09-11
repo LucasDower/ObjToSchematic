@@ -1,7 +1,6 @@
 import { Vector3 } from '../vector';
 import { BlockMesh } from '../block_mesh';
 import { TOptional } from '../util';
-import { TBlockMeshBuffer } from '../buffer';
 
 export abstract class IExporter {
     protected _sizeVector!: Vector3;
@@ -19,7 +18,7 @@ export abstract class IExporter {
         return;
     }
 
-    public abstract export(blockMesh: BlockMesh, filePath: string, blockMeshBuffer: TBlockMeshBuffer): boolean;
+    public abstract export(blockMesh: BlockMesh, filePath: string): boolean;
 
     public getFormatFilter() {
         return {

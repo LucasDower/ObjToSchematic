@@ -4,7 +4,6 @@ import { ASSERT } from '../util/error_util';
 
 import fs from 'fs';
 import path from 'path';
-import { TBlockMeshBuffer } from '../buffer';
 
 export class ObjExporter extends IExporter {
     public override getFormatFilter(): Electron.FileFilter {
@@ -22,32 +21,34 @@ export class ObjExporter extends IExporter {
         return 'Wavefront OBJ';
     }
 
-    public override export(blockMesh: BlockMesh, filepath: string, blockMeshBuffer: TBlockMeshBuffer) {
+    public override export(blockMesh: BlockMesh, filepath: string) {
         ASSERT(path.isAbsolute(filepath));
         const parsedPath = path.parse(filepath);
-        
+
         const filepathOBJ = filepath;
         const filepathMTL = path.join(parsedPath.dir, parsedPath.name + '.mtl');
         const filepathTexture = path.join(parsedPath.dir, parsedPath.name + '.png');
 
-        this._exportOBJ(filepathOBJ, blockMesh, blockMeshBuffer, parsedPath.name + '.mtl');
+        this._exportOBJ(filepathOBJ, blockMesh, parsedPath.name + '.mtl');
         this._exportMTL(filepathMTL, filepathTexture, blockMesh);
 
         return true;
     }
 
-    private _exportOBJ(filepath: string, blockMesh: BlockMesh, buffer: TBlockMeshBuffer, mtlRelativePath: string) {
+    private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
+        const buffer = blockMesh.getBuffer().buffer;
+
         const positionData = buffer.position.data as Float32Array;
         const normalData = buffer.normal.data as Float32Array;
         const texcoordData = buffer.texcoord.data as Float32Array;
         const blockTexcoordData = buffer.blockTexcoord.data as Float32Array;
         const indexData = buffer.indices.data as Uint32Array;
-        
+
         const writeStream = fs.createWriteStream(filepath);
 
         writeStream.write('# Created with ObjToSchematic\n');
         writeStream.write('# https://github.com/LucasDower/ObjToSchematic/\n\n');
-        
+
         if (positionData && normalData && texcoordData && indexData && blockTexcoordData) {
             const numTris = indexData.length / 3;
             // Add vertex data
@@ -90,7 +91,7 @@ export class ObjExporter extends IExporter {
         const mtlData: string[] = [];
         mtlData.push('# Created with ObjToSchematic');
         mtlData.push('# https://github.com/LucasDower/ObjToSchematic/');
-        
+
         mtlData.push('newmtl Default');
         mtlData.push('Kd 1.000000 1.000000 1.000000');
         mtlData.push(`map_Kd ${filepathTexture}`);

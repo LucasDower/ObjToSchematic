@@ -1,4 +1,3 @@
-import { clamp } from './math';
 import { WorkerClient } from './worker_client';
 import { TToWorkerMessage, TFromWorkerMessage } from './worker_types';
 import { StatusHandler } from './status';
@@ -20,7 +19,7 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.renderMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
-            case 'Voxelise': 
+            case 'Voxelise':
                 return {
                     action: 'Voxelise',
                     result: WorkerClient.Get.voxelise(message.params),
@@ -32,7 +31,7 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.renderVoxelMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
-            case 'Assign': 
+            case 'Assign':
                 return {
                     action: 'Assign',
                     result: WorkerClient.Get.assign(message.params),
@@ -44,7 +43,7 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.renderBlockMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
-            case 'Export': 
+            case 'Export':
                 return {
                     action: 'Export',
                     result: WorkerClient.Get.export(message.params),
@@ -55,7 +54,6 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };
     }
 
-    return { action: 'KnownError', error: new AppError('Worker could not handle message') };         
-
+    return { action: 'KnownError', error: new AppError('Worker could not handle message') };
 }
 

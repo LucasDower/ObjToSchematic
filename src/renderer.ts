@@ -3,15 +3,11 @@ import { ArcballCamera } from './camera';
 import { ShaderManager } from './shaders';
 import { RenderBuffer } from './render_buffer';
 import { DebugGeometryTemplates } from './geometry';
-import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-import { VoxelMesh } from './voxel_mesh';
-import { BlockMesh } from './block_mesh';
+import { SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
 
 import * as twgl from 'twgl.js';
 import { RGBA, RGBAUtil } from './colour';
 import { Texture } from './texture';
-import { LOG } from './util/log_util';
-import { TMeshBufferDescription } from './buffer';
 import { RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
 
 /* eslint-disable */
@@ -55,7 +51,7 @@ export class Renderer {
         numElements: number,
     }>;
     public _voxelBuffer?: twgl.BufferInfo;
-    public _voxelBufferRaw?: {[attribute: string]: { numComponents: number, data: Float32Array | Uint32Array }};
+    public _voxelBufferRaw?: { [attribute: string]: { numComponents: number, data: Float32Array | Uint32Array } };
     private _blockBuffer?: twgl.BufferInfo;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
@@ -64,9 +60,9 @@ export class Renderer {
     private _axesEnabled: boolean;
 
     private _gridBuffers: {
-        x: { [meshType: string]: RenderBuffer};
-        y: { [meshType: string]: RenderBuffer};
-        z: { [meshType: string]: RenderBuffer};
+        x: { [meshType: string]: RenderBuffer };
+        y: { [meshType: string]: RenderBuffer };
+        z: { [meshType: string]: RenderBuffer };
     };
     private _gridEnabled: boolean;
 
@@ -167,7 +163,7 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(params: RenderMeshParams.Output) {       
+    public useMesh(params: RenderMeshParams.Output) {
         this._materialBuffers = [];
 
         for (const { material, buffer, numElements } of params.buffers) {
@@ -226,23 +222,23 @@ export class Renderer {
         this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
         this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
         this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        
+
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
     }
-    
+
     public useBlockMesh(params: RenderBlockMeshParams.Output) {
         this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer);
-        
+
         this._atlasTexture = twgl.createTexture(this._gl, {
             src: params.atlasTexturePath,
             mag: this._gl.NEAREST,
         });
-        
-        this._atlasSize = params.atlasSize,
+
+        this._atlasSize = params.atlasSize;
 
         this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
-        
+
         this._modelsAvailable = 3;
         this.setModelToUse(MeshType.BlockMesh);
     }
@@ -382,7 +378,7 @@ export class Renderer {
     }
 
     private _setupScene() {
-        twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement> this._gl.canvas);
+        twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement>this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
         ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
@@ -403,7 +399,7 @@ export class Renderer {
     public getModelsAvailable() {
         return this._modelsAvailable;
     }
-    
+
     public getActiveMeshType() {
         return this._meshToUse;
     }

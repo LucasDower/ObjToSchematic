@@ -1,4 +1,4 @@
-import { AttributeData, MergeAttributeData } from "../src/render_buffer";
+import { AttributeData, MergeAttributeData } from '../src/render_buffer';
 
 test('MergeAttributeData #1', () => {
     const a: AttributeData = {

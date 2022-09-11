@@ -1,19 +1,15 @@
-import { RenderBuffer } from "./render_buffer";
-import { GeometryTemplates } from "./geometry";
-import { ObjImporter } from "./importers/obj_importer";
-import { MaterialType, Mesh, SolidMaterial, TexturedMaterial } from "./mesh";
-import { ASSERT } from "./util/error_util";
-import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from "./worker_types";
-import { BufferGenerator, TBlockMeshBuffer, TVoxelMeshBuffer } from "./buffer";
-import { TVoxelisers, VoxeliserFactory } from "./voxelisers/voxelisers";
-import { param } from "jquery";
-import { IVoxeliser } from "./voxelisers/base-voxeliser";
-import { TIME_END, TIME_START } from "./util/log_util";
-import { VoxelMesh } from "./voxel_mesh";
-import { BlockMesh } from "./block_mesh";
-import { Atlas } from "./atlas";
-import { ExporterFactory } from "./exporters/exporters";
-import { IExporter } from "./exporters/base_exporter";
+import { ObjImporter } from './importers/obj_importer';
+import { Mesh } from './mesh';
+import { ASSERT } from './util/error_util';
+import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { BufferGenerator } from './buffer';
+import { VoxeliserFactory } from './voxelisers/voxelisers';
+import { IVoxeliser } from './voxelisers/base-voxeliser';
+import { VoxelMesh } from './voxel_mesh';
+import { BlockMesh } from './block_mesh';
+import { Atlas } from './atlas';
+import { ExporterFactory } from './exporters/exporters';
+import { IExporter } from './exporters/base_exporter';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -24,9 +20,6 @@ export class WorkerClient {
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
-
-    private _voxelMeshBuffer?: TVoxelMeshBuffer;
-    private _blockMeshBuffer?: TBlockMeshBuffer;
 
     public import(params: ImportParams.Input): ImportParams.Output {
         const importer = new ObjImporter();
@@ -50,22 +43,21 @@ export class WorkerClient {
 
     public voxelise(params: VoxeliseParams.Input): VoxeliseParams.Output {
         ASSERT(this._loadedMesh !== undefined);
-        
+
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
 
         return {
-        }
+        };
     }
 
     public renderVoxelMesh(params: RenderVoxelMeshParams.Input): RenderVoxelMeshParams.Output {
         ASSERT(this._loadedVoxelMesh !== undefined);
 
-        const buffer = BufferGenerator.fromVoxelMesh(this._loadedVoxelMesh, params);
-        this._voxelMeshBuffer = buffer.buffer;
+        this._loadedVoxelMesh.setRenderParams(params);
 
         return {
-            buffer: buffer,
+            buffer: this._loadedVoxelMesh.getBuffer(),
             dimensions: this._loadedVoxelMesh.getBounds().getDimensions(),
             voxelSize: 8.0 / params.desiredHeight,
         };
@@ -73,25 +65,21 @@ export class WorkerClient {
 
     public assign(params: AssignParams.Input): AssignParams.Output {
         ASSERT(this._loadedVoxelMesh !== undefined);
-    
+
         this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, params);
 
         return {
-        }
+        };
     }
 
     public renderBlockMesh(params: RenderBlockMeshParams.Input): RenderBlockMeshParams.Output {
         ASSERT(this._loadedBlockMesh !== undefined);
-        ASSERT(this._voxelMeshBuffer !== undefined);
 
         const atlas = Atlas.load(params.textureAtlas);
         ASSERT(atlas !== undefined);
 
-        const buffer = BufferGenerator.fromBlockMesh(this._loadedBlockMesh, this._voxelMeshBuffer);
-        this._blockMeshBuffer = buffer.buffer;
-
         return {
-            buffer: buffer,
+            buffer: this._loadedBlockMesh.getBuffer(),
             dimensions: this._loadedBlockMesh.getVoxelMesh().getBounds().getDimensions(),
             atlasTexturePath: atlas.getAtlasTexturePath(),
             atlasSize: atlas.getAtlasSize(),
@@ -100,16 +88,15 @@ export class WorkerClient {
 
     public export(params: ExportParams.Input): ExportParams.Output {
         ASSERT(this._loadedBlockMesh !== undefined);
-        ASSERT(this._blockMeshBuffer !== undefined);
 
         const exporter: IExporter = ExporterFactory.GetExporter(params.exporter);
         const fileExtension = '.' + exporter.getFileExtension();
         if (!params.filepath.endsWith(fileExtension)) {
             params.filepath += fileExtension;
         }
-        exporter.export(this._loadedBlockMesh, params.filepath, this._blockMeshBuffer);
+        exporter.export(this._loadedBlockMesh, params.filepath);
 
         return {
-        }
+        };
     }
 }

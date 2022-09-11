@@ -1,14 +1,14 @@
-import { TBlockAssigners } from "./assigners/assigners"
-import { FallableBehaviour } from "./block_mesh"
-import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "./buffer"
-import { TExporters } from "./exporters/exporters"
-import { StatusMessage } from "./status"
-import { TextureFiltering } from "./texture"
-import { ColourSpace } from "./util"
-import { AppError } from "./util/error_util"
-import { Vector3 } from "./vector"
-import { TVoxelisers } from "./voxelisers/voxelisers"
-import { TVoxelOverlapRule } from "./voxel_mesh"
+import { TBlockAssigners } from './assigners/assigners';
+import { FallableBehaviour } from './block_mesh';
+import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
+import { TExporters } from './exporters/exporters';
+import { StatusMessage } from './status';
+import { TextureFiltering } from './texture';
+import { ColourSpace } from './util';
+import { AppError } from './util/error_util';
+import { Vector3 } from './vector';
+import { TVoxelisers } from './voxelisers/voxelisers';
+import { TVoxelOverlapRule } from './voxel_mesh';
 
 export namespace ImportParams {
     export type Input = {
@@ -32,7 +32,7 @@ export namespace RenderMeshParams {
 }
 
 export namespace VoxeliseParams {
-    export type Input =  {
+    export type Input = {
         voxeliser: TVoxelisers,
         desiredHeight: number,
         useMultisampleColouring: boolean,
@@ -106,22 +106,22 @@ export type TStatus = {
 }
 
 export type TToWorkerMessage =
-    | { action: 'Import',           params: ImportParams.Input }
-    | { action: 'RenderMesh',       params: RenderMeshParams.Input }
-    | { action: 'Voxelise',         params: VoxeliseParams.Input }
-    | { action: 'RenderVoxelMesh',  params: RenderVoxelMeshParams.Input }
-    | { action: 'Assign',           params: AssignParams.Input }
-    | { action: 'RenderBlockMesh',  params: RenderBlockMeshParams.Input }
-    | { action: 'Export',           params: ExportParams.Input }
+    | { action: 'Import', params: ImportParams.Input }
+    | { action: 'RenderMesh', params: RenderMeshParams.Input }
+    | { action: 'Voxelise', params: VoxeliseParams.Input }
+    | { action: 'RenderVoxelMesh', params: RenderVoxelMeshParams.Input }
+    | { action: 'Assign', params: AssignParams.Input }
+    | { action: 'RenderBlockMesh', params: RenderBlockMeshParams.Input }
+    | { action: 'Export', params: ExportParams.Input }
 
-export type TFromWorkerMessage = 
+export type TFromWorkerMessage =
     | { action: 'KnownError', error: AppError }
     | { action: 'UnknownError', error: Error }
-    | (TStatus & ( 
-        | { action: 'Import',           result: ImportParams.Output }
-        | { action: 'RenderMesh',       result: RenderMeshParams.Output }
-        | { action: 'Voxelise',         result: VoxeliseParams.Output }
-        | { action: 'RenderVoxelMesh',  result: RenderVoxelMeshParams.Output }
-        | { action: 'Assign',           result: AssignParams.Output }
-        | { action: 'RenderBlockMesh',  result: RenderBlockMeshParams.Output }
-        | { action: 'Export',           result: ExportParams.Output } ));
+    | (TStatus & (
+        | { action: 'Import', result: ImportParams.Output }
+        | { action: 'RenderMesh', result: RenderMeshParams.Output }
+        | { action: 'Voxelise', result: VoxeliseParams.Output }
+        | { action: 'RenderVoxelMesh', result: RenderVoxelMeshParams.Output }
+        | { action: 'Assign', result: AssignParams.Output }
+        | { action: 'RenderBlockMesh', result: RenderBlockMeshParams.Output }
+        | { action: 'Export', result: ExportParams.Output }));

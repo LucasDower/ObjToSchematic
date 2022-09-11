@@ -7,7 +7,7 @@ import { ArcballCamera } from './camera';
 import path from 'path';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
-import { LOG } from './util/log_util';
+import { Logger } from './util/log_util';
 import { ASSERT } from './util/error_util';
 import { ColourSpace, EAction } from './util';
 import { AppConfig } from './config';
@@ -22,6 +22,9 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     public constructor() {
+        Logger.Get.enableLOG();
+        Logger.Get.enableLOGMAJOR();
+
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
@@ -48,7 +51,7 @@ export class AppContext {
             this._ui.enable(action);
             return;
         }
-        
+
         const uiOutput = this._ui.getActionOutput(action);
 
         const jobCallback = (payload: TFromWorkerMessage) => {
@@ -59,14 +62,14 @@ export class AppContext {
                     uiOutput.setTaskComplete(
                         'action',
                         StatusHandler.Get.getDefaultFailureMessage(action),
-                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
-                        'error'
+                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        'error',
                     );
                     break;
                 }
                 default: {
                     this._ui.enable(action + 1);
-                    
+
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
 
@@ -75,7 +78,7 @@ export class AppContext {
                     }
                 }
             }
-        }
+        };
 
         this._workerController.addJob({
             id: workerJob.id,
@@ -86,13 +89,13 @@ export class AppContext {
 
     private _getActionMessageBuilder(action: EAction, statusMessages: StatusMessage[]) {
         const infoStatuses = statusMessages
-            .filter(x => x.status === 'info')
-            .map(x => x.message);
+            .filter((x) => x.status === 'info')
+            .map((x) => x.message);
         const hasInfos = infoStatuses.length > 0;
 
         const warningStatuses = statusMessages
-            .filter(x => x.status === 'warning')
-            .map(x => x.message);
+            .filter((x) => x.status === 'warning')
+            .map((x) => x.message);
         const hasWarnings = warningStatuses.length > 0;
 
         const builder = new UIMessageBuilder();
@@ -123,15 +126,15 @@ export class AppContext {
 
     private _import(): TWorkerJob {
         const uiElements = this._ui.layout.import.elements;
-        
+
         this._ui.getActionOutput(EAction.Import)
             .setTaskInProgress('action', '[Importer]: Loading...');
 
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getCachedValue()
-            }
+                filepath: uiElements.input.getCachedValue(),
+            },
         };
 
         const callback = (payload: TFromWorkerMessage) => {
@@ -142,10 +145,10 @@ export class AppContext {
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
                 this._workerController.addJob(this._renderMesh());
-                outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
+                outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
             } else {
                 const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`;
-                outputElement.setTaskComplete('render', '[Renderer]: Stopped.', [ message ], 'warning')
+                outputElement.setTaskComplete('render', '[Renderer]: Stopped.', [message], 'warning');
             }
         };
 
@@ -155,7 +158,7 @@ export class AppContext {
     private _renderMesh(): TWorkerJob {
         const payload: TToWorkerMessage = {
             action: 'RenderMesh',
-            params: {}
+            params: {},
         };
 
         const callback = (payload: TFromWorkerMessage) => {
@@ -167,8 +170,8 @@ export class AppContext {
                     this._ui.getActionOutput(EAction.Import).setTaskComplete(
                         'render',
                         '[Renderer]: Failed',
-                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
-                        'error'
+                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        'error',
                     );
                     break;
                 }
@@ -180,8 +183,8 @@ export class AppContext {
                         'render',
                         '[Renderer]: Succeeded',
                         [],
-                        'success'
-                    )
+                        'success',
+                    );
                 }
             }
         };
@@ -215,7 +218,7 @@ export class AppContext {
             const outputElement = this._ui.getActionOutput(EAction.Voxelise);
 
             this._workerController.addJob(this._renderVoxelMesh());
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
+            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
         };
 
         return { id: 'Voxelise', payload: payload, callback: callback };
@@ -241,21 +244,21 @@ export class AppContext {
                     this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                         'render',
                         '[Renderer]: Failed',
-                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
-                        'error'
+                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        'error',
                     );
                     break;
                 }
                 default: {
                     ASSERT(payload.action === 'RenderVoxelMesh');
-                    Renderer.Get.useVoxelMesh(payload.result)
+                    Renderer.Get.useVoxelMesh(payload.result);
 
                     this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                         'render',
                         '[Renderer]: Succeeded',
                         [],
-                        'success'
-                    )
+                        'success',
+                    );
                 }
             }
         };
@@ -287,7 +290,7 @@ export class AppContext {
             const outputElement = this._ui.getActionOutput(EAction.Assign);
 
             this._workerController.addJob(this._renderBlockMesh());
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...')
+            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
         };
 
         return { id: 'Assign', payload: payload, callback: callback };
@@ -312,21 +315,21 @@ export class AppContext {
                     this._ui.getActionOutput(EAction.Assign).setTaskComplete(
                         'render',
                         '[Renderer]: Failed',
-                        [ payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong' ],
-                        'error'
+                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        'error',
                     );
                     break;
                 }
                 default: {
                     ASSERT(payload.action === 'RenderBlockMesh');
-                    Renderer.Get.useBlockMesh(payload.result)
+                    Renderer.Get.useBlockMesh(payload.result);
 
                     this._ui.getActionOutput(EAction.Assign).setTaskComplete(
                         'render',
                         '[Renderer]: Succeeded',
                         [],
-                        'success'
-                    )
+                        'success',
+                    );
                 }
             }
         };
@@ -338,7 +341,7 @@ export class AppContext {
         const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
-        let filepath = remote.dialog.showSaveDialogSync({
+        const filepath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',
             filters: [exporter.getFormatFilter()],
@@ -356,7 +359,7 @@ export class AppContext {
             params: {
                 filepath: filepath,
                 exporter: exporterID,
-            }
+            },
         };
 
         const callback = (payload: TFromWorkerMessage) => {

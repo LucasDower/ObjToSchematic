@@ -1,9 +1,9 @@
-import { Vector3 } from "./vector";
+import { Vector3 } from './vector';
 
 /**
  * A 3D cuboid volume defined by two opposing corners
  */
- export class Bounds {
+export class Bounds {
     private _min: Vector3;
     private _max: Vector3;
 
