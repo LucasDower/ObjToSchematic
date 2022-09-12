@@ -17,6 +17,9 @@ export namespace RGBAUtil {
         };
     }
 
+    /**
+     * Note this is a very naive approach to averaging a colour
+     */
     export function average(...colours: RGBA[]) {
         const avg = { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
         for (let i = 0; i < colours.length; ++i) {
@@ -25,6 +28,10 @@ export namespace RGBAUtil {
             avg.b += colours[i].b;
             avg.a += colours[i].a;
         }
+        avg.r /= colours.length;
+        avg.g /= colours.length;
+        avg.b /= colours.length;
+        avg.a /= colours.length;
         return avg;
     }
 
@@ -38,7 +45,7 @@ export namespace RGBAUtil {
     }
 
     export function copy(a: RGBA): RGBA {
-        return { 
+        return {
             r: a.r,
             g: a.g,
             b: a.b,
@@ -52,12 +59,12 @@ export namespace RGBAUtil {
 }
 
 export namespace RGBAColours {
-    export const RED: RGBA = { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }; 
-    export const GREEN: RGBA = { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }; 
-    export const BLUE: RGBA = { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }; 
+    export const RED: RGBA = { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
+    export const GREEN: RGBA = { r: 0.0, g: 1.0, b: 0.0, a: 1.0 };
+    export const BLUE: RGBA = { r: 0.0, g: 0.0, b: 1.0, a: 1.0 };
 
-    export const YELLOW: RGBA = { r: 1.0, g: 1.0, b: 0.0, a: 1.0 }; 
-    export const CYAN: RGBA = { r: 0.0, g: 1.0, b: 1.0, a: 1.0 }; 
+    export const YELLOW: RGBA = { r: 1.0, g: 1.0, b: 0.0, a: 1.0 };
+    export const CYAN: RGBA = { r: 0.0, g: 1.0, b: 1.0, a: 1.0 };
     export const MAGENTA: RGBA = { r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
 
     export const WHITE: RGBA = { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
