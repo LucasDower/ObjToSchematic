@@ -58,4 +58,8 @@ export class AppPaths {
     public get shaders() {
         return PathUtil.join(this.resources, './shaders/');
     }
+
+    public get logs() {
+        return PathUtil.join(this._base, './logs/');
+    }
 }

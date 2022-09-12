@@ -33,4 +33,7 @@ export namespace AppConfig {
 
     /** The maximum memory that should be allocated when attempting to decode JPEG images. 512MB is usually sufficient for 4k images, however this will need to be increased for 8k images */
     export const MAXIMUM_IMAGE_MEM_ALLOC = 512;
+
+    /** Whether of not all logs should be saved to a file */
+    export const LOG_TO_FILE = false;
 }
