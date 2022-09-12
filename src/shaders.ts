@@ -1,5 +1,6 @@
-import * as twgl from 'twgl.js';
 import * as fs from 'fs';
+import * as twgl from 'twgl.js';
+
 import { Renderer } from './renderer';
 import { AppPaths, PathUtil } from './util/path_util';
 

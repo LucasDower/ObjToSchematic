@@ -7,8 +7,8 @@ import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
 import { Vector3 } from './vector';
-import { TVoxelisers } from './voxelisers/voxelisers';
 import { TVoxelOverlapRule } from './voxel_mesh';
+import { TVoxelisers } from './voxelisers/voxelisers';
 
 export namespace ImportParams {
     export type Input = {

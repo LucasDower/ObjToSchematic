@@ -1,5 +1,5 @@
-import { UV } from './util';
 import { RGBA } from './colour';
+import { UV } from './util';
 
 export interface TextureInfo {
     name: string

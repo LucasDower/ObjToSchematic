@@ -1,10 +1,11 @@
 import { NBT, TagType } from 'prismarine-nbt';
-import { Vector3 } from '../vector';
+
 import { BlockMesh } from '../block_mesh';
-import { IExporter } from './base_exporter';
-import { saveNBT } from '../util/nbt_util';
 import { AppConstants } from '../constants';
 import { LOG } from '../util/log_util';
+import { saveNBT } from '../util/nbt_util';
+import { Vector3 } from '../vector';
+import { IExporter } from './base_exporter';
 
 const varintarray = require('varint-array');
 

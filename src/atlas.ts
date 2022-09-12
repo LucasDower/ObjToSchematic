@@ -1,8 +1,8 @@
-import { AppTypes, AppUtil, TOptional, UV } from './util';
-
 import fs from 'fs';
 import path from 'path';
+
 import { RGBA } from './colour';
+import { AppTypes, AppUtil, TOptional, UV } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { AppPaths } from './util/path_util';

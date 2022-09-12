@@ -1,8 +1,8 @@
-import { ASSERT } from '../util/error_util';
 import { AtlasPalette } from '../block_assigner';
 import { BlockInfo } from '../block_atlas';
 import { RGBA } from '../colour';
 import { ColourSpace } from '../util';
+import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
 import { IBlockAssigner } from './base_assigner';
 

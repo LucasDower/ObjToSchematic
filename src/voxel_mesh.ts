@@ -1,4 +1,5 @@
 import { Bounds } from './bounds';
+import { BufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
@@ -6,7 +7,6 @@ import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
-import { BufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 
 export interface Voxel {
     position: Vector3;

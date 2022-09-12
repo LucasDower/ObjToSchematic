@@ -1,15 +1,15 @@
-import { Vector3 } from './vector';
-import { UV, getRandomID } from './util';
-import { Triangle, UVTriangle } from './triangle';
-
-import path from 'path';
 import fs from 'fs';
-import { Texture, TextureFiltering } from './texture';
-import { StatusHandler } from './status';
+import path from 'path';
+
+import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { StatusHandler } from './status';
+import { Texture, TextureFiltering } from './texture';
+import { Triangle, UVTriangle } from './triangle';
+import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
-import { Bounds } from './bounds';
+import { Vector3 } from './vector';
 
 interface VertexIndices {
     x: number;

@@ -1,13 +1,13 @@
-import { Vector3 } from './vector';
-import { ArcballCamera } from './camera';
-import { ShaderManager } from './shaders';
-import { RenderBuffer } from './render_buffer';
-import { DebugGeometryTemplates } from './geometry';
-import { SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-
 import * as twgl from 'twgl.js';
+
+import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
+import { DebugGeometryTemplates } from './geometry';
+import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
+import { RenderBuffer } from './render_buffer';
+import { ShaderManager } from './shaders';
 import { Texture } from './texture';
+import { Vector3 } from './vector';
 import { RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
 
 /* eslint-disable */

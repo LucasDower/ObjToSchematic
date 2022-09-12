@@ -1,5 +1,5 @@
-import { ASSERT } from '../../util/error_util';
 import { getRandomID } from '../../util';
+import { ASSERT } from '../../util/error_util';
 
 export class LabelElement {
     private _id: string;

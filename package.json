@@ -46,6 +46,7 @@
     "electron-packager": "^15.2.0",
     "eslint": "^8.7.0",
     "eslint-config-google": "^0.14.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
     "images": "^3.2.3",
     "jest": "^27.5.1",
     "prompt": "^1.2.1",

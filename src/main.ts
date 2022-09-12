@@ -16,6 +16,7 @@
 
 import { app, BrowserWindow } from 'electron';
 import url from 'url';
+
 import { AppConfig } from './config';
 import { AppPaths, PathUtil } from './util/path_util';
 

@@ -1,4 +1,5 @@
 import path from 'path';
+
 import { ASSERT } from './error_util';
 
 export namespace PathUtil {

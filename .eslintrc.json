@@ -12,7 +12,8 @@
         "ecmaVersion": "latest"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "simple-import-sort"
     ],
     "rules": {
         "linebreak-style": "off",
@@ -34,6 +35,8 @@
         "semi": "error",
         "spaced-comment": "off",
         "keyword-spacing": "off",
-        "space-before-function-paren": "off"
+        "space-before-function-paren": "off",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error"
     }
 }

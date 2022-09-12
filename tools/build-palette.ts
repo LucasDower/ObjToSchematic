@@ -1,10 +1,10 @@
-import { log, LogStyle } from './logging';
-import { Palette } from '../src/palette';
-
 import fs from 'fs';
 import path from 'path';
 import prompt from 'prompt';
+
+import { Palette } from '../src/palette';
 import { AppPaths, PathUtil } from '../src/util/path_util';
+import { log, LogStyle } from './logging';
 
 const PALETTE_NAME_REGEX = /^[a-zA-Z\-]+$/;
 

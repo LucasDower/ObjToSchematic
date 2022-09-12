@@ -1,6 +1,6 @@
-import { getRandomID } from '../../util';
-
 import fs from 'fs';
+
+import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { AppPaths } from '../../util/path_util';
 import { PathUtil } from '../../util/path_util';

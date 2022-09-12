@@ -1,7 +1,7 @@
-import { WorkerClient } from './worker_client';
-import { TToWorkerMessage, TFromWorkerMessage } from './worker_types';
 import { StatusHandler } from './status';
 import { AppError } from './util/error_util';
+import { WorkerClient } from './worker_client';
+import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
     StatusHandler.Get.clear();

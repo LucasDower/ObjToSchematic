@@ -1,9 +1,10 @@
 import { m4, v3 } from 'twgl.js';
-import { MouseManager } from './mouse';
+
+import { AppConfig } from './config';
 import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from './math';
+import { MouseManager } from './mouse';
 import { Renderer } from './renderer';
 import { Vector3 } from './vector';
-import { AppConfig } from './config';
 
 export class ArcballCamera {
     public isUserRotating = false;

@@ -1,8 +1,8 @@
-import { LabelledElement } from './labelled_element';
-import { ASSERT } from '../../util/error_util';
-
 import { remote } from 'electron';
 import * as path from 'path';
+
+import { ASSERT } from '../../util/error_util';
+import { LabelledElement } from './labelled_element';
 
 export class FileInputElement extends LabelledElement<string> {
     private _fileExtension: string;

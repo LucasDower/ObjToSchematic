@@ -1,13 +1,13 @@
-import { UV } from './util';
-
 import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
-import { PNG } from 'pngjs';
 import path from 'path';
-import { clamp, wayThrough } from './math';
+import { PNG } from 'pngjs';
+
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { clamp, wayThrough } from './math';
+import { UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
+import { LOG, LOG_ERROR } from './util/log_util';
 
 /* eslint-disable */
 export enum TextureFormat {
@@ -53,10 +53,10 @@ export class Texture {
             } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
                 this._useAlphaChannelValue = false;
                 return jpeg.decode(data);
-            } else {
-                throw new AppError(`Failed to load ${filename}`);
             }
+            ASSERT(false);
         } catch (err) {
+            LOG_ERROR(err);
             throw new AppError(`Could not read ${filename}`);
         }
     }
@@ -85,7 +85,7 @@ export class Texture {
 
         const u = wayThrough(x, xL, xU);
         const v = wayThrough(y, yL, yU);
-        
+
         if (!(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0)) {
             return RGBAColours.MAGENTA;
         }
@@ -93,7 +93,7 @@ export class Texture {
         const A = this._getFromXY(xL, yU);
         const B = this._getFromXY(xU, yU);
         const AB = RGBAUtil.lerp(A, B, u);
-        
+
         const C = this._getFromXY(xL, yL);
         const D = this._getFromXY(xU, yL);
         const CD = RGBAUtil.lerp(C, D, u);
@@ -141,7 +141,7 @@ export class Texture {
                 }
             }
         }
-        
+
         LOG(`Using red channel`);
         this._useAlphaChannelValue = false;
         return false;
@@ -150,7 +150,7 @@ export class Texture {
     private static _sampleImage(image: ImageData, x: number, y: number) {
         x = clamp(x, 0, image.width - 1);
         y = clamp(y, 0, image.height - 1);
-        
+
         const index = 4 * (image.width * y + x);
         const rgba = image.data.slice(index, index + 4);
 

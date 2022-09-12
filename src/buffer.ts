@@ -1,12 +1,12 @@
+import { BlockMesh } from './block_mesh';
+import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
+import { OcclusionManager } from './occlusion';
 import { AttributeData } from './render_buffer';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
-import { AppConstants } from './constants';
 import { RenderVoxelMeshParams } from './worker_types';
-import { OcclusionManager } from './occlusion';
-import { BlockMesh } from './block_mesh';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },

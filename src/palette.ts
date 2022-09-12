@@ -1,12 +1,12 @@
-import { AppTypes, AppUtil, TOptional } from './util';
-
 import fs from 'fs';
 import path from 'path';
-import { StatusHandler } from './status';
+
 import { Atlas } from './atlas';
+import { RGBA, RGBAUtil } from './colour';
+import { StatusHandler } from './status';
+import { AppTypes, AppUtil, TOptional } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
-import { RGBA, RGBAUtil } from './colour';
 import { AppPaths, PathUtil } from './util/path_util';
 
 export class PaletteManager {

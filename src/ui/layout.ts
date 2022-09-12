@@ -1,24 +1,24 @@
-import { BaseUIElement } from './elements/base';
-import { SliderElement } from './elements/slider';
-import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
-import { FileInputElement } from './elements/file_input';
-import { ButtonElement } from './elements/button';
-import { OutputElement } from './elements/output';
-import { AppContext } from '../app_context';
-
 import fs from 'fs';
-import { ToolbarItemElement } from './elements/toolbar_item';
-import { MeshType, Renderer } from '../renderer';
-import { ArcballCamera } from '../camera';
-import { TVoxelisers } from '../voxelisers/voxelisers';
-import { TExporters } from '../exporters/exporters';
-import { TVoxelOverlapRule } from '../voxel_mesh';
-import { PaletteManager } from '../palette';
+
+import { AppContext } from '../app_context';
 import { TBlockAssigners } from '../assigners/assigners';
+import { ArcballCamera } from '../camera';
+import { TExporters } from '../exporters/exporters';
+import { PaletteManager } from '../palette';
+import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
+import { TVoxelOverlapRule } from '../voxel_mesh';
+import { TVoxelisers } from '../voxelisers/voxelisers';
+import { BaseUIElement } from './elements/base';
+import { ButtonElement } from './elements/button';
+import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
+import { FileInputElement } from './elements/file_input';
+import { OutputElement } from './elements/output';
+import { SliderElement } from './elements/slider';
+import { ToolbarItemElement } from './elements/toolbar_item';
 
 export interface Group {
     label: string;

@@ -1,9 +1,9 @@
+import { NBT, TagType } from 'prismarine-nbt';
+
 import { BlockMesh } from '../block_mesh';
+import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
-import { saveNBT } from '../util/nbt_util';
-
-import { NBT, TagType } from 'prismarine-nbt';
 
 type BlockID = number;
 type long = [number, number];

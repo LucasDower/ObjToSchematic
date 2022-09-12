@@ -1,5 +1,5 @@
-import { ASSERT } from '../../util/error_util';
 import { clamp, mapRange, wayThrough } from '../../math';
+import { ASSERT } from '../../util/error_util';
 import { LabelledElement } from './labelled_element';
 
 export class SliderElement extends LabelledElement<number> {

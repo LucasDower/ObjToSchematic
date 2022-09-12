@@ -1,7 +1,7 @@
-import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/worker_types';
-import { WorkerClient } from '../src/worker_client';
 import { StatusHandler } from '../src/status';
-import { Logger, LOG_MAJOR } from '../src/util/log_util';
+import { LOG_MAJOR, Logger } from '../src/util/log_util';
+import { WorkerClient } from '../src/worker_client';
+import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/worker_types';
 
 export type THeadlessConfig = {
     import: ImportParams.Input,

@@ -1,9 +1,9 @@
-import { BlockMesh } from '../block_mesh';
-import { IExporter } from './base_exporter';
-import { ASSERT } from '../util/error_util';
-
 import fs from 'fs';
 import path from 'path';
+
+import { BlockMesh } from '../block_mesh';
+import { ASSERT } from '../util/error_util';
+import { IExporter } from './base_exporter';
 
 export class ObjExporter extends IExporter {
     public override getFormatFilter(): Electron.FileFilter {

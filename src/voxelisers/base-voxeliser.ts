@@ -1,11 +1,11 @@
-import { UVTriangle, Triangle } from '../triangle';
+import { RGBA } from '../colour';
+import { Mesh } from '../mesh';
+import { StatusHandler } from '../status';
+import { TextureFiltering } from '../texture';
+import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
-import { Mesh } from '../mesh';
 import { VoxelMesh } from '../voxel_mesh';
-import { TextureFiltering } from '../texture';
-import { StatusHandler } from '../status';
-import { RGBA } from '../colour';
 import { VoxeliseParams } from '../worker_types';
 
 export abstract class IVoxeliser {

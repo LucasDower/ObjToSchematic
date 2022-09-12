@@ -1,12 +1,12 @@
-import { BlockMesh } from '../block_mesh';
-import { IExporter } from './base_exporter';
-import { Vector3 } from '../vector';
-import { StatusHandler } from '../status';
-
 import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
+
+import { BlockMesh } from '../block_mesh';
+import { StatusHandler } from '../status';
 import { saveNBT } from '../util/nbt_util';
 import { AppPaths, PathUtil } from '../util/path_util';
+import { Vector3 } from '../vector';
+import { IExporter } from './base_exporter';
 
 export class Schematic extends IExporter {
     private _convertToNBT(blockMesh: BlockMesh) {

@@ -1,11 +1,11 @@
-import { log, LogStyle } from './logging';
-
 import fs from 'fs';
 import path from 'path';
 import { PNG } from 'pngjs';
 import prompt from 'prompt';
+
 import { RGBA } from '../src/colour';
 import { AppPaths } from '../src/util/path_util';
+import { log, LogStyle } from './logging';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {

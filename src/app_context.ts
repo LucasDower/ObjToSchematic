@@ -1,22 +1,22 @@
-import { UI } from './ui/layout';
+import { remote } from 'electron';
+import path from 'path';
+
+import { FallableBehaviour } from './block_mesh';
+import { ArcballCamera } from './camera';
+import { AppConfig } from './config';
+import { IExporter } from './exporters/base_exporter';
+import { ExporterFactory, TExporters } from './exporters/exporters';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
+import { TextureFiltering } from './texture';
+import { OutputStyle } from './ui/elements/output';
+import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
-import { ArcballCamera } from './camera';
-
-import path from 'path';
+import { ColourSpace, EAction } from './util';
+import { ASSERT } from './util/error_util';
+import { Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
-import { Logger } from './util/log_util';
-import { ASSERT } from './util/error_util';
-import { ColourSpace, EAction } from './util';
-import { AppConfig } from './config';
-import { OutputStyle } from './ui/elements/output';
-import { TextureFiltering } from './texture';
-import { FallableBehaviour } from './block_mesh';
-import { remote } from 'electron';
-import { ExporterFactory, TExporters } from './exporters/exporters';
-import { IExporter } from './exporters/base_exporter';
 
 export class AppContext {
     private _ui: UI;
@@ -101,12 +101,9 @@ export class AppContext {
 
         const builder = new UIMessageBuilder();
         builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
-        builder.addItem('action', infoStatuses, 'success');
 
-        if (hasWarnings) {
-            builder.addHeading('action', 'There were some warnings', 'warning');
-            builder.addItem('action', warningStatuses, 'warning');
-        }
+        builder.addItem('action', infoStatuses, 'success');
+        builder.addItem('action', warningStatuses, 'warning');
 
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
     }
@@ -148,8 +145,8 @@ export class AppContext {
                 this._workerController.addJob(this._renderMesh());
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
             } else {
-                const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD} triangles.`;
-                outputElement.setTaskComplete('render', '[Renderer]: Stopped.', [message], 'warning');
+                const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
+                outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
         };
 

@@ -1,15 +1,15 @@
-import { UV } from '../src/util';
-import { log, LogStyle } from './logging';
-import { isDirSetup, ASSERT, getAverageColour, getPermission, getMinecraftDir } from './misc';
-
-import fs from 'fs';
-import path from 'path';
-import images from 'images';
-import { PNG } from 'pngjs';
 import chalk from 'chalk';
+import fs from 'fs';
+import images from 'images';
+import path from 'path';
+import { PNG } from 'pngjs';
 import prompt from 'prompt';
+
 import { RGBA } from '../src/colour';
+import { UV } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
+import { log, LogStyle } from './logging';
+import { ASSERT, getAverageColour, getMinecraftDir, getPermission, isDirSetup } from './misc';
 const AdmZip = require('adm-zip');
 const copydir = require('copy-dir');
 

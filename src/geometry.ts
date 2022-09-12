@@ -1,12 +1,13 @@
 import * as twgl from 'twgl.js';
-import { Triangle, UVTriangle } from './triangle';
-import { Vector3 } from './vector';
-import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
-import { Mesh } from './mesh';
-import { VoxelMesh } from './voxel_mesh';
-import { RGBA } from './colour';
+
 import { Bounds } from './bounds';
+import { RGBA } from './colour';
+import { Mesh } from './mesh';
+import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
+import { Triangle, UVTriangle } from './triangle';
 import { ASSERT } from './util/error_util';
+import { Vector3 } from './vector';
+import { VoxelMesh } from './voxel_mesh';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);

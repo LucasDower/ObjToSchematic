@@ -1,18 +1,18 @@
-import { Voxel, VoxelMesh } from './voxel_mesh';
-import { BlockInfo } from './block_atlas';
-import { ColourSpace } from './util';
-
 import fs from 'fs';
-import { StatusHandler } from './status';
-import { Vector3 } from './vector';
-import { Atlas } from './atlas';
-import { Palette } from './palette';
+
 import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
+import { Atlas } from './atlas';
 import { AtlasPalette } from './block_assigner';
-import { AppError, ASSERT } from './util/error_util';
-import { AssignParams } from './worker_types';
+import { BlockInfo } from './block_atlas';
 import { BufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { Palette } from './palette';
+import { StatusHandler } from './status';
+import { ColourSpace } from './util';
+import { AppError, ASSERT } from './util/error_util';
 import { AppPaths, PathUtil } from './util/path_util';
+import { Vector3 } from './vector';
+import { Voxel, VoxelMesh } from './voxel_mesh';
+import { AssignParams } from './worker_types';
 
 interface Block {
     voxel: Voxel;

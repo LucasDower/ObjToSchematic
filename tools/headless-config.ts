@@ -1,6 +1,6 @@
-import { THeadlessConfig } from './headless';
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
+import { THeadlessConfig } from './headless';
 
 export const headlessConfig: THeadlessConfig = {
     import: {

@@ -1,6 +1,6 @@
-import { Renderer } from './renderer';
-
 import * as twgl from 'twgl.js';
+
+import { Renderer } from './renderer';
 import { ASSERT } from './util/error_util';
 
 export interface Attribute {

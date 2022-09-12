@@ -30,4 +30,7 @@ export namespace AppConfig {
 
     /** If the loaded mesh exceeds this number of triangles, the renderer will not attempt to draw it. */
     export const RENDER_TRIANGLE_THRESHOLD = 1_000_000;
+
+    /** The maximum memory that should be allocated when attempting to decode JPEG images. 512MB is usually sufficient for 4k images, however this will need to be increased for 8k images */
+    export const MAXIMUM_IMAGE_MEM_ALLOC = 512;
 }
