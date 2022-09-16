@@ -14,7 +14,7 @@ import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { Logger } from './util/log_util';
+import { LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -46,17 +46,18 @@ export class AppContext {
     public do(action: EAction) {
         this._ui.cacheValues(action);
         this._ui.disable(action);
+        this._ui.disableAll();
 
         const workerJob = this._getWorkerJob(action);
         if (workerJob === undefined) {
-            this._ui.enable(action);
+            this._ui.enableTo(action);
             return;
         }
 
         const uiOutput = this._ui.getActionOutput(action);
 
         const jobCallback = (payload: TFromWorkerMessage) => {
-            this._ui.enable(action);
+            this._ui.enableTo(action);
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
@@ -66,10 +67,11 @@ export class AppContext {
                         [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
                         'error',
                     );
+                    LOG_ERROR(payload.error);
                     break;
                 }
                 default: {
-                    this._ui.enable(action + 1);
+                    this._ui.enableTo(action + 1);
 
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
@@ -171,6 +173,7 @@ export class AppContext {
                         [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
                         'error',
                     );
+                    LOG_ERROR(payload.error);
                     break;
                 }
                 default: {
@@ -244,6 +247,7 @@ export class AppContext {
                         [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
                         'error',
                     );
+                    LOG_ERROR(payload.error);
                     break;
                 }
                 default: {
@@ -315,6 +319,7 @@ export class AppContext {
                         [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
                         'error',
                     );
+                    LOG_ERROR(payload.error);
                     break;
                 }
                 default: {

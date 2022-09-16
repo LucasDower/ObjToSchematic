@@ -482,6 +482,12 @@ export class UI {
         return this._uiDull;
     }
 
+    public enableTo(action: EAction) {
+        for (let i = 0; i <= action; ++i) {
+            this.enable(i);
+        }
+    }
+
     public enable(action: EAction) {
         if (action >= EAction.MAX) {
             return;

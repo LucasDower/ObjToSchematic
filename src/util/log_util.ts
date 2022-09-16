@@ -12,8 +12,8 @@ export const LOG = (...data: any[]) => {
     if (Logger.Get.isLOGEnabled()) {
         // eslint-disable-next-line no-console
         console.log(...data);
-        Logger.Get.logToFile(...data);
     }
+    Logger.Get.logToFile(...data);
 };
 
 /**
@@ -23,8 +23,8 @@ export const LOG_MAJOR = (...data: any[]) => {
     if (Logger.Get.isLOGMAJOREnabled()) {
         // eslint-disable-next-line no-console
         console.log(...data);
-        Logger.Get.logToFile(...data);
     }
+    Logger.Get.logToFile(...data);
 };
 
 /**
@@ -34,8 +34,8 @@ export const LOG_WARN = (...data: any[]) => {
     if (Logger.Get.isLOGWARNEnabled()) {
         // eslint-disable-next-line no-console
         console.warn(...data);
-        Logger.Get.logToFile(...data);
     }
+    Logger.Get.logToFile(...data);
 };
 
 /* eslint-disable no-console */
@@ -55,7 +55,7 @@ export class Logger {
     private _enabledLOGMAJOR: boolean;
     private _enabledLOGWARN: boolean;
 
-    private _logStream: fs.WriteStream;
+    private _logStream?: fs.WriteStream;
 
     private constructor() {
         this._enabledLOG = false;
@@ -63,13 +63,13 @@ export class Logger {
         this._enabledLOGWARN = false;
 
         FileUtil.mkdirSyncIfNotExist(AppPaths.Get.logs);
-        this._logStream = fs.createWriteStream(PathUtil.join(AppPaths.Get.logs, `./${Date.now()}.log`));
+        if (AppConfig.LOG_TO_FILE) {
+            this._logStream = fs.createWriteStream(PathUtil.join(AppPaths.Get.logs, `./${Date.now()}.log`));
+        }
     }
 
     public logToFile(...data: any[]) {
-        if (AppConfig.LOG_TO_FILE) {
-            this._logStream.write(util.format(...data) + '\n');
-        }
+        this._logStream?.write(util.format(...data) + '\n');
     }
 
     public enableLOG() {

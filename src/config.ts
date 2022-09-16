@@ -35,5 +35,5 @@ export namespace AppConfig {
     export const MAXIMUM_IMAGE_MEM_ALLOC = 512;
 
     /** Whether of not all logs should be saved to a file */
-    export const LOG_TO_FILE = false;
+    export const LOG_TO_FILE = true;
 }
