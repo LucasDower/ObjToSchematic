@@ -37,10 +37,10 @@ export namespace RGBAUtil {
 
     export function squaredDistance(a: RGBA, b: RGBA) {
         let squaredDistance = 0.0;
-        squaredDistance += Math.pow(a.r - b.r, 2);
-        squaredDistance += Math.pow(a.g - b.g, 2);
-        squaredDistance += Math.pow(a.b - b.b, 2);
-        squaredDistance += Math.pow(a.a - b.a, 2) * AppConfig.ALPHA_BIAS;
+        squaredDistance += (a.r - b.r) * (a.r - b.r);
+        squaredDistance += (a.g - b.g) * (a.g - b.g);
+        squaredDistance += (a.b - b.b) * (a.b - b.b);
+        squaredDistance += (a.a - b.a) * (a.a - b.a) * AppConfig.ALPHA_BIAS;
         return squaredDistance;
     }
 
