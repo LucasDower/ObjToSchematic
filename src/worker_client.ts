@@ -10,6 +10,7 @@ import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { Logger } from './util/log_util';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -18,6 +19,8 @@ export class WorkerClient {
     }
 
     private constructor() {
+        Logger.Get.enableLogToFile();
+        Logger.Get.initLogFile('worker');
     }
 
     private _loadedMesh?: Mesh;

@@ -22,6 +22,8 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     public constructor() {
+        Logger.Get.enableLogToFile();
+        Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
@@ -71,7 +73,7 @@ export class AppContext {
                     break;
                 }
                 default: {
-                    this._ui.enableTo(action + 1);
+                    this._ui.enable(action + 1);
 
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
