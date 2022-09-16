@@ -8,5 +8,5 @@ void async function main() {
 
     runHeadless(headlessConfig);
 
-    LOG_MAJOR('Finished!');
+    LOG_MAJOR('\nFinished!');
 }();

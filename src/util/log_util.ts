@@ -38,11 +38,22 @@ export const LOG_WARN = (...data: any[]) => {
     Logger.Get.logToFile(...data);
 };
 
-/* eslint-disable no-console */
+export const TIME_START = (label: string) => {
+    if (Logger.Get.isLOGTIMEEnabled()) {
+        // eslint-disable-next-line no-console
+        console.time(label);
+    }
+};
+
+export const TIME_END = (label: string) => {
+    if (Logger.Get.isLOGTIMEEnabled()) {
+        // eslint-disable-next-line no-console
+        console.timeEnd(label);
+    }
+};
+
+/* eslint-disable-next-line no-console */
 export const LOG_ERROR = console.error;
-export const TIME_START = console.time;
-export const TIME_END = console.timeEnd;
-/* eslint-disable */
 
 export class Logger {
     /* Singleton */
@@ -54,6 +65,7 @@ export class Logger {
     private _enabledLOG: boolean;
     private _enabledLOGMAJOR: boolean;
     private _enabledLOGWARN: boolean;
+    private _enabledLOGTIME: boolean;
 
     private _logStream?: fs.WriteStream;
 
@@ -61,6 +73,7 @@ export class Logger {
         this._enabledLOG = false;
         this._enabledLOGMAJOR = false;
         this._enabledLOGWARN = false;
+        this._enabledLOGTIME = false;
 
         FileUtil.mkdirSyncIfNotExist(AppPaths.Get.logs);
         if (AppConfig.LOG_TO_FILE) {
@@ -96,6 +109,14 @@ export class Logger {
         this._enabledLOGWARN = false;
     }
 
+    public enableLOGTIME() {
+        this._enabledLOGTIME = true;
+    }
+
+    public disableLOGTIME() {
+        this._enabledLOGTIME = false;
+    }
+
     public isLOGEnabled() {
         return this._enabledLOG;
     }
@@ -106,5 +127,9 @@ export class Logger {
 
     public isLOGWARNEnabled() {
         return this._enabledLOGWARN;
+    }
+
+    public isLOGTIMEEnabled() {
+        return this._enabledLOGTIME;
     }
 }

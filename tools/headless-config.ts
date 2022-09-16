@@ -28,5 +28,6 @@ export const headlessConfig: THeadlessConfig = {
     debug: {
         showLogs: true,
         showWarnings: true,
+        showTimings: true,
     },
 };

@@ -30,6 +30,7 @@ const baseConfig: THeadlessConfig = {
     debug: {
         showLogs: false,
         showWarnings: false,
+        showTimings: false,
     },
 };
 
