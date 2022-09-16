@@ -4,6 +4,7 @@ import path from 'path';
 import { PNG } from 'pngjs';
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { AppConfig } from './config';
 import { clamp, wayThrough } from './math';
 import { UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -52,7 +53,9 @@ export class Texture {
                 return PNG.sync.read(data);
             } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
                 this._useAlphaChannelValue = false;
-                return jpeg.decode(data);
+                return jpeg.decode(data, {
+                    maxMemoryUsageInMB: AppConfig.MAXIMUM_IMAGE_MEM_ALLOC,
+                });
             }
             ASSERT(false);
         } catch (err) {
