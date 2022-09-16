@@ -1,5 +1,7 @@
+import { AppConfig } from './config';
 import { ASSERT } from './util/error_util';
 import { LOG, TIME_END, TIME_START } from './util/log_util';
+import { doWork } from './worker';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export type TWorkerJob = {
@@ -51,10 +53,10 @@ export class WorkerController {
     }
 
     private _tryStartNextJob() {
-        if (this.isBusy()) {
+        if (this.isBusy() && AppConfig.USE_WORKER_THREAD) {
             return;
         }
-        
+
         this._jobPending = this._jobQueue.shift();
         if (this._jobPending === undefined) {
             return;
@@ -62,6 +64,13 @@ export class WorkerController {
 
         LOG('[WorkerController]: Starting Job', this._jobPending.id, `(${this._jobQueue.length} remaining)`);
         TIME_START(this._jobPending.id);
-        this._worker.postMessage(this._jobPending.payload);
+        if (AppConfig.USE_WORKER_THREAD) {
+            this._worker.postMessage(this._jobPending.payload);
+        } else {
+            const result = doWork(this._jobPending.payload);
+            if (this._jobPending.callback) {
+                this._jobPending.callback(result);
+            }
+        }
     }
 }

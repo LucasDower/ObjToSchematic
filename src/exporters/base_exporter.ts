@@ -13,11 +13,6 @@ export abstract class IExporter {
      */
     public abstract getFileExtension(): string;
 
-    /** */
-    public getFormatDisclaimer(): TOptional<string> {
-        return;
-    }
-
     public abstract export(blockMesh: BlockMesh, filePath: string): boolean;
 
     public getFormatFilter() {

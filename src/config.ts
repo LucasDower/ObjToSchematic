@@ -36,4 +36,7 @@ export namespace AppConfig {
 
     /** Whether of not all logs should be saved to a file */
     export const LOG_TO_FILE = true;
+
+    /** Whether or not to use a worker thread. You should probably never disable this unless debugging. */
+    export const USE_WORKER_THREAD = true;
 }

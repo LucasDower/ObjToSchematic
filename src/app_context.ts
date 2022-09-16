@@ -144,8 +144,8 @@ export class AppContext {
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
-                this._workerController.addJob(this._renderMesh());
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+                this._workerController.addJob(this._renderMesh());
             } else {
                 const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
@@ -217,8 +217,8 @@ export class AppContext {
             ASSERT(payload.action === 'Voxelise');
             const outputElement = this._ui.getActionOutput(EAction.Voxelise);
 
-            this._workerController.addJob(this._renderVoxelMesh());
             outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+            this._workerController.addJob(this._renderVoxelMesh());
         };
 
         return { id: 'Voxelise', payload: payload, callback: callback };
@@ -290,8 +290,8 @@ export class AppContext {
             ASSERT(payload.action === 'Assign');
             const outputElement = this._ui.getActionOutput(EAction.Assign);
 
-            this._workerController.addJob(this._renderBlockMesh());
             outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+            this._workerController.addJob(this._renderBlockMesh());
         };
 
         return { id: 'Assign', payload: payload, callback: callback };

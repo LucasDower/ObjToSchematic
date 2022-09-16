@@ -78,16 +78,12 @@ export class Schematic extends IExporter {
         return 'Schematic';
     }
 
-    getFormatDisclaimer() {
-        return 'Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.';
-    }
-
     getFileExtension(): string {
         return 'schematic';
     }
 
     public override export(blockMesh: BlockMesh, filePath: string): boolean {
-        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        const bounds = blockMesh.getVoxelMesh().getBounds();
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
