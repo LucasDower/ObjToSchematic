@@ -1,15 +1,17 @@
 import { Atlas } from './atlas';
 import { BlockMesh } from './block_mesh';
 import { BufferGenerator } from './buffer';
+import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
 import { ObjImporter } from './importers/obj_importer';
 import { Mesh } from './mesh';
 import { ASSERT } from './util/error_util';
+import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -18,6 +20,43 @@ export class WorkerClient {
     }
 
     private constructor() {
+        Logger.Get.enableLOG();
+        Logger.Get.enableLOGMAJOR();
+        Logger.Get.enableLOGWARN();
+
+        EventManager.Get.add(EAppEvent.onTaskStart, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Started',
+                    taskId: e[0],
+                },
+            };
+            postMessage(message);
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskProgress, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Progress',
+                    taskId: e[0],
+                    percentage: e[1],
+                },
+            };
+            postMessage(message);
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskEnd, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Finished',
+                    taskId: e[0],
+                },
+            };
+            postMessage(message);
+        });
     }
 
     private _loadedMesh?: Mesh;

@@ -37,8 +37,27 @@ export class WorkerController {
         return this._jobPending !== undefined;
     }
 
-    private _onWorkerMessage(payload: any) {
+    private _onWorkerMessage(payload: MessageEvent<TFromWorkerMessage>) {
         ASSERT(this._jobPending !== undefined, `Received worker message when no job is pending`);
+
+        if (payload.data.action === 'Progress') {
+            const element = document.getElementById('progress-bar') as HTMLDivElement;
+            if (element) {
+                switch (payload.data.payload.type) {
+                    case 'Started':
+                        element.style.width = `0%`;
+                        break;
+                    case 'Progress':
+                        element.style.width = `${payload.data.payload.percentage * 100}%`;
+                        break;
+                    case 'Finished':
+                        element.style.width = `100%`;
+                        break;
+                }
+            }
+            return;
+        }
+
         TIME_END(this._jobPending.id);
         LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`);
 
@@ -54,7 +73,7 @@ export class WorkerController {
         if (this.isBusy()) {
             return;
         }
-        
+
         this._jobPending = this._jobQueue.shift();
         if (this._jobPending === undefined) {
             return;

@@ -3,6 +3,9 @@ import { LOG } from './util/log_util';
 
 /* eslint-disable */
 export enum EAppEvent {
+    onTaskStart,
+    onTaskProgress,
+    onTaskEnd,
 }
 /* eslint-enable */
 
@@ -18,7 +21,7 @@ export class EventManager {
         this._eventsToListeners = new Map();
     }
 
-    public add(event: EAppEvent, delegate: () => void) {
+    public add(event: EAppEvent, delegate: (...args: any[]) => void) {
         if (!this._eventsToListeners.has(event)) {
             this._eventsToListeners.set(event, []);
         }

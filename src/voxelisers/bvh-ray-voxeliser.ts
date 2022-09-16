@@ -1,4 +1,5 @@
 import { Mesh } from '../mesh';
+import { ProgressManager } from '../progress';
 import { Axes, axesToDirection, Ray } from '../ray';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
@@ -19,12 +20,12 @@ export class BVHRayVoxeliser extends IVoxeliser {
         const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
         const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
-        
+
         useMesh.scaleMesh(scale);
         useMesh.translateMesh(offset);
 
         // Build BVH
-        const triangles = Array<{x: Number, y: Number, z: Number}[]>(useMesh._tris.length);
+        const triangles = Array<{ x: Number, y: Number, z: Number }[]>(useMesh._tris.length);
         for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
             const positionData = useMesh.getVertices(triIndex);
             triangles[triIndex] = [positionData.v0, positionData.v1, positionData.v2];
@@ -77,7 +78,15 @@ export class BVHRayVoxeliser extends IVoxeliser {
         LOG('Rays created...');
 
         // Ray test BVH
+        let nextPercentage = 0.0;
+        ProgressManager.Get.start('Voxelising');
         for (rayIndex = 0; rayIndex < rays.length; ++rayIndex) {
+            const percentage = rayIndex / rays.length;
+            if (rayIndex / rays.length >= nextPercentage) {
+                ProgressManager.Get.progress('Voxelising', percentage);
+                nextPercentage += 0.1;
+            }
+
             const ray = rays[rayIndex];
             const intersections = bvh.intersectRay(ray.origin, axesToDirection(ray.axis), false);
             for (const intersection of intersections) {
@@ -98,6 +107,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
                 }
             }
         }
+        ProgressManager.Get.end('Voxelising');
 
         return voxelMesh;
     }

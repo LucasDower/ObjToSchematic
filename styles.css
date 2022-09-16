@@ -576,3 +576,16 @@ svg {
     opacity: 100%;
   }
 }
+
+
+
+.progress-bar-container {
+  width: 100%;
+  height: 2px;
+}
+
+.progress-bar {
+  background-color: var(--prop-accent-standard);
+  height: 100%;
+  transition: width 0.1s;
+}

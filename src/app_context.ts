@@ -73,6 +73,7 @@ export class AppContext {
                 default: {
                     this._ui.enableTo(action + 1);
 
+                    ASSERT(payload.action !== 'Progress');
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
 

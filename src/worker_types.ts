@@ -104,6 +104,11 @@ export type TStatus = {
     statusMessages: StatusMessage[],
 }
 
+export type TaskParams =
+    | { type: 'Started', taskId: string }
+    | { type: 'Progress', taskId: string, percentage: number }
+    | { type: 'Finished', taskId: string }
+
 export type TToWorkerMessage =
     | { action: 'Import', params: ImportParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
@@ -116,6 +121,7 @@ export type TToWorkerMessage =
 export type TFromWorkerMessage =
     | { action: 'KnownError', error: AppError }
     | { action: 'UnknownError', error: Error }
+    | { action: 'Progress', payload: TaskParams }
     | (TStatus & (
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }
