@@ -23,8 +23,8 @@ export class AppPaths {
 
     public setBaseDir(dir: string) {
         this._base = dir;
-        const parsed = path.parse(dir);
-        ASSERT(parsed.base === 'ObjToSchematic', `AppPaths: Not correct base ${dir}`);
+        //const parsed = path.parse(dir);
+        //ASSERT(parsed.base === 'ObjToSchematic', `AppPaths: Not correct base ${dir}`);
     }
 
     public get base() {
