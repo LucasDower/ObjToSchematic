@@ -78,14 +78,9 @@ export class BVHRayVoxeliser extends IVoxeliser {
         LOG('Rays created...');
 
         // Ray test BVH
-        let nextPercentage = 0.0;
-        ProgressManager.Get.start('Voxelising');
+        const taskHandle = ProgressManager.Get.start('Voxelising');
         for (rayIndex = 0; rayIndex < rays.length; ++rayIndex) {
-            const percentage = rayIndex / rays.length;
-            if (rayIndex / rays.length >= nextPercentage) {
-                ProgressManager.Get.progress('Voxelising', percentage);
-                nextPercentage += 0.05;
-            }
+            ProgressManager.Get.progress(taskHandle, rayIndex / rays.length);
 
             const ray = rays[rayIndex];
             const intersections = bvh.intersectRay(ray.origin, axesToDirection(ray.axis), false);
@@ -107,7 +102,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
                 }
             }
         }
-        ProgressManager.Get.end('Voxelising');
+        ProgressManager.Get.end(taskHandle);
 
         return voxelMesh;
     }
