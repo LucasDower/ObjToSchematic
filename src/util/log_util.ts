@@ -76,8 +76,13 @@ export const TIME_END = (label: string) => {
 /** 
  * Logs an error to the console and file, always.
  */
-/* eslint-disable-next-line no-console */
-export const LOG_ERROR = console.error;
+export const LOG_ERROR = (...data: any[]) => {
+    // eslint-disable-next-line no-console
+    console.error(...data);
+    if (Logger.Get.logToFile) {
+        Logger.Get.logToFile(...data);
+    }
+};
 
 /**
  * Logger controls enable/disabling the logging functions above.
