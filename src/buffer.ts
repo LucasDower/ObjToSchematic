@@ -3,7 +3,9 @@ import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
 import { OcclusionManager } from './occlusion';
+import { ProgressManager } from './progress';
 import { AttributeData } from './render_buffer';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 import { RenderVoxelMeshParams } from './worker_types';
@@ -54,10 +56,12 @@ type TMaterialID = string;
 
 export class BufferGenerator {
     public static fromMesh(mesh: Mesh): TMeshBufferDescription[] {
+        const numTris = mesh.getTriangleCount();
+
         // Count the number of triangles that use each material
         const materialTriangleCount = new Map<TMaterialID, number>();
         {
-            for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
                 const materialName = mesh.getMaterialByTriangle(triIndex);
                 const triangleCount = materialTriangleCount.get(materialName) ?? 0;
                 materialTriangleCount.set(materialName, triangleCount + 1);
@@ -66,14 +70,26 @@ export class BufferGenerator {
 
         const materialBuffers: TMeshBufferDescription[] = [];
 
+        let trianglesHandled = 0;
+        let nextPercentage = 0;
+        ProgressManager.Get.start('MeshBuffer');
+
         // Create the buffers for each material and fill with data from the triangles
         materialTriangleCount.forEach((triangleCount: number, materialName: string) => {
             const materialBuffer: TMeshBuffer = BufferGenerator.createMaterialBuffer(triangleCount);
 
             let insertIndex = 0;
-            for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
+                const percentage = trianglesHandled / numTris;
+                if (percentage >= nextPercentage) {
+                    ProgressManager.Get.progress('MeshBuffer', percentage);
+                    nextPercentage += 0.05;
+                }
+
                 const material = mesh.getMaterialByTriangle(triIndex);
                 if (material === materialName) {
+                    ++trianglesHandled;
+
                     const uiTriangle = mesh.getUVTriangle(triIndex);
 
                     // Position
@@ -119,6 +135,8 @@ export class BufferGenerator {
             });
         });
 
+        ProgressManager.Get.end('MeshBuffer');
+
         return materialBuffers;
     }
 
@@ -128,7 +146,16 @@ export class BufferGenerator {
 
         const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
         const voxels = voxelMesh.getVoxels();
+
+        let nextPercentage = 0.0;
+        ProgressManager.Get.start('VoxelMeshBuffer');
         for (let i = 0; i < numVoxels; ++i) {
+            const percentage = i / numVoxels;
+            if (i / numVoxels >= nextPercentage) {
+                ProgressManager.Get.progress('VoxelMeshBuffer', percentage);
+                nextPercentage += 0.05;
+            }
+
             const voxel = voxels[i];
             const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
             const voxelPositionArray = voxel.position.toArray();
@@ -160,6 +187,7 @@ export class BufferGenerator {
                 }
             }
         }
+        ProgressManager.Get.end('VoxelMeshBuffer');
 
         return {
             buffer: newBuffer,
@@ -175,7 +203,16 @@ export class BufferGenerator {
 
         const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
         let insertIndex = 0;
+
+        let nextPercentage = 0.0;
+        ProgressManager.Get.start('BlockMeshBuffer');
         for (let i = 0; i < numBlocks; ++i) {
+            const percentage = i / numBlocks;
+            if (i / numBlocks >= nextPercentage) {
+                ProgressManager.Get.progress('BlockMeshBuffer', percentage);
+                nextPercentage += 0.05;
+            }
+
             for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
                 const faceName = faceOrder[f];
                 const texcoord = blocks[i].blockInfo.faces[faceName].texcoord;
@@ -185,6 +222,7 @@ export class BufferGenerator {
                 }
             }
         }
+        ProgressManager.Get.end('BlockMeshBuffer');
 
         return {
             buffer: newBuffer,

@@ -1,3 +1,4 @@
+import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
 import { LOG, TIME_END, TIME_START } from './util/log_util';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
@@ -41,19 +42,16 @@ export class WorkerController {
         ASSERT(this._jobPending !== undefined, `Received worker message when no job is pending`);
 
         if (payload.data.action === 'Progress') {
-            const element = document.getElementById('progress-bar') as HTMLDivElement;
-            if (element) {
-                switch (payload.data.payload.type) {
-                    case 'Started':
-                        element.style.width = `0%`;
-                        break;
-                    case 'Progress':
-                        element.style.width = `${payload.data.payload.percentage * 100}%`;
-                        break;
-                    case 'Finished':
-                        element.style.width = `100%`;
-                        break;
-                }
+            switch (payload.data.payload.type) {
+                case 'Started':
+                    EventManager.Get.broadcast(EAppEvent.onTaskStart, payload.data.payload.taskId);
+                    break;
+                case 'Progress':
+                    EventManager.Get.broadcast(EAppEvent.onTaskProgress, payload.data.payload.taskId, payload.data.payload.percentage);
+                    break;
+                case 'Finished':
+                    EventManager.Get.broadcast(EAppEvent.onTaskEnd, payload.data.payload.taskId);
+                    break;
             }
             return;
         }

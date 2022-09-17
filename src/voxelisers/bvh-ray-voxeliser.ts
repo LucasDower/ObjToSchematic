@@ -84,7 +84,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
             const percentage = rayIndex / rays.length;
             if (rayIndex / rays.length >= nextPercentage) {
                 ProgressManager.Get.progress('Voxelising', percentage);
-                nextPercentage += 0.1;
+                nextPercentage += 0.05;
             }
 
             const ray = rays[rayIndex];

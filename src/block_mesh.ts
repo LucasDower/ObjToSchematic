@@ -6,6 +6,7 @@ import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { BufferGenerator, TBlockMeshBufferDescription } from './buffer';
 import { Palette } from './palette';
+import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
 import { ColourSpace } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -66,8 +67,16 @@ export class BlockMesh {
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
 
         let countFalling = 0;
+        let nextPercentage = 0.0;
+        ProgressManager.Get.start('Assigning');
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
+            const percentage = voxelIndex / voxels.length;
+            if (voxelIndex / voxels.length >= nextPercentage) {
+                ProgressManager.Get.progress('Assigning', percentage);
+                nextPercentage += 0.05;
+            }
+
             const voxel = voxels[voxelIndex];
             let block = blockAssigner.assignBlock(atlasPalette, voxel.colour, voxel.position, blockMeshParams.colourSpace);
 
@@ -95,6 +104,7 @@ export class BlockMesh {
                 this._blocksUsed.push(block.name);
             }
         }
+        ProgressManager.Get.end('Assigning');
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
             StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);

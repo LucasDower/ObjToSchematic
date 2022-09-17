@@ -239,13 +239,30 @@ select:disabled {
   text-align: center;
   padding: 5px 0px 0px 0px;
   border: 1px solid rgb(255, 255, 255, 0);
+  position: relative;
   cursor: pointer;
+  display: inline-block;
+  width: 100%;
 }
 
 .button:hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
   background: var(--prop-accent-hovered);
   cursor: pointer;
+}
+
+.progress {
+	z-index: 5;
+	background: white;
+  opacity: 0.1;
+  border-radius: 5px;
+  position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+  width: 0%;
+  transition: width 0.2s;
 }
 
 .button-disabled {

@@ -18,16 +18,6 @@ export class OutputElement {
         `;
     }
 
-    public clearMessage() {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-        
-        element.innerHTML = '';
-        element.classList.remove('border-success');
-        element.classList.remove('border-warning');
-        element.classList.remove('border-error');
-    }
-
     private _message: UIMessageBuilder;
 
     public setMessage(message: UIMessageBuilder, style?: OutputStyle) {
@@ -36,19 +26,7 @@ export class OutputElement {
 
         this._message = message;
 
-        this.clearMessage();
         element.innerHTML = this._message.toString();
-        switch (style) {
-            case 'success':
-                //element.classList.add('border-success');
-                break;
-            case 'warning':
-                //element.classList.add('border-warning');
-                break;
-            case 'error':
-                //element.classList.add('border-error');
-                break;
-        }
     }
 
     public getMessage() {
@@ -81,21 +59,8 @@ export class OutputElement {
         const element = document.getElementById(this._id) as HTMLDivElement;
         ASSERT(element !== null);
 
-        this.clearMessage();
         element.innerHTML = this._message.toString();
     }
-
-    /*
-    public addMessage(message: UIMessageBuilder) {
-        this._message.join(message);
-
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        element.innerHTML = this._message.toString();
-        return this;
-    }
-    */
 
     public setStyle(style: OutputStyle) {
         const element = document.getElementById(this._id) as HTMLDivElement;
@@ -116,5 +81,5 @@ export class OutputElement {
                 element.classList.add('border-error');
                 break;
         }
-    } 
+    }
 }

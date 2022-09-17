@@ -7,7 +7,7 @@ type TMessage = {
 
 export class UIMessageBuilder {
     private _messages: TMessage[];
-    
+
     public constructor() {
         this._messages = [];
     }
@@ -24,7 +24,8 @@ export class UIMessageBuilder {
     public addBold(groupId: string, messages: string[], style: OutputStyle) {
         for (const message of messages) {
             const cssColourClass = this._getStatusCSSClass(style);
-            this._messages.push({ groupId: groupId, body: `
+            this._messages.push({
+                groupId: groupId, body: `
                 <div style="display: flex; align-items: center;" ${cssColourClass ? `class="${cssColourClass}"` : ''}>
                     <div style="margin-right: 8px;" class="loader-circle"></div>
                     <b>${message}</b>
@@ -37,7 +38,8 @@ export class UIMessageBuilder {
     public addItem(groupId: string, messages: string[], style: OutputStyle) {
         for (const message of messages) {
             const cssColourClass = this._getStatusCSSClass(style);
-            this._messages.push({ groupId: groupId, body: `
+            this._messages.push({
+                groupId: groupId, body: `
                 <div style="padding-left: 16px;" ${cssColourClass ? `class="${cssColourClass}"` : ''}> - ${message}</div>
             `});
         }
@@ -45,7 +47,8 @@ export class UIMessageBuilder {
     }
 
     public addTask(groupId: string, message: string) {
-        this._messages.push({ groupId: groupId, body: `
+        this._messages.push({
+            groupId: groupId, body: `
             <div style="display: flex; align-items: center; color: var(--text-standard)">
                 <div style="margin-right: 8px;" class="loader-circle spin"></div> 
                 <b class="spin">${message}</b>
@@ -57,6 +60,10 @@ export class UIMessageBuilder {
     public clear(groupId: string) {
         this._messages = this._messages.filter((x) => x.groupId !== groupId);
         return this;
+    }
+
+    public clearAll() {
+        this._messages = [];
     }
 
     public toString(): string {
