@@ -39,6 +39,10 @@ export class AppPaths {
         return PathUtil.join(this._base, './tools/');
     }
 
+    public get tests() {
+        return PathUtil.join(this._base, './tests/');
+    }
+
     public get testData() {
         return PathUtil.join(this._base, './tests/data/');
     }
