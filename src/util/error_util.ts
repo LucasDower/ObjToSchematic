@@ -9,6 +9,7 @@ export class AppError extends Error {
 
 export function ASSERT(condition: any, errorMessage = 'Assertion Failed'): asserts condition {
     if (AppConfig.ASSERTIONS_ENABLED && !condition) {
+        Error(errorMessage);
         throw Error(errorMessage);
     }
 }

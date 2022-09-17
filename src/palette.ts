@@ -104,8 +104,8 @@ export class Palette {
 
     public remove(blockName: string): boolean {
         const index = this._blocks.indexOf(AppUtil.Text.namespaceBlock(blockName));
-        if (index !== undefined) {
-            this._blocks.slice(index, 1);
+        if (index !== -1) {
+            this._blocks.splice(index, 1);
             return true;
         }
         return false;
@@ -164,8 +164,8 @@ export class Palette {
     }
 
     /**
-     * atlas. If not, the block is removed from the palette.
-     * Checks if each block in this block palette has texture data in the given
+     * Removes blocks from the palette if they do not
+     * have texture data in the given atlas.
      */
     public removeMissingAtlasBlocks(atlas: Atlas) {
         const missingBlocks: AppTypes.TNamespacedBlockName[] = [];

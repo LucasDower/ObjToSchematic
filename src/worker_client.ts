@@ -6,11 +6,11 @@ import { ExporterFactory } from './exporters/exporters';
 import { ObjImporter } from './importers/obj_importer';
 import { Mesh } from './mesh';
 import { ASSERT } from './util/error_util';
+import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
-import { Logger } from './util/log_util';
 
 export class WorkerClient {
     private static _instance: WorkerClient;

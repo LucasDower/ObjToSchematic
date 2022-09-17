@@ -1,7 +1,11 @@
-import { RegExpBuilder, REGEX_NUMBER, REGEX_NZ_ANY } from '../src/util/regex_util';
+import { AppUtil } from '../src/util';
 import { ASSERT } from '../src/util/error_util';
+import { REGEX_NUMBER, REGEX_NZ_ANY, RegExpBuilder } from '../src/util/regex_util';
+import { TEST_PREAMBLE } from './preamble';
 
 test('RegExpBuilder', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/hello/)
         .toRegExp();
@@ -10,6 +14,8 @@ test('RegExpBuilder', () => {
 });
 
 test('RegExpBuilder REGEX_NUMBER', () => {
+    TEST_PREAMBLE();
+
     const tests = [
         { f: '0', s: 0 },
         { f: '0.0', s: 0.0 },
@@ -26,6 +32,8 @@ test('RegExpBuilder REGEX_NUMBER', () => {
 });
 
 test('RegExpBuilder Required-whitespace', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/hello/)
         .addNonzeroWhitespace()
@@ -37,6 +45,8 @@ test('RegExpBuilder Required-whitespace', () => {
 });
 
 test('RegExpBuilder Optional', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/hello/)
         .addNonzeroWhitespace()
@@ -49,6 +59,8 @@ test('RegExpBuilder Optional', () => {
 });
 
 test('RegExpBuilder Capture', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/[0-9]+/, 'myNumber')
         .toRegExp();
@@ -61,6 +73,8 @@ test('RegExpBuilder Capture', () => {
 });
 
 test('RegExpBuilder Capture-multiple', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/[0-9]+/, 'x')
         .addNonzeroWhitespace()
@@ -82,6 +96,8 @@ test('RegExpBuilder Capture-multiple', () => {
 });
 
 test('RegExpBuilder Capture-multiple', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/f/)
         .addNonzeroWhitespace()
@@ -124,6 +140,8 @@ test('RegExpBuilder Capture-multiple', () => {
 });
 
 test('RegExpBuilder Capture-multiple', () => {
+    TEST_PREAMBLE();
+
     const regex = new RegExpBuilder()
         .add(/usemtl/)
         .add(/ /)
@@ -135,4 +153,12 @@ test('RegExpBuilder Capture-multiple', () => {
     if (exec !== null && exec.groups) {
         expect(exec.groups['path']).toBe('hellothere.txt');
     }
+});
+
+test('Namespace block', () => {
+    expect(AppUtil.Text.namespaceBlock('stone')).toBe('minecraft:stone');
+});
+
+test('Namespace already namespaced block', () => {
+    expect(AppUtil.Text.namespaceBlock('minecraft:stone')).toBe('minecraft:stone');
 });

@@ -1,7 +1,7 @@
 import fs from 'fs';
-import { AppConfig } from '../config';
 import util from 'util';
 
+import { AppConfig } from '../config';
 import { FileUtil } from './file_util';
 import { AppPaths, PathUtil } from './path_util';
 

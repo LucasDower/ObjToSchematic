@@ -1,8 +1,11 @@
 import { ObjImporter } from '../src/importers/obj_importer';
 import { ASSERT } from '../src/util/error_util';
 import { Vector3 } from '../src/vector';
+import { TEST_PREAMBLE } from './preamble';
 
 test('Parse vertex #1', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('v 1.0 -2.0 3.0');
     const mesh = importer.toMesh();
@@ -11,6 +14,8 @@ test('Parse vertex #1', () => {
 });
 
 test('Parse vertex #2', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('v 4.467e+000 9.243e+000 9.869e+000');
     const mesh = importer.toMesh();
@@ -19,6 +24,8 @@ test('Parse vertex #2', () => {
 });
 
 test('Parse normal #1', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('vn -1.0 -0.5 0.0');
     const mesh = importer.toMesh();
@@ -27,6 +34,8 @@ test('Parse normal #1', () => {
 });
 
 test('Parse texcoord #1', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('vt 0.5 -0.8');
     const mesh = importer.toMesh();
@@ -35,6 +44,8 @@ test('Parse texcoord #1', () => {
 });
 
 test('Parse face #1', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('f 12 24 36');
     const mesh = importer.toMesh();
@@ -44,10 +55,12 @@ test('Parse face #1', () => {
     expect(tri.normalIndices).toBeDefined(); ASSERT(tri.normalIndices);
     expect(tri.positionIndices.x === 12 - 1 && tri.positionIndices.y === 24 - 1 && tri.positionIndices.z === 36 - 1).toBe(true);
     expect(tri.texcoordIndices.x === 12 - 1 && tri.texcoordIndices.y === 24 - 1 && tri.texcoordIndices.z === 36 - 1).toBe(true);
-    expect(tri.normalIndices.x   === 12 - 1 && tri.normalIndices.y   === 24 - 1 && tri.normalIndices.z   === 36 - 1).toBe(true);
+    expect(tri.normalIndices.x === 12 - 1 && tri.normalIndices.y === 24 - 1 && tri.normalIndices.z === 36 - 1).toBe(true);
 });
 
 test('Parse face #2', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('f 1/2 3/4 5/6');
     const mesh = importer.toMesh();
@@ -60,6 +73,8 @@ test('Parse face #2', () => {
 });
 
 test('Parse face #3', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('f 11/2/3 4/55/6 7/8/99');
     const mesh = importer.toMesh();
@@ -67,12 +82,14 @@ test('Parse face #3', () => {
     const tri = mesh._tris[0];
     expect(tri.texcoordIndices).toBeDefined(); ASSERT(tri.texcoordIndices);
     expect(tri.normalIndices).toBeDefined(); ASSERT(tri.normalIndices);
-    expect(tri.positionIndices.x === 11 - 1 && tri.positionIndices.y === 4 - 1&& tri.positionIndices.z === 7 - 1).toBe(true);
+    expect(tri.positionIndices.x === 11 - 1 && tri.positionIndices.y === 4 - 1 && tri.positionIndices.z === 7 - 1).toBe(true);
     expect(tri.texcoordIndices.x === 2 - 1 && tri.texcoordIndices.y === 55 - 1 && tri.texcoordIndices.z === 8 - 1).toBe(true);
     expect(tri.normalIndices.x === 3 - 1 && tri.normalIndices.y === 6 - 1 && tri.normalIndices.z === 99 - 1).toBe(true);
 });
 
 test('Parse mini #1', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('v -1 2 3');
     importer.parseOBJLine('v 4 -5 6');
@@ -95,7 +112,7 @@ test('Parse mini #1', () => {
     expect(vertexData.v0.equals(new Vector3(-1, 2, 3))).toBe(true);
     expect(vertexData.v1.equals(new Vector3(4, -5, 6))).toBe(true);
     expect(vertexData.v2.equals(new Vector3(7, 8, -9))).toBe(true);
-    
+
     const texcoordData = mesh.getUVs(0);
     expect(texcoordData.uv0.u === 0.0 && texcoordData.uv0.v === 0.5).toBe(true);
     expect(texcoordData.uv1.u === 0.5 && texcoordData.uv1.v === 1.0).toBe(true);
@@ -109,6 +126,8 @@ test('Parse mini #1', () => {
 
 
 test('Parse mini #2', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('v -1 2 3');
     importer.parseOBJLine('v 4 -5 6');
@@ -131,7 +150,7 @@ test('Parse mini #2', () => {
     expect(vertexData.v0.equals(new Vector3(7, 8, -9))).toBe(true);
     expect(vertexData.v1.equals(new Vector3(-1, 2, 3))).toBe(true);
     expect(vertexData.v2.equals(new Vector3(4, -5, 6))).toBe(true);
-    
+
     const texcoordData = mesh.getUVs(0);
     expect(texcoordData.uv0.u === 0.0 && texcoordData.uv0.v === 0.5).toBe(true);
     expect(texcoordData.uv1.u === 0.5 && texcoordData.uv1.v === 1.0).toBe(true);
@@ -144,6 +163,8 @@ test('Parse mini #2', () => {
 });
 
 test('Parse mini #3', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('v 0 0 0');
     importer.parseOBJLine('v 1 0 0');
@@ -168,6 +189,8 @@ test('Parse mini #3', () => {
 });
 
 test('Parse comments', () => {
+    TEST_PREAMBLE();
+
     const importer = new ObjImporter();
     importer.parseOBJLine('# v -1 2 3');
     importer.parseOBJLine('# vn 0.0 0.1 0.2');

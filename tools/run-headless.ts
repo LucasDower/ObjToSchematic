@@ -1,4 +1,4 @@
-import { Logger, LOG_MAJOR } from '../src/util/log_util';
+import { LOG_MAJOR, Logger } from '../src/util/log_util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { runHeadless } from './headless';
 import { headlessConfig } from './headless-config';
