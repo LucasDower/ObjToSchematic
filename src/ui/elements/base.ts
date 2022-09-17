@@ -23,7 +23,7 @@ export abstract class BaseUIElement<Type> {
         return this._cachedValue as Type;
     }
 
-    protected getValue() {
+    protected getValue(): Type {
         ASSERT(this._value);
         return this._value;
     }
