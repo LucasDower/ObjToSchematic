@@ -2,7 +2,8 @@ import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
-import { StatusHandler } from '../status';
+import { StatusHandler, StatusID } from '../status';
+import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { AppPaths, PathUtil } from '../util/path_util';
 import { Vector3 } from '../vector';
@@ -42,7 +43,9 @@ export class Schematic extends IExporter {
             StatusHandler.Get.add(
                 'warning',
                 `${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`,
+                StatusID.SchematicUnsupportedBlocks,
             );
+            LOG_WARN(unsupportedBlocks);
         }
 
         const nbt: NBT = {
