@@ -1,5 +1,4 @@
 import { BlockMesh } from '../block_mesh';
-import { TOptional } from '../util';
 import { Vector3 } from '../vector';
 
 export abstract class IExporter {

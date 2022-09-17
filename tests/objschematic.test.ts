@@ -1,9 +1,8 @@
-import { TextureFiltering } from '../../src/texture';
-import { ColourSpace } from '../../src/util';
-import { AppPaths, PathUtil } from '../../src/util/path_util';
-import { runHeadless, THeadlessConfig } from '../../tools/headless';
-import { FileUtil } from '../../src/util/file_util';
-import { TEST_PREAMBLE } from '../preamble';
+import { TextureFiltering } from '../src/texture';
+import { ColourSpace } from '../src/util';
+import { AppPaths, PathUtil } from '../src/util/path_util';
+import { runHeadless, THeadlessConfig } from '../tools/headless';
+import { TEST_PREAMBLE } from './preamble';
 
 const baseConfig: THeadlessConfig = {
     import: {
@@ -35,17 +34,14 @@ const baseConfig: THeadlessConfig = {
     },
 };
 
-test('FULL Obj->Obj', () => {
+test('FULL Obj->Schematic', () => {
     TEST_PREAMBLE();
-
-    AppPaths.Get.setBaseDir(PathUtil.join(__dirname, '../..'));
-    FileUtil.mkdirSyncIfNotExist(PathUtil.join(AppPaths.Get.testData, '../out/'));
 
     const config: THeadlessConfig = baseConfig;
 
     config.import.filepath = PathUtil.join(AppPaths.Get.resources, './samples/skull.obj');
-    config.export.exporter = 'obj';
-    config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/out.obj');
+    config.export.exporter = 'schematic';
+    config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/out.schematic');
 
     runHeadless(config);
 });

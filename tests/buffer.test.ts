@@ -1,6 +1,9 @@
 import { AttributeData, MergeAttributeData } from '../src/render_buffer';
+import { TEST_PREAMBLE } from './preamble';
 
 test('MergeAttributeData #1', () => {
+    TEST_PREAMBLE();
+
     const a: AttributeData = {
         indices: new Uint32Array([0, 1, 2]),
         custom: {
@@ -13,6 +16,8 @@ test('MergeAttributeData #1', () => {
 });
 
 test('MergeAttributeData #2', () => {
+    TEST_PREAMBLE();
+
     const a: AttributeData = {
         indices: new Uint32Array([0, 1, 2]),
         custom: {
@@ -32,7 +37,7 @@ test('MergeAttributeData #2', () => {
         indices: new Uint32Array([0, 1, 2, 3, 4, 5]),
         custom: {
             position: [
-                1,  2,  3,  4,  5,  6,  7,  8,  9,
+                1, 2, 3, 4, 5, 6, 7, 8, 9,
                 10, 11, 12, 13, 14, 15, 16, 17, 18,
             ],
             colour: [
@@ -45,6 +50,8 @@ test('MergeAttributeData #2', () => {
 });
 
 test('MergeAttributeData #3', () => {
+    TEST_PREAMBLE();
+
     const a: AttributeData = {
         indices: new Uint32Array([0, 1]),
         custom: {

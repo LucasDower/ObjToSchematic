@@ -1,9 +1,12 @@
-import { Vector3 } from '../src/vector';
-import { VoxelMesh } from '../src/voxel_mesh';
 import { RGBAColours } from '../src/colour';
 import { ASSERT } from '../src/util/error_util';
+import { Vector3 } from '../src/vector';
+import { VoxelMesh } from '../src/voxel_mesh';
+import { TEST_PREAMBLE } from './preamble';
 
 test('Voxel neighbours', () => {
+    TEST_PREAMBLE();
+
     const voxelMesh = new VoxelMesh({
         voxelOverlapRule: 'first',
         enableAmbientOcclusion: true,
