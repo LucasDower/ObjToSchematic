@@ -13,7 +13,8 @@ export class ButtonElement extends BaseUIElement<any> {
     public generateHTML() {
         return `
             <div class="button" id="${this._id}">
-                ${this._label}
+                <div class="btn">${this._label}</div>
+                <div class="progress" id="${this._id}-progress"></div>
             </div>
         `;
     }
@@ -53,6 +54,18 @@ export class ButtonElement extends BaseUIElement<any> {
         ASSERT(element !== null, 'Removing label override of element that does not exist');
 
         element.innerHTML = this._label;
+        return this;
+    }
+
+    /**
+     * Set the progress bar progress.
+     * @param progress A number between 0.0 and 1.0 inclusive.
+     */
+    public setProgress(progress: number) {
+        const element = document.getElementById(this._id + '-progress') as HTMLDivElement;
+        ASSERT(element !== null);
+
+        element.style.width = `${progress * 100}%`;
         return this;
     }
 

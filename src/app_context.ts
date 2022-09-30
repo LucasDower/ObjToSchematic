@@ -4,6 +4,7 @@ import path from 'path';
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
+import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
 import { Renderer } from './renderer';
@@ -14,13 +15,15 @@ import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { LOG_ERROR, Logger } from './util/log_util';
+import { LOG, LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
+    private _lastAction?: EAction;
+
     public constructor() {
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
@@ -39,10 +42,34 @@ export class AppContext {
         this._ui.disable(EAction.Voxelise);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
+        this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
 
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
+
+        EventManager.Get.add(EAppEvent.onTaskStart, (...data) => {
+            if (this._lastAction) {
+                this._ui.getActionButton(this._lastAction)
+                    .startLoading()
+                    .setProgress(0.0);
+            }
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskProgress, (...data) => {
+            if (this._lastAction) {
+                this._ui.getActionButton(this._lastAction)
+                    .setProgress(data[0][1]);
+            }
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskEnd, (...data) => {
+            if (this._lastAction) {
+                this._ui.getActionButton(this._lastAction)
+                    .stopLoading()
+                    .setProgress(0.0);
+            }
+        });
     }
 
     public do(action: EAction) {
@@ -59,7 +86,7 @@ export class AppContext {
         const uiOutput = this._ui.getActionOutput(action);
 
         const jobCallback = (payload: TFromWorkerMessage) => {
-            this._ui.enableTo(action);
+            //this._ui.enableTo(action);
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
@@ -70,11 +97,18 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.getActionButton(action)
+                        .stopLoading()
+                        .setProgress(0.0);
+
+                    this._ui.enableTo(action);
                     break;
                 }
                 default: {
-                    this._ui.enable(action + 1);
+                    //this._ui.enableTo(action + 1);
 
+                    ASSERT(payload.action !== 'Progress');
                     const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
                     uiOutput.setMessage(builder, style as OutputStyle);
 
@@ -84,6 +118,8 @@ export class AppContext {
                 }
             }
         };
+
+        this._lastAction = action;
 
         this._workerController.addJob({
             id: workerJob.id,
@@ -166,6 +202,8 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
+            this._ui.enableTo(EAction.Voxelise);
+
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
@@ -240,6 +278,8 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
+            this._ui.enableTo(EAction.Assign);
+
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
@@ -290,6 +330,7 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Assign');
+
             const outputElement = this._ui.getActionOutput(EAction.Assign);
 
             outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
@@ -312,6 +353,8 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
+            this._ui.enableTo(EAction.Export);
+
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
@@ -369,6 +412,7 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
+            this._ui.enableTo(EAction.Export);
         };
 
         return { id: 'Export', payload: payload, callback: callback };

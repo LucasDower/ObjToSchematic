@@ -2,6 +2,7 @@ import { Bounds } from '../bounds';
 import { RGBA, RGBAUtil } from '../colour';
 import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
+import { ProgressManager } from '../progress';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
@@ -33,36 +34,42 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         useMesh.scaleMesh(this._scale);
         const bounds = useMesh.getBounds();
         this._size = Vector3.sub(bounds.max, bounds.min);
-        this._offset =new Vector3(
+        this._offset = new Vector3(
             this._size.x % 2 < 0.001 ? 0.5 : 0.0,
             this._size.y % 2 < 0.001 ? 0.5 : 0.0,
             this._size.z % 2 < 0.001 ? 0.5 : 0.0,
         );
 
-        for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
+        const numTris = useMesh.getTriangleCount();
+
+        const taskHandle = ProgressManager.Get.start('Voxelising');
+        for (let triIndex = 0; triIndex < numTris; ++triIndex) {
+            ProgressManager.Get.progress(taskHandle, triIndex / numTris);
+
             const uvTriangle = useMesh.getUVTriangle(triIndex);
             const normals = useMesh.getNormals(triIndex);
             const material = useMesh.getMaterialByTriangle(triIndex);
             this._voxeliseTri(uvTriangle, material, normals);
         }
+        ProgressManager.Get.end(taskHandle);
 
         return this._voxelMesh;
     }
 
-    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3}) {
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3 }) {
         const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2,
             this._offset,
         );
-        
+
         rayList.forEach((ray) => {
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
-            if (intersection) {                
+            if (intersection) {
                 // Move transition away from normal
                 const norm = normals.v0.normalise();
                 intersection.sub(Vector3.mulScalar(norm, 0.5));
                 // Correct size parity
                 intersection.add(this._offset);
-                
+
                 let voxelPosition: Vector3;
                 switch (ray.axis) {
                     case Axes.x:
@@ -109,7 +116,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
-        
+
         return this._mesh!.sampleMaterial(materialName, uv, this._voxeliseParams!.textureFiltering);
     }
 
@@ -126,14 +133,14 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                 Math.floor(Math.max(v0.z, v1.z, v2.z)),
             ),
         );
-    
+
         const rayList: Array<Ray> = [];
         this._traverseX(rayList, bounds, offset);
         this._traverseY(rayList, bounds, offset);
         this._traverseZ(rayList, bounds, offset);
         return rayList;
     }
-    
+
     private _traverseX(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
         for (let y = bounds.min.y - offset.y; y <= bounds.max.y + offset.y; ++y) {
             for (let z = bounds.min.z - offset.z; z <= bounds.max.z + offset.z; ++z) {
@@ -144,7 +151,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             }
         }
     }
-    
+
     private _traverseY(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
         for (let x = bounds.min.x - offset.x; x <= bounds.max.x + offset.x; ++x) {
             for (let z = bounds.min.z - offset.z; z <= bounds.max.z + offset.z; ++z) {
@@ -155,7 +162,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             }
         }
     }
-    
+
     private _traverseZ(rayList: Array<Ray>, bounds: Bounds, offset: Vector3) {
         for (let x = bounds.min.x - offset.x; x <= bounds.max.x + offset.x; ++x) {
             for (let y = bounds.min.y - offset.y; y <= bounds.max.y + offset.y; ++y) {

@@ -10,6 +10,14 @@ import { Vector3 } from './vector';
 import { TVoxelOverlapRule } from './voxel_mesh';
 import { TVoxelisers } from './voxelisers/voxelisers';
 
+export namespace InitParams {
+    export type Input = {
+    }
+
+    export type Output = {
+    }
+}
+
 export namespace ImportParams {
     export type Input = {
         filepath: string,
@@ -104,7 +112,13 @@ export type TStatus = {
     statusMessages: StatusMessage[],
 }
 
+export type TaskParams =
+    | { type: 'Started', taskId: string }
+    | { type: 'Progress', taskId: string, percentage: number }
+    | { type: 'Finished', taskId: string }
+
 export type TToWorkerMessage =
+    | { action: 'Init', params: InitParams.Input }
     | { action: 'Import', params: ImportParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
     | { action: 'Voxelise', params: VoxeliseParams.Input }
@@ -116,7 +130,9 @@ export type TToWorkerMessage =
 export type TFromWorkerMessage =
     | { action: 'KnownError', error: AppError }
     | { action: 'UnknownError', error: Error }
+    | { action: 'Progress', payload: TaskParams }
     | (TStatus & (
+        | { action: 'Init', result: InitParams.Output }
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }
         | { action: 'Voxelise', result: VoxeliseParams.Output }

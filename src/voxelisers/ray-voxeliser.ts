@@ -2,6 +2,7 @@ import { Bounds } from '../bounds';
 import { RGBA, RGBAUtil } from '../colour';
 import { AppConfig } from '../config';
 import { Mesh } from '../mesh';
+import { ProgressManager } from '../progress';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
@@ -33,18 +34,24 @@ export class RayVoxeliser extends IVoxeliser {
         useMesh.scaleMesh(this._scale);
         useMesh.translateMesh(this._offset);
 
-        for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
+        const numTris = useMesh.getTriangleCount();
+
+        const taskHandle = ProgressManager.Get.start('Voxelising');
+        for (let triIndex = 0; triIndex < numTris; ++triIndex) {
+            ProgressManager.Get.progress(taskHandle, triIndex / numTris);
+
             const uvTriangle = useMesh.getUVTriangle(triIndex);
             const material = useMesh.getMaterialByTriangle(triIndex);
             this._voxeliseTri(uvTriangle, material);
         }
+        ProgressManager.Get.end(taskHandle);
 
         return this._voxelMesh;
     }
 
     private _voxeliseTri(triangle: UVTriangle, materialName: string) {
         const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2);
-        
+
         rayList.forEach((ray) => {
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
@@ -93,7 +100,7 @@ export class RayVoxeliser extends IVoxeliser {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
-        
+
         return this._mesh!.sampleMaterial(materialName, uv, this._voxeliseParams!.textureFiltering);
     }
 
@@ -110,14 +117,14 @@ export class RayVoxeliser extends IVoxeliser {
                 Math.ceil(Math.max(v0.z, v1.z, v2.z)),
             ),
         );
-    
+
         const rayList: Array<Ray> = [];
         this._traverseX(rayList, bounds);
         this._traverseY(rayList, bounds);
         this._traverseZ(rayList, bounds);
         return rayList;
     }
-    
+
     private _traverseX(rayList: Array<Ray>, bounds: Bounds) {
         for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
             for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
@@ -128,7 +135,7 @@ export class RayVoxeliser extends IVoxeliser {
             }
         }
     }
-    
+
     private _traverseY(rayList: Array<Ray>, bounds: Bounds) {
         for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
             for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
@@ -139,7 +146,7 @@ export class RayVoxeliser extends IVoxeliser {
             }
         }
     }
-    
+
     private _traverseZ(rayList: Array<Ray>, bounds: Bounds) {
         for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
             for (let y = bounds.min.y; y <= bounds.max.y; ++y) {

@@ -1,4 +1,5 @@
 import { AppConfig } from './config';
+import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
 import { LOG, TIME_END, TIME_START } from './util/log_util';
 import { doWork } from './worker';
@@ -39,8 +40,24 @@ export class WorkerController {
         return this._jobPending !== undefined;
     }
 
-    private _onWorkerMessage(payload: any) {
+    private _onWorkerMessage(payload: MessageEvent<TFromWorkerMessage>) {
         ASSERT(this._jobPending !== undefined, `Received worker message when no job is pending`);
+
+        if (payload.data.action === 'Progress') {
+            switch (payload.data.payload.type) {
+                case 'Started':
+                    EventManager.Get.broadcast(EAppEvent.onTaskStart, payload.data.payload.taskId);
+                    break;
+                case 'Progress':
+                    EventManager.Get.broadcast(EAppEvent.onTaskProgress, payload.data.payload.taskId, payload.data.payload.percentage);
+                    break;
+                case 'Finished':
+                    EventManager.Get.broadcast(EAppEvent.onTaskEnd, payload.data.payload.taskId);
+                    break;
+            }
+            return;
+        }
+
         TIME_END(this._jobPending.id);
         LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`);
 

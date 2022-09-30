@@ -1,6 +1,7 @@
 import { Atlas } from './atlas';
 import { BlockMesh } from './block_mesh';
 import { BufferGenerator } from './buffer';
+import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
 import { ObjImporter } from './importers/obj_importer';
@@ -10,7 +11,7 @@ import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -26,6 +27,47 @@ export class WorkerClient {
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
+
+    /**
+     * This function should only be called if the client is using the worker.
+     */
+    public init(params: InitParams.Input): InitParams.Output {
+        EventManager.Get.add(EAppEvent.onTaskStart, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Started',
+                    taskId: e[0],
+                },
+            };
+            postMessage(message);
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskProgress, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Progress',
+                    taskId: e[0],
+                    percentage: e[1],
+                },
+            };
+            postMessage(message);
+        });
+
+        EventManager.Get.add(EAppEvent.onTaskEnd, (e: any) => {
+            const message: TFromWorkerMessage = {
+                action: 'Progress',
+                payload: {
+                    type: 'Finished',
+                    taskId: e[0],
+                },
+            };
+            postMessage(message);
+        });
+
+        return {};
+    }
 
     public import(params: ImportParams.Input): ImportParams.Output {
         const importer = new ObjImporter();

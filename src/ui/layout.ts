@@ -526,7 +526,8 @@ export class UI {
             }
             group.submitButton.setEnabled(false);
             if (clearOutput) {
-                group.output.clearMessage();
+                group.output.getMessage().clearAll();
+                group.output.updateMessage();
             }
             if (group.postElements) {
                 LOG(group.label, 'has post-element');
