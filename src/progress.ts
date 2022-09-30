@@ -33,7 +33,7 @@ export class ProgressManager {
      * @param taskId The id of the task (created here).
      */
     public start(taskId: TTaskID): TTaskHandle {
-        ASSERT(!this._tasks.includes(taskId), 'Task with that Id already being tracked');
+        ASSERT(!this._tasks.includes(taskId), `Task with id '${taskId}' already being tracked`);
         this._tasks.push(taskId);
         EventManager.Get.broadcast(EAppEvent.onTaskStart, taskId);
 
@@ -64,5 +64,9 @@ export class ProgressManager {
         ASSERT(taskIndex !== -1, 'Task with that Id is not being tracked');
         this._tasks.splice(taskIndex, 1);
         EventManager.Get.broadcast(EAppEvent.onTaskEnd, tracker.id);
+    }
+
+    public clear() {
+        this._tasks = [];
     }
 }

@@ -94,6 +94,12 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.getActionButton(action)
+                        .stopLoading()
+                        .setProgress(0.0);
+
+                    this._ui.enableTo(action);
                     break;
                 }
                 default: {

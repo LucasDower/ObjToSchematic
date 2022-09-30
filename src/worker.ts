@@ -1,3 +1,4 @@
+import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
 import { AppError } from './util/error_util';
 import { WorkerClient } from './worker_client';
@@ -5,6 +6,8 @@ import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
     StatusHandler.Get.clear();
+    ProgressManager.Get.clear();
+
     try {
         switch (message.action) {
             case 'Import':
