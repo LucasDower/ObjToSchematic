@@ -11,7 +11,7 @@ import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -23,7 +23,16 @@ export class WorkerClient {
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
+    }
 
+    private _loadedMesh?: Mesh;
+    private _loadedVoxelMesh?: VoxelMesh;
+    private _loadedBlockMesh?: BlockMesh;
+
+    /**
+     * This function should only be called if the client is using the worker.
+     */
+    public init(params: InitParams.Input): InitParams.Output {
         EventManager.Get.add(EAppEvent.onTaskStart, (e: any) => {
             const message: TFromWorkerMessage = {
                 action: 'Progress',
@@ -57,11 +66,9 @@ export class WorkerClient {
             };
             postMessage(message);
         });
-    }
 
-    private _loadedMesh?: Mesh;
-    private _loadedVoxelMesh?: VoxelMesh;
-    private _loadedBlockMesh?: BlockMesh;
+        return {};
+    }
 
     public import(params: ImportParams.Input): ImportParams.Output {
         const importer = new ObjImporter();

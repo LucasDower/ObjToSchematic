@@ -40,6 +40,7 @@ export class AppContext {
         this._ui.disable(EAction.Voxelise);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
+        this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
 
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');

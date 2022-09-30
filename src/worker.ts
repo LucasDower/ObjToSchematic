@@ -10,6 +10,12 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
 
     try {
         switch (message.action) {
+            case 'Init':
+                return {
+                    action: 'Init',
+                    result: WorkerClient.Get.init(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
             case 'Import':
                 return {
                     action: 'Import',
