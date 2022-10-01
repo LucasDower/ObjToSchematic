@@ -77,6 +77,7 @@ export class WorkerClient {
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
+            materials: this._loadedMesh.getMaterials(),
         };
     }
 

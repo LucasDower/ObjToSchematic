@@ -3,18 +3,21 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
+import { RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
+import { MaterialType } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
-import { UIMessageBuilder } from './ui/misc';
-import { ColourSpace, EAction } from './util';
+import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
+import { ColourSpace, EAction, getRandomID } from './util';
 import { ASSERT } from './util/error_util';
+import { FileUtil } from './util/file_util';
 import { LOG, LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
@@ -142,7 +145,7 @@ export class AppContext {
         const builder = new UIMessageBuilder();
         builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
 
-        builder.addItem('action', infoStatuses, 'success');
+        builder.addItem('action', infoStatuses, 'none');
         builder.addItem('action', warningStatuses, 'warning');
 
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
@@ -180,6 +183,36 @@ export class AppContext {
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
+
+            // Add material information to the output log
+            {
+                const messageBuilder = outputElement.getMessage();
+                const tree = UITreeBuilder.create('Materials');
+
+                for (const [materialName, material] of Object.entries(payload.result.materials)) {
+                    if (materialName === 'DEFAULT_UNASSIGNED') {
+                        continue;
+                    }
+
+                    const subTree = UITreeBuilder.create(materialName);
+                    if (material.type === MaterialType.solid) {
+                        subTree.addChild(`Colour: ${RGBAUtil.toUint8String(material.colour)}`);
+                    } else {
+                        const parsedPath = path.parse(material.path);
+                        const id = getRandomID();
+                        subTree.addChild(`Texture: <a id="${id}">${parsedPath.base}</a>`, () => {
+                            const tmp = document.getElementById(id) as HTMLLinkElement;
+                            tmp.onclick = () => {
+                                FileUtil.openDir(material.path);
+                            };
+                        });
+                    }
+
+                    tree.addChild(subTree);
+                }
+
+                messageBuilder.addTree('materials', tree);
+            }
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');

@@ -8,6 +8,14 @@ export type RGBA = {
 }
 
 export namespace RGBAUtil {
+    export function toString(a: RGBA) {
+        return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
+    }
+
+    export function toUint8String(a: RGBA) {
+        return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
+    }
+
     export function lerp(a: RGBA, b: RGBA, alpha: number) {
         return {
             r: a.r * (1 - alpha) + b.r * alpha,

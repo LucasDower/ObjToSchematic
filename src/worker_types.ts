@@ -2,6 +2,7 @@ import { TBlockAssigners } from './assigners/assigners';
 import { FallableBehaviour } from './block_mesh';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { TExporters } from './exporters/exporters';
+import { MaterialMap } from './mesh';
 import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
@@ -25,6 +26,7 @@ export namespace ImportParams {
 
     export type Output = {
         triangleCount: number,
+        materials: MaterialMap
     }
 }
 

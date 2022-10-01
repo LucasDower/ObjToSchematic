@@ -5,11 +5,67 @@ type TMessage = {
     body: string,
 }
 
+interface IUIOutputElement {
+    buildHTML(): string;
+}
+
+export class UITreeBuilder implements IUIOutputElement {
+    private _rootLabel: string;
+    private _children: Array<string | UITreeBuilder>;
+    private _postBuildDelegates: Array<() => void>;
+
+    private constructor(rootLabel: string) {
+        this._rootLabel = rootLabel;
+        this._children = [];
+        this._postBuildDelegates = [];
+    }
+
+    public static create(rootLabel: string): UITreeBuilder {
+        return new UITreeBuilder(rootLabel);
+    }
+
+    public addChild(child: string | UITreeBuilder, postBuildDelegate?: () => void) {
+        this._children.push(child);
+        if (postBuildDelegate !== undefined) {
+            this._postBuildDelegates.push(postBuildDelegate);
+        }
+        if (child instanceof UITreeBuilder) {
+            this._postBuildDelegates.push(() => { child.postBuild(); });
+        }
+    }
+
+    public postBuild() {
+        this._postBuildDelegates.forEach((delegate) => {
+            delegate();
+        });
+    }
+
+    public buildHTML(): string {
+        let childrenHTML: string = '';
+        this._children.forEach((child) => {
+            childrenHTML += '<li>';
+            if (child instanceof UITreeBuilder) {
+                childrenHTML += child.buildHTML();
+            } else {
+                childrenHTML += child;
+            }
+            childrenHTML += '<li>';
+        });
+
+        return `
+            <span class="caret">${this._rootLabel}</span>
+            <ul class="nested">${childrenHTML}</ul>
+        `;
+    }
+}
+
 export class UIMessageBuilder {
     private _messages: TMessage[];
+    private _postBuildDelegates: Array<() => void>;
 
     public constructor() {
         this._messages = [];
+        this._postBuildDelegates = [];
     }
 
     public static create() {
@@ -35,7 +91,21 @@ export class UIMessageBuilder {
         return this;
     }
 
-    public addItem(groupId: string, messages: string[], style: OutputStyle) {
+    public addTree(groupId: string, tree: UITreeBuilder) {
+        this._messages.push({
+            groupId: groupId,
+            body: `<div style="padding-left: 16px;">${tree.buildHTML()}</div>`,
+        });
+        this._postBuildDelegates.push(() => { tree.postBuild(); });
+    }
+
+    public postBuild() {
+        this._postBuildDelegates.forEach((delegate) => {
+            delegate();
+        });
+    }
+
+    public addItem(groupId: string, messages: string[], style: OutputStyle, indent: number = 1) {
         for (const message of messages) {
             const cssColourClass = this._getStatusCSSClass(style);
             this._messages.push({
