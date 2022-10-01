@@ -1,7 +1,5 @@
 import path from 'path';
 
-import { ASSERT } from './error_util';
-
 export namespace PathUtil {
     export function join(...paths: string[]) {
         return path.join(...paths);

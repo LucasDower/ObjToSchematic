@@ -7,7 +7,6 @@ import { OcclusionManager } from './occlusion';
 import { ProgressManager } from './progress';
 import { AttributeData } from './render_buffer';
 import { ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 import { RenderNextVoxelMeshChunkParams } from './worker_types';

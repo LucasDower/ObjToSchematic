@@ -8,7 +8,7 @@ import { ObjImporter } from './importers/obj_importer';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
 import { ASSERT } from './util/error_util';
-import { LOGF, Logger } from './util/log_util';
+import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';

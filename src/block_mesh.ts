@@ -4,7 +4,7 @@ import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { Atlas } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
-import { BufferGenerator, ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';

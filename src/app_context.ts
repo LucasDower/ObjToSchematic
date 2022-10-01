@@ -15,7 +15,7 @@ import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { LOG, LOG_ERROR, Logger } from './util/log_util';
+import { LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
