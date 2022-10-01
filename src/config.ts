@@ -20,7 +20,7 @@ export namespace AppConfig {
     export const MULTISAMPLE_COUNT = 16;
 
     /** Max size of Node's old space in MBs. */
-    export const OLD_SPACE_SIZE = 2048;
+    export const OLD_SPACE_SIZE = 8192;
 
     /** This value determines how much more important it is to closely match a block's transparency value than its colour. */
     export const ALPHA_BIAS = 1.0;
@@ -39,4 +39,7 @@ export namespace AppConfig {
 
     /** Whether or not to use a worker thread. You should probably never disable this unless debugging. */
     export const USE_WORKER_THREAD = true;
+
+    /** The number of voxels that're packed into a single buffer */
+    export const VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 }

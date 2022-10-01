@@ -20,6 +20,12 @@ export const LOG = (...data: any[]) => {
     }
 };
 
+export const LOGF = (...data: any[]) => {
+    if (Logger.Get.logToFile) {
+        Logger.Get.logToFile(...data);
+    }
+};
+
 /**
  * Logs to console and file if logging `LOG_MAJOR` is enabled.
  * This is identical to `LOG` but can be enabled/disabled separately.

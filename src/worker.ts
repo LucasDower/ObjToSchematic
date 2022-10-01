@@ -6,7 +6,10 @@ import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
     StatusHandler.Get.clear();
-    ProgressManager.Get.clear();
+
+    if (message.action !== 'RenderNextVoxelMeshChunk' && message.action !== 'RenderNextBlockMeshChunk') {
+        ProgressManager.Get.clear();
+    }
 
     try {
         switch (message.action) {
@@ -34,10 +37,18 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.voxelise(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            /*
             case 'RenderVoxelMesh':
                 return {
                     action: 'RenderVoxelMesh',
                     result: WorkerClient.Get.renderVoxelMesh(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
+            */
+            case 'RenderNextVoxelMeshChunk':
+                return {
+                    action: 'RenderNextVoxelMeshChunk',
+                    result: WorkerClient.Get.renderChunkedVoxelMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
             case 'Assign':
@@ -46,10 +57,18 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.assign(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            /*
             case 'RenderBlockMesh':
                 return {
                     action: 'RenderBlockMesh',
                     result: WorkerClient.Get.renderBlockMesh(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
+                */
+            case 'RenderNextBlockMeshChunk':
+                return {
+                    action: 'RenderNextBlockMeshChunk',
+                    result: WorkerClient.Get.renderChunkedBlockMesh(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
             case 'Export':
@@ -62,7 +81,5 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
     } catch (e: any) {
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };
     }
-
-    return { action: 'KnownError', error: new AppError('Worker could not handle message') };
 }
 

@@ -1,12 +1,13 @@
 import { Bounds } from './bounds';
-import { BufferGenerator, TVoxelMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
 import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
-import { RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { RenderNextVoxelMeshChunkParams, VoxeliseParams } from './worker_types';
 
 export interface Voxel {
     position: Vector3;
@@ -149,13 +150,15 @@ export class VoxelMesh {
         return (this.getNeighbours(pos).value & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
     }
 
-    private _renderParams?: RenderVoxelMeshParams.Input;
+    private _renderParams?: RenderNextVoxelMeshChunkParams.Input;
     private _recreateBuffer: boolean;
-    public setRenderParams(params: RenderVoxelMeshParams.Input) {
+    public setRenderParams(params: RenderNextVoxelMeshChunkParams.Input) {
         this._renderParams = params;
         this._recreateBuffer = true;
+        this._bufferChunks = [];
     }
 
+    /*
     private _buffer?: TVoxelMeshBufferDescription;
     public getBuffer(): TVoxelMeshBufferDescription {
         ASSERT(this._renderParams, 'Called VoxelMesh.getBuffer() without setting render params');
@@ -164,5 +167,18 @@ export class VoxelMesh {
             this._recreateBuffer = false;
         }
         return this._buffer;
+    }
+    */
+
+    private _bufferChunks: Array<TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number }> = [];
+    public getChunkedBuffer(chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
+        ASSERT(this._renderParams, 'Called VoxelMesh.getChunkedBuffer() without setting render params');
+        if (this._bufferChunks[chunkIndex] === undefined) {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromVoxelMesh(this, this._renderParams, chunkIndex);
+        } else {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} cached`);
+        }
+        return this._bufferChunks[chunkIndex];
     }
 }
