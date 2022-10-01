@@ -202,10 +202,13 @@ export class Renderer {
         this.setModelToUse(MeshType.TriangleMesh);
     }
 
+    private _allVoxelChunks = false;
     public useVoxelMeshChunk(params: RenderNextVoxelMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._voxelBuffer = [];
         }
+
+        this._allVoxelChunks = !params.moreVoxelsToBuffer;
 
         this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
         this._voxelSize = params.voxelSize;
@@ -255,7 +258,7 @@ export class Renderer {
         this.setModelToUse(MeshType.VoxelMesh);
     }
     */
-
+    
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
@@ -371,6 +374,7 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_ambientOcclusion: this._allVoxelChunks,
         };
         this._voxelBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);

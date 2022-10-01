@@ -278,7 +278,6 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Assign);
 
             switch (payload.action) {
                 case 'KnownError':
@@ -290,6 +289,8 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.enableTo(EAction.Assign);
                     break;
                 }
                 default: {
@@ -305,6 +306,7 @@ export class AppContext {
                             [],
                             'success',
                         );
+                        this._ui.enableTo(EAction.Assign);
                     }
                 }
             }
@@ -357,7 +359,6 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Export);
 
             switch (payload.action) {
                 case 'KnownError':
@@ -369,6 +370,8 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.enableTo(EAction.Export);
                     break;
                 }
                 default: {
@@ -384,6 +387,7 @@ export class AppContext {
                             [],
                             'success',
                         );
+                        this._ui.enableTo(EAction.Export);
                     }
                 }
             }
