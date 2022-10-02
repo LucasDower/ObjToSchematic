@@ -19,7 +19,6 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
     private _voxeliseParams?: VoxeliseParams.Input;
-    private _scale!: number;
     private _size!: Vector3;
     private _offset!: Vector3;
 
@@ -28,11 +27,12 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
-        this._scale = (voxeliseParams.desiredHeight) / Mesh.desiredHeight;
-        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
+        const scale = (voxeliseParams.desiredHeight) / Mesh.desiredHeight;
+        mesh.setTransform((vertex: Vector3) => {
+            return vertex.copy().mulScalar(scale);
+        });
 
-        useMesh.scaleMesh(this._scale);
-        const bounds = useMesh.getBounds();
+        const bounds = mesh.getBounds();
         this._size = Vector3.sub(bounds.max, bounds.min);
         this._offset = new Vector3(
             this._size.x % 2 < 0.001 ? 0.5 : 0.0,
@@ -40,18 +40,19 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             this._size.z % 2 < 0.001 ? 0.5 : 0.0,
         );
 
-        const numTris = useMesh.getTriangleCount();
+        const numTris = mesh.getTriangleCount();
 
         const taskHandle = ProgressManager.Get.start('Voxelising');
         for (let triIndex = 0; triIndex < numTris; ++triIndex) {
             ProgressManager.Get.progress(taskHandle, triIndex / numTris);
-
-            const uvTriangle = useMesh.getUVTriangle(triIndex);
-            const normals = useMesh.getNormals(triIndex);
-            const material = useMesh.getMaterialByTriangle(triIndex);
+            const uvTriangle = mesh.getUVTriangle(triIndex);
+            const normals = mesh.getNormals(triIndex);
+            const material = mesh.getMaterialByTriangle(triIndex);
             this._voxeliseTri(uvTriangle, material, normals);
         }
         ProgressManager.Get.end(taskHandle);
+
+        mesh.clearTransform();
 
         return this._voxelMesh;
     }
