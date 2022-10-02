@@ -6,6 +6,7 @@ import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
 import { OcclusionManager } from './occlusion';
 import { ProgressManager } from './progress';
 import { AttributeData } from './render_buffer';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 import { RenderNextVoxelMeshChunkParams } from './worker_types';
@@ -57,8 +58,8 @@ type TMaterialID = string;
 export class ChunkedBufferGenerator {
     public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderNextVoxelMeshChunkParams.Input, chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
         const numTotalVoxels = voxelMesh.getVoxelCount();
-        const voxelsStartIndex = chunkIndex * AppConfig.VOXEL_BUFFER_CHUNK_SIZE;
-        const voxelsEndIndex = Math.min((chunkIndex + 1) * AppConfig.VOXEL_BUFFER_CHUNK_SIZE, numTotalVoxels);
+        const voxelsStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const voxelsEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalVoxels);
         ASSERT(voxelsStartIndex < numTotalVoxels, 'Invalid voxel start index');
 
         const numBufferVoxels = voxelsEndIndex - voxelsStartIndex;
@@ -114,8 +115,8 @@ export class ChunkedBufferGenerator {
         const blocks = blockMesh.getBlocks();
 
         const numTotalBlocks = blocks.length;
-        const blocksStartIndex = chunkIndex * AppConfig.VOXEL_BUFFER_CHUNK_SIZE;
-        const blocksEndIndex = Math.min((chunkIndex + 1) * AppConfig.VOXEL_BUFFER_CHUNK_SIZE, numTotalBlocks);
+        const blocksStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const blocksEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalBlocks);
         ASSERT(blocksStartIndex < numTotalBlocks, 'Invalid block start index');
 
         const numBufferBlocks = blocksEndIndex - blocksStartIndex;
