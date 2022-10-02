@@ -1,7 +1,7 @@
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
-import { LOG, TIME_END, TIME_START } from './util/log_util';
+import { LOG, LOGF, TIME_END, TIME_START } from './util/log_util';
 import { doWork } from './worker';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -15,12 +15,14 @@ export class WorkerController {
     private _worker: Worker;
     private _jobQueue: TWorkerJob[];
     private _jobPending: TWorkerJob | undefined;
+    private _jobStartTime: number;
 
     public constructor(scriptURL: string, options?: WorkerOptions) {
         this._worker = new Worker(scriptURL, options);
         this._worker.onmessage = this._onWorkerMessage.bind(this);
 
         this._jobQueue = [];
+        this._jobStartTime = 0;
     }
 
     public addJob(newJob: TWorkerJob): boolean {
@@ -58,8 +60,8 @@ export class WorkerController {
             return;
         }
 
-        TIME_END(this._jobPending.id);
-        LOG(`[WorkerController]: Job '${this._jobPending.id}' finished:`);
+        const deltaTime = Date.now() - this._jobStartTime;
+        LOG(`[WorkerController]: '${this._jobPending.id}' completed in ${deltaTime}ms`);
 
         if (this._jobPending.callback) {
             this._jobPending.callback(payload.data);
@@ -79,8 +81,9 @@ export class WorkerController {
             return;
         }
 
-        LOG('[WorkerController]: Starting Job', this._jobPending.id, `(${this._jobQueue.length} remaining)`);
-        TIME_START(this._jobPending.id);
+        LOG(`[WorkerController]: Starting Job '${this._jobPending.id}' (${this._jobQueue.length} remaining)`);
+        this._jobStartTime = Date.now();
+
         if (AppConfig.Get.USE_WORKER_THREAD) {
             this._worker.postMessage(this._jobPending.payload);
         } else {
