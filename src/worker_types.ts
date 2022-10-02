@@ -1,6 +1,7 @@
 import { TBlockAssigners } from './assigners/assigners';
 import { FallableBehaviour } from './block_mesh';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
+import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
 import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
@@ -77,6 +78,7 @@ export namespace AssignParams {
         blockAssigner: TBlockAssigners,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
+        resolution: RGBAUtil.TColourAccuracy,
     }
 
     export type Output = {

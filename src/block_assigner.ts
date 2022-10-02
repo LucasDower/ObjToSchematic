@@ -1,8 +1,18 @@
-import { Atlas } from './atlas';
-import { RGBA } from './colour';
+import { Atlas, TAtlasBlock } from './atlas';
+import { RGBA, RGBAUtil } from './colour';
 import { Palette } from './palette';
-import { AppTypes } from './util';
+import { AppTypes, TOptional } from './util';
+import { ASSERT } from './util/error_util';
 
+export type TBlockCollection = {
+    blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>,
+    cache: Map<number, TAtlasBlock>,
+}
+
+/**
+ * A new instance of AtlasPalette is created each time 
+ * a new voxel mesh is voxelised.
+ */
 export class AtlasPalette {
     private _atlas: Atlas;
     private _palette: Palette;
@@ -14,7 +24,71 @@ export class AtlasPalette {
         this._palette.removeMissingAtlasBlocks(this._atlas);
     }
 
-    public getBlock(colour: RGBA, exclude?: AppTypes.TNamespacedBlockName[]) {
-        return this._palette.getBlock(colour, this._atlas, exclude);
+    public createBlockCollection(blocksToExclude: AppTypes.TNamespacedBlockName[]): TBlockCollection {
+        const blocksNamesToUse = this._palette.getBlocks();
+        {
+            // Remove excluded blocks
+            for (const blockToExclude of blocksToExclude) {
+                const index = blocksNamesToUse.indexOf(blockToExclude);
+                if (index != -1) {
+                    blocksNamesToUse.splice(index, 1);
+                }
+            }
+        }
+
+        const blocksToUse: TBlockCollection = {
+            blocks: new Map(),
+            cache: new Map(),
+        };
+
+        const atlasBlocks = this._atlas.getBlocks();
+        {
+            // Only add block data for blocks in the palette
+            atlasBlocks.forEach((atlasBlock, blockName) => {
+                if (blocksNamesToUse.includes(blockName)) {
+                    blocksToUse.blocks.set(blockName, atlasBlock);
+                }
+            });
+        }
+
+        ASSERT(blocksToUse.blocks.size >= 1, 'Must have at least one block cached');
+        return blocksToUse;
+    }
+
+    /**
+     * Convert a colour into a Minecraft block.
+     * @param colour The colour that the returned block should match with.
+     * @param resolution The colour accuracy, a uint8 from 1 to 255, inclusive.
+     * @param blockToExclude A list of blocks that should not be used, this should be a subset of the palette blocks.
+     * @returns 
+     */
+    public getBlock(colour: RGBA, blockCollection: TBlockCollection, resolution: RGBAUtil.TColourAccuracy) {
+        const { colourHash, binnedColour } = RGBAUtil.bin(colour, resolution);
+
+        // If we've already calculated the block associated with this colour, return it.
+        const cachedBlock = blockCollection.cache.get(colourHash);
+        if (cachedBlock !== undefined) {
+            return cachedBlock;
+        }
+
+        // Find closest block in colour
+        let minDistance = Infinity;
+        let blockChoice: TOptional<TAtlasBlock>;
+        {
+            blockCollection.blocks.forEach((blockData) => {
+                const colourDistance = RGBAUtil.squaredDistance(binnedColour, blockData.colour);
+                if (colourDistance < minDistance) {
+                    minDistance = colourDistance;
+                    blockChoice = blockData;
+                }
+            });
+        }
+
+        if (blockChoice !== undefined) {
+            blockCollection.cache.set(colourHash, blockChoice);
+            return blockChoice;
+        }
+
+        ASSERT(false, 'Unreachable, always at least one possible block');
     }
 }

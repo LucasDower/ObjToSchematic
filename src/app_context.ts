@@ -325,6 +325,7 @@ export class AppContext {
                 blockAssigner: uiElements.dithering.getCachedValue(),
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
             },
         };
 

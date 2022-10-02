@@ -15,6 +15,14 @@ export namespace AppMath {
     export function degreesToRadians(degrees: number) {
         return degrees * (Math.PI / 180.0);
     }
+
+    /**
+     * Converts a float in [0, 1] to an int in [0, 255]
+     * @param decimal A number in [0, 1]
+     */
+    export function uint8(decimal: number) {
+        return Math.floor(decimal * 255);
+    }
 }
 
 export const argMax = (array: [number]) => {
@@ -42,7 +50,7 @@ export const between = (value: number, min: number, max: number) => {
 };
 
 export const mapRange = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) => {
-    return (value - fromMin)/(fromMax - fromMin) * (toMax - toMin) + toMin;
+    return (value - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
 };
 
 export const wayThrough = (value: number, min: number, max: number) => {

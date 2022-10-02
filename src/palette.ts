@@ -2,10 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import { Atlas } from './atlas';
-import { RGBA, RGBAUtil } from './colour';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
-import { AppError, ASSERT } from './util/error_util';
+import { ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
@@ -117,42 +116,6 @@ export class Palette {
 
     public count() {
         return this._blocks.length;
-    }
-
-    public getBlock(voxelColour: RGBA, atlas: Atlas, blocksToExclude?: AppTypes.TNamespacedBlockName[]) {
-        const blocksToUse = this.getBlocks();
-        const atlasBlocks = atlas.getBlocks();
-
-        // Remove excluded blocks
-        if (blocksToExclude !== undefined) {
-            for (const blockToExclude of blocksToExclude) {
-                const index = blocksToUse.indexOf(blockToExclude);
-                if (index != -1) {
-                    blocksToUse.splice(index, 1);
-                }
-            }
-        }
-
-        // Find closest block in colour
-        let minDistance = Infinity;
-        let blockChoice: TOptional<AppTypes.TNamespacedBlockName>;
-
-        for (const blockName of blocksToUse) {
-            const blockData = atlasBlocks.get(blockName);
-            ASSERT(blockData);
-
-            const colourDistance = RGBAUtil.squaredDistance(voxelColour, blockData.colour);
-            if (colourDistance < minDistance) {
-                minDistance = colourDistance;
-                blockChoice = blockName;
-            }
-        }
-
-        if (blockChoice !== undefined) {
-            return atlasBlocks.get(blockChoice)!;
-        }
-
-        throw new AppError('Could not find a suitable block');
     }
 
     public getBlocks() {

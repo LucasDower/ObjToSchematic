@@ -56,6 +56,51 @@ export namespace RGBAUtil {
     export function toArray(a: RGBA): number[] {
         return [a.r, a.g, a.b, a.a];
     }
+
+    export function bin(col: RGBA, resolution: TColourAccuracy) {
+        const r = Math.floor(col.r * resolution);
+        const g = Math.floor(col.g * resolution);
+        const b = Math.floor(col.b * resolution);
+        const a = Math.ceil(col.a * resolution);
+
+        let hash = r;
+        hash = (hash << 8) + g;
+        hash = (hash << 8) + b;
+        hash = (hash << 8) + a;
+
+        const binnedColour: RGBA = {
+            r: r / resolution,
+            g: g / resolution,
+            b: b / resolution,
+            a: a / resolution,
+        };
+
+        return {
+            colourHash: hash,
+            binnedColour: binnedColour,
+        };
+    }
+
+    /**
+     * Encodes a colour as a single number.
+     * Note this will bin colours together.
+     * @param col The colour to hash.
+     * @param resolution An uint8, the larger the more accurate the hash.
+     */
+    export function hash(col: RGBA, resolution: TColourAccuracy): number {
+        const r = Math.floor(col.r * resolution);
+        const g = Math.floor(col.g * resolution);
+        const b = Math.floor(col.b * resolution);
+        const a = Math.floor(col.a * resolution);
+
+        let hash = r;
+        hash = (hash << 8) + g;
+        hash = (hash << 8) + b;
+        hash = (hash << 8) + a;
+        return hash;
+    }
+
+    export type TColourAccuracy = number;
 }
 
 export namespace RGBAColours {
