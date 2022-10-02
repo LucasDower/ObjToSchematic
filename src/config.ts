@@ -11,6 +11,7 @@ export class AppConfig {
     }
 
     public readonly RELEASE_MODE: boolean;
+    public readonly VOXEL_BUFFER_CHUNK_SIZE: number;
 
     // Loaded from .json
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER: boolean;
@@ -31,6 +32,7 @@ export class AppConfig {
 
     private constructor() {
         this.RELEASE_MODE = false;
+        this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
         const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
         const configJSON = JSON.parse(configFile);

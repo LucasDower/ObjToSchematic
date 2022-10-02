@@ -4,12 +4,13 @@ import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { Atlas } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
-import { BufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
 import { ColourSpace } from './util';
 import { AppError, ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
 import { Voxel, VoxelMesh } from './voxel_mesh';
@@ -126,14 +127,6 @@ export class BlockMesh {
     }
 
     /*
-    private _renderParams?: RenderBlockMeshParams.Input;
-    private _recreateBuffer: boolean;
-    public setRenderParams(params: RenderBlockMeshParams.Input) {
-        this._renderParams = params;
-        this._recreateBuffer = true;
-    }
-    */
-
     private _buffer?: TBlockMeshBufferDescription;
     public getBuffer(): TBlockMeshBufferDescription {
         //ASSERT(this._renderParams, 'Called BlockMesh.getBuffer() without setting render params');
@@ -142,5 +135,21 @@ export class BlockMesh {
             //this._recreateBuffer = false;
         }
         return this._buffer;
+    }
+    */
+
+    private _bufferChunks: Array<TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number }> = [];
+    public getChunkedBuffer(chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
+        if (this._bufferChunks[chunkIndex] === undefined) {
+            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromBlockMesh(this, chunkIndex);
+        } else {
+            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+        }
+        return this._bufferChunks[chunkIndex];
+    }
+
+    public getAllChunkedBuffers() {
+        return this._bufferChunks;
     }
 }
