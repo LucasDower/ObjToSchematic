@@ -1,5 +1,3 @@
-import { AppConfig } from '../config';
-
 export class AppError extends Error {
     constructor(msg: string) {
         super(msg);
@@ -8,7 +6,7 @@ export class AppError extends Error {
 }
 
 export function ASSERT(condition: any, errorMessage = 'Assertion Failed'): asserts condition {
-    if (AppConfig.ASSERTIONS_ENABLED && !condition) {
+    if (!condition) {
         Error(errorMessage);
         throw Error(errorMessage);
     }

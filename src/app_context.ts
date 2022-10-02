@@ -31,6 +31,8 @@ export class AppContext {
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
 
+        AppConfig.Get.dumpConfig();
+
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
@@ -181,11 +183,11 @@ export class AppContext {
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
-            if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
+            if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
                 this._workerController.addJob(this._renderMesh());
             } else {
-                const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
+                const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
         };

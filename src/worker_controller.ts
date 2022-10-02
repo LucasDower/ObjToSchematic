@@ -70,7 +70,7 @@ export class WorkerController {
     }
 
     private _tryStartNextJob() {
-        if (this.isBusy() && AppConfig.USE_WORKER_THREAD) {
+        if (this.isBusy() && AppConfig.Get.USE_WORKER_THREAD) {
             return;
         }
 
@@ -81,7 +81,7 @@ export class WorkerController {
 
         LOG('[WorkerController]: Starting Job', this._jobPending.id, `(${this._jobQueue.length} remaining)`);
         TIME_START(this._jobPending.id);
-        if (AppConfig.USE_WORKER_THREAD) {
+        if (AppConfig.Get.USE_WORKER_THREAD) {
             this._worker.postMessage(this._jobPending.payload);
         } else {
             const result = doWork(this._jobPending.payload);

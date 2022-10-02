@@ -20,7 +20,7 @@ import url from 'url';
 import { AppConfig } from './config';
 import { AppPaths, PathUtil } from './util/path_util';
 
-app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.Get.OLD_SPACE_SIZE_MB}`);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -46,7 +46,7 @@ function createWindow() {
             enableRemoteModule: true,
         },
     });
-    if (!AppConfig.DEBUG_ENABLED) {
+    if (AppConfig.Get.RELEASE_MODE) {
         mainWindow.removeMenu();
     }
 

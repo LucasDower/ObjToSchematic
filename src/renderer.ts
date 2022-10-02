@@ -419,7 +419,7 @@ export class Renderer {
     private _setupScene() {
         twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement>this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-        ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
+        ArcballCamera.Get.setAspect(this._gl.canvas.width / this._gl.canvas.height);
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
 
         this._gl.enable(this._gl.DEPTH_TEST);

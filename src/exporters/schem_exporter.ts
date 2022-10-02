@@ -2,12 +2,12 @@ import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
+import { AppUtil } from '../util';
 import { LOG } from '../util/log_util';
+import { MathUtil } from '../util/math_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
-
-const varintarray = require('varint-array');
 
 export class SchemExporter extends IExporter {
     public override getFormatFilter() {
@@ -33,27 +33,41 @@ export class SchemExporter extends IExporter {
 
         // https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-3.md#paletteObject
         // const blockMapping: BlockMapping = {};
-        const test: {[name: string]: { type: TagType, value: any }} = {
+        const blockMapping: {[name: string]: { type: TagType, value: any }} = {
             'minecraft:air': { type: TagType.Int, value: 0 },
         };
 
         let blockIndex = 1;
         for (const blockName of blockMesh.getBlockPalette()) {
-            const namespacedBlockName = 'minecraft:' + blockName; // FIXME: All block names should be namespaced on import
-            // ASSERT(!(namespacedBlockName in blockMapping));
-            // blockMapping[namespacedBlockName] = blockIndex;
-            test[namespacedBlockName] = { type: TagType.Int, value: blockIndex };
+            const namespacedBlockName = AppUtil.Text.namespaceBlock(blockName);
+            
+            blockMapping[namespacedBlockName] = { type: TagType.Int, value: blockIndex };
             ++blockIndex;
         }
-        LOG(test);
+        LOG(blockMapping);
 
         // const paletteObject = SchemExporter._createBlockStatePalette(blockMapping);
         const blockData = new Array<number>(sizeVector.x * sizeVector.y * sizeVector.z).fill(0);
         for (const block of blockMesh.getBlocks()) {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
             const bufferIndex = SchemExporter._getBufferIndex(sizeVector, indexVector);
-            const namespacedBlockName = 'minecraft:' + block.blockInfo.name;
-            blockData[bufferIndex] = test[namespacedBlockName].value;
+            const namespacedBlockName = AppUtil.Text.namespaceBlock(block.blockInfo.name);
+            blockData[bufferIndex] = blockMapping[namespacedBlockName].value;
+        }
+        
+        const blockEncoding: number[] = [];
+        for (let i = 0; i < blockData.length; ++i) {
+            let id = blockData[i];
+          
+            while ((id & -128) != 0) {
+                blockEncoding.push(id & 127 | 128);
+                id >>>= 7;
+            }
+            blockEncoding.push(id);
+        }
+
+        for (let i = 0; i < blockEncoding.length; ++i) {
+            blockEncoding[i] = MathUtil.int8(blockEncoding[i]);
         }
         
         const nbt: NBT = {
@@ -66,8 +80,8 @@ export class SchemExporter extends IExporter {
                 Height: { type: TagType.Short, value: sizeVector.y },
                 Length: { type: TagType.Short, value: sizeVector.z },
                 PaletteMax: { type: TagType.Int, value: blockIndex },
-                Palette: { type: TagType.Compound, value: test },
-                BlockData: { type: TagType.ByteArray, value: varintarray.encode(blockData) },
+                Palette: { type: TagType.Compound, value: blockMapping },
+                BlockData: { type: TagType.ByteArray, value: blockEncoding },
             },
         };
 
