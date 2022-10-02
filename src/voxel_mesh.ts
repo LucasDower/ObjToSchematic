@@ -1,7 +1,6 @@
 import { Bounds } from './bounds';
 import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
-import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
@@ -21,14 +20,14 @@ export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | '
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
-    private _voxelsHash: HashMap<Vector3, number>;
+    private _voxelsHash: Map<string, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
     private _voxelMeshParams: TVoxelMeshParams;
 
     public constructor(voxelMeshParams: TVoxelMeshParams) {
         this._voxels = [];
-        this._voxelsHash = new HashMap(2048);
+        this._voxelsHash = new Map();
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
         this._voxelMeshParams = voxelMeshParams;
@@ -40,13 +39,15 @@ export class VoxelMesh {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this._voxelsHash.has(pos);
+        return this._voxelsHash.has(pos.stringify());
     }
 
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
-            return this._voxels[voxelIndex];
+            const voxel = this._voxels[voxelIndex];
+            ASSERT(voxel !== undefined);
+            return voxel;
         }
     }
 
@@ -57,7 +58,7 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -73,7 +74,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.add(pos, this._voxels.length - 1);
+            this._voxelsHash.set(pos.stringify(), this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }

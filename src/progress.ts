@@ -37,7 +37,7 @@ export class ProgressManager {
         ASSERT(!this._tasks.includes(taskId), `Task with id '${taskId}' already being tracked`);
         this._tasks.push(taskId);
         EventManager.Get.broadcast(EAppEvent.onTaskStart, taskId);
-        
+
         LOGF(`[PROGRESS]: Start '${taskId} (${this._tasks.length} task(s))'`);
 
         return {
@@ -53,7 +53,7 @@ export class ProgressManager {
      */
     public progress(tracker: TTaskHandle, percentage: number) {
         if (percentage > tracker.nextPercentage) {
-            LOGF(`[PROGRESS]: Progress '${tracker.id}' (${this._tasks.length} task(s))'`);
+            //LOGF(`[PROGRESS]: Progress '${tracker.id}' (${this._tasks.length} task(s))'`);
             EventManager.Get.broadcast(EAppEvent.onTaskProgress, tracker.id, percentage);
             tracker.nextPercentage += 0.05;
         }
