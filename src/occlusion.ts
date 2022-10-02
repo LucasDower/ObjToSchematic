@@ -51,7 +51,7 @@ export class OcclusionManager {
                 // If both edge blocks along this vertex exist,
                 // assume corner exists (even if it doesnt)
                 // (This is a stylistic choice)
-                if (numNeighbours == 2 && AppConfig.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
+                if (numNeighbours == 2 && AppConfig.Get.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
                     ++numNeighbours;
                 } else {
                     const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];

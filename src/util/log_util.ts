@@ -192,7 +192,7 @@ export class Logger {
      * Should be called before `initLogFile`
      */
     public enableLogToFile() {
-        if (AppConfig.LOG_TO_FILE && this._enabledLogToFile === undefined) {
+        if (AppConfig.Get.LOG_TO_FILE && this._enabledLogToFile === undefined) {
             this._enabledLogToFile = true;
         }
     }

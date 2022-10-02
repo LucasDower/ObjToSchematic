@@ -71,7 +71,7 @@ export class RayVoxeliser extends IVoxeliser {
                 let voxelColour: RGBA;
                 if (this._voxeliseParams!.useMultisampleColouring) {
                     const samples: RGBA[] = [];
-                    for (let i = 0; i < AppConfig.MULTISAMPLE_COUNT; ++i) {
+                    for (let i = 0; i < AppConfig.Get.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
                         samples.push(this.__getVoxelColour(triangle, materialName, samplePosition));
                     }
