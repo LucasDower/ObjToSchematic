@@ -36,13 +36,49 @@ export class ObjExporter extends IExporter {
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
-        const buffer = blockMesh.getBuffer().buffer;
+        const buffers = blockMesh.getAllChunkedBuffers();
+        let numPositions = 0;
+        let numNormals = 0;
+        let numTexcoords = 0;
+        let numBlockTexcoords = 0;
+        let numIndices = 0;
 
-        const positionData = buffer.position.data as Float32Array;
-        const normalData = buffer.normal.data as Float32Array;
-        const texcoordData = buffer.texcoord.data as Float32Array;
-        const blockTexcoordData = buffer.blockTexcoord.data as Float32Array;
-        const indexData = buffer.indices.data as Uint32Array;
+        buffers.forEach(({ buffer }) => {
+            numPositions += buffer.position.data.length;
+            numNormals += buffer.normal.data.length;
+            numTexcoords += buffer.texcoord.data.length;
+            numBlockTexcoords += buffer.blockTexcoord.data.length;
+            numIndices += buffer.indices.data.length;
+        });
+
+        const positionData = new Float32Array(numPositions);
+        const normalData = new Float32Array(numNormals);
+        const texcoordData = new Float32Array(numTexcoords);
+        const blockTexcoordData = new Float32Array(numBlockTexcoords);
+        const indexData = new Float32Array(numIndices);
+
+        let positionIndex = 0;
+        let normalIndex = 0;
+        let texcoordIndex = 0;
+        let blockTexcoordIndex = 0;
+        let indicesIndex = 0;
+
+        buffers.forEach(({ buffer }) => {
+            positionData.set(buffer.position.data, positionIndex);
+            positionIndex += buffer.position.data.length;
+            
+            normalData.set(buffer.normal.data, normalIndex);
+            normalIndex += buffer.normal.data.length;
+            
+            texcoordData.set(buffer.texcoord.data, texcoordIndex);
+            texcoordIndex += buffer.texcoord.data.length;
+            
+            blockTexcoordData.set(buffer.blockTexcoord.data, blockTexcoordIndex);
+            blockTexcoordIndex += buffer.blockTexcoord.data.length;
+            
+            indexData.set(buffer.indices.data, indicesIndex);
+            indicesIndex += buffer.indices.data.length;
+        });
 
         const file = fs.openSync(filepath, 'w');
         fs.writeSync(file, '# Created with ObjToSchematic\n');

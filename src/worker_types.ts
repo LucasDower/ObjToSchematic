@@ -55,6 +55,7 @@ export namespace VoxeliseParams {
     }
 }
 
+/*
 export namespace RenderVoxelMeshParams {
     export type Input = {
         desiredHeight: number,
@@ -65,6 +66,22 @@ export namespace RenderVoxelMeshParams {
         buffer: TVoxelMeshBufferDescription,
         dimensions: Vector3,
         voxelSize: number,
+    }
+}
+*/
+
+export namespace RenderNextVoxelMeshChunkParams {
+    export type Input = {
+        desiredHeight: number,
+        enableAmbientOcclusion: boolean,
+    }
+
+    export type Output = {
+        buffer: TVoxelMeshBufferDescription,
+        dimensions: Vector3,
+        voxelSize: number,
+        moreVoxelsToBuffer: boolean,
+        isFirstChunk: boolean,
     }
 }
 
@@ -86,6 +103,22 @@ export namespace AssignParams {
     }
 }
 
+export namespace RenderNextBlockMeshChunkParams {
+    export type Input = {
+        textureAtlas: TAtlasId,
+    }
+
+    export type Output = {
+        buffer: TBlockMeshBufferDescription,
+        dimensions: Vector3,
+        atlasTexturePath: string,
+        atlasSize: number,
+        moreBlocksToBuffer: boolean,
+        isFirstChunk: boolean,
+    }
+}
+
+/*
 export namespace RenderBlockMeshParams {
     export type Input = {
         textureAtlas: TAtlasId,
@@ -98,6 +131,7 @@ export namespace RenderBlockMeshParams {
         atlasSize: number,
     }
 }
+*/
 
 export namespace ExportParams {
     export type Input = {
@@ -124,9 +158,11 @@ export type TToWorkerMessage =
     | { action: 'Import', params: ImportParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
     | { action: 'Voxelise', params: VoxeliseParams.Input }
-    | { action: 'RenderVoxelMesh', params: RenderVoxelMeshParams.Input }
+    //| { action: 'RenderVoxelMesh', params: RenderVoxelMeshParams.Input }
+    | { action: 'RenderNextVoxelMeshChunk', params: RenderNextVoxelMeshChunkParams.Input }
     | { action: 'Assign', params: AssignParams.Input }
-    | { action: 'RenderBlockMesh', params: RenderBlockMeshParams.Input }
+    //| { action: 'RenderBlockMesh', params: RenderBlockMeshParams.Input }
+    | { action: 'RenderNextBlockMeshChunk', params: RenderNextBlockMeshChunkParams.Input }
     | { action: 'Export', params: ExportParams.Input }
 
 export type TFromWorkerMessage =
@@ -138,7 +174,9 @@ export type TFromWorkerMessage =
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }
         | { action: 'Voxelise', result: VoxeliseParams.Output }
-        | { action: 'RenderVoxelMesh', result: RenderVoxelMeshParams.Output }
+        //| { action: 'RenderVoxelMesh', result: RenderVoxelMeshParams.Output }
+        | { action: 'RenderNextVoxelMeshChunk', result: RenderNextVoxelMeshChunkParams.Output }
         | { action: 'Assign', result: AssignParams.Output }
-        | { action: 'RenderBlockMesh', result: RenderBlockMeshParams.Output }
+        //| { action: 'RenderBlockMesh', result: RenderBlockMeshParams.Output }
+        | { action: 'RenderNextBlockMeshChunk', result: RenderNextBlockMeshChunkParams.Output }
         | { action: 'Export', result: ExportParams.Output }));

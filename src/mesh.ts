@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Bounds } from './bounds';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { RGBA, RGBAColours } from './colour';
 import { StatusHandler } from './status';
 import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
@@ -72,8 +72,14 @@ export class Mesh {
 
     public getBounds() {
         const bounds = Bounds.getInfiniteBounds();
-        for (const vertex of this._vertices) {
-            bounds.extendByPoint(vertex);
+        if (this._transform) {
+            for (const vertex of this._vertices) {
+                bounds.extendByPoint(this._transform(vertex));
+            }
+        } else {
+            for (const vertex of this._vertices) {
+                bounds.extendByPoint(vertex);
+            }
         }
         return bounds;
     }
@@ -192,21 +198,6 @@ export class Mesh {
     }
 
     private _centreMesh() {
-        /*
-        const centre = new Vector3(0, 0, 0);
-        let totalWeight = 0.0;
-
-        // Find the weighted centre
-        this.tris.forEach((tri, triIndex) => {
-            const verts = this.getVertices(triIndex);
-            const triangle = new Triangle(verts.v0, verts.v1, verts.v2);
-
-            const weight = triangle.getArea();
-            totalWeight += weight;
-            centre.add(triangle.getCentre().mulScalar(weight));
-        });
-        centre.divScalar(totalWeight);
-        */
         const centre = this.getBounds().getCentre();
 
         if (!centre.isNumber()) {
@@ -243,11 +234,19 @@ export class Mesh {
 
     public getVertices(triIndex: number) {
         const tri = this._tris[triIndex];
-        return {
-            v0: this._vertices[tri.positionIndices.x],
-            v1: this._vertices[tri.positionIndices.y],
-            v2: this._vertices[tri.positionIndices.z],
-        };
+        if (this._transform) {
+            return {
+                v0: this._transform(this._vertices[tri.positionIndices.x]),
+                v1: this._transform(this._vertices[tri.positionIndices.y]),
+                v2: this._transform(this._vertices[tri.positionIndices.z]),
+            };
+        } else {
+            return {
+                v0: this._vertices[tri.positionIndices.x],
+                v1: this._vertices[tri.positionIndices.y],
+                v2: this._vertices[tri.positionIndices.z],
+            };
+        }
     }
 
     public getUVs(triIndex: number) {
@@ -322,50 +321,16 @@ export class Mesh {
         }
     }
 
-    public copy(): Mesh {
-        const newVertices = new Array<Vector3>(this._vertices.length);
-        for (let i = 0; i < this._vertices.length; ++i) {
-            newVertices[i] = this._vertices[i].copy();
-        }
-
-        const newNormals = new Array<Vector3>(this._normals.length);
-        for (let i = 0; i < this._normals.length; ++i) {
-            newNormals[i] = this._normals[i].copy();
-        }
-
-        const newUVs = new Array<UV>(this._uvs.length);
-        for (let i = 0; i < this._uvs.length; ++i) {
-            newUVs[i] = this._uvs[i].copy();
-        }
-
-        const newTris = new Array<Tri>(this._tris.length);
-        for (let i = 0; i < this._tris.length; ++i) {
-            // FIXME: Replace
-            newTris[i] = JSON.parse(JSON.stringify(this._tris[i]));
-        }
-
-        const materials: { [materialName: string]: (SolidMaterial | TexturedMaterial) } = {}; // JSON.parse(JSON.stringify(this.materials));
-        for (const materialName in this._materials) {
-            const material = this._materials[materialName];
-            if (material.type === MaterialType.solid) {
-                materials[materialName] = {
-                    type: MaterialType.solid,
-                    colour: RGBAUtil.copy(material.colour),
-                };
-            } else {
-                materials[materialName] = {
-                    type: MaterialType.textured,
-                    alphaFactor: material.alphaFactor,
-                    alphaPath: material.alphaPath,
-                    path: material.path,
-                };
-            };
-        }
-
-        return new Mesh(newVertices, newNormals, newUVs, newTris, materials);
-    }
-
     public getTriangleCount(): number {
         return this._tris.length;
+    }
+
+    private _transform?: (vertex: Vector3) => Vector3;
+    public setTransform(transform: (vertex: Vector3) => Vector3) {
+        this._transform = transform;
+    }
+
+    public clearTransform() {
+        this._transform = undefined;
     }
 }

@@ -1,5 +1,8 @@
 precision mediump float;
 
+uniform bool u_ambientOcclusion;
+uniform float u_globalAlpha;
+
 varying float v_lighting;
 varying vec4 v_occlusion;
 varying vec2 v_texcoord;
@@ -85,11 +88,15 @@ void main() {
   float u = v_texcoord.x;
   float v = v_texcoord.y;
   
-  float a = v_occlusion.x;
-  float b = v_occlusion.y;
-  float c = v_occlusion.z;
-  float d = v_occlusion.w;
-  float g = v*(u*b + (1.0-u)*d) + (1.0-v)*(u*a + (1.0-u)*c);
+  float g = 1.0;
+  if (u_ambientOcclusion)
+  {
+    float a = v_occlusion.x;
+    float b = v_occlusion.y;
+    float c = v_occlusion.z;
+    float d = v_occlusion.w;
+    g = v*(u*b + (1.0-u)*d) + (1.0-v)*(u*a + (1.0-u)*c);
+  }
 
   float alpha = dither8x8(gl_FragCoord.xy, v_colour.a);
   if (alpha < 0.5)

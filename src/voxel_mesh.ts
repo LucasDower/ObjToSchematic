@@ -1,12 +1,12 @@
 import { Bounds } from './bounds';
-import { BufferGenerator, TVoxelMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
-import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
-import { RenderVoxelMeshParams, VoxeliseParams } from './worker_types';
+import { RenderNextVoxelMeshChunkParams, VoxeliseParams } from './worker_types';
 
 export interface Voxel {
     position: Vector3;
@@ -20,14 +20,14 @@ export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | '
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
-    private _voxelsHash: HashMap<Vector3, number>;
+    private _voxelsHash: Map<string, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
     private _voxelMeshParams: TVoxelMeshParams;
 
     public constructor(voxelMeshParams: TVoxelMeshParams) {
         this._voxels = [];
-        this._voxelsHash = new HashMap(2048);
+        this._voxelsHash = new Map();
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
         this._voxelMeshParams = voxelMeshParams;
@@ -39,13 +39,15 @@ export class VoxelMesh {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this._voxelsHash.has(pos);
+        return this._voxelsHash.has(pos.stringify());
     }
 
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
-            return this._voxels[voxelIndex];
+            const voxel = this._voxels[voxelIndex];
+            ASSERT(voxel !== undefined);
+            return voxel;
         }
     }
 
@@ -56,7 +58,7 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -72,7 +74,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.add(pos, this._voxels.length - 1);
+            this._voxelsHash.set(pos.stringify(), this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
@@ -149,13 +151,15 @@ export class VoxelMesh {
         return (this.getNeighbours(pos).value & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
     }
 
-    private _renderParams?: RenderVoxelMeshParams.Input;
+    private _renderParams?: RenderNextVoxelMeshChunkParams.Input;
     private _recreateBuffer: boolean;
-    public setRenderParams(params: RenderVoxelMeshParams.Input) {
+    public setRenderParams(params: RenderNextVoxelMeshChunkParams.Input) {
         this._renderParams = params;
         this._recreateBuffer = true;
+        this._bufferChunks = [];
     }
 
+    /*
     private _buffer?: TVoxelMeshBufferDescription;
     public getBuffer(): TVoxelMeshBufferDescription {
         ASSERT(this._renderParams, 'Called VoxelMesh.getBuffer() without setting render params');
@@ -164,5 +168,18 @@ export class VoxelMesh {
             this._recreateBuffer = false;
         }
         return this._buffer;
+    }
+    */
+
+    private _bufferChunks: Array<TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number }> = [];
+    public getChunkedBuffer(chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
+        ASSERT(this._renderParams, 'Called VoxelMesh.getChunkedBuffer() without setting render params');
+        if (this._bufferChunks[chunkIndex] === undefined) {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromVoxelMesh(this, this._renderParams, chunkIndex);
+        } else {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} cached`);
+        }
+        return this._bufferChunks[chunkIndex];
     }
 }

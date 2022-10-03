@@ -19,32 +19,31 @@ export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
     private _voxeliseParams?: VoxeliseParams.Input;
-    private _scale!: number;
-    private _offset!: Vector3;
 
     protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
-        this._scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
-        this._offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
-        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
+        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
+        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
 
-        useMesh.scaleMesh(this._scale);
-        useMesh.translateMesh(this._offset);
+        mesh.setTransform((vertex: Vector3) => {
+            return vertex.copy().mulScalar(scale).add(offset);
+        });
 
-        const numTris = useMesh.getTriangleCount();
+        const numTris = mesh.getTriangleCount();
 
         const taskHandle = ProgressManager.Get.start('Voxelising');
         for (let triIndex = 0; triIndex < numTris; ++triIndex) {
             ProgressManager.Get.progress(taskHandle, triIndex / numTris);
-
-            const uvTriangle = useMesh.getUVTriangle(triIndex);
-            const material = useMesh.getMaterialByTriangle(triIndex);
+            const uvTriangle = mesh.getUVTriangle(triIndex);
+            const material = mesh.getMaterialByTriangle(triIndex);
             this._voxeliseTri(uvTriangle, material);
         }
         ProgressManager.Get.end(taskHandle);
+
+        mesh.clearTransform();
 
         return this._voxelMesh;
     }
