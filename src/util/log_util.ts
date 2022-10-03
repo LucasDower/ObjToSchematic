@@ -133,7 +133,7 @@ export class Logger {
      */
     public logToFile(...data: any[]) {
         if (this._logStream && this._enabledLogToFile) {
-            this._logStream.write(`${util.format(...data)}\n`);
+            this._logStream.write(`[${(new Date()).toISOString()}] ${util.format(...data)}\n`);
         }
     }
 
