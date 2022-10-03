@@ -1,6 +1,9 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
+import { AppConstants } from '../constants';
+import { ceilToNearest } from '../math';
+import { ASSERT } from '../util/error_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
@@ -14,80 +17,122 @@ interface BlockMapping {
 
 export class Litematic extends IExporter {
     // XZY
-    _getBufferIndex(vec: Vector3) {
+    private _getBufferIndex(vec: Vector3) {
         return (this._sizeVector.z * this._sizeVector.x * vec.y) + (this._sizeVector.x * vec.z) + vec.x;
     }
 
-    _createBlockMapping(blockMesh: BlockMesh): BlockMapping {
-        const blockPalette = blockMesh.getBlockPalette();
+    /**
+     * Create a mapping from block names to their respecitve index in the block state palette
+     */
+    private _createBlockMapping(blockMesh: BlockMesh): BlockMapping {
+        const blockMapping: BlockMapping = { 'minecraft:air': 0 };
 
-        const blockMapping: BlockMapping = { 'air': 0 };
-        for (let i = 0; i < blockPalette.length; ++i) {
-            const blockName = blockPalette[i];
-            blockMapping[blockName] = i + 1; // Ensure 0 maps to air
-        }
+        blockMesh.getBlockPalette().forEach((blockName, index) => {
+            blockMapping[blockName] = index + 1;
+        });
 
         return blockMapping;
     }
 
-    _createBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping): Array<BlockID> {
+    private _createBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping): Uint32Array {
         const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
-
-        const buffer = Array<BlockID>(bufferSize).fill(0);
-        const blocks = blockMesh.getBlocks();
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
-        for (const block of blocks) {
+        const buffer = new Uint32Array(bufferSize);
+
+        blockMesh.getBlocks().forEach((block) => {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
-            const index = this._getBufferIndex(indexVector);
-            buffer[index] = blockMapping[block.blockInfo.name || 'air'];
-        }
+            const bufferIndex = this._getBufferIndex(indexVector);
+            buffer[bufferIndex] = blockMapping[block.blockInfo.name || 'minecraft:air'];
+        });
 
         return buffer;
     }
 
-    _createBlockStates(blockMesh: BlockMesh, blockMapping: BlockMapping) {
-        const blockEncoding = this._encodeBlockBuffer(blockMesh, blockMapping);
+    private _createBlockStates(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+        const buffer = this._encodeBlockBuffer(blockMesh, blockMapping);
 
-        const blockStates = new Array<long>();
+        const numBytes = buffer.length;
+        const numBits = numBytes * 8;
 
-        for (let i = blockEncoding.length; i > 0; i -= 64) {
-            let right = parseInt(blockEncoding.substring(i - 32, i), 2);
-            let left = parseInt(blockEncoding.substring(i - 64, i - 32), 2);
+        const blockStates = new Array<long>(Math.ceil(numBits / 64));
 
-            // TODO: Cleanup, UINT32 -> INT32
-            if (right > 2147483647) {
-                right -= 4294967296;
-            }
-            if (left > 2147483647) {
-                left -= 4294967296;
-            }
+        let index = 0;
+        for (let i = numBits; i > 0; i -= 64) {
+            const rightBaseIndexBit = i - 32;
+            const rightBaseIndexByte = rightBaseIndexBit / 8;
 
-            blockStates.push([left, right]);
+            let right = 0;
+            right = (right << 8) + buffer[rightBaseIndexByte + 0];
+            right = (right << 8) + buffer[rightBaseIndexByte + 1];
+            right = (right << 8) + buffer[rightBaseIndexByte + 2];
+            right = (right << 8) + buffer[rightBaseIndexByte + 3];
+
+            const leftBaseIndexBit = i - 64;
+            const leftBaseIndexByte = leftBaseIndexBit / 8;
+
+            let left = 0;
+            left = (left << 8) + buffer[leftBaseIndexByte + 0];
+            left = (left << 8) + buffer[leftBaseIndexByte + 1];
+            left = (left << 8) + buffer[leftBaseIndexByte + 2];
+            left = (left << 8) + buffer[leftBaseIndexByte + 3];
+
+            blockStates[index++] = [left, right];
         }
 
         return blockStates;
     }
 
-    _encodeBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+    private _encodeBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping) {
         const blockBuffer = this._createBlockBuffer(blockMesh, blockMapping);
 
         const paletteSize = Object.keys(blockMapping).length;
-        let stride = (paletteSize - 1).toString(2).length;
-        stride = Math.max(2, stride);
+        const stride = Math.ceil(Math.log2(paletteSize - 1));
+        ASSERT(stride >= 1, 'Stride too small');
 
-        let encoding = '';
-        for (let i = blockBuffer.length - 1; i >= 0; --i) {
-            encoding += blockBuffer[i].toString(2).padStart(stride, '0');
+        const expectedLengthBits = blockBuffer.length * stride;
+        const requiredLengthBits = ceilToNearest(expectedLengthBits, 64);
+        const startOffsetBits = requiredLengthBits - expectedLengthBits;
+
+        const requiredLengthBytes = requiredLengthBits / 8;
+        const buffer = Buffer.alloc(requiredLengthBytes);
+
+        // Write first few offset bits
+        const fullBytesToWrite = Math.floor(startOffsetBits / 8);
+        for (let i = 0; i < fullBytesToWrite; ++i) {
+            buffer[i] = 0;
         }
 
-        const requiredLength = Math.ceil(encoding.length / 64) * 64;
-        encoding = encoding.padStart(requiredLength, '0');
+        const remainingBitsToWrite = startOffsetBits - (fullBytesToWrite * 8);
+        let currentByte = 0;
+        let bitsWrittenToByte = remainingBitsToWrite;
+        let nextBufferWriteIndex = fullBytesToWrite;
 
-        return encoding;
+        for (let i = blockBuffer.length - 1; i >= 0; --i) {
+            for (let j = 0; j < stride; ++j) {
+                if (bitsWrittenToByte === 8) {
+                    buffer[nextBufferWriteIndex] = currentByte;
+                    ++nextBufferWriteIndex;
+                    currentByte = 0; // Shouldn't be actually necessary to reset
+                    bitsWrittenToByte = 0;
+                }
+
+                const bitToAddToByte = (blockBuffer[i] >> (stride - j - 1)) & 1;
+                currentByte = (currentByte << 1) + bitToAddToByte;
+                ++bitsWrittenToByte;
+            }
+        }
+
+        // Write remaining partially filled byte
+        buffer[nextBufferWriteIndex] = currentByte;
+        ++nextBufferWriteIndex;
+        currentByte = 0; // Shouldn't be actually necessary to reset
+        bitsWrittenToByte = 0;
+
+        return buffer;
     }
 
-    _createBlockStatePalette(blockMapping: BlockMapping) {
+    private _createBlockStatePalette(blockMapping: BlockMapping) {
         const blockStatePalette = Array(Object.keys(blockMapping).length);
         for (const block of Object.keys(blockMapping)) {
             const index = blockMapping[block];
@@ -158,7 +203,7 @@ export class Litematic extends IExporter {
                         },
                     },
                 },
-                MinecraftDataVersion: { type: TagType.Int, value: 2730 },
+                MinecraftDataVersion: { type: TagType.Int, value: AppConstants.DATA_VERSION },
                 Version: { type: TagType.Int, value: 5 },
             },
         };
