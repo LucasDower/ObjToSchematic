@@ -77,7 +77,7 @@ export class UI {
                         displayText: 'Off (faster)',
                     },
                 ]),
-                'multisampleColouring': new ComboBoxElement('Multisample colouring', [
+                'multisampleColouring': new ComboBoxElement('Multisampling', [
                     {
                         id: 'on',
                         displayText: 'On (recommended)',
@@ -150,8 +150,9 @@ export class UI {
                         tooltip: 'Let the block fall',
                     },
                 ]),
+                'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),

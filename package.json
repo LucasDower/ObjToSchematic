@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint --fix src tools tests --ext .ts",
     "build": "tsc",
-    "test": "jest --config jestconfig.json --runInBand",
+    "test": "jest --config jestconfig.json",
     "start": "npm run build && electron ./dist/src/main.js --enable-logging --remote-debugging-port=9222",
     "atlas": "node ./dist/tools/build-atlas.js",
     "palette": "node ./dist/tools/build-palette.js",

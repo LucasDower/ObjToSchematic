@@ -64,6 +64,8 @@ export class BlockMesh {
         ASSERT(palette !== undefined, 'Could not load palette');
 
         const atlasPalette = new AtlasPalette(atlas, palette);
+        const allBlockCollection = atlasPalette.createBlockCollection([]);
+        const nonFallableBlockCollection = atlasPalette.createBlockCollection(this._fallableBlocks);
 
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
 
@@ -74,7 +76,15 @@ export class BlockMesh {
             ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
             const voxel = voxels[voxelIndex];
-            let block = blockAssigner.assignBlock(atlasPalette, voxel.colour, voxel.position, blockMeshParams.colourSpace);
+            
+            let block = blockAssigner.assignBlock(
+                atlasPalette,
+                voxel.colour,
+                voxel.position,
+                blockMeshParams.resolution,
+                blockMeshParams.colourSpace,
+                allBlockCollection,
+            );
 
             const isFallable = this._fallableBlocks.includes(block.name);
             const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
@@ -87,8 +97,14 @@ export class BlockMesh {
             shouldReplace ||= (blockMeshParams.fallable === 'replace-falling' && isFallable && !isSupported);
 
             if (shouldReplace) {
-                const replacedBlock = blockAssigner.assignBlock(atlasPalette, voxel.colour, voxel.position, blockMeshParams.colourSpace, this._fallableBlocks);
-                // LOG(`Replacing ${block.name} with ${replacedBlock.name}`);
+                const replacedBlock = blockAssigner.assignBlock(
+                    atlasPalette,
+                    voxel.colour,
+                    voxel.position,
+                    blockMeshParams.resolution,
+                    ColourSpace.RGB,
+                    nonFallableBlockCollection,
+                );
                 block = replacedBlock;
             }
 

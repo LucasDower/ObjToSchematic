@@ -1,6 +1,6 @@
-import { AtlasPalette } from '../block_assigner';
+import { AtlasPalette, TBlockCollection } from '../block_assigner';
 import { BlockInfo } from '../block_atlas';
-import { RGBA } from '../colour';
+import { RGBA, RGBAUtil } from '../colour';
 import { ColourSpace } from '../util';
 import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
@@ -30,7 +30,7 @@ export class OrderedDitheringBlockAssigner implements IBlockAssigner {
         return (OrderedDitheringBlockAssigner._mapMatrix[index] / (size * size * size)) - 0.5;
     }
 
-    assignBlock(atlasPalette: AtlasPalette, voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
+    assignBlock(atlasPalette: AtlasPalette, voxelColour: RGBA, voxelPosition: Vector3, resolution: RGBAUtil.TColourAccuracy, colourSpace: ColourSpace, blockCollection: TBlockCollection): BlockInfo {
         const size = OrderedDitheringBlockAssigner._size;
         const map = this._getThresholdValue(
             Math.abs(voxelPosition.x % size),
@@ -45,6 +45,6 @@ export class OrderedDitheringBlockAssigner implements IBlockAssigner {
             a: ((255 * voxelColour.a) + map * OrderedDitheringBlockAssigner._threshold) / 255,
         };
 
-        return atlasPalette.getBlock(newVoxelColour, exclude);
+        return atlasPalette.getBlock(newVoxelColour, blockCollection, resolution);
     }
 }

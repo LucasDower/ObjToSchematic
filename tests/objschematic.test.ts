@@ -22,6 +22,7 @@ const baseConfig: THeadlessConfig = {
         blockAssigner: 'ordered-dithering',
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
+        resolution: 32,
     },
     export: {
         filepath: '', // Must be an absolute path to the file (can be anywhere)
