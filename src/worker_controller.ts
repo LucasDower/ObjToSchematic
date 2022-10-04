@@ -1,7 +1,7 @@
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
-import { LOG, LOGF, TIME_END, TIME_START } from './util/log_util';
+import { LOG } from './util/log_util';
 import { doWork } from './worker';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 

@@ -521,7 +521,7 @@ export class UI {
 
         for (let i = action; i < EAction.MAX; ++i) {
             const group = this._getEActionGroup(i);
-            LOG('[UI]: Disabling', group.label);
+            //LOG('[UI]: Disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
             }
