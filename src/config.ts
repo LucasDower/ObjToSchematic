@@ -11,6 +11,7 @@ export class AppConfig {
     }
 
     public readonly RELEASE_MODE: boolean;
+    public readonly RELEASE_VERSION: string;
     public readonly VOXEL_BUFFER_CHUNK_SIZE: number;
 
     // Loaded from .json
@@ -32,6 +33,7 @@ export class AppConfig {
 
     private constructor() {
         this.RELEASE_MODE = false;
+        this.RELEASE_VERSION = '0.6.0d';
         this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
         const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
