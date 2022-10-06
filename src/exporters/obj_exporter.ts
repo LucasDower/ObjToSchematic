@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { BlockMesh } from '../block_mesh';
+import { TBlockMeshBufferDescription } from '../buffer';
 import { ASSERT } from '../util/error_util';
 import { IExporter } from './base_exporter';
 
@@ -36,7 +37,25 @@ export class ObjExporter extends IExporter {
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
-        const buffers = blockMesh.getAllChunkedBuffers();
+        const buffers: Array<TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean }> = [];
+        let chunkIndex = 0;
+        do {
+            buffers.push(blockMesh.getChunkedBuffer(chunkIndex));
+            ++chunkIndex;
+        } while (buffers[buffers.length - 1].moreBlocksToBuffer);
+
+        // Fix indices
+        let indexOffset = 0;
+        buffers.forEach(({ buffer }, bufferIndex) => {
+            let maxIndex = 0;
+            for (let i = 0; i < buffer.indices.data.length; ++i) {
+                maxIndex = Math.max(maxIndex, buffer.indices.data[i]);
+                buffer.indices.data[i] += indexOffset;
+            }
+            indexOffset += maxIndex + 1;
+        });
+
+        //const buffers = blockMesh.getAllChunkedBuffers();
         let numPositions = 0;
         let numNormals = 0;
         let numTexcoords = 0;
