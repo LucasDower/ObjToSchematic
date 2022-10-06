@@ -1,7 +1,7 @@
 import { Bounds } from '../bounds';
 import { RGBA, RGBAUtil } from '../colour';
 import { AppConfig } from '../config';
-import { Mesh } from '../mesh';
+import { MaterialType, Mesh } from '../mesh';
 import { ProgressManager } from '../progress';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { Triangle, UVTriangle } from '../triangle';
@@ -86,7 +86,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                 voxelPosition.round();
 
                 let voxelColour: RGBA;
-                if (this._voxeliseParams!.useMultisampleColouring) {
+                if (this._voxeliseParams!.useMultisampleColouring && this._mesh!.getMaterialByName(materialName).type === MaterialType.textured) {
                     const samples: RGBA[] = [];
                     for (let i = 0; i < AppConfig.Get.MULTISAMPLE_COUNT; ++i) {
                         const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
