@@ -101,7 +101,6 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        LOG(nbt);
         saveNBT(nbt, filePath);
 
         return false;

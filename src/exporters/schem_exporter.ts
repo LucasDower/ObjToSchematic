@@ -85,7 +85,6 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        LOG(nbt);
         saveNBT(nbt, filePath);
 
         return false;
