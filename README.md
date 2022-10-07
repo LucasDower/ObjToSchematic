@@ -92,7 +92,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Optimise construction of voxel mesh vertex buffers**
 * 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
 
-0.6
+[0.6](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.6.0)
 * 🟢 **Web workers**
   * Processing UI animation
   * Prevent UI hanging
@@ -106,12 +106,28 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 * 🟢 **Log files**
 
 0.7
-* ⚪ Support for simplifying complex meshes
-* ⚪ Node.js C++ addons
-* ⚪ Block painting
-* ⚪ Building guides
-* ⚪ Slice viewer
+* ⚪ Update .atlas format
+* ⚪ Localisation support (message me if you want to add your language!)
+* ⚪ .fbx importer
+* ⚪ UI for creating palettes
+* ⚪ Height-map and colour-map support
+* ⚪ Complete code documentation
+* ⚪ Realistic lighting instead of night-vision everywhere
+* ⚪ Block painting (be able to select blocks and swap them for another)
+* ⚪ Add option for setting seed for RNG
+* ⚪ .tga support
+* ⚪ Material editing - find missing textures, change material colours
+* ⚪ Support for splitting up exported structures
+* ⚪ Add multisampling to 'bvh-ray' voxeliser
+
+0.8
+* ⚪ .gltf importer
+* ⚪ Slice viewer 
 * ⚪ Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
+* ⚪ Option to simplify complex meshes
+* ⚪ Support for non-16x16 resource packs for texture atlases
+* ⚪ Reimplement colour-space convertions
+* ⚪ Add documentation about how to add modded blocks
 
 ## Disclaimer
 :warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
