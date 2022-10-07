@@ -12,7 +12,8 @@
         "ecmaVersion": "latest"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "simple-import-sort"
     ],
     "rules": {
         "linebreak-style": "off",
@@ -31,6 +32,11 @@
         "no-unused-vars": "warn",
         "brace-style": [2, "1tbs", { "allowSingleLine": true }],
         "block-spacing": [2, "always"],
-        "semi": "error"
+        "semi": "error",
+        "spaced-comment": "off",
+        "keyword-spacing": "off",
+        "space-before-function-paren": "off",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error"
     }
 }

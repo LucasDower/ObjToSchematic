@@ -1,5 +1,5 @@
 import { IHashable } from './hash_map';
-import { ASSERT } from './util';
+import { ASSERT } from './util/error_util';
 
 export class Vector3 implements IHashable {
     public x: number;
@@ -252,3 +252,15 @@ export class Vector3 implements IHashable {
         return `${this.x}_${this.y}_${this.z}`;
     }
 }
+
+export const fastCrossXAxis = (vec: Vector3) => {
+    return new Vector3(0.0, -vec.z, vec.y);
+};
+
+export const fastCrossYAxis = (vec: Vector3) => {
+    return new Vector3(vec.z, 0.0, -vec.x);
+};
+
+export const fastCrossZAxis = (vec: Vector3) => {
+    return new Vector3(-vec.y, vec.x, 0.0);
+};

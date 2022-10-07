@@ -1,6 +1,5 @@
-import { Vector3 } from '../vector';
 import { BlockMesh } from '../block_mesh';
-import { TOptional } from '../util';
+import { Vector3 } from '../vector';
 
 export abstract class IExporter {
     protected _sizeVector!: Vector3;
@@ -12,11 +11,6 @@ export abstract class IExporter {
      * @note Do not include the dot prefix, e.g. 'obj' not '.obj'.
      */
     public abstract getFileExtension(): string;
-
-    /** */
-    public getFormatDisclaimer(): TOptional<string> {
-        return;
-    }
 
     public abstract export(blockMesh: BlockMesh, filePath: string): boolean;
 

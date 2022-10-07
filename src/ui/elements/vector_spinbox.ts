@@ -1,6 +1,7 @@
-import { ASSERT, LOG } from '../../util';
-import { LabelledElement } from './labelled_element';
+import { ASSERT } from '../../util/error_util';
+import { LOG } from '../../util/log_util';
 import { Vector3 } from '../../vector';
+import { LabelledElement } from './labelled_element';
 
 /* eslint-disable */
 enum EAxis {

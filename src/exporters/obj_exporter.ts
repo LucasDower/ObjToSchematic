@@ -1,9 +1,10 @@
-import { BlockMesh } from '../block_mesh';
-import { IExporter } from './base_exporter';
-import { ASSERT, ATLASES_DIR } from '../util';
-
 import fs from 'fs';
 import path from 'path';
+
+import { BlockMesh } from '../block_mesh';
+import { TBlockMeshBufferDescription } from '../buffer';
+import { ASSERT } from '../util/error_util';
+import { IExporter } from './base_exporter';
 
 export class ObjExporter extends IExporter {
     public override getFormatFilter(): Electron.FileFilter {
@@ -24,7 +25,7 @@ export class ObjExporter extends IExporter {
     public override export(blockMesh: BlockMesh, filepath: string) {
         ASSERT(path.isAbsolute(filepath));
         const parsedPath = path.parse(filepath);
-        
+
         const filepathOBJ = filepath;
         const filepathMTL = path.join(parsedPath.dir, parsedPath.name + '.mtl');
         const filepathTexture = path.join(parsedPath.dir, parsedPath.name + '.png');
@@ -36,51 +37,105 @@ export class ObjExporter extends IExporter {
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
-        const buffer = blockMesh.createBuffer();
-        const positionData = buffer.position.data as Float32Array;
-        const normalData = buffer.normal.data as Float32Array;
-        const texcoordData = buffer.texcoord.data as Float32Array;
-        const blockTexcoordData = buffer.blockTexcoord.data as Float32Array;
-        const indexData = buffer.indices.data as Uint32Array;
-        
-        const writeStream = fs.createWriteStream(filepath);
+        const buffers: Array<TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean }> = [];
+        let chunkIndex = 0;
+        do {
+            buffers.push(blockMesh.getChunkedBuffer(chunkIndex));
+            ++chunkIndex;
+        } while (buffers[buffers.length - 1].moreBlocksToBuffer);
 
-        writeStream.write('# Created with ObjToSchematic\n');
-        writeStream.write('# https://github.com/LucasDower/ObjToSchematic/\n\n');
-        
+        // Fix indices
+        let indexOffset = 0;
+        buffers.forEach(({ buffer }, bufferIndex) => {
+            let maxIndex = 0;
+            for (let i = 0; i < buffer.indices.data.length; ++i) {
+                maxIndex = Math.max(maxIndex, buffer.indices.data[i]);
+                buffer.indices.data[i] += indexOffset;
+            }
+            indexOffset += maxIndex + 1;
+        });
+
+        //const buffers = blockMesh.getAllChunkedBuffers();
+        let numPositions = 0;
+        let numNormals = 0;
+        let numTexcoords = 0;
+        let numBlockTexcoords = 0;
+        let numIndices = 0;
+
+        buffers.forEach(({ buffer }) => {
+            numPositions += buffer.position.data.length;
+            numNormals += buffer.normal.data.length;
+            numTexcoords += buffer.texcoord.data.length;
+            numBlockTexcoords += buffer.blockTexcoord.data.length;
+            numIndices += buffer.indices.data.length;
+        });
+
+        const positionData = new Float32Array(numPositions);
+        const normalData = new Float32Array(numNormals);
+        const texcoordData = new Float32Array(numTexcoords);
+        const blockTexcoordData = new Float32Array(numBlockTexcoords);
+        const indexData = new Float32Array(numIndices);
+
+        let positionIndex = 0;
+        let normalIndex = 0;
+        let texcoordIndex = 0;
+        let blockTexcoordIndex = 0;
+        let indicesIndex = 0;
+
+        buffers.forEach(({ buffer }) => {
+            positionData.set(buffer.position.data, positionIndex);
+            positionIndex += buffer.position.data.length;
+            
+            normalData.set(buffer.normal.data, normalIndex);
+            normalIndex += buffer.normal.data.length;
+            
+            texcoordData.set(buffer.texcoord.data, texcoordIndex);
+            texcoordIndex += buffer.texcoord.data.length;
+            
+            blockTexcoordData.set(buffer.blockTexcoord.data, blockTexcoordIndex);
+            blockTexcoordIndex += buffer.blockTexcoord.data.length;
+            
+            indexData.set(buffer.indices.data, indicesIndex);
+            indicesIndex += buffer.indices.data.length;
+        });
+
+        const file = fs.openSync(filepath, 'w');
+        fs.writeSync(file, '# Created with ObjToSchematic\n');
+        fs.writeSync(file, '# https://github.com/LucasDower/ObjToSchematic/\n\n');
+
         if (positionData && normalData && texcoordData && indexData && blockTexcoordData) {
             const numTris = indexData.length / 3;
             // Add vertex data
-            writeStream.write(`mtllib ${mtlRelativePath}\n`);
-            writeStream.write(`o Object\n`);
+            fs.writeSync(file, `mtllib ${mtlRelativePath}\n`);
+            fs.writeSync(file, `o Object\n`);
             for (let i = 0; i < positionData.length / 3; ++i) {
-                writeStream.write(`v ${positionData[3 * i + 0]} ${positionData[3 * i + 1]} ${positionData[3 * i + 2]}\n`);
+                fs.writeSync(file, `v ${positionData[3 * i + 0]} ${positionData[3 * i + 1]} ${positionData[3 * i + 2]}\n`);
             }
             // Add texcoord data
-            const atlasSize = blockMesh.getAtlasSize(); 
+            const atlasSize = blockMesh.getAtlas().getAtlasSize();
             for (let i = 0; i < texcoordData.length / 2; ++i) {
                 // vec2 tex = v_blockTexcoord + (v_texcoord / (u_atlasSize * 3.0));
                 const u = blockTexcoordData[2 * i + 0] + (texcoordData[2 * i + 0] / (atlasSize * 3.0));
                 const v = blockTexcoordData[2 * i + 1] + (texcoordData[2 * i + 1] / (atlasSize * 3.0));
-                writeStream.write(`vt ${u} ${1.0 - v}\n`);
+                fs.writeSync(file, `vt ${u} ${1.0 - v}\n`);
             }
             // Add normal data
             for (let i = 0; i < normalData.length / 3; ++i) {
-                writeStream.write(`vn ${normalData[3 * i + 0]} ${normalData[3 * i + 1]} ${normalData[3 * i + 2]}\n`);
+                fs.writeSync(file, `vn ${normalData[3 * i + 0]} ${normalData[3 * i + 1]} ${normalData[3 * i + 2]}\n`);
             }
 
-            writeStream.write(`usemtl Default\n`);
+            fs.writeSync(file, `usemtl Default\n`);
             // Add face data
             for (let i = 0; i < numTris * 3; i += 3) {
                 const a = indexData[i + 0] + 1;
                 const b = indexData[i + 1] + 1;
                 const c = indexData[i + 2] + 1;
-                writeStream.write(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}\n`);
+                fs.writeSync(file, `f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}\n`);
             }
             // Export to file
         }
 
-        writeStream.end();
+        fs.closeSync(file);
     }
 
     private _exportMTL(filepathMTL: string, filepathTexture: string, blockMesh: BlockMesh) {
@@ -90,7 +145,7 @@ export class ObjExporter extends IExporter {
         const mtlData: string[] = [];
         mtlData.push('# Created with ObjToSchematic');
         mtlData.push('# https://github.com/LucasDower/ObjToSchematic/');
-        
+
         mtlData.push('newmtl Default');
         mtlData.push('Kd 1.000000 1.000000 1.000000');
         mtlData.push(`map_Kd ${filepathTexture}`);
@@ -100,7 +155,7 @@ export class ObjExporter extends IExporter {
         fs.writeFileSync(filepathMTL, outputString);
 
         // Export texture
-        const filepathAtlasTexture = path.join(ATLASES_DIR, blockMesh.getAtlasUsed() + '.png');
+        const filepathAtlasTexture = blockMesh.getAtlas().getAtlasTexturePath();
         fs.copyFileSync(filepathAtlasTexture, filepathTexture);
     }
 }

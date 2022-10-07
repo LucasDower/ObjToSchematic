@@ -1,13 +1,13 @@
-import { BlockMesh } from '../block_mesh';
-import { RESOURCES_DIR } from '../util';
-import { IExporter } from './base_exporter';
-import { Vector3 } from '../vector';
-import { StatusHandler } from '../status';
-
-import path from 'path';
 import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
+
+import { BlockMesh } from '../block_mesh';
+import { StatusHandler, StatusID } from '../status';
+import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
+import { AppPaths, PathUtil } from '../util/path_util';
+import { Vector3 } from '../vector';
+import { IExporter } from './base_exporter';
 
 export class Schematic extends IExporter {
     private _convertToNBT(blockMesh: BlockMesh) {
@@ -18,7 +18,7 @@ export class Schematic extends IExporter {
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
         const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(
-            fs.readFileSync(path.join(RESOURCES_DIR, './block_ids.json'), 'utf8'),
+            fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './block_ids.json'), 'utf8'),
         );
 
         const blocks = blockMesh.getBlocks();
@@ -43,7 +43,9 @@ export class Schematic extends IExporter {
             StatusHandler.Get.add(
                 'warning',
                 `${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`,
+                StatusID.SchematicUnsupportedBlocks,
             );
+            LOG_WARN(unsupportedBlocks);
         }
 
         const nbt: NBT = {
@@ -79,16 +81,12 @@ export class Schematic extends IExporter {
         return 'Schematic';
     }
 
-    getFormatDisclaimer() {
-        return 'Schematic files only support pre-1.13 blocks. As a result, all blocks will be exported as Stone. To export the blocks, use the .litematic format with the Litematica mod.';
-    }
-
     getFileExtension(): string {
         return 'schematic';
     }
 
     public override export(blockMesh: BlockMesh, filePath: string): boolean {
-        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        const bounds = blockMesh.getVoxelMesh().getBounds();
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);

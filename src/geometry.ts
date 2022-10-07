@@ -1,11 +1,13 @@
 import * as twgl from 'twgl.js';
-import { Triangle, UVTriangle } from './triangle';
-import { Vector3 } from './vector';
-import { AttributeData, MergeAttributeData, RenderBuffer } from './buffer';
-import { ASSERT, Bounds } from './util';
-import { Mesh } from './mesh';
-import { VoxelMesh } from './voxel_mesh';
+
+import { Bounds } from './bounds';
 import { RGBA } from './colour';
+import { Mesh } from './mesh';
+import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
+import { Triangle, UVTriangle } from './triangle';
+import { ASSERT } from './util/error_util';
+import { Vector3 } from './vector';
+import { VoxelMesh } from './voxel_mesh';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
@@ -219,36 +221,89 @@ export class DebugGeometryTemplates {
         return MergeAttributeData(line, cone);
     }
 
-    public static grid(dimensions: Vector3, spacing?: number): RenderBuffer {
+    public static COLOUR_MINOR: RGBA = { r: 0.5, g: 0.5, b: 0.5, a: 0.3 };
+    public static COLOUR_MAJOR: RGBA = { r: 1.0, g: 1.0, b: 1.0, a: 0.3 };
+
+    public static gridX(dimensions: Vector3, spacing?: number): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 4 },
         ]);
-        const COLOUR_MINOR: RGBA = { r: 0.5, g: 0.5, b: 0.5, a: 0.3 };
-        const COLOUR_MAJOR: RGBA = { r: 1.0, g: 1.0, b: 1.0, a: 0.3 };
+        
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(0, -dimensions.y / 2, -dimensions.z / 2),
+            new Vector3(0, -dimensions.y / 2, dimensions.z / 2),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(0, dimensions.y / 2, -dimensions.z / 2),
+            new Vector3(0, dimensions.y / 2, dimensions.z / 2),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(0, -dimensions.y / 2, -dimensions.z / 2),
+            new Vector3(0, dimensions.y / 2, -dimensions.z / 2),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(0, -dimensions.y / 2, dimensions.z / 2),
+            new Vector3(0, dimensions.y / 2, dimensions.z / 2),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        if (spacing) {
+            ASSERT(spacing > 0.0);
+            for (let y = -dimensions.y / 2; y < dimensions.y / 2; y += spacing) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(0, y, -dimensions.z / 2),
+                    new Vector3(0, y, dimensions.z / 2),
+                    DebugGeometryTemplates.COLOUR_MINOR,
+                ));
+            }
+
+            for (let z = -dimensions.z / 2; z < dimensions.z / 2; z += spacing) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(0, -dimensions.y / 2, z),
+                    new Vector3(0, dimensions.y / 2, z),
+                    DebugGeometryTemplates.COLOUR_MINOR,
+                ));
+            }
+        }
+
+        return buffer;
+    }
+
+    public static gridY(dimensions: Vector3, spacing?: number): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
+        ]);
         
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(-dimensions.x / 2, 0, -dimensions.z / 2),
             new Vector3(-dimensions.x / 2, 0, dimensions.z / 2),
-            COLOUR_MAJOR,
+            DebugGeometryTemplates.COLOUR_MAJOR,
         ));
 
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(dimensions.x / 2, 0, -dimensions.z / 2),
             new Vector3(dimensions.x / 2, 0, dimensions.z / 2),
-            COLOUR_MAJOR,
+            DebugGeometryTemplates.COLOUR_MAJOR,
         ));
 
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(-dimensions.x / 2, 0, -dimensions.z / 2),
             new Vector3(dimensions.x / 2, 0, -dimensions.z / 2),
-            COLOUR_MAJOR,
+            DebugGeometryTemplates.COLOUR_MAJOR,
         ));
 
         buffer.add(DebugGeometryTemplates.line(
             new Vector3(-dimensions.x / 2, 0, dimensions.z / 2),
             new Vector3(dimensions.x / 2, 0, dimensions.z / 2),
-            COLOUR_MAJOR,
+            DebugGeometryTemplates.COLOUR_MAJOR,
         ));
 
         if (spacing) {
@@ -257,7 +312,7 @@ export class DebugGeometryTemplates {
                 buffer.add(DebugGeometryTemplates.line(
                     new Vector3(x, 0, -dimensions.z / 2),
                     new Vector3(x, 0, dimensions.z / 2),
-                    COLOUR_MINOR,
+                    DebugGeometryTemplates.COLOUR_MINOR,
                 ));
             }
 
@@ -265,7 +320,59 @@ export class DebugGeometryTemplates {
                 buffer.add(DebugGeometryTemplates.line(
                     new Vector3(-dimensions.x / 2, 0, z),
                     new Vector3(dimensions.x / 2, 0, z),
-                    COLOUR_MINOR,
+                    DebugGeometryTemplates.COLOUR_MINOR,
+                ));
+            }
+        }
+
+        return buffer;
+    }
+
+    public static gridZ(dimensions: Vector3, spacing?: number): RenderBuffer {
+        const buffer = new RenderBuffer([
+            { name: 'position', numComponents: 3 },
+            { name: 'colour', numComponents: 4 },
+        ]);
+        
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(-dimensions.x / 2, -dimensions.y / 2, 0),
+            new Vector3(-dimensions.x / 2, dimensions.y / 2, 0),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(dimensions.x / 2, -dimensions.y / 2, 0),
+            new Vector3(dimensions.x / 2, dimensions.y / 2, 0),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(-dimensions.x / 2, -dimensions.y / 2, 0),
+            new Vector3(dimensions.x / 2, -dimensions.y / 2, 0),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        buffer.add(DebugGeometryTemplates.line(
+            new Vector3(-dimensions.x / 2, dimensions.y / 2, 0),
+            new Vector3(dimensions.x / 2, dimensions.y / 2, 0),
+            DebugGeometryTemplates.COLOUR_MAJOR,
+        ));
+
+        if (spacing) {
+            ASSERT(spacing > 0.0);
+            for (let x = -dimensions.x / 2; x < dimensions.x / 2; x += spacing) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(x, -dimensions.y / 2, 0),
+                    new Vector3(x, dimensions.y / 2, 0),
+                    DebugGeometryTemplates.COLOUR_MINOR,
+                ));
+            }
+
+            for (let y = -dimensions.y / 2; y < dimensions.y / 2; y += spacing) {
+                buffer.add(DebugGeometryTemplates.line(
+                    new Vector3(-dimensions.x / 2, y, 0),
+                    new Vector3(dimensions.x / 2, y, 0),
+                    DebugGeometryTemplates.COLOUR_MINOR,
                 ));
             }
         }

@@ -1,10 +1,12 @@
-import { VoxelMesh } from '../voxel_mesh';
 import { Mesh } from '../mesh';
+import { ProgressManager } from '../progress';
 import { Axes, axesToDirection, Ray } from '../ray';
-import { ASSERT, LOG } from '../util';
+import { ASSERT } from '../util/error_util';
+import { LOG } from '../util/log_util';
 import { Vector3 } from '../vector';
+import { VoxelMesh } from '../voxel_mesh';
+import { VoxeliseParams } from '../worker_types';
 import { IVoxeliser } from './base-voxeliser';
-import { VoxeliseParams } from './voxelisers';
 
 const bvhtree = require('bvh-tree');
 
@@ -13,19 +15,19 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
         const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
         const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
-        const useMesh = mesh.copy(); // TODO: Voxelise without copying mesh, too expensive for dense meshes
-        
-        useMesh.scaleMesh(scale);
-        useMesh.translateMesh(offset);
+
+        mesh.setTransform((vertex: Vector3) => {
+            return vertex.copy().mulScalar(scale).add(offset);
+        });
 
         // Build BVH
-        const triangles = Array<{x: Number, y: Number, z: Number}[]>(useMesh._tris.length);
-        for (let triIndex = 0; triIndex < useMesh.getTriangleCount(); ++triIndex) {
-            const positionData = useMesh.getVertices(triIndex);
+        const triangles = Array<{ x: Number, y: Number, z: Number }[]>(mesh._tris.length);
+        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+            const positionData = mesh.getVertices(triIndex);
             triangles[triIndex] = [positionData.v0, positionData.v1, positionData.v2];
         }
 
@@ -35,7 +37,7 @@ export class BVHRayVoxeliser extends IVoxeliser {
         LOG('BVH created...');
 
         // Generate rays
-        const bounds = useMesh.getBounds();
+        const bounds = mesh.getBounds();
         bounds.min.floor();
         bounds.max.ceil();
 
@@ -76,7 +78,10 @@ export class BVHRayVoxeliser extends IVoxeliser {
         LOG('Rays created...');
 
         // Ray test BVH
+        const taskHandle = ProgressManager.Get.start('Voxelising');
         for (rayIndex = 0; rayIndex < rays.length; ++rayIndex) {
+            ProgressManager.Get.progress(taskHandle, rayIndex / rays.length);
+
             const ray = rays[rayIndex];
             const intersections = bvh.intersectRay(ray.origin, axesToDirection(ray.axis), false);
             for (const intersection of intersections) {
@@ -86,8 +91,8 @@ export class BVHRayVoxeliser extends IVoxeliser {
 
                 const voxelColour = this._getVoxelColour(
                     mesh,
-                    useMesh.getUVTriangle(intersection.triangleIndex),
-                    useMesh.getMaterialByTriangle(intersection.triangleIndex),
+                    mesh.getUVTriangle(intersection.triangleIndex),
+                    mesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
                     voxeliseParams.textureFiltering,
                 );
@@ -97,6 +102,9 @@ export class BVHRayVoxeliser extends IVoxeliser {
                 }
             }
         }
+        ProgressManager.Get.end(taskHandle);
+
+        mesh.clearTransform();
 
         return voxelMesh;
     }

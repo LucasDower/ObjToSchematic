@@ -1,4 +1,4 @@
-import { ASSERT } from '../../util';
+import { ASSERT } from '../../util/error_util';
 
 export abstract class BaseUIElement<Type> {
     protected _id: string;
@@ -23,7 +23,7 @@ export abstract class BaseUIElement<Type> {
         return this._cachedValue as Type;
     }
 
-    protected getValue() {
+    protected getValue(): Type {
         ASSERT(this._value);
         return this._value;
     }
@@ -34,7 +34,7 @@ export abstract class BaseUIElement<Type> {
 
     public abstract generateHTML(): string;
     public abstract registerEvents(): void;
-    
+
 
     protected abstract _onEnabledChanged(): void;
 }

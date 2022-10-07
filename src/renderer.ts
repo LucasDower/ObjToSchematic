@@ -1,18 +1,14 @@
-import { Vector3 } from './vector';
-import { ArcballCamera } from './camera';
-import { ShaderManager } from './shaders';
-import { RenderBuffer } from './buffer';
-import { DebugGeometryTemplates } from './geometry';
-import { Mesh, SolidMaterial, TexturedMaterial, MaterialType } from './mesh';
-import { BlockAtlas } from './block_atlas';
-import { ASSERT, LOG } from './util';
-import { VoxelMesh } from './voxel_mesh';
-import { BlockMesh } from './block_mesh';
-
 import * as twgl from 'twgl.js';
-import { EAppEvent, EventManager } from './event';
+
+import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
+import { DebugGeometryTemplates } from './geometry';
+import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
+import { RenderBuffer } from './render_buffer';
+import { ShaderManager } from './shaders';
 import { Texture } from './texture';
+import { Vector3 } from './vector';
+import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 
 /* eslint-disable */
 export enum MeshType {
@@ -25,7 +21,6 @@ export enum MeshType {
 
 /* eslint-disable */
 enum EDebugBufferComponents {
-    Grid,
     Wireframe,
     Normals,
     Bounds,
@@ -33,12 +28,17 @@ enum EDebugBufferComponents {
 }
 /* eslint-enable */
 
+export type TextureMaterialRenderAddons = {
+    texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean,
+}
+
 export class Renderer {
     public _gl: WebGLRenderingContext;
 
     private _backgroundColour: RGBA = { r: 0.125, g: 0.125, b: 0.125, a: 1.0 };
     private _atlasTexture?: WebGLTexture;
 
+    private _atlasSize: number = 1.0;
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _gridOffset: Vector3 = new Vector3(0, 0, 0);
@@ -46,18 +46,24 @@ export class Renderer {
     private _modelsAvailable: number;
 
     private _materialBuffers: Array<{
-        material: (SolidMaterial | (TexturedMaterial & { texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean }))
+        material: SolidMaterial | (TexturedMaterial & TextureMaterialRenderAddons)
         buffer: twgl.BufferInfo,
         numElements: number,
     }>;
-    public _voxelBuffer?: twgl.BufferInfo;
-    public _voxelBufferRaw?: {[attribute: string]: { numComponents: number, data: Float32Array | Uint32Array }};
-    private _blockBuffer?: twgl.BufferInfo;
+    public _voxelBuffer?: twgl.BufferInfo[];
+    private _blockBuffer?: twgl.BufferInfo[];
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
+
+    private _gridBuffers: {
+        x: { [meshType: string]: RenderBuffer };
+        y: { [meshType: string]: RenderBuffer };
+        z: { [meshType: string]: RenderBuffer };
+    };
+    private _gridEnabled: boolean;
 
     private static _instance: Renderer;
     public static get Get() {
@@ -73,6 +79,9 @@ export class Renderer {
         this._modelsAvailable = 0;
         this._materialBuffers = [];
 
+        this._gridBuffers = { x: {}, y: {}, z: {} };
+        this._gridEnabled = false;
+
         this._debugBuffers = {};
         this._debugBuffers[MeshType.None] = {};
         this._debugBuffers[MeshType.TriangleMesh] = {};
@@ -80,7 +89,6 @@ export class Renderer {
         this._debugBuffers[MeshType.BlockMesh] = {};
 
         this._isGridComponentEnabled = {};
-        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = false;
         this._axesEnabled = false;
 
         this._axisBuffer = new RenderBuffer([
@@ -117,124 +125,56 @@ export class Renderer {
     // /////////////////////////////////////////////////////////////////////////
 
     public toggleIsGridEnabled() {
-        const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Grid];
-        this._isGridComponentEnabled[EDebugBufferComponents.Grid] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onGridEnabledChanged, isEnabled);
+        this._gridEnabled = !this._gridEnabled;
+    }
+
+    public isGridEnabled() {
+        return this._gridEnabled;
+    }
+
+    public isAxesEnabled() {
+        return this._axesEnabled;
     }
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
-        EventManager.Get.broadcast(EAppEvent.onAxesEnabledChanged, this._axesEnabled);
     }
 
     public toggleIsWireframeEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Wireframe];
         this._isGridComponentEnabled[EDebugBufferComponents.Wireframe] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onWireframeEnabledChanged, isEnabled);
     }
 
     public toggleIsNormalsEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
         this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onNormalsEnabledChanged, isEnabled);
     }
 
     public toggleIsDevDebugEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Dev];
         this._isGridComponentEnabled[EDebugBufferComponents.Dev] = isEnabled;
-        EventManager.Get.broadcast(EAppEvent.onDevViewEnabledChanged, isEnabled);
     }
 
     public clearMesh() {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-
         this._materialBuffers = [];
 
         this._modelsAvailable = 0;
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(mesh: Mesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
-        
-        LOG('Using mesh');
+    public useMesh(params: RenderMeshParams.Output) {
         this._materialBuffers = [];
 
-        const materialTriangleCount = new Map<string, number>();
-        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-            const materialName = mesh.getMaterialByTriangle(triIndex);
-            const triangleCount = materialTriangleCount.get(materialName) ?? 0;
-            materialTriangleCount.set(materialName, triangleCount + 1);
-        }
-
-        materialTriangleCount.forEach((triangleCount: number, materialName: string) => {
-            const materialBuffer = {
-                'position': {
-                    numComponents: 3,
-                    data: new Float32Array(triangleCount * 3 * 3),
-                },
-                'texcoord': {
-                    numComponents: 2,
-                    data: new Float32Array(triangleCount * 3 * 2),
-                },
-                'normal': {
-                    numComponents: 3,
-                    data: new Float32Array(triangleCount * 3 * 3),
-                },
-                'indices': {
-                    numComponents: 3,
-                    data: new Uint32Array(triangleCount * 3),
-                },
-            };
-
-            let insertIndex = 0;
-            for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-                const material = mesh.getMaterialByTriangle(triIndex);
-                if (material === materialName) {
-                    const uiTriangle = mesh.getUVTriangle(triIndex);
-                    // const tmp = GeometryTemplates.getTriangleBufferData(uiTriangle);
-
-                    materialBuffer.position.data.set(uiTriangle.v0.toArray(), insertIndex * 9 + 0);
-                    materialBuffer.position.data.set(uiTriangle.v1.toArray(), insertIndex * 9 + 3);
-                    materialBuffer.position.data.set(uiTriangle.v2.toArray(), insertIndex * 9 + 6);
-
-                    materialBuffer.texcoord.data.set([uiTriangle.uv0.u, uiTriangle.uv0.v], insertIndex * 6 + 0);
-                    materialBuffer.texcoord.data.set([uiTriangle.uv1.u, uiTriangle.uv1.v], insertIndex * 6 + 2);
-                    materialBuffer.texcoord.data.set([uiTriangle.uv2.u, uiTriangle.uv2.v], insertIndex * 6 + 4);
-
-                    const normalArray = uiTriangle.getNormal().toArray();
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
-                    materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
-
-                    // materialBuffer.position.data.set(tmp.custom['position'], insertIndex * 9);
-                    // materialBuffer.normal.data.set(tmp.custom['normal'], insertIndex * 9);
-                    // materialBuffer.texcoord.data.set(tmp.custom['texcoord'], insertIndex * 6);
-                    
-                    materialBuffer.indices.data.set([
-                        insertIndex * 3 + 0,
-                        insertIndex * 3 + 1,
-                        insertIndex * 3 + 2,
-                    ], insertIndex * 3);
-
-                    ++insertIndex;
-                }
-            }
-            
-            const material = mesh.getMaterialByName(materialName);
+        for (const { material, buffer, numElements } of params.buffers) {
             if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, materialBuffer),
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: material,
-                    numElements: materialBuffer.indices.data.length,
+                    numElements: numElements,
                 });
             } else {
                 this._materialBuffers.push({
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, materialBuffer),
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: {
                         type: MaterialType.textured,
                         path: material.path,
@@ -249,35 +189,60 @@ export class Renderer {
                         }) : undefined,
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
-                    numElements: materialBuffer.indices.data.length,
+                    numElements: numElements,
                 });
             }
-        });
+        }
 
-        const dimensions = mesh.getBounds().getDimensions();
-        this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(dimensions);
-        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.meshWireframe(mesh, new RGB(0.18, 0.52, 0.89).toRGBA());
-        // this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Normals] = DebugGeometryTemplates.meshNormals(mesh, new RGB(0.89, 0.52, 0.18).toRGBA());
-        // delete this._debugBuffers[MeshType.TriangleMesh][EDebugBufferComponents.Dev];
+        this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(params.dimensions);
+        this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(params.dimensions);
+        this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(params.dimensions);
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.TriangleMesh, true);
     }
-    
-    public useVoxelMesh(voxelMesh: VoxelMesh, voxelSize: number, ambientOcclusionEnabled: boolean) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, false);
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
 
-        LOG('Using voxel mesh');
-        LOG(voxelMesh);
+    private _allVoxelChunks = false;
+    public useVoxelMeshChunk(params: RenderNextVoxelMeshChunkParams.Output) {
+        if (params.isFirstChunk) {
+            this._voxelBuffer = [];
+        }
 
-        this._voxelBufferRaw = voxelMesh.createBuffer(ambientOcclusionEnabled);
-        this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, this._voxelBufferRaw);
-        this._voxelSize = voxelSize;
+        this._allVoxelChunks = !params.moreVoxelsToBuffer;
 
-        const dimensions = voxelMesh.getBounds().getDimensions();
+        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
+        this._voxelSize = params.voxelSize;
+
+        if (params.isFirstChunk) {
+            const voxelSize = this._voxelSize;
+            const dimensions = new Vector3(0, 0, 0);
+            dimensions.setFrom(params.dimensions);
+
+            this._gridOffset = new Vector3(
+                dimensions.x % 2 === 0 ? 0 : -0.5,
+                dimensions.y % 2 === 0 ? 0 : -0.5,
+                dimensions.z % 2 === 0 ? 0 : -0.5,
+            );
+            dimensions.add(1);
+
+            this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+            this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+            this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+            
+            this._modelsAvailable = 2;
+            this.setModelToUse(MeshType.VoxelMesh);
+        }
+    }
+
+    /*
+    public useVoxelMesh(params: RenderNextVoxelMeshChunkParams.Output) {
+        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
+        this._voxelSize = params.voxelSize;
+
+        const voxelSize = this._voxelSize;
+        const dimensions = new Vector3(0, 0, 0);
+        dimensions.setFrom(params.dimensions);
+
         this._gridOffset = new Vector3(
             dimensions.x % 2 === 0 ? 0 : -0.5,
             dimensions.y % 2 === 0 ? 0 : -0.5,
@@ -285,39 +250,42 @@ export class Renderer {
         );
         dimensions.add(1);
 
-        this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid] = DebugGeometryTemplates.grid(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        // this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Wireframe] = DebugGeometryTemplates.voxelMeshWireframe(voxelMesh, new RGB(0.18, 0.52, 0.89).toRGBA(), this._voxelSize);
-        
+        this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+        this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+        this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
-
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.VoxelMesh, true);
     }
+    */
     
-    public useBlockMesh(blockMesh: BlockMesh) {
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, false);
+    public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
+        if (params.isFirstChunk) {
+            this._blockBuffer = [];
+        }
 
-        LOG('Using block mesh');
-        LOG(blockMesh);
-        this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, blockMesh.createBuffer());
-        
-        this._atlasTexture = twgl.createTexture(this._gl, {
-            src: BlockAtlas.Get.getAtlasTexturePath(),
-            mag: this._gl.NEAREST,
-        });
-        
-        this._debugBuffers[MeshType.BlockMesh][EDebugBufferComponents.Grid] = this._debugBuffers[MeshType.VoxelMesh][EDebugBufferComponents.Grid];
-        
-        this._modelsAvailable = 3;
-        this.setModelToUse(MeshType.BlockMesh);
+        this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
 
-        EventManager.Get.broadcast(EAppEvent.onModelAvailableChanged, MeshType.BlockMesh, true);
+        if (params.isFirstChunk) {
+            this._atlasTexture = twgl.createTexture(this._gl, {
+                src: params.atlasTexturePath,
+                mag: this._gl.NEAREST,
+            });
+
+            this._atlasSize = params.atlasSize;
+
+            this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
+
+            this._modelsAvailable = 3;
+            this.setModelToUse(MeshType.BlockMesh);
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////
 
     private _drawDebug() {
-        const debugComponents = [EDebugBufferComponents.Grid];
+        /*
+        const debugComponents = [EDebugBufferComponents.GridY];
         for (const debugComp of debugComponents) {
             if (this._isGridComponentEnabled[debugComp]) {
                 ASSERT(this._debugBuffers[this._meshToUse]);
@@ -326,6 +294,9 @@ export class Renderer {
                     if (debugComp === EDebugBufferComponents.Dev) {
                         this._gl.disable(this._gl.DEPTH_TEST);
                     }
+                    if (debugComp === EDebugBufferComponents.GridY && !ArcballCamera.Get.isAlignedWithAxis('y')) {
+                        continue;
+                    }
                     this._drawBuffer(this._gl.LINES, buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
@@ -333,6 +304,33 @@ export class Renderer {
                 }
             }
         }
+        */
+        // Draw grid
+        if (this._gridEnabled) {
+            if (ArcballCamera.Get.isAlignedWithAxis('x') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
+                const gridBuffer = this._gridBuffers.x[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            } else if (ArcballCamera.Get.isAlignedWithAxis('z') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
+                const gridBuffer = this._gridBuffers.z[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            } else {
+                const gridBuffer = this._gridBuffers.y[this._meshToUse];
+                if (gridBuffer !== undefined) {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                    });
+                }
+            }
+        }
+
         // Draw axis
         if (this._axesEnabled) {
             this._gl.disable(this._gl.DEPTH_TEST);
@@ -343,6 +341,9 @@ export class Renderer {
         }
     }
 
+    public parseRawMeshData(buffer: string, dimensions: Vector3) {
+    }
+
     private _drawMesh() {
         for (const materialBuffer of this._materialBuffers) {
             if (materialBuffer.material.type === MaterialType.textured) {
@@ -351,7 +352,7 @@ export class Renderer {
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
-                    u_alpha: materialBuffer.material.alpha,
+                    u_alpha: materialBuffer.material.alpha || materialBuffer.material.texture,
                     u_useAlphaMap: materialBuffer.material.alpha !== undefined,
                     u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
                     u_alphaFactor: materialBuffer.material.alphaFactor,
@@ -373,13 +374,14 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_ambientOcclusion: this._allVoxelChunks,
         };
-        if (this._voxelBuffer) {
+        this._voxelBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
-            twgl.setBuffersAndAttributes(this._gl, shader, this._voxelBuffer);
+            twgl.setBuffersAndAttributes(this._gl, shader, buffer);
             twgl.setUniforms(shader, uniforms);
-            this._gl.drawElements(this._gl.TRIANGLES, this._voxelBuffer.numElements, this._gl.UNSIGNED_INT, 0);
-        }
+            this._gl.drawElements(this._gl.TRIANGLES, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        });
     }
 
     private _drawBlockMesh() {
@@ -389,15 +391,15 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,
             u_voxelSize: this._voxelSize,
-            u_atlasSize: BlockAtlas.Get.getAtlasSize(),
+            u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
         };
-        if (this._blockBuffer) {
+        this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
-            twgl.setBuffersAndAttributes(this._gl, shader, this._blockBuffer);
+            twgl.setBuffersAndAttributes(this._gl, shader, buffer);
             twgl.setUniforms(shader, uniforms);
-            this._gl.drawElements(this._gl.TRIANGLES, this._blockBuffer.numElements, this._gl.UNSIGNED_INT, 0);
-        }
+            this._gl.drawElements(this._gl.TRIANGLES, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        });
         this._gl.disable(this._gl.CULL_FACE);
     }
 
@@ -411,14 +413,13 @@ export class Renderer {
         const isModelAvailable = this._modelsAvailable >= meshType;
         if (isModelAvailable) {
             this._meshToUse = meshType;
-            EventManager.Get.broadcast(EAppEvent.onModelActiveChanged, meshType);
         }
     }
 
     private _setupScene() {
-        twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement> this._gl.canvas);
+        twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement>this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-        ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
+        ArcballCamera.Get.setAspect(this._gl.canvas.width / this._gl.canvas.height);
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
 
         this._gl.enable(this._gl.DEPTH_TEST);
@@ -437,7 +438,7 @@ export class Renderer {
     public getModelsAvailable() {
         return this._modelsAvailable;
     }
-    
+
     public getActiveMeshType() {
         return this._meshToUse;
     }

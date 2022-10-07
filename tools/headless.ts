@@ -1,120 +1,74 @@
-import { Mesh } from '../src/mesh';
-import { ObjImporter } from '../src/importers/obj_importer';
-import { IVoxeliser } from '../src/voxelisers/base-voxeliser';
-import { TVoxelOverlapRule, VoxelMesh } from '../src/voxel_mesh';
-import { BlockMesh, BlockMeshParams, FallableBehaviour } from '../src/block_mesh';
-import { IExporter} from '../src/exporters/base_exporter';
-import { TextureFiltering } from '../src/texture';
-import { ColourSpace } from '../src/util';
-import { log, LogStyle } from './logging';
-import { headlessConfig } from './headless-config';
-import { TBlockAssigners } from '../src/block_assigner';
-import { TVoxelisers, VoxeliserFactory } from '../src/voxelisers/voxelisers';
-import { VoxeliseParams } from '../src/voxelisers/voxelisers';
-import { ExporterFactory, TExporters } from '../src/exporters/exporters';
+import { StatusHandler } from '../src/status';
+import { LOG_MAJOR, Logger, TIME_END, TIME_START } from '../src/util/log_util';
+import { WorkerClient } from '../src/worker_client';
+import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/worker_types';
 
 export type THeadlessConfig = {
-    import: {
-        absoluteFilePathLoad: string,
-    },
-    voxelise: {
-        voxeliser: TVoxelisers,
-        voxelMeshParams: {
-            desiredHeight: number
-            useMultisampleColouring: boolean,
-            textureFiltering: TextureFiltering,
-            voxelOverlapRule: TVoxelOverlapRule,
-        },
-    },
-    palette: {
-        blockMeshParams: {
-            textureAtlas: string,
-            blockPalette: string,
-            blockAssigner: TBlockAssigners,
-            colourSpace: ColourSpace,
-            fallable: FallableBehaviour,
-        },
-    },
-    export: {
-        absoluteFilePathSave: string,
-        exporter: TExporters,
-    },
+    import: ImportParams.Input,
+    voxelise: VoxeliseParams.Input,
+    assign: AssignParams.Input,
+    export: ExportParams.Input,
+    debug: {
+        showLogs: boolean,
+        showWarnings: boolean,
+        showTimings: boolean,
+    }
 }
 
-void async function main() {
-    const mesh = _import({
-        absoluteFilePathLoad: headlessConfig.import.absoluteFilePathLoad,
-    });
-    const voxelMesh = _voxelise(mesh, {
-        voxeliser: VoxeliserFactory.GetVoxeliser(headlessConfig.voxelise.voxeliser),
-        voxeliseParams: {
-            desiredHeight: headlessConfig.voxelise.voxelMeshParams.desiredHeight,
-            useMultisampleColouring: headlessConfig.voxelise.voxelMeshParams.useMultisampleColouring,
-            textureFiltering: headlessConfig.voxelise.voxelMeshParams.textureFiltering,
-            enableAmbientOcclusion: false,
-            voxelOverlapRule: headlessConfig.voxelise.voxelMeshParams.voxelOverlapRule,
-            calculateNeighbours: false,
-        },
-    });
-    const blockMesh = _palette(voxelMesh, {
-        blockMeshParams: {
-            textureAtlas: headlessConfig.palette.blockMeshParams.textureAtlas,
-            blockPalette: headlessConfig.palette.blockMeshParams.blockPalette,
-            blockAssigner: headlessConfig.palette.blockMeshParams.blockAssigner as TBlockAssigners,
-            colourSpace: headlessConfig.palette.blockMeshParams.colourSpace,
-            fallable: headlessConfig.palette.blockMeshParams.fallable as FallableBehaviour,
-        },
-    });
-    _export(blockMesh, {
-        absoluteFilePathSave: headlessConfig.export.absoluteFilePathSave,
-        exporter: ExporterFactory.GetExporter(headlessConfig.export.exporter),
-    });
-    log(LogStyle.Success, 'Finished!');
-}();
+export function runHeadless(headlessConfig: THeadlessConfig) {
+    if (headlessConfig.debug.showLogs) {
+        Logger.Get.enableLOGMAJOR();
+    }
+    if (headlessConfig.debug.showWarnings) {
+        Logger.Get.enableLOGWARN();
+    }
+    if (headlessConfig.debug.showTimings) {
+        Logger.Get.enableLOGTIME();
+    }
 
-interface ImportParams {
-    absoluteFilePathLoad: string;
-}
+    const worker = WorkerClient.Get;
+    {
+        TIME_START('[TIMER] Importer');
+        LOG_MAJOR('\nImporting...');
+        worker.import(headlessConfig.import);
+        StatusHandler.Get.dump().clear();
+        TIME_END('[TIMER] Importer');
+    }
+    {
+        TIME_START('[TIMER] Voxeliser');
+        LOG_MAJOR('\nVoxelising...');
+        worker.voxelise(headlessConfig.voxelise);
+        StatusHandler.Get.dump().clear();
+        TIME_END('[TIMER] Voxeliser');
+    }
+    {
+        TIME_START('[TIMER] Assigner');
+        LOG_MAJOR('\nAssigning...');
+        worker.assign(headlessConfig.assign);
+        StatusHandler.Get.dump().clear();
+        TIME_END('[TIMER] Assigner');
+    }
+    {
+        TIME_START('[TIMER] Exporter');
+        LOG_MAJOR('\nExporting...');
+    
+        /**
+         * The OBJExporter is unique in that it uses the actual render buffer used by WebGL
+         * to create its data, in headless mode this render buffer is not created so we must
+         * generate it manually
+         */
+        {
+            let result;
+            do {
+                result = worker.renderChunkedVoxelMesh({
+                    enableAmbientOcclusion: headlessConfig.voxelise.enableAmbientOcclusion,
+                    desiredHeight: headlessConfig.voxelise.desiredHeight,
+                });
+            } while (result.moreVoxelsToBuffer);
+        }
 
-interface ActionVoxeliseParams {
-    voxeliser: IVoxeliser;
-    voxeliseParams: VoxeliseParams;
-}
-
-interface PaletteParams {
-    blockMeshParams: BlockMeshParams;
-}
-
-interface ExportParams {
-    absoluteFilePathSave: string;
-    exporter: IExporter;
-}
-
-// TODO: Log status messages
-function _import(params: ImportParams): Mesh {
-    log(LogStyle.Info, 'Importing...');
-    const importer = new ObjImporter();
-    importer.parseFile(params.absoluteFilePathLoad);
-    const mesh = importer.toMesh();
-    mesh.processMesh();
-    return mesh;
-}
-
-// TODO: Log status messages
-function _voxelise(mesh: Mesh, params: ActionVoxeliseParams): VoxelMesh {
-    log(LogStyle.Info, 'Voxelising...');
-    const voxeliser: IVoxeliser = params.voxeliser;
-    return voxeliser.voxelise(mesh, params.voxeliseParams);
-}
-
-// TODO: Log status messages
-function _palette(voxelMesh: VoxelMesh, params: PaletteParams): BlockMesh {
-    log(LogStyle.Info, 'Assigning blocks...');
-    return BlockMesh.createFromVoxelMesh(voxelMesh, params.blockMeshParams);
-}
-
-// TODO: Log status messages
-function _export(blockMesh: BlockMesh, params: ExportParams) {
-    log(LogStyle.Info, 'Exporting...');
-    params.exporter.export(blockMesh, params.absoluteFilePathSave);
+        worker.export(headlessConfig.export);
+        StatusHandler.Get.dump().clear();
+        TIME_END('[TIMER] Exporter');
+    }
 }

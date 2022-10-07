@@ -3,6 +3,7 @@ precision mediump float;
 uniform mat4 u_worldViewProjection;
 uniform float u_voxelSize;
 uniform vec3 u_gridOffset;
+uniform bool u_ambientOcclusion;
 
 attribute vec3 position;
 attribute vec3 normal;

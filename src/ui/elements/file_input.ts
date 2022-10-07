@@ -1,17 +1,19 @@
-import { LabelledElement } from './labelled_element';
-import { ASSERT } from '../../util';
-
 import { remote } from 'electron';
 import * as path from 'path';
+
+import { ASSERT } from '../../util/error_util';
+import { LabelledElement } from './labelled_element';
 
 export class FileInputElement extends LabelledElement<string> {
     private _fileExtension: string;
     private _loadedFilePath: string;
+    private _hovering: boolean;
 
     public constructor(label: string, fileExtension: string) {
         super(label);
         this._fileExtension = fileExtension;
         this._loadedFilePath = '';
+        this._hovering = false;
     }
 
     public generateInnerHTML() {
@@ -25,6 +27,14 @@ export class FileInputElement extends LabelledElement<string> {
     public registerEvents(): void {
         const element = document.getElementById(this._id) as HTMLDivElement;
         ASSERT(element !== null);
+
+        element.onmouseenter = () => {
+            this._hovering = true;
+        };
+
+        element.onmouseleave = () => {
+            this._hovering = false;
+        };
 
         element.onclick = () => {
             if (!this._isEnabled) {
@@ -43,12 +53,22 @@ export class FileInputElement extends LabelledElement<string> {
                 const filePath = files[0];
                 this._loadedFilePath = filePath;
                 this._value = filePath;
-            } else {
-                this._loadedFilePath = '';
-                this._value = '';
             }
             const parsedPath = path.parse(this._loadedFilePath);
             element.innerHTML = parsedPath.name + parsedPath.ext;
+        };
+
+        document.onmousemove = () => {
+            element.classList.remove('input-text-disabled');
+            element.classList.remove('input-text-hover');
+
+            if (this._isEnabled) {
+                if (this._hovering) {
+                    element.classList.add('input-text-hover');
+                }
+            } else {
+                element.classList.add('input-text-disabled');
+            }
         };
     }
 

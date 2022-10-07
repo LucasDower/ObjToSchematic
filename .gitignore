@@ -11,5 +11,9 @@ ObjToSchematic-darwin-x64
 /dev
 /tools/blocks
 /tools/models
+/tests/out
+/logs/
 notes.txt
 *.DS_Store
+.dependency-cruiser.js
+dependencygraph.svg

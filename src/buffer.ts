@@ -1,219 +1,399 @@
-import { Renderer } from './renderer';
-import { ASSERT } from './util';
+import { BlockMesh } from './block_mesh';
+import { AppConfig } from './config';
+import { AppConstants } from './constants';
+import { GeometryTemplates } from './geometry';
+import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
+import { OcclusionManager } from './occlusion';
+import { ProgressManager } from './progress';
+import { AttributeData } from './render_buffer';
+import { ASSERT } from './util/error_util';
+import { Vector3 } from './vector';
+import { VoxelMesh } from './voxel_mesh';
+import { RenderNextVoxelMeshChunkParams } from './worker_types';
 
-import * as twgl from 'twgl.js';
+export type TMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
 
-export interface Attribute {
-    name: string,
-    numComponents: number
+export type TMeshBufferDescription = {
+    material: SolidMaterial | (TexturedMaterial)
+    buffer: TMeshBuffer,
+    numElements: number,
+};
+
+export type TVoxelMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TVoxelMeshBufferDescription = {
+    buffer: TVoxelMeshBuffer,
+    numElements: number,
 }
 
-interface BottomlessBufferData {
-    indices: BottomlessAttributeData,
-    [name: string]: BottomlessAttributeData
+export type TBlockMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    blockTexcoord: { numComponents: 2, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TBlockMeshBufferDescription = {
+    buffer: TBlockMeshBuffer,
+    numElements: number,
 }
 
-interface BottomlessAttributeData {
-    numComponents: number,
-    data: Array<number>
-}
+type TMaterialID = string;
 
-export interface AttributeData {
-    indices: Uint32Array
-    custom: {
-        [name: string]: Array<number>
-    }
-}
+export class ChunkedBufferGenerator {
+    public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderNextVoxelMeshChunkParams.Input, chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
+        const numTotalVoxels = voxelMesh.getVoxelCount();
+        const voxelsStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const voxelsEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalVoxels);
+        ASSERT(voxelsStartIndex < numTotalVoxels, 'Invalid voxel start index');
 
-export function MergeAttributeData(...data: AttributeData[]): AttributeData {
-    if (data.length === 0) {
+        const numBufferVoxels = voxelsEndIndex - voxelsStartIndex;
+        const newBuffer: TVoxelMeshBuffer = BufferGenerator.createVoxelMeshBuffer(numBufferVoxels);
+
+        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
+        const voxels = voxelMesh.getVoxels();
+
+        for (let i = 0; i < numBufferVoxels; ++i) {
+            const voxelIndex = i + voxelsStartIndex;
+            
+            const voxel = voxels[voxelIndex];
+            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
+            const voxelPositionArray = voxel.position.toArray();
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
+                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {
+                newBuffer.normal.data[i * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL + j] = cube.custom.normal[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD; ++j) {
+                newBuffer.texcoord.data[i * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD + j] = cube.custom.texcoord[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
+                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
+            }
+
+            if (params.enableAmbientOcclusion) {
+                const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, voxelMesh);
+                for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
+                    newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];
+                }
+            }
+        }
+
         return {
-            indices: new Uint32Array(),
-            custom: {},
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+            moreVoxelsToBuffer: voxelsEndIndex !== numTotalVoxels,
+            progress: voxelsStartIndex / numTotalVoxels,
         };
     }
-    // Check custom attributes match
-    const requiredAttributes = Object.keys(data[0].custom);
-    for (let i = 1; i < data.length; ++i) {
-        const customAttributes = Object.keys(data[i].custom);
-        const isAllRequiredInCustom = requiredAttributes.every((attr) => {
-            return customAttributes.includes(attr);
-        });
-        const isAllCustomInRequired = customAttributes.every((attr) => {
-            return requiredAttributes.includes(attr);
-        });
-        ASSERT(isAllRequiredInCustom && isAllCustomInRequired, 'Attributes to merge do not match');
-    }
-    // Merge data
-    const indices = Array.from(data[0].indices);
-    const custom = data[0].custom;
-    for (let i = 1; i < data.length; ++i) {
-        const nextIndex = Math.max(...indices) + 1;
-        const d = data[i];
-        const newIndices = d.indices.map((index) => index + nextIndex);
-        indices.push(...Array.from(newIndices));
-        for (const attr of requiredAttributes) {
-            const attrData = d.custom[attr];
-            custom[attr].push(...attrData);
-        }
-    }
 
-    return {
-        indices: new Uint32Array(indices),
-        custom: custom,
-    };
+    public static fromBlockMesh(blockMesh: BlockMesh, chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
+        const blocks = blockMesh.getBlocks();
+
+        const numTotalBlocks = blocks.length;
+        const blocksStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const blocksEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalBlocks);
+        ASSERT(blocksStartIndex < numTotalBlocks, 'Invalid block start index');
+
+        const numBufferBlocks = blocksEndIndex - blocksStartIndex;
+
+        const voxelChunkBuffer = blockMesh.getVoxelMesh().getChunkedBuffer(chunkIndex);
+        const newBuffer = BufferGenerator.createBlockMeshBuffer(numBufferBlocks, voxelChunkBuffer.buffer);
+
+        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+        let insertIndex = 0;
+
+        for (let i = 0; i < numBufferBlocks; ++i) {
+            const blockIndex = i + blocksStartIndex;
+
+            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
+                const faceName = faceOrder[f];
+                const texcoord = blocks[blockIndex].blockInfo.faces[faceName].texcoord;
+                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
+                }
+            }
+        }
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+            moreBlocksToBuffer: voxelChunkBuffer.moreVoxelsToBuffer,
+            progress: voxelChunkBuffer.progress,
+        };
+    }
 }
 
-export class RenderBuffer {
-    private _WebGLBuffer?: {
-        buffer: twgl.BufferInfo,
-        numElements: number
-    };
-    private _buffer!: BottomlessBufferData;
-    private _attributes: {[name: string]: Attribute};
-    private _maxIndex: number;
-    private _compiled: boolean;
-    private _needsCompiling: boolean;
+export class BufferGenerator {
+    public static fromMesh(mesh: Mesh): TMeshBufferDescription[] {
+        const numTris = mesh.getTriangleCount();
 
-    public constructor(attributes: Array<Attribute>) {
-        this._attributes = {};
-        for (const attr of attributes) {
-            this._attributes[attr.name] = {
-                name: attr.name,
-                numComponents: attr.numComponents,
-            };
+        // Count the number of triangles that use each material
+        const materialTriangleCount = new Map<TMaterialID, number>();
+        {
+            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
+                const materialName = mesh.getMaterialByTriangle(triIndex);
+                const triangleCount = materialTriangleCount.get(materialName) ?? 0;
+                materialTriangleCount.set(materialName, triangleCount + 1);
+            }
         }
-        
-        this._needsCompiling = false;
-        this._compiled = false;
-        this._maxIndex = 0;
 
-        this._getNewBuffer();
-    }
+        const materialBuffers: TMeshBufferDescription[] = [];
 
-    public add(data: AttributeData) {
-        const mappedIndicesToAdd = new Array<number>(data.indices.length);
-        let maxMapped = -1;
-        data.indices.forEach((index, i) => {
-            const newIndex = index + this._maxIndex;
-            maxMapped = Math.max(maxMapped, newIndex);
-            mappedIndicesToAdd[i] = newIndex;
+        let trianglesHandled = 0;
+        const taskHandle = ProgressManager.Get.start('MeshBuffer');
+
+        // Create the buffers for each material and fill with data from the triangles
+        materialTriangleCount.forEach((triangleCount: number, materialName: string) => {
+            const materialBuffer: TMeshBuffer = BufferGenerator.createMaterialBuffer(triangleCount);
+
+            let insertIndex = 0;
+            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
+                ProgressManager.Get.progress(taskHandle, trianglesHandled / numTris);
+
+                const material = mesh.getMaterialByTriangle(triIndex);
+                if (material === materialName) {
+                    ++trianglesHandled;
+
+                    const uiTriangle = mesh.getUVTriangle(triIndex);
+
+                    // Position
+                    {
+                        materialBuffer.position.data.set(uiTriangle.v0.toArray(), insertIndex * 9 + 0);
+                        materialBuffer.position.data.set(uiTriangle.v1.toArray(), insertIndex * 9 + 3);
+                        materialBuffer.position.data.set(uiTriangle.v2.toArray(), insertIndex * 9 + 6);
+                    }
+
+                    // Texcoord
+                    {
+                        materialBuffer.texcoord.data.set([uiTriangle.uv0.u, uiTriangle.uv0.v], insertIndex * 6 + 0);
+                        materialBuffer.texcoord.data.set([uiTriangle.uv1.u, uiTriangle.uv1.v], insertIndex * 6 + 2);
+                        materialBuffer.texcoord.data.set([uiTriangle.uv2.u, uiTriangle.uv2.v], insertIndex * 6 + 4);
+                    }
+
+                    // Normal
+                    {
+                        const normalArray = uiTriangle.getNormal().toArray();
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
+                    }
+
+                    // Indices
+                    {
+                        materialBuffer.indices.data.set([
+                            insertIndex * 3 + 0,
+                            insertIndex * 3 + 1,
+                            insertIndex * 3 + 2,
+                        ], insertIndex * 3);
+                    }
+
+                    ++insertIndex;
+                }
+            }
+
+            const material = mesh.getMaterialByName(materialName);
+            materialBuffers.push({
+                buffer: materialBuffer,
+                material: material,
+                numElements: materialBuffer.indices.data.length,
+            });
         });
-        this._buffer.indices.data.push(...mappedIndicesToAdd);
-        this._maxIndex = 1 + maxMapped;
 
-        for (const attr in this._attributes) {
-            this._buffer[attr].data.push(...data.custom[attr]);
-        }
+        ProgressManager.Get.end(taskHandle);
 
-        this._needsCompiling = true;
+        return materialBuffers;
     }
 
-    public attachNewAttribute(attribute: Attribute, data: Array<number>) {
-        ASSERT(this._buffer[attribute.name] === undefined, 'Attribute already exists in buffer');
-        ASSERT(this._attributes[attribute.name] === undefined, 'Attribute already exists in attributes');
-        const expectedDataLength = this._maxIndex * attribute.numComponents;
-        ASSERT(data.length === expectedDataLength, `Data length expected to be ${expectedDataLength}, got ${data.length}`);
-        this._buffer[attribute.name] = {
-            numComponents: attribute.numComponents,
-            data: data,
-        };
-        this._attributes[attribute.name] = attribute;
-        this._needsCompiling = true;
-    }
+    /*
+    public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderVoxelMeshParams.Input): TVoxelMeshBufferDescription {
+        const numVoxels = voxelMesh.getVoxelCount();
+        const newBuffer: TVoxelMeshBuffer = this.createVoxelMeshBuffer(numVoxels);
 
-    public removeAttribute(attributeName: string) {
-        delete this._buffer[attributeName];
-        delete this._attributes[attributeName];
-        this._needsCompiling = true;
-    }
+        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
+        const voxels = voxelMesh.getVoxels();
 
-    public getWebGLBuffer() {
-        this._compile();
-        ASSERT(this._WebGLBuffer !== undefined);
-        return this._WebGLBuffer;
-    }
+        const taskHandle = ProgressManager.Get.start('VoxelMeshBuffer');
+        for (let i = 0; i < numVoxels; ++i) {
+            ProgressManager.Get.progress(taskHandle, i / numVoxels);
 
-    private _compile() {
-        if (this._compiled && !this._needsCompiling) {
-            return;
-        }
+            const voxel = voxels[i];
+            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
+            const voxelPositionArray = voxel.position.toArray();
 
-        const newBuffer: { indices: { data: Uint32Array, numComponents: number }, [arr: string]: { data: (Float32Array | Uint32Array), numComponents: number }} = {
-            indices: { data: Uint32Array.from(this._buffer.indices.data), numComponents: this._buffer.indices.numComponents },
-        };
-        for (const key in this._buffer) {
-            if (key !== 'indices') {
-                newBuffer[key] = {
-                    data: Float32Array.from(this._buffer[key].data),
-                    numComponents: this._buffer[key].numComponents,
-                };
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
+                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {
+                newBuffer.normal.data[i * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL + j] = cube.custom.normal[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD; ++j) {
+                newBuffer.texcoord.data[i * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD + j] = cube.custom.texcoord[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
+                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
+            }
+
+            if (params.enableAmbientOcclusion) {
+                const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, voxelMesh);
+                for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
+                    newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];
+                }
             }
         }
+        ProgressManager.Get.end(taskHandle);
 
-        this._WebGLBuffer = {
-            buffer: twgl.createBufferInfoFromArrays(Renderer.Get._gl, newBuffer),
-            numElements: this._buffer.indices.data.length,
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
         };
-
-        this._compiled = true;
-        this._needsCompiling = false;
     }
+    */
 
-    private _getNewBuffer() {
-        this._buffer = {
-            indices: {numComponents: 1, data: []},
+    /*
+    public static fromBlockMesh(blockMesh: BlockMesh): TBlockMeshBufferDescription {
+        const blocks = blockMesh.getBlocks();
+        const numBlocks = blocks.length;
+
+        const newBuffer = this.createBlockMeshBuffer(numBlocks, blockMesh.getVoxelMesh().getBuffer().buffer);
+
+        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+        let insertIndex = 0;
+
+        const taskHandle = ProgressManager.Get.start('BlockMeshBuffer');
+        for (let i = 0; i < numBlocks; ++i) {
+            ProgressManager.Get.progress(taskHandle, i / numBlocks);
+
+            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
+                const faceName = faceOrder[f];
+                const texcoord = blocks[i].blockInfo.faces[faceName].texcoord;
+                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
+                }
+            }
+        }
+        ProgressManager.Get.end(taskHandle);
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
         };
-        for (const attr in this._attributes) {
-            this._buffer[attr] = {
-                numComponents: this._attributes[attr].numComponents,
-                data: [],
-            };
-        }
     }
+    */
 
-    private _checkDataMatchesAttributes(data: AttributeData) {
-        if (!('indices' in data)) {
-            throw Error('Given data does not have indices data');
-        }
-        const setsRequired = data.indices.reduce((a, v) => Math.max(a, v)) + 1;
-        for (const attr in this._attributes) {
-            if (!(attr in data)) {
-                throw Error(`Given data does not have ${attr} data`);
-            }
-            if (data.custom[attr].length % this._attributes[attr].numComponents != 0) {
-                throw Error(`Not enough/too much ${attr} data given`);
-            }
-            const numSets = data.custom[attr].length / this._attributes[attr].numComponents;
-            if (numSets != setsRequired) {
-                // throw `Number of indices does not match number of ${attr} components given`;
-                throw Error(`Expected ${setsRequired * this._attributes[attr].numComponents} values for ${attr}, got ${data.custom[attr].length}`);
-            }
-        }
-    }
-
-    public copy(): RenderBuffer {
-        const copiedBuffer = new RenderBuffer([]);
-
-        copiedBuffer._buffer = {
+    public static createMaterialBuffer(triangleCount: number): TMeshBuffer {
+        return {
+            position: {
+                numComponents: 3,
+                data: new Float32Array(triangleCount * 3 * 3),
+            },
+            texcoord: {
+                numComponents: 2,
+                data: new Float32Array(triangleCount * 3 * 2),
+            },
+            normal: {
+                numComponents: 3,
+                data: new Float32Array(triangleCount * 3 * 3),
+            },
             indices: {
-                numComponents: this._buffer.indices.numComponents,
-                data: Array.from(this._buffer.indices.data),
+                numComponents: 3,
+                data: new Uint32Array(triangleCount * 3),
             },
         };
-        for (const key in this._buffer) {
-            if (key !== 'indices') {
-                copiedBuffer._buffer[key] = {
-                    numComponents: this._buffer[key].numComponents,
-                    data: Array.from(this._buffer[key].data),
-                };
-            }
-        }
+    }
 
-        copiedBuffer._attributes = JSON.parse(JSON.stringify(this._attributes));
-        copiedBuffer._maxIndex = this._maxIndex;
-        copiedBuffer._compiled = false;
-        copiedBuffer._needsCompiling = true;
-        return copiedBuffer;
+    public static createVoxelMeshBuffer(numVoxels: number): TVoxelMeshBuffer {
+        return {
+            position: {
+                numComponents: 3,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.POSITION),
+            },
+            colour: {
+                numComponents: 4,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR),
+            },
+            occlusion: {
+                numComponents: 4,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION).fill(1.0),
+            },
+            texcoord: {
+                numComponents: 2,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+            normal: {
+                numComponents: 3,
+                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL),
+            },
+            indices: {
+                numComponents: 3,
+                data: new Uint32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.INDICES),
+            },
+        };
+    }
+
+    public static createBlockMeshBuffer(numBlocks: number, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBuffer {
+        return {
+            position: {
+                numComponents: AppConstants.ComponentSize.POSITION,
+                data: voxelMeshBuffer.position.data,
+            },
+            colour: {
+                numComponents: AppConstants.ComponentSize.COLOUR,
+                data: voxelMeshBuffer.colour.data,
+            },
+            occlusion: {
+                numComponents: AppConstants.ComponentSize.OCCLUSION,
+                data: voxelMeshBuffer.occlusion.data,
+            },
+            texcoord: {
+                numComponents: AppConstants.ComponentSize.TEXCOORD,
+                data: voxelMeshBuffer.texcoord.data,
+            },
+            normal: {
+                numComponents: AppConstants.ComponentSize.NORMAL,
+                data: voxelMeshBuffer.normal.data,
+            },
+            indices: {
+                numComponents: AppConstants.ComponentSize.INDICES,
+                data: voxelMeshBuffer.indices.data,
+            },
+            blockTexcoord: {
+                numComponents: AppConstants.ComponentSize.TEXCOORD,
+                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+        };
     }
 }

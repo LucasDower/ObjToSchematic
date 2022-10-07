@@ -1,122 +1,94 @@
-import { BlockAtlas, BlockInfo } from './block_atlas';
-import { RGBA } from './colour';
-import { ASSERT, ColourSpace } from './util';
-import { Vector3 } from './vector';
+import { Atlas, TAtlasBlock } from './atlas';
+import { RGBA, RGBAUtil } from './colour';
+import { Palette } from './palette';
+import { AppTypes, TOptional } from './util';
+import { ASSERT } from './util/error_util';
 
-export type TBlockAssigners = 'basic' | 'ordered-dithering' | 'random-dithering';
+export type TBlockCollection = {
+    blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>,
+    cache: Map<number, TAtlasBlock>,
+}
 
-export class BlockAssignerFactory {
-    public static GetAssigner(blockAssigner: TBlockAssigners): IBlockAssigner {
-        switch (blockAssigner) {
-            case 'basic':
-                return new BasicBlockAssigner();
-            case 'ordered-dithering':
-                return new OrderedDitheringBlockAssigner();
-            case 'random-dithering':
-                return new RandomDitheringBlockAssigner();
-            default:
-                ASSERT(false, 'Unreachable');
+/**
+ * A new instance of AtlasPalette is created each time 
+ * a new voxel mesh is voxelised.
+ */
+export class AtlasPalette {
+    private _atlas: Atlas;
+    private _palette: Palette;
+
+    public constructor(atlas: Atlas, palette: Palette) {
+        this._atlas = atlas;
+        this._palette = palette;
+
+        this._palette.removeMissingAtlasBlocks(this._atlas);
+    }
+
+    public createBlockCollection(blocksToExclude: AppTypes.TNamespacedBlockName[]): TBlockCollection {
+        const blocksNamesToUse = this._palette.getBlocks();
+        {
+            // Remove excluded blocks
+            for (const blockToExclude of blocksToExclude) {
+                const index = blocksNamesToUse.indexOf(blockToExclude);
+                if (index != -1) {
+                    blocksNamesToUse.splice(index, 1);
+                }
+            }
         }
-    }
-}
 
-interface IBlockAssigner {
-    assignBlock(voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo;
-}
-
-export class BasicBlockAssigner implements IBlockAssigner {
-    assignBlock(voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
-        return BlockAtlas.Get.getBlock(voxelColour, colourSpace, exclude);
-    }
-}
-
-export class OrderedDitheringBlockAssigner implements IBlockAssigner {
-    /** 4x4x4 */
-    private static _size = 4;
-    private static _threshold = 256 / 8;
-
-    private static _mapMatrix = [
-        0, 16, 2, 18, 48, 32, 50, 34,
-        6, 22, 4, 20, 54, 38, 52, 36,
-        24, 40, 26, 42, 8, 56, 10, 58,
-        30, 46, 28, 44, 14, 62, 12, 60,
-        3, 19, 5, 21, 51, 35, 53, 37,
-        1, 17, 7, 23, 49, 33, 55, 39,
-        27, 43, 29, 45, 11, 59, 13, 61,
-        25, 41, 31, 47, 9, 57, 15, 63,
-    ];
-
-    private _getThresholdValue(x: number, y: number, z: number) {
-        const size = OrderedDitheringBlockAssigner._size;
-        ASSERT(0 <= x && x < size && 0 <= y && y < size && 0 <= z && z < size);
-        const index = (x + (size * y) + (size * size * z));
-        ASSERT(0 <= index && index < size * size * size);
-        return (OrderedDitheringBlockAssigner._mapMatrix[index] / (size * size * size)) - 0.5;
-    }
-
-    assignBlock(voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
-        const size = OrderedDitheringBlockAssigner._size;
-        const map = this._getThresholdValue(
-            Math.abs(voxelPosition.x % size),
-            Math.abs(voxelPosition.y % size),
-            Math.abs(voxelPosition.z % size),
-        );
-
-        const newVoxelColour: RGBA = {
-            r: ((255 * voxelColour.r) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            g: ((255 * voxelColour.g) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            b: ((255 * voxelColour.b) + map * OrderedDitheringBlockAssigner._threshold) / 255,
-            a: ((255 * voxelColour.a) + map * OrderedDitheringBlockAssigner._threshold) / 255,
+        const blocksToUse: TBlockCollection = {
+            blocks: new Map(),
+            cache: new Map(),
         };
 
-        return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace, exclude);
-    }
-}
+        const atlasBlocks = this._atlas.getBlocks();
+        {
+            // Only add block data for blocks in the palette
+            atlasBlocks.forEach((atlasBlock, blockName) => {
+                if (blocksNamesToUse.includes(blockName)) {
+                    blocksToUse.blocks.set(blockName, atlasBlock);
+                }
+            });
+        }
 
-export class RandomDitheringBlockAssigner implements IBlockAssigner {
-    /** 4x4x4 */
-    private static _size = 4;
-    private static _threshold = 256 / 8;
-
-    private _mapMatrix = [
-        0, 16, 2, 18, 48, 32, 50, 34,
-        6, 22, 4, 20, 54, 38, 52, 36,
-        24, 40, 26, 42, 8, 56, 10, 58,
-        30, 46, 28, 44, 14, 62, 12, 60,
-        3, 19, 5, 21, 51, 35, 53, 37,
-        1, 17, 7, 23, 49, 33, 55, 39,
-        27, 43, 29, 45, 11, 59, 13, 61,
-        25, 41, 31, 47, 9, 57, 15, 63,
-    ];
-
-    private _getThresholdValue(x: number, y: number, z: number) {
-        const size = RandomDitheringBlockAssigner._size;
-        ASSERT(0 <= x && x < size && 0 <= y && y < size && 0 <= z && z < size);
-        const index = (x + (size * y) + (size * size * z));
-        ASSERT(0 <= index && index < size * size * size);
-        return (this._mapMatrix[index] / (size * size * size)) - 0.5;
+        ASSERT(blocksToUse.blocks.size >= 1, 'Must have at least one block cached');
+        return blocksToUse;
     }
 
-    assignBlock(voxelColour: RGBA, voxelPosition: Vector3, colourSpace: ColourSpace, exclude?: string[]): BlockInfo {
-        this._mapMatrix = this._mapMatrix
-            .map((value) => ({ value, sort: Math.random() }))
-            .sort((a, b) => a.sort - b.sort)
-            .map(({ value }) => value);
+    /**
+     * Convert a colour into a Minecraft block.
+     * @param colour The colour that the returned block should match with.
+     * @param resolution The colour accuracy, a uint8 from 1 to 255, inclusive.
+     * @param blockToExclude A list of blocks that should not be used, this should be a subset of the palette blocks.
+     * @returns 
+     */
+    public getBlock(colour: RGBA, blockCollection: TBlockCollection, resolution: RGBAUtil.TColourAccuracy) {
+        const { colourHash, binnedColour } = RGBAUtil.bin(colour, resolution);
 
-        const size = RandomDitheringBlockAssigner._size;
-        const map = this._getThresholdValue(
-            Math.abs(voxelPosition.x % size),
-            Math.abs(voxelPosition.y % size),
-            Math.abs(voxelPosition.z % size),
-        );
+        // If we've already calculated the block associated with this colour, return it.
+        const cachedBlock = blockCollection.cache.get(colourHash);
+        if (cachedBlock !== undefined) {
+            return cachedBlock;
+        }
 
-        const newVoxelColour: RGBA = {
-            r: ((255 * voxelColour.r) + map * RandomDitheringBlockAssigner._threshold) / 255,
-            g: ((255 * voxelColour.g) + map * RandomDitheringBlockAssigner._threshold) / 255,
-            b: ((255 * voxelColour.b) + map * RandomDitheringBlockAssigner._threshold) / 255,
-            a: ((255 * voxelColour.a) + map * RandomDitheringBlockAssigner._threshold) / 255,
-        };
+        // Find closest block in colour
+        let minDistance = Infinity;
+        let blockChoice: TOptional<TAtlasBlock>;
+        {
+            blockCollection.blocks.forEach((blockData) => {
+                const colourDistance = RGBAUtil.squaredDistance(binnedColour, blockData.colour);
+                if (colourDistance < minDistance) {
+                    minDistance = colourDistance;
+                    blockChoice = blockData;
+                }
+            });
+        }
 
-        return BlockAtlas.Get.getBlock(newVoxelColour, colourSpace, exclude);
+        if (blockChoice !== undefined) {
+            blockCollection.cache.set(colourHash, blockChoice);
+            return blockChoice;
+        }
+
+        ASSERT(false, 'Unreachable, always at least one possible block');
     }
 }

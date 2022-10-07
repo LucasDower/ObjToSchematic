@@ -13782,59 +13782,6 @@
             }
         },
         {
-            "name": "smooth_stone_slab_double",
-            "faces": {
-                "up": {
-                    "name": "minecraft:block/smooth_stone",
-                    "texcoord": {
-                        "u": 0.49122807017543857,
-                        "v": 0.8070175438596491
-                    }
-                },
-                "down": {
-                    "name": "minecraft:block/smooth_stone",
-                    "texcoord": {
-                        "u": 0.49122807017543857,
-                        "v": 0.8070175438596491
-                    }
-                },
-                "north": {
-                    "name": "minecraft:block/smooth_stone_slab_side",
-                    "texcoord": {
-                        "u": 0.543859649122807,
-                        "v": 0.8070175438596491
-                    }
-                },
-                "south": {
-                    "name": "minecraft:block/smooth_stone_slab_side",
-                    "texcoord": {
-                        "u": 0.543859649122807,
-                        "v": 0.8070175438596491
-                    }
-                },
-                "east": {
-                    "name": "minecraft:block/smooth_stone_slab_side",
-                    "texcoord": {
-                        "u": 0.543859649122807,
-                        "v": 0.8070175438596491
-                    }
-                },
-                "west": {
-                    "name": "minecraft:block/smooth_stone_slab_side",
-                    "texcoord": {
-                        "u": 0.543859649122807,
-                        "v": 0.8070175438596491
-                    }
-                }
-            },
-            "colour": {
-                "r": 0.645455473856208,
-                "g": 0.645455473856208,
-                "b": 0.645455473856208,
-                "a": 1
-            }
-        },
-        {
             "name": "snow_block",
             "faces": {
                 "up": {
@@ -16905,7 +16852,6 @@
         "smooth_red_sandstone",
         "smooth_sandstone",
         "smooth_stone",
-        "smooth_stone_slab_double",
         "snow_block",
         "soul_sand",
         "soul_soil",

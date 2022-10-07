@@ -1,11 +1,12 @@
-import { AttributeData } from './buffer';
+import { Bounds } from './bounds';
+import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
-import { AppConstants } from './constants';
-import { GeometryTemplates } from './geometry';
-import { HashMap } from './hash_map';
 import { OcclusionManager } from './occlusion';
-import { ASSERT, Bounds, TOptional } from './util';
+import { TOptional } from './util';
+import { ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
+import { RenderNextVoxelMeshChunkParams, VoxeliseParams } from './worker_types';
 
 export interface Voxel {
     position: Vector3;
@@ -15,25 +16,22 @@ export interface Voxel {
 
 export type TVoxelOverlapRule = 'first' | 'average';
 
-/** These are the parameters required to create a Voxel Mesh */
-export type VoxelMeshParams = {
-    voxelOverlapRule: TVoxelOverlapRule,
-    calculateNeighbours: boolean,
-}
+export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | 'enableAmbientOcclusion'>;
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
-    private _voxelsHash: HashMap<Vector3, number>;
+    private _voxelsHash: Map<string, number>;
     private _bounds: Bounds;
     private _neighbourMap: Map<string, { value: number }>;
-    private _voxelMeshParams: VoxelMeshParams;
+    private _voxelMeshParams: TVoxelMeshParams;
 
-    public constructor(voxelMeshParams: VoxelMeshParams) {
+    public constructor(voxelMeshParams: TVoxelMeshParams) {
         this._voxels = [];
-        this._voxelsHash = new HashMap(2048);
+        this._voxelsHash = new Map();
         this._neighbourMap = new Map();
         this._bounds = Bounds.getInfiniteBounds();
         this._voxelMeshParams = voxelMeshParams;
+        this._recreateBuffer = true;
     }
 
     public getVoxels() {
@@ -41,13 +39,15 @@ export class VoxelMesh {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this._voxelsHash.has(pos);
+        return this._voxelsHash.has(pos.stringify());
     }
 
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
-            return this._voxels[voxelIndex];
+            const voxel = this._voxels[voxelIndex];
+            ASSERT(voxel !== undefined);
+            return voxel;
         }
     }
 
@@ -58,7 +58,7 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos);
+        const voxelIndex = this._voxelsHash.get(pos.stringify());
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -74,7 +74,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.add(pos, this._voxels.length - 1);
+            this._voxelsHash.set(pos.stringify(), this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
@@ -112,7 +112,7 @@ export class VoxelMesh {
     ];
 
     private _updateNeighbours(pos: Vector3) {
-        if (this._voxelMeshParams.calculateNeighbours) {
+        if (this._voxelMeshParams.enableAmbientOcclusion) {
             for (const neighbourOffset of this._neighbours) {
                 const neighbour = Vector3.add(pos, neighbourOffset);
                 const inverseOffset = neighbourOffset.copy().negate();
@@ -127,7 +127,7 @@ export class VoxelMesh {
 
     private _stringified: string = '';
     public getNeighbours(pos: Vector3) {
-        ASSERT(this._voxelMeshParams.calculateNeighbours, 'Calculate neighbours is disabled');
+        ASSERT(this._voxelMeshParams.enableAmbientOcclusion, 'Ambient occlusion is disabled');
 
         this._stringified = pos.stringify();
         const neighbours = this._neighbourMap.get(this._stringified);
@@ -151,71 +151,35 @@ export class VoxelMesh {
         return (this.getNeighbours(pos).value & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
     }
 
-    // //////////////////////////////////////////////////////////////////////////
+    private _renderParams?: RenderNextVoxelMeshChunkParams.Input;
+    private _recreateBuffer: boolean;
+    public setRenderParams(params: RenderNextVoxelMeshChunkParams.Input) {
+        this._renderParams = params;
+        this._recreateBuffer = true;
+        this._bufferChunks = [];
+    }
 
-    public createBuffer(enableAmbientOcclusion: boolean) {
-        const numVoxels = this._voxels.length;
-        const newBuffer = {
-            position: {
-                numComponents: AppConstants.ComponentSize.POSITION,
-                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.POSITION),
-            },
-            colour: {
-                numComponents: AppConstants.ComponentSize.COLOUR,
-                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR),
-            },
-            occlusion: {
-                numComponents: AppConstants.ComponentSize.OCCLUSION,
-                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION).fill(1.0),
-            },
-            texcoord: {
-                numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
-            },
-            normal: {
-                numComponents: AppConstants.ComponentSize.NORMAL,
-                data: new Float32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL),
-            },
-            indices: {
-                numComponents: AppConstants.ComponentSize.INDICES,
-                data: new Uint32Array(numVoxels * AppConstants.VoxelMeshBufferComponentOffsets.INDICES),
-            },
-        };
-
-        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
-        for (let i = 0; i < numVoxels; ++i) {
-            const voxel = this._voxels[i];
-            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
-            const voxelPositionArray = voxel.position.toArray();
-
-            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
-                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
-            }
-
-            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
-                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
-            }
-
-            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {
-                newBuffer.normal.data[i * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL + j] = cube.custom.normal[j];
-            }
-
-            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD; ++j) {
-                newBuffer.texcoord.data[i * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD + j] = cube.custom.texcoord[j];
-            }
-
-            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
-                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
-            }
-
-            if (enableAmbientOcclusion) {
-                const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, this);
-                for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
-                    newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];
-                }
-            }
+    /*
+    private _buffer?: TVoxelMeshBufferDescription;
+    public getBuffer(): TVoxelMeshBufferDescription {
+        ASSERT(this._renderParams, 'Called VoxelMesh.getBuffer() without setting render params');
+        if (this._buffer === undefined || this._recreateBuffer) {
+            this._buffer = BufferGenerator.fromVoxelMesh(this, this._renderParams);
+            this._recreateBuffer = false;
         }
+        return this._buffer;
+    }
+    */
 
-        return newBuffer;
+    private _bufferChunks: Array<TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number }> = [];
+    public getChunkedBuffer(chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
+        ASSERT(this._renderParams, 'Called VoxelMesh.getChunkedBuffer() without setting render params');
+        if (this._bufferChunks[chunkIndex] === undefined) {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromVoxelMesh(this, this._renderParams, chunkIndex);
+        } else {
+            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} cached`);
+        }
+        return this._bufferChunks[chunkIndex];
     }
 }

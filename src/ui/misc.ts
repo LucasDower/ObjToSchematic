@@ -1,33 +1,102 @@
+import { OutputStyle } from './elements/output';
+
+type TMessage = {
+    groupId: string,
+    body: string,
+}
+
 export class UIMessageBuilder {
-    private _messages: string[];
-    
+    private _messages: TMessage[];
+
     public constructor() {
         this._messages = [];
     }
 
-    public addHeading(message: string) {
-        this.addBold(message + ':');
+    public static create() {
+        return new UIMessageBuilder();
     }
 
-    public addBold(...messages: string[]) {
-        for (const message of messages) {
-            this._messages.push(`<b>${message}</b>`);
-        }
+    public addHeading(groupId: string, message: string, style: OutputStyle) {
+        this.addBold(groupId, [message + ':'], style);
+        return this;
     }
 
-    public add(...messages: string[]) {
+    public addBold(groupId: string, messages: string[], style: OutputStyle) {
         for (const message of messages) {
-            this._messages.push(message);
+            const cssColourClass = this._getStatusCSSClass(style);
+            this._messages.push({
+                groupId: groupId, body: `
+                <div style="display: flex; align-items: center;" ${cssColourClass ? `class="${cssColourClass}"` : ''}>
+                    <div style="margin-right: 8px;" class="loader-circle"></div>
+                    <b>${message}</b>
+                </div>
+            `});
         }
+        return this;
     }
 
-    public addItem(...messages: string[]) {
+    public addItem(groupId: string, messages: string[], style: OutputStyle) {
         for (const message of messages) {
-            this._messages.push('• ' + message);
+            const cssColourClass = this._getStatusCSSClass(style);
+            this._messages.push({
+                groupId: groupId, body: `
+                <div style="padding-left: 16px;" ${cssColourClass ? `class="${cssColourClass}"` : ''}> - ${message}</div>
+            `});
         }
+        return this;
+    }
+
+    public addTask(groupId: string, message: string) {
+        this._messages.push({
+            groupId: groupId, body: `
+            <div style="display: flex; align-items: center; color: var(--text-standard)">
+                <div style="margin-right: 8px;" class="loader-circle spin"></div> 
+                <b class="spin">${message}</b>
+            </div>
+        `});
+        return this;
+    }
+
+    public clear(groupId: string) {
+        this._messages = this._messages.filter((x) => x.groupId !== groupId);
+        return this;
+    }
+
+    public clearAll() {
+        this._messages = [];
     }
 
     public toString(): string {
-        return this._messages.join('<br>');
+        // Put together in a flexbox
+        const divs = this._messages
+            .map((x) => x.body)
+            .join('');
+
+        return `
+            <div style="display: flex; flex-direction: column">
+                ${divs}
+            </div>
+        `;
+    }
+
+    public static fromString(groupId: string, string: string, style: OutputStyle): UIMessageBuilder {
+        const builder = new UIMessageBuilder();
+        builder.addItem(groupId, [string], style);
+        return builder;
+    }
+
+    public join(builder: UIMessageBuilder) {
+        this._messages.push(...builder._messages);
+    }
+
+    private _getStatusCSSClass(status?: OutputStyle) {
+        switch (status) {
+            case 'success':
+                return 'status-success';
+            case 'warning':
+                return 'status-warning';
+            case 'error':
+                return 'status-error';
+        }
     }
 }

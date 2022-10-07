@@ -1,8 +1,15 @@
-import { ASSERT, getRandomID, STATIC_DIR } from '../../util';
-
-import path from 'path';
 import fs from 'fs';
-import { EAppEvent, EventManager } from '../../event';
+
+import { getRandomID } from '../../util';
+import { ASSERT } from '../../util/error_util';
+import { AppPaths } from '../../util/path_util';
+import { PathUtil } from '../../util/path_util';
+
+export type TToolbarBooleanProperty = 'enabled' | 'active';
+
+export type TToolbarItemParams = {
+    icon: string;
+}
 
 export class ToolbarItemElement {
     private _id: string;
@@ -10,36 +17,44 @@ export class ToolbarItemElement {
     private _iconPath: string;
     private _isEnabled: boolean;
     private _isActive: boolean;
-    private _onClick: () => void;
-    
-    public constructor(iconName: string, onClick: () => void,
-        _activeChangedEvent?: EAppEvent, _activeChangedDelegate?: (...args: any[]) => boolean,
-        _enableChangedEvent?: EAppEvent, _enableChangedDelegate?: (...args: any[]) => boolean,
-    ) {
-        this._id = getRandomID();
-        this._iconName = iconName;
-        this._iconPath = path.join(STATIC_DIR, iconName + '.svg');
-        this._isEnabled = false;
-        this._isActive = false;
-        this._onClick = onClick;
+    private _onClick?: () => void;
 
-        // Enabled/Disabled Event 
-        if (_enableChangedEvent !== undefined && _enableChangedDelegate) {
-            EventManager.Get.add(_enableChangedEvent, (...args: any[]) => {
-                const isEnabled = _enableChangedDelegate(args);
-                this.setEnabled(isEnabled);
-            });
-        } else {
-            this._isEnabled = true;
+    public constructor(params: TToolbarItemParams) {
+        this._id = getRandomID();
+
+        this._iconName = params.icon;
+        this._iconPath = PathUtil.join(AppPaths.Get.static, params.icon + '.svg');
+
+        this._isEnabled = true;
+        this._isActive = false;
+    }
+
+    public tick() {
+        if (this._isEnabledDelegate !== undefined) {
+            this.setEnabled(this._isEnabledDelegate());
         }
-        
-        // Active/Inactive Event
-        if (_activeChangedEvent !== undefined && _activeChangedDelegate) {
-            EventManager.Get.add(_activeChangedEvent, (...args: any[]) => {
-                const isActive = _activeChangedDelegate(args);
-                this.setActive(isActive);
-            });
+
+        if (this._isActiveDelegate !== undefined) {
+            this.setActive(this._isActiveDelegate());
         }
+    }
+
+    private _isActiveDelegate?: () => boolean;
+    public isActive(delegate: () => boolean) {
+        this._isActiveDelegate = delegate;
+        return this;
+    }
+
+    private _isEnabledDelegate?: () => boolean;
+    public isEnabled(delegate: () => boolean) {
+        this._isEnabledDelegate = delegate;
+        return this;
+    }
+
+    public onClick(delegate: () => void) {
+        this._onClick = delegate;
+
+        return this;
     }
 
     public generateHTML() {
@@ -56,7 +71,7 @@ export class ToolbarItemElement {
         ASSERT(element !== null);
 
         element.addEventListener('click', () => {
-            if (this._isEnabled) {
+            if (this._isEnabled && this._onClick) {
                 this._onClick();
             }
         });
@@ -66,7 +81,7 @@ export class ToolbarItemElement {
                 element.classList.add('toolbar-item-hover');
             }
         });
-        
+
         element.addEventListener('mouseleave', () => {
             if (this._isEnabled) {
                 element.classList.remove('toolbar-item-hover');

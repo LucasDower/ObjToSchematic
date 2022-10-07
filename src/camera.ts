@@ -1,35 +1,37 @@
 import { m4, v3 } from 'twgl.js';
+
+import { AppConfig } from './config';
+import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from './math';
 import { MouseManager } from './mouse';
-import { degreesToRadians } from './math';
 import { Renderer } from './renderer';
-import { SmoothVariable, SmoothVectorVariable } from './util';
 import { Vector3 } from './vector';
 
 export class ArcballCamera {
     public isUserRotating = false;
     public isUserTranslating = false;
 
-    private readonly fov: number;
-    private readonly zNear: number;
-    private readonly zFar: number;
-    public aspect: number;
-    
-    private readonly _defaultDistance = 18.0;
-    private readonly _defaultAzimuth = -1.0;
-    private readonly _defaultElevation = 1.3;
+    private _isPerspective: boolean;
+    private _fov: number;
+    private _zNear: number;
+    private _zFar: number;
+    private _aspect: number;
 
-    private _distance = new SmoothVariable(this._defaultDistance, 0.025);
-    private _azimuth = new SmoothVariable(this._defaultAzimuth, 0.025);
-    private _elevation = new SmoothVariable(this._defaultElevation, 0.025);
-    private _target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
+    private _distance: SmoothVariable;// = new SmoothVariable(this._defaultDistance, 0.025);
+    private _azimuth: SmoothVariable;// = new SmoothVariable(this._defaultAzimuth, 0.025);
+    private _elevation: SmoothVariable;// = new SmoothVariable(this._defaultElevation, 0.025);
+    private _target: SmoothVectorVariable;// = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
 
     private readonly up: v3.Vec3 = [0, 1, 0];
     private eye: v3.Vec3 = [0, 0, 0];
 
+    private _azimuthRelief = 0.0;
+    private _elevationRelief = 0.0;
+    private _isAngleSnapped = false;
+
     private mouseSensitivity = 0.005;
     private scrollSensitivity = 0.005;
 
-    private gl: WebGLRenderingContext;
+    private _gl: WebGLRenderingContext;
 
     private static _instance: ArcballCamera;
     public static get Get() {
@@ -37,27 +39,78 @@ export class ArcballCamera {
     }
 
     private constructor() {
-        this.fov = 30 * degreesToRadians;
-        this.zNear = 0.5;
-        this.zFar = 100.0;
-        this.gl = Renderer.Get._gl;
-        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
+        this._gl = Renderer.Get._gl;
 
-        this._elevation.setClamp(0.01, Math.PI - 0.01);
+        this._isPerspective = true;
+        this._fov = AppConfig.Get.CAMERA_FOV_DEGREES * degreesToRadians;
+        this._zNear = 0.5;
+        this._zFar = 100.0;
+        this._aspect = this._gl.canvas.width / this._gl.canvas.height;
+        this._distance = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS, 0.025);
+        this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, 0.025);
+        this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, 0.025);
+        this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
+
+        this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);
+
+        this.setCameraMode(this._isPerspective ? 'perspective' : 'orthographic');
+    }
+
+    public isPerspective() {
+        return this._isPerspective;
+    }
+
+    public isOrthographic() {
+        return !this._isPerspective;
+    }
+
+    public isAlignedWithAxis(axis: 'x' | 'y' | 'z'): boolean {
+        const azimuth = Math.abs(this._azimuth.getTarget() % (Math.PI * 2));
+        const elevation = this._elevation.getTarget();
+
+        switch (axis) {
+            case 'x':
+                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_0) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_180);
+            case 'y':
+                return AppMath.nearlyEqual(elevation, AppMath.RADIANS_0, 0.002) || AppMath.nearlyEqual(elevation, AppMath.RADIANS_180, 0.002);
+            case 'z':
+                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_90) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_270);
+        }
+    }
+
+    public setCameraMode(mode: 'perspective' | 'orthographic') {
+        this._isPerspective = mode === 'perspective';
+    }
+
+    private _angleSnap = false;
+    public toggleAngleSnap() {
+        this._angleSnap = !this._angleSnap;
+
+        if (!this._angleSnap) {
+            this._isAngleSnapped = false;
+            this._azimuthRelief = 0.0;
+            this._elevationRelief = 0.0;
+        }
+    }
+    public isAngleSnapEnabled() {
+        return this._angleSnap;
     }
 
     public updateCamera() {
-        this.aspect = this.gl.canvas.width / this.gl.canvas.height;
+        this._aspect = this._gl.canvas.width / this._gl.canvas.height;
 
         const mouseDelta = MouseManager.Get.getMouseDelta();
+        mouseDelta.dx *= this.mouseSensitivity;
+        mouseDelta.dy *= this.mouseSensitivity;
+
         if (this.isUserRotating) {
-            this._azimuth.addToTarget(mouseDelta.dx * this.mouseSensitivity);
-            this._elevation.addToTarget(mouseDelta.dy * this.mouseSensitivity);
+            this._azimuth.addToTarget(mouseDelta.dx);
+            this._elevation.addToTarget(mouseDelta.dy);
         }
         if (this.isUserTranslating) {
-            const my = mouseDelta.dy * this.mouseSensitivity;
-            const mx = mouseDelta.dx * this.mouseSensitivity;
+            const my = mouseDelta.dy;
+            const mx = mouseDelta.dx;
             // Up-down
             const dy = -Math.cos(this._elevation.getTarget() - Math.PI/2);
             const df = Math.sin(this._elevation.getTarget() - Math.PI/2);
@@ -72,6 +125,89 @@ export class ArcballCamera {
             this._target.addToTarget(new Vector3(dx * mx, 0.0, dz * mx));
         }
 
+        const axisSnapRadius = clamp(AppConfig.Get.ANGLE_SNAP_RADIUS_DEGREES, 0.0, 90.0) * degreesToRadians;
+
+        if (this._shouldSnapCameraAngle()) {
+            let shouldSnapToAzimuth = false;
+            let shouldSnapToElevation = false;
+            let snapAngleAzimuth = 0.0;
+            let snapAngleElevation = 0.0;
+
+            const azimuth = this._azimuth.getTarget();
+            const elevation = this._elevation.getTarget();
+
+            const modAzimuth = Math.abs(azimuth % (90 * degreesToRadians));
+
+            if (modAzimuth < axisSnapRadius || modAzimuth > (90*degreesToRadians - axisSnapRadius)) {
+                shouldSnapToAzimuth = true;
+                snapAngleAzimuth = roundToNearest(azimuth, 90 * degreesToRadians);
+            }
+
+            const elevationSnapPoints = [0, 90, 180].map((x) => x * degreesToRadians);
+            for (const elevationSnapPoint of elevationSnapPoints) {
+                if (elevationSnapPoint - axisSnapRadius <= elevation && elevation <= elevationSnapPoint + axisSnapRadius) {
+                    shouldSnapToElevation = true;
+                    snapAngleElevation = elevationSnapPoint;
+                    break;
+                }
+            }
+
+            if (shouldSnapToAzimuth && shouldSnapToElevation) {
+                this._azimuth.setTarget(snapAngleAzimuth);
+                this._elevation.setTarget(snapAngleElevation);
+                this._isAngleSnapped = true;
+            }
+        }
+
+        /*
+        if (this.isOrthographic()) {
+            const azimuth0 = between(this._azimuth.getTarget(), 0.0 - axisSnapRadius, 0.0 + axisSnapRadius);
+            const azimuth90 = between(this._azimuth.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
+            const azimuth180 = between(this._azimuth.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
+            const azimuth270 = between(this._azimuth.getTarget(), 3*Math.PI/2 - axisSnapRadius, 3*Math.PI/2 + axisSnapRadius);
+            
+            const elevationTop = between(this._elevation.getTarget(), 0.0 - axisSnapRadius, 0.0 + axisSnapRadius);
+            const elevationMiddle = between(this._elevation.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
+            const elevationBottom = between(this._elevation.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
+            
+            if (elevationMiddle) {
+                if (azimuth0) {
+                    this._azimuth.setTarget(0);
+                    this._elevation.setTarget(Math.PI/2);
+                    this._isAngleSnapped = true;
+                } else if (azimuth90) {
+                    this._azimuth.setTarget(90);
+                    this._elevation.setTarget(Math.PI/2);
+                    this._isAngleSnapped = true;
+                } else if (azimuth180) {
+                    this._azimuth.setTarget(180);
+                    this._elevation.setTarget(Math.PI/2);
+                    this._isAngleSnapped = true;
+                } else if (azimuth270) {
+                    this._azimuth.setTarget(270);
+                    this._elevation.setTarget(Math.PI/2);
+                    this._isAngleSnapped = true;
+                }
+            }
+        }
+        */
+
+        if (this._isAngleSnapped && this.isUserRotating) {
+            this._azimuthRelief += mouseDelta.dx;
+            this._elevationRelief += mouseDelta.dy;
+
+            if (!between(this._azimuthRelief, -axisSnapRadius, axisSnapRadius) || !between(this._elevationRelief, -axisSnapRadius, axisSnapRadius)) {
+                this._azimuth.setTarget(this._azimuth.getTarget() + this._azimuthRelief * 2);
+                this._elevation.setTarget(this._elevation.getTarget() + this._elevationRelief * 2);
+                this._isAngleSnapped = false;
+            }
+        }
+        
+        if (!this._isAngleSnapped) {
+            this._azimuthRelief = 0.0;
+            this._elevationRelief = 0.0;
+        }
+
         // Move camera towards target location
         this._distance.tick();
         this._azimuth.tick();
@@ -84,6 +220,10 @@ export class ArcballCamera {
             this._distance.getActual() * Math.cos(this._elevation.getActual()) + target[1],
             this._distance.getActual() * Math.sin(this._azimuth.getActual()) * -Math.sin(this._elevation.getActual()) + target[2],
         ];
+    }
+
+    private _shouldSnapCameraAngle() {
+        return this.isOrthographic() && this._angleSnap;
     }
 
     getCameraPosition(azimuthOffset: number, elevationOffset: number) {
@@ -114,7 +254,12 @@ export class ArcballCamera {
     }
 
     public getProjectionMatrix() {
-        return m4.perspective(this.fov, this.aspect, this.zNear, this.zFar);
+        if (this._isPerspective) {
+            return m4.perspective(this._fov, this._aspect, this._zNear, this._zFar);
+        } else {
+            const zoom = this._distance.getActual() / 3.6;
+            return m4.ortho(-zoom * this._aspect, zoom * this._aspect, -zoom, zoom, -1000, 1000);
+        }
     }
 
     public getCameraMatrix() {
@@ -155,16 +300,24 @@ export class ArcballCamera {
 
     public reset() {
         this._target.setTarget(new Vector3(0, 0, 0));
-        this._distance.setTarget(this._defaultDistance);
-        this._azimuth.setTarget(this._defaultAzimuth);
-        this._elevation.setTarget(this._defaultElevation);
+        this._distance.setTarget(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS);
+        this._azimuth.setTarget(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS);
+        this._elevation.setTarget(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS);
 
-        while (this._azimuth.getActual() < this._defaultAzimuth - Math.PI) {
+        while (this._azimuth.getActual() < AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS - Math.PI) {
             this._azimuth.setActual(this._azimuth.getActual() + Math.PI * 2);
         }
-        while (this._azimuth.getActual() > this._defaultAzimuth + Math.PI) {
+        while (this._azimuth.getActual() > AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS + Math.PI) {
             this._azimuth.setActual(this._azimuth.getActual() - Math.PI * 2);
         }
+    }
+
+    public getAspect() {
+        return this._aspect;
+    }
+
+    public setAspect(aspect: number) {
+        this._aspect = aspect;
     }
 
     /*

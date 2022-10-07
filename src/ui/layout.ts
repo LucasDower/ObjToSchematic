@@ -1,21 +1,24 @@
+import fs from 'fs';
+
+import { AppContext } from '../app_context';
+import { TBlockAssigners } from '../assigners/assigners';
+import { ArcballCamera } from '../camera';
+import { TExporters } from '../exporters/exporters';
+import { PaletteManager } from '../palette';
+import { MeshType, Renderer } from '../renderer';
+import { EAction } from '../util';
+import { ASSERT } from '../util/error_util';
+import { LOG } from '../util/log_util';
+import { AppPaths } from '../util/path_util';
+import { TVoxelOverlapRule } from '../voxel_mesh';
+import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
-import { SliderElement } from './elements/slider';
+import { ButtonElement } from './elements/button';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
-import { ButtonElement } from './elements/button';
 import { OutputElement } from './elements/output';
-import { EAction, AppContext } from '../app_context';
-import { ASSERT, ATLASES_DIR, LOG, PALETTES_DIR } from '../util';
-
-import fs from 'fs';
+import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
-import { EAppEvent } from '../event';
-import { MeshType, Renderer } from '../renderer';
-import { ArcballCamera } from '../camera';
-import { TVoxelisers } from '../voxelisers/voxelisers';
-import { TExporters } from '../exporters/exporters';
-import { TBlockAssigners } from '../block_assigner';
-import { TVoxelOverlapRule } from '../voxel_mesh';
 
 export interface Group {
     label: string;
@@ -33,7 +36,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'simplify', 'build', 'assign', 'export'];
+    public uiOrder = ['import', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -46,21 +49,10 @@ export class UI {
             }),
             output: new OutputElement(),
         },
-        'simplify': {
-            label: 'Simplify',
+        'voxelise': {
+            label: 'Voxelise',
             elements: {
-                'ratio': new SliderElement('Ratio', 0.0, 1.0, 2, 0.5, 0.01),
-            },
-            elementsOrder: ['ratio'],
-            submitButton: new ButtonElement('Simplify mesh', () => {
-                this._appContext.do(EAction.Simplify);
-            }),
-            output: new OutputElement(),
-        },
-        'build': {
-            label: 'Build',
-            elements: {
-                'height': new SliderElement('Desired height', 3, 380, 0, 80, 1),
+                'desiredHeight': new SliderElement('Desired height', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
@@ -85,7 +77,7 @@ export class UI {
                         displayText: 'Off (faster)',
                     },
                 ]),
-                'multisampleColouring': new ComboBoxElement('Multisample colouring', [
+                'multisampleColouring': new ComboBoxElement('Multisampling', [
                     {
                         id: 'on',
                         displayText: 'On (recommended)',
@@ -118,7 +110,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['height', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
+            elementsOrder: ['desiredHeight', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),
@@ -133,10 +125,6 @@ export class UI {
                     { id: 'ordered-dithering', displayText: 'Ordered' },
                     { id: 'random-dithering', displayText: 'Random' },
                     { id: 'basic', displayText: 'Off' },
-                ]),
-                'colourSpace': new ComboBoxElement('Colour space', [
-                    { id: 'rgb', displayText: 'RGB (faster)' },
-                    { id: 'lab', displayText: 'LAB (recommended, slow)' },
                 ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
@@ -162,8 +150,9 @@ export class UI {
                         tooltip: 'Let the block fall',
                     },
                 ]),
+                'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'colourSpace', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -192,119 +181,117 @@ export class UI {
         groups: {
             'viewmode': {
                 elements: {
-                    'mesh': new ToolbarItemElement('mesh', () => {
-                        Renderer.Get.setModelToUse(MeshType.TriangleMesh);
-                    },
-                    EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
-                    },
-                    EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.TriangleMesh && isCached;
-                    }),
-
-                    'voxelMesh': new ToolbarItemElement('voxel', () => {
-                        Renderer.Get.setModelToUse(MeshType.VoxelMesh);
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.VoxelMesh;
-                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.VoxelMesh && isCached;
-                    }),
-
-                    'blockMesh': new ToolbarItemElement('block', () => {
-                        Renderer.Get.setModelToUse(MeshType.BlockMesh);
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.BlockMesh;
-                    }, EAppEvent.onModelAvailableChanged, (...args: any[]) => {
-                        const modelType = args[0][0][0] as MeshType;
-                        const isCached = args[0][0][1] as boolean;
-                        return modelType >= MeshType.BlockMesh && isCached;
-                    }),
+                    'mesh': new ToolbarItemElement({ icon: 'mesh' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.TriangleMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.TriangleMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
+                        }),
+                    'voxelMesh': new ToolbarItemElement({ icon: 'voxel' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.VoxelMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.VoxelMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
+                        }),
+                    'blockMesh': new ToolbarItemElement({ icon: 'block' })
+                        .onClick(() => {
+                            Renderer.Get.setModelToUse(MeshType.BlockMesh);
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.BlockMesh;
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
+                        }),
                 },
                 elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
-            'zoom': {
-                elements: {
-                    'zoomOut': new ToolbarItemElement('minus', () => {
-                        ArcballCamera.Get.onZoomOut();
-                    }),
-                    'zoomIn': new ToolbarItemElement('plus', () => {
-                        ArcballCamera.Get.onZoomIn();
-                    }),
-                    'centre': new ToolbarItemElement('centre', () => {
-                        ArcballCamera.Get.reset();
-                    }),
-                },
-                elementsOrder: ['zoomOut', 'zoomIn', 'centre'],
-            },
             'debug': {
                 elements: {
-                    'grid': new ToolbarItemElement('grid', () => {
-                        Renderer.Get.toggleIsGridEnabled();
-                    }, EAppEvent.onGridEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        return Renderer.Get.getActiveMeshType() !== MeshType.None;
-                    }),
-                    'axes': new ToolbarItemElement('axes', () => {
-                        Renderer.Get.toggleIsAxesEnabled();
-                    }, EAppEvent.onAxesEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }),
+                    'grid': new ToolbarItemElement({ icon: 'grid' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsGridEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isGridEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getActiveMeshType() !== MeshType.None;
+                        }),
+                    'axes': new ToolbarItemElement({ icon: 'axes' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsAxesEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isAxesEnabled();
+                        }),
                 },
                 elementsOrder: ['grid', 'axes'],
             },
+
         },
-        groupsOrder: ['viewmode', 'zoom', 'debug'],
+        groupsOrder: ['viewmode', 'debug'],
     };
 
     private _toolbarRight = {
         groups: {
-            'debug': {
+            'zoom': {
                 elements: {
-                    /*
-                    'wireframe': new ToolbarItemElement('wireframe', () => {
-                        Renderer.Get.toggleIsWireframeEnabled();
-                    }, EAppEvent.onWireframeEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh || modelUsed === MeshType.VoxelMesh;
-                    }),
-                    'normals': new ToolbarItemElement('normal', () => {
-                        Renderer.Get.toggleIsNormalsEnabled();
-                    }, EAppEvent.onNormalsEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        return modelUsed === MeshType.TriangleMesh;
-                    }),
-                    'dev': new ToolbarItemElement('debug', () => {
-                        Renderer.Get.toggleIsDevDebugEnabled();
-                    }, EAppEvent.onDevViewEnabledChanged, (...args: any[]) => {
-                        const isEnabled = args[0][0][0] as boolean;
-                        return isEnabled;
-                    }, EAppEvent.onModelActiveChanged, (...args: any[]) => {
-                        const modelUsed = args[0][0][0] as MeshType;
-                        const devBufferAvailable = Renderer.Get.getModelsAvailable() >= 2;
-                        return modelUsed === MeshType.TriangleMesh && devBufferAvailable;
-                    }),
-                    */
+                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomOut();
+                        }),
+                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
+                        .onClick(() => {
+                            ArcballCamera.Get.onZoomIn();
+                        }),
+                    'reset': new ToolbarItemElement({ icon: 'centre' })
+                        .onClick(() => {
+                            ArcballCamera.Get.reset();
+                        }),
                 },
-                elementsOrder: [], // ['wireframe', 'normals', 'dev'],
+                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
+            },
+            'camera': {
+                elements: {
+                    'perspective': new ToolbarItemElement({ icon: 'perspective' })
+                        .onClick(() => {
+                            ArcballCamera.Get.setCameraMode('perspective');
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isPerspective();
+                        }),
+                    'orthographic': new ToolbarItemElement({ icon: 'orthographic' })
+                        .onClick(() => {
+                            ArcballCamera.Get.setCameraMode('orthographic');
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isOrthographic();
+                        }),
+                    'angleSnap': new ToolbarItemElement({ icon: 'magnet' })
+                        .onClick(() => {
+                            ArcballCamera.Get.toggleAngleSnap();
+                        })
+                        .isActive(() => {
+                            return ArcballCamera.Get.isAngleSnapEnabled();
+                        })
+                        .isEnabled(() => {
+                            return ArcballCamera.Get.isOrthographic();
+                        }),
+
+                },
+                elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
             },
         },
-        groupsOrder: ['debug'],
+        groupsOrder: ['camera', 'zoom'],
     };
 
     private _uiDull: { [key: string]: Group } = this._ui;
@@ -318,6 +305,22 @@ export class UI {
 
         this._ui.assign.elements.textureAtlas.addDescription('Textures to use and colour-match with');
         this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
+    }
+
+    public tick() {
+        for (const groupName in this._toolbarLeftDull) {
+            const toolbarGroup = this._toolbarLeftDull[groupName];
+            for (const toolbarItem of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[toolbarItem].tick();
+            }
+        }
+
+        for (const groupName in this._toolbarRightDull) {
+            const toolbarGroup = this._toolbarRightDull[groupName];
+            for (const toolbarItem of toolbarGroup.elementsOrder) {
+                toolbarGroup.elements[toolbarItem].tick();
+            }
+        }
     }
 
     public build() {
@@ -383,7 +386,7 @@ export class UI {
     public cacheValues(action: EAction) {
         const group = this._getEActionGroup(action);
         for (const elementName of group.elementsOrder) {
-            LOG(`Caching ${elementName}`);
+            LOG(`[UI]: Caching ${elementName}`);
             const element = group.elements[elementName];
             element.cacheValue();
         }
@@ -429,6 +432,16 @@ export class UI {
         `;
     }
 
+    public getActionOutput(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.output;
+    }
+
+    public getActionButton(action: EAction) {
+        const group = this._getEActionGroup(action);
+        return group.submitButton;
+    }
+
     public registerEvents() {
         for (const groupName in this._ui) {
             const group = this._uiDull[groupName];
@@ -470,16 +483,18 @@ export class UI {
         return this._uiDull;
     }
 
+    public enableTo(action: EAction) {
+        for (let i = 0; i <= action; ++i) {
+            this.enable(i);
+        }
+    }
+
     public enable(action: EAction) {
         if (action >= EAction.MAX) {
             return;
         }
 
-        LOG('enabling', action);
-        // TODO: Remove once Simplify has been implemented
-        if (action === EAction.Simplify) {
-            action = EAction.Voxelise;
-        }
+        LOG('[UI]: Enabling', action);
         const group = this._getEActionGroup(action);
         for (const compName in group.elements) {
             group.elements[compName].setEnabled(true);
@@ -495,19 +510,26 @@ export class UI {
         }
     }
 
-    public disable(action: EAction) {
+    public disableAll() {
+        this.disable(EAction.Import, false);
+    }
+
+    public disable(action: EAction, clearOutput: boolean = true) {
         if (action < 0) {
             return;
         }
 
         for (let i = action; i < EAction.MAX; ++i) {
             const group = this._getEActionGroup(i);
-            LOG('disabling', group.label);
+            //LOG('[UI]: Disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
             }
             group.submitButton.setEnabled(false);
-            group.output.clearMessage();
+            if (clearOutput) {
+                group.output.getMessage().clearAll();
+                group.output.updateMessage();
+            }
             if (group.postElements) {
                 LOG(group.label, 'has post-element');
                 ASSERT(group.postElementsOrder);
@@ -535,7 +557,7 @@ export class UI {
     private _getTextureAtlases(): ComboBoxItem<string>[] {
         const textureAtlases: ComboBoxItem<string>[] = [];
 
-        fs.readdirSync(ATLASES_DIR).forEach((file) => {
+        fs.readdirSync(AppPaths.Get.atlases).forEach((file) => {
             if (file.endsWith('.atlas')) {
                 const paletteID = file.split('.')[0];
                 let paletteName = paletteID.replace('-', ' ').toLowerCase();
@@ -550,14 +572,13 @@ export class UI {
     private _getBlockPalettes(): ComboBoxItem<string>[] {
         const blockPalettes: ComboBoxItem<string>[] = [];
 
-        fs.readdirSync(PALETTES_DIR).forEach((file) => {
-            if (file.endsWith('.palette')) {
-                const paletteID = file.split('.')[0];
-                let paletteName = paletteID.replace('-', ' ').toLowerCase();
-                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                blockPalettes.push({ id: paletteID, displayText: paletteName });
-            }
-        });
+        const palettes = PaletteManager.getPalettesInfo();
+        for (const palette of palettes) {
+            blockPalettes.push({
+                id: palette.paletteID,
+                displayText: palette.paletteDisplayName,
+            });
+        }
 
         return blockPalettes;
     }

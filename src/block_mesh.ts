@@ -1,14 +1,20 @@
-import { BlockAssignerFactory, TBlockAssigners } from './block_assigner';
-import { Voxel, VoxelMesh } from './voxel_mesh';
-import { BlockAtlas, BlockInfo } from './block_atlas';
-import { ColourSpace, AppError, ASSERT, RESOURCES_DIR } from './util';
-import { Renderer } from './renderer';
-import { AppConstants } from './constants';
-
 import fs from 'fs';
-import path from 'path';
+
+import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
+import { Atlas } from './atlas';
+import { AtlasPalette } from './block_assigner';
+import { BlockInfo } from './block_atlas';
+import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { Palette } from './palette';
+import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
+import { ColourSpace } from './util';
+import { AppError, ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
+import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
+import { Voxel, VoxelMesh } from './voxel_mesh';
+import { AssignParams } from './worker_types';
 
 interface Block {
     voxel: Voxel;
@@ -18,52 +24,71 @@ interface Block {
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
-    textureAtlas: string,
-    blockPalette: string,
+    textureAtlas: Atlas,
+    blockPalette: Palette,
     blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
 }
 
 export class BlockMesh {
-    private _blockPalette: string[];
+    private _blocksUsed: string[];
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
-    private _atlasUsed: string;
+    private _atlas: Atlas;
 
-    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
+    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
         blockMesh._assignBlocks(blockMeshParams);
         return blockMesh;
     }
 
     private constructor(voxelMesh: VoxelMesh) {
-        this._blockPalette = [];
+        this._blocksUsed = [];
         this._blocks = [];
         this._voxelMesh = voxelMesh;
-        this._atlasUsed = 'Vanilla';
+        this._atlas = Atlas.getVanillaAtlas()!;
+        //this._recreateBuffer = true;
 
-        const fallableBlocksString = fs.readFileSync(path.join(RESOURCES_DIR, 'fallable_blocks.json'), 'utf-8');
+        const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
     }
-    
-    private _assignBlocks(blockMeshParams: BlockMeshParams) {
-        BlockAtlas.Get.loadAtlas(blockMeshParams.textureAtlas);
-        BlockAtlas.Get.loadPalette(blockMeshParams.blockPalette);
-        this._atlasUsed = blockMeshParams.textureAtlas;
+
+    private _assignBlocks(blockMeshParams: AssignParams.Input) {
+        const atlas = Atlas.load(blockMeshParams.textureAtlas);
+        ASSERT(atlas !== undefined, 'Could not load atlas');
+        this._atlas = atlas;
+
+        const palette = Palette.load(blockMeshParams.blockPalette);
+        ASSERT(palette !== undefined, 'Could not load palette');
+
+        const atlasPalette = new AtlasPalette(atlas, palette);
+        const allBlockCollection = atlasPalette.createBlockCollection([]);
+        const nonFallableBlockCollection = atlasPalette.createBlockCollection(this._fallableBlocks);
 
         const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
-        
+
         let countFalling = 0;
+        const taskHandle = ProgressManager.Get.start('Assigning');
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
+            ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
+
             const voxel = voxels[voxelIndex];
-            let block = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace);
+            
+            let block = blockAssigner.assignBlock(
+                atlasPalette,
+                voxel.colour,
+                voxel.position,
+                blockMeshParams.resolution,
+                blockMeshParams.colourSpace,
+                allBlockCollection,
+            );
 
             const isFallable = this._fallableBlocks.includes(block.name);
             const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
-            
+
             if (isFallable && !isSupported) {
                 ++countFalling;
             }
@@ -72,8 +97,14 @@ export class BlockMesh {
             shouldReplace ||= (blockMeshParams.fallable === 'replace-falling' && isFallable && !isSupported);
 
             if (shouldReplace) {
-                const replacedBlock = blockAssigner.assignBlock(voxel.colour, voxel.position, blockMeshParams.colourSpace, this._fallableBlocks);
-                // LOG(`Replacing ${block.name} with ${replacedBlock.name}`);
+                const replacedBlock = blockAssigner.assignBlock(
+                    atlasPalette,
+                    voxel.colour,
+                    voxel.position,
+                    blockMeshParams.resolution,
+                    ColourSpace.RGB,
+                    nonFallableBlockCollection,
+                );
                 block = replacedBlock;
             }
 
@@ -81,10 +112,11 @@ export class BlockMesh {
                 voxel: voxel,
                 blockInfo: block,
             });
-            if (!this._blockPalette.includes(block.name)) {
-                this._blockPalette.push(block.name);
+            if (!this._blocksUsed.includes(block.name)) {
+                this._blocksUsed.push(block.name);
             }
         }
+        ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
             StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
@@ -96,7 +128,7 @@ export class BlockMesh {
     }
 
     public getBlockPalette() {
-        return this._blockPalette;
+        return this._blocksUsed;
     }
 
     public getVoxelMesh() {
@@ -106,64 +138,34 @@ export class BlockMesh {
         return this._voxelMesh;
     }
 
-    public createBuffer() {
-        ASSERT(this._blocks.length === this._voxelMesh.getVoxelCount());
+    public getAtlas() {
+        return this._atlas;
+    }
 
-        const voxelBufferRaw = (typeof window === 'undefined') ? this._voxelMesh.createBuffer(false) : Renderer.Get._voxelBufferRaw!;
-
-        const numBlocks = this._blocks.length;
-        const newBuffer = {
-            position: {
-                numComponents: AppConstants.ComponentSize.POSITION,
-                data: voxelBufferRaw.position.data,
-            },
-            colour: {
-                numComponents: AppConstants.ComponentSize.COLOUR,
-                data: voxelBufferRaw.colour.data,
-            },
-            occlusion: {
-                numComponents: AppConstants.ComponentSize.OCCLUSION,
-                data: voxelBufferRaw.occlusion.data,
-            },
-            texcoord: {
-                numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: voxelBufferRaw.texcoord.data,
-            },
-            normal: {
-                numComponents: AppConstants.ComponentSize.NORMAL,
-                data: voxelBufferRaw.normal.data,
-            },
-            indices: {
-                numComponents: AppConstants.ComponentSize.INDICES,
-                data: voxelBufferRaw.indices.data,
-            },
-            blockTexcoord: {
-                numComponents: AppConstants.ComponentSize.TEXCOORD,
-                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
-            },
-        };
-
-        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
-        let insertIndex = 0;
-        for (let i = 0; i < numBlocks; ++i) {
-            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
-                const faceName = faceOrder[f];
-                const texcoord = this._blocks[i].blockInfo.faces[faceName].texcoord;
-                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
-                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
-                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
-                }
-            }
+    /*
+    private _buffer?: TBlockMeshBufferDescription;
+    public getBuffer(): TBlockMeshBufferDescription {
+        //ASSERT(this._renderParams, 'Called BlockMesh.getBuffer() without setting render params');
+        if (this._buffer === undefined) {
+            this._buffer = BufferGenerator.fromBlockMesh(this);
+            //this._recreateBuffer = false;
         }
+        return this._buffer;
+    }
+    */
 
-        return newBuffer;
+    private _bufferChunks: Array<TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number }> = [];
+    public getChunkedBuffer(chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
+        if (this._bufferChunks[chunkIndex] === undefined) {
+            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromBlockMesh(this, chunkIndex);
+        } else {
+            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
+        }
+        return this._bufferChunks[chunkIndex];
     }
 
-    public getAtlasSize() {
-        return BlockAtlas.Get.getAtlasSize();
-    }
-
-    public getAtlasUsed() {
-        return this._atlasUsed;
+    public getAllChunkedBuffers() {
+        return this._bufferChunks;
     }
 }

@@ -1,5 +1,5 @@
-import { ASSERT } from '../../util';
 import { clamp, mapRange, wayThrough } from '../../math';
+import { ASSERT } from '../../util/error_util';
 import { LabelledElement } from './labelled_element';
 
 export class SliderElement extends LabelledElement<number> {
@@ -26,7 +26,7 @@ export class SliderElement extends LabelledElement<number> {
         return `
             <div style="display: flex; flex-direction: row;">
                 <div class="slider-value" id="${this._id + '-value'}">
-                    ${this._value}
+                    ${this._value?.toFixed(this._decimals)}
                 </div>
                 <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
                     <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">

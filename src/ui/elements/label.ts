@@ -1,4 +1,5 @@
-import { ASSERT, getRandomID } from '../../util';
+import { getRandomID } from '../../util';
+import { ASSERT } from '../../util/error_util';
 
 export class LabelElement {
     private _id: string;
@@ -12,7 +13,7 @@ export class LabelElement {
     }
 
     public generateHTML(): string {
-        const description = this._description ? `<br><div style="font-weight: 300; font-size: 85%; color: var(--text-disabled);">
+        const description = false && this._description ? `<br><div style="font-weight: 300; font-size: 85%; color: var(--text-disabled);">
             ${this._description}
         </div>` : '';
         return `

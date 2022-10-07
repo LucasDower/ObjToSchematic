@@ -1,12 +1,15 @@
-import { Vector3 } from './vector';
-import { UV, Bounds, ASSERT, AppError, LOG_WARN, getRandomID } from './util';
-import { Triangle, UVTriangle } from './triangle';
-
-import path from 'path';
 import fs from 'fs';
-import { Texture, TextureFiltering } from './texture';
+import path from 'path';
+
+import { Bounds } from './bounds';
+import { RGBA, RGBAColours } from './colour';
 import { StatusHandler } from './status';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { Texture, TextureFiltering } from './texture';
+import { Triangle, UVTriangle } from './triangle';
+import { getRandomID, UV } from './util';
+import { AppError, ASSERT } from './util/error_util';
+import { LOG_WARN } from './util/log_util';
+import { Vector3 } from './vector';
 
 interface VertexIndices {
     x: number;
@@ -31,7 +34,7 @@ export interface TexturedMaterial {
     alphaPath?: string;
     alphaFactor: number;
 }
-export type MaterialMap = {[key: string]: (SolidMaterial | TexturedMaterial)};
+export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
 
 export class Mesh {
     public readonly id: string;
@@ -40,7 +43,7 @@ export class Mesh {
     public _normals!: Vector3[];
     public _uvs!: UV[];
     public _tris!: Tri[];
-    
+
     private _materials!: MaterialMap;
     private _loadedTextures: { [materialName: string]: Texture };
     public static desiredHeight = 8.0;
@@ -69,8 +72,14 @@ export class Mesh {
 
     public getBounds() {
         const bounds = Bounds.getInfiniteBounds();
-        for (const vertex of this._vertices) {
-            bounds.extendByPoint(vertex);
+        if (this._transform) {
+            for (const vertex of this._vertices) {
+                bounds.extendByPoint(this._transform(vertex));
+            }
+        } else {
+            for (const vertex of this._vertices) {
+                bounds.extendByPoint(vertex);
+            }
         }
         return bounds;
     }
@@ -167,7 +176,7 @@ export class Mesh {
                 colour: RGBAColours.WHITE,
             };
         }
-        
+
         // Check texture paths are absolute and exist
         for (const materialName in this._materials) {
             const material = this._materials[materialName];
@@ -189,23 +198,8 @@ export class Mesh {
     }
 
     private _centreMesh() {
-        /*
-        const centre = new Vector3(0, 0, 0);
-        let totalWeight = 0.0;
-
-        // Find the weighted centre
-        this.tris.forEach((tri, triIndex) => {
-            const verts = this.getVertices(triIndex);
-            const triangle = new Triangle(verts.v0, verts.v1, verts.v2);
-
-            const weight = triangle.getArea();
-            totalWeight += weight;
-            centre.add(triangle.getCentre().mulScalar(weight));
-        });
-        centre.divScalar(totalWeight);
-        */
         const centre = this.getBounds().getCentre();
-        
+
         if (!centre.isNumber()) {
             throw new AppError('Could not find centre of mesh');
         }
@@ -240,11 +234,19 @@ export class Mesh {
 
     public getVertices(triIndex: number) {
         const tri = this._tris[triIndex];
-        return {
-            v0: this._vertices[tri.positionIndices.x],
-            v1: this._vertices[tri.positionIndices.y],
-            v2: this._vertices[tri.positionIndices.z],
-        };
+        if (this._transform) {
+            return {
+                v0: this._transform(this._vertices[tri.positionIndices.x]),
+                v1: this._transform(this._vertices[tri.positionIndices.y]),
+                v2: this._transform(this._vertices[tri.positionIndices.z]),
+            };
+        } else {
+            return {
+                v0: this._vertices[tri.positionIndices.x],
+                v1: this._vertices[tri.positionIndices.y],
+                v2: this._vertices[tri.positionIndices.z],
+            };
+        }
     }
 
     public getUVs(triIndex: number) {
@@ -319,85 +321,16 @@ export class Mesh {
         }
     }
 
-    /*
-    public simplify(ratio: number) {
-        ASSERT(ratio > 0.0 && ratio <= 1.0);
-        const cells: Array<number[]> = Array(this.tris.length);
-        this.tris.forEach((tris, index) => {
-            cells[index] = [tris.iX, tris.iY, tris.iZ];
-        });
-        const positions: Array<number[]> = Array(this.vertices.length);
-        this.vertices.forEach((vertex, index) => {
-            positions[index] = vertex.toArray();
-        });
-        const targetNumTris = positions.length * ratio;
-        const simplified = meshSimplify(cells, positions)(targetNumTris);
-
-        const placeHolderMat = this.tris[0].material;
-        this.tris = new Array(simplified.cells.length);
-        simplified.cells.forEach((cell: number[], index: number) => {
-            this.tris[index] = {
-                iX: cell[0],
-                iY: cell[1],
-                iZ: cell[2],
-                iXUV: 0.5,
-                iYUV: 0.5,
-                iZUV: 0.5,
-                material: placeHolderMat,
-            };
-        });
-
-        this.vertices = new Array(simplified.positions.length);
-        simplified.positions.forEach((position: number[], index: number) => {
-            this.vertices[index] = Vector3.fromArray(position);
-        });
-    }
-    */
-
-    public copy(): Mesh {
-        const newVertices = new Array<Vector3>(this._vertices.length);
-        for (let i = 0; i < this._vertices.length; ++i) {
-            newVertices[i] = this._vertices[i].copy();
-        }
-
-        const newNormals = new Array<Vector3>(this._normals.length);
-        for (let i = 0; i < this._normals.length; ++i) {
-            newNormals[i] = this._normals[i].copy();
-        }
-
-        const newUVs = new Array<UV>(this._uvs.length);
-        for (let i = 0; i < this._uvs.length; ++i) {
-            newUVs[i] = this._uvs[i].copy();
-        }
-
-        const newTris = new Array<Tri>(this._tris.length);
-        for (let i = 0; i < this._tris.length; ++i) {
-            // FIXME: Replace
-            newTris[i] = JSON.parse(JSON.stringify(this._tris[i]));
-        }
-
-        const materials: { [materialName: string]: (SolidMaterial | TexturedMaterial) } = {}; // JSON.parse(JSON.stringify(this.materials));
-        for (const materialName in this._materials) {
-            const material = this._materials[materialName];
-            if (material.type === MaterialType.solid) {
-                materials[materialName] = {
-                    type: MaterialType.solid,
-                    colour: RGBAUtil.copy(material.colour),
-                };
-            } else {
-                materials[materialName] = {
-                    type: MaterialType.textured,
-                    alphaFactor: material.alphaFactor,
-                    alphaPath: material.alphaPath,
-                    path: material.path,
-                };
-            };
-        }
-
-        return new Mesh(newVertices, newNormals, newUVs, newTris, materials);
-    }
-
     public getTriangleCount(): number {
         return this._tris.length;
+    }
+
+    private _transform?: (vertex: Vector3) => Vector3;
+    public setTransform(transform: (vertex: Vector3) => Vector3) {
+        this._transform = transform;
+    }
+
+    public clearTransform() {
+        this._transform = undefined;
     }
 }

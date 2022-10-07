@@ -15,12 +15,12 @@
 */
 
 import { app, BrowserWindow } from 'electron';
-import path from 'path';
 import url from 'url';
-import { AppConfig } from './config';
-import { BASE_DIR, STATIC_DIR } from './util';
 
-app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
+import { AppConfig } from './config';
+import { AppPaths, PathUtil } from './util/path_util';
+
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.Get.OLD_SPACE_SIZE_MB}`);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -36,40 +36,54 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: width,
         height: height,
-        icon: path.join(STATIC_DIR, process.platform === 'win32' ? './icon.ico' : './icon.png'),
+        icon: PathUtil.join(AppPaths.Get.static, process.platform === 'win32' ? './icon.ico' : './icon.png'),
         minWidth: 1280,
         minHeight: 720,
         webPreferences: {
             nodeIntegration: true,
+            nodeIntegrationInWorker: true,
             contextIsolation: false,
             enableRemoteModule: true,
         },
     });
-    if (!AppConfig.DEBUG_ENABLED) {
+    if (AppConfig.Get.RELEASE_MODE) {
         mainWindow.removeMenu();
     }
-    
+
     // Load index.html
     mainWindow.loadURL(url.format({
-        pathname: path.join(BASE_DIR, './index.html'),
+        pathname: PathUtil.join(AppPaths.Get.base, './index.html'),
         protocol: 'file:',
         slashes: true,
     }));
 
     const baseTitle = 'ObjToSchematic – Convert 3D models into Minecraft builds';
-    try {
-        const branchName: Buffer = require('child_process').execSync('git rev-parse --abbrev-ref HEAD').toString().replace('\n', '');
-        const commitHash: (string | Buffer) = require('child_process').execSync('git rev-parse --short HEAD').toString().replace('\n', '');
-        mainWindow.setTitle(`${baseTitle} (git//${branchName.toString()}++${commitHash.toString().trim()})`);
-    } catch (e: any) {
-        mainWindow.setTitle(`${baseTitle} (release//v0.5.1)`);
+    if (AppConfig.Get.RELEASE_MODE) {
+        mainWindow.setTitle(`${baseTitle} (${AppConfig.Get.RELEASE_VERSION})`);
+    } else {
+        try {
+            const branchName: Buffer = require('child_process')
+                .execSync('git rev-parse --abbrev-ref HEAD')
+                .toString()
+                .replace('\n', '');
+            
+            const commitHash: (string | Buffer) = require('child_process')
+                .execSync('git rev-parse --short HEAD')
+                .toString()
+                .replace('\n', '');
+            
+            mainWindow.setTitle(`${baseTitle} (git ${branchName.toString()}${commitHash.toString().trim()})`);
+        } catch (e: any) {
+            mainWindow.setTitle(`${baseTitle} (git)`);
+        }
     }
     
+
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();
 
     // Emitted when the window is closed.
-    mainWindow.on('closed', function() {
+    mainWindow.on('closed', function () {
         app.quit();
     });
 }
@@ -80,7 +94,7 @@ function createWindow() {
 app.on('ready', createWindow);
 
 // Quit when all windows are closed.
-app.on('window-all-closed', function() {
+app.on('window-all-closed', function () {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
@@ -88,7 +102,7 @@ app.on('window-all-closed', function() {
     }
 });
 
-app.on('activate', function() {
+app.on('activate', function () {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) {
