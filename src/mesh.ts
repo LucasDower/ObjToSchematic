@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Bounds } from './bounds';
-import { RGBA, RGBAColours } from './colour';
+import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { StatusHandler } from './status';
 import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
@@ -312,7 +312,7 @@ export class Mesh {
         ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
         const material = this._materials[materialName];
         if (material.type === MaterialType.solid) {
-            return material.colour;
+            return RGBAUtil.copy(material.colour);
         } else {
             ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
             const colour = this._loadedTextures[materialName].getRGBA(uv, textureFiltering);
