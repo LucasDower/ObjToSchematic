@@ -28,9 +28,6 @@ export class ArcballCamera {
     private _elevationRelief = 0.0;
     private _isAngleSnapped = false;
 
-    private mouseSensitivity = 0.005;
-    private scrollSensitivity = 0.005;
-
     private _gl: WebGLRenderingContext;
 
     private static _instance: ArcballCamera;
@@ -101,8 +98,8 @@ export class ArcballCamera {
         this._aspect = this._gl.canvas.width / this._gl.canvas.height;
 
         const mouseDelta = MouseManager.Get.getMouseDelta();
-        mouseDelta.dx *= this.mouseSensitivity;
-        mouseDelta.dy *= this.mouseSensitivity;
+        mouseDelta.dx *= AppConfig.Get.CAMERA_SENSITIVITY_ROTATION;
+        mouseDelta.dy *= AppConfig.Get.CAMERA_SENSITIVITY_ROTATION;
 
         if (this.isUserRotating) {
             this._azimuth.addToTarget(mouseDelta.dx);
@@ -112,15 +109,15 @@ export class ArcballCamera {
             const my = mouseDelta.dy;
             const mx = mouseDelta.dx;
             // Up-down
-            const dy = -Math.cos(this._elevation.getTarget() - Math.PI/2);
-            const df = Math.sin(this._elevation.getTarget() - Math.PI/2);
+            const dy = -Math.cos(this._elevation.getTarget() - Math.PI / 2);
+            const df = Math.sin(this._elevation.getTarget() - Math.PI / 2);
             this._target.addToTarget(new Vector3(
-                -Math.sin(this._azimuth.getTarget() - Math.PI/2) * my * df,
+                -Math.sin(this._azimuth.getTarget() - Math.PI / 2) * my * df,
                 dy * my,
-                Math.cos(this._azimuth.getTarget() - Math.PI/2) * my * df,
+                Math.cos(this._azimuth.getTarget() - Math.PI / 2) * my * df,
             ));
             // Left-right
-            const dx =  Math.sin(this._azimuth.getTarget());
+            const dx = Math.sin(this._azimuth.getTarget());
             const dz = -Math.cos(this._azimuth.getTarget());
             this._target.addToTarget(new Vector3(dx * mx, 0.0, dz * mx));
         }
@@ -138,7 +135,7 @@ export class ArcballCamera {
 
             const modAzimuth = Math.abs(azimuth % (90 * degreesToRadians));
 
-            if (modAzimuth < axisSnapRadius || modAzimuth > (90*degreesToRadians - axisSnapRadius)) {
+            if (modAzimuth < axisSnapRadius || modAzimuth > (90 * degreesToRadians - axisSnapRadius)) {
                 shouldSnapToAzimuth = true;
                 snapAngleAzimuth = roundToNearest(azimuth, 90 * degreesToRadians);
             }
@@ -202,7 +199,7 @@ export class ArcballCamera {
                 this._isAngleSnapped = false;
             }
         }
-        
+
         if (!this._isAngleSnapped) {
             this._azimuthRelief = 0.0;
             this._elevationRelief = 0.0;
@@ -230,7 +227,7 @@ export class ArcballCamera {
         const azimuth = this._azimuth.getActual() + azimuthOffset;
         const elevation = this._elevation.getActual() + elevationOffset;
         return [
-            this._distance.getActual() * Math.cos(azimuth ) * -Math.sin(elevation),
+            this._distance.getActual() * Math.cos(azimuth) * -Math.sin(elevation),
             this._distance.getActual() * Math.cos(elevation),
             this._distance.getActual() * Math.sin(azimuth) * -Math.sin(elevation),
         ];
@@ -243,14 +240,14 @@ export class ArcballCamera {
             this.isUserTranslating = true;
         }
     }
-    
+
     public onMouseUp(e: MouseEvent) {
         this.isUserRotating = false;
         this.isUserTranslating = false;
     }
 
     public onWheelScroll(e: WheelEvent) {
-        this._distance.addToTarget(e.deltaY * this.scrollSensitivity);
+        this._distance.addToTarget(e.deltaY * AppConfig.Get.CAMERA_SENSITIVITY_ZOOM);
     }
 
     public getProjectionMatrix() {
@@ -293,7 +290,7 @@ export class ArcballCamera {
     public onZoomOut() {
         this._distance.addToTarget(1);
     }
-    
+
     public onZoomIn() {
         this._distance.addToTarget(-1);
     }
