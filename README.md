@@ -1,21 +1,24 @@
 <h1>
   <p align="center">
     <img src="res/static/icon.png" alt="Logo" width="64" height="64"><br>
-    ObjToSchematic
+    ObjToSchematic<br>
   </p>
 </h1>
 <p align="center">
   A visual tool to convert 3D .obj models into Minecraft structures (.schematic, <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">.litematic</a>, <a href="https://github.com/SpongePowered/Schematic-Specification">.schem</a>, .nbt)
   <br>
   <a href="#usage">Usage</a> •
+  <a href="https://github.com/LucasDower/ObjToSchematic/releases/latest">Download</a> •
   <a href="#progress">Progress</a> •
   <a href="#disclaimer">Disclaimer</a> •
+  <a href="https://discord.gg/McS2VrBZPD">Discord</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#gallery">Gallery</a>
 </p>
 <p align="center">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build.js.yml/badge.svg" alt="Logo">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests.js.yml/badge.svg" alt="Logo">
+  <img src="https://img.shields.io/github/downloads/LucasDower/ObjToSchematic/total.svg" alt="Logo">
 </p>
 
 <p align="center">
