@@ -1,8 +1,18 @@
+import { ASSERT } from '../../tools/misc';
+import { TLocString } from '../util/type_util';
 import { OutputStyle } from './elements/output';
 
 type TMessage = {
     groupId: string,
     body: string,
+}
+
+export namespace UIUtil {
+    export function getElementById(id: string) {
+        const element = document.getElementById(id);
+        ASSERT(element !== null, 'Attempting to getElement of nonexistent element');
+        return element as HTMLElement;
+    }
 }
 
 export class UIMessageBuilder {
@@ -16,12 +26,12 @@ export class UIMessageBuilder {
         return new UIMessageBuilder();
     }
 
-    public addHeading(groupId: string, message: string, style: OutputStyle) {
-        this.addBold(groupId, [message + ':'], style);
+    public addHeading(groupId: string, message: TLocString, style: OutputStyle) {
+        this.addBold(groupId, [message + ':' as TLocString], style); // FIXME
         return this;
     }
 
-    public addBold(groupId: string, messages: string[], style: OutputStyle) {
+    public addBold(groupId: string, messages: TLocString[], style: OutputStyle) {
         for (const message of messages) {
             const cssColourClass = this._getStatusCSSClass(style);
             this._messages.push({
@@ -35,7 +45,7 @@ export class UIMessageBuilder {
         return this;
     }
 
-    public addItem(groupId: string, messages: string[], style: OutputStyle) {
+    public addItem(groupId: string, messages: TLocString[], style: OutputStyle) {
         for (const message of messages) {
             const cssColourClass = this._getStatusCSSClass(style);
             this._messages.push({
@@ -46,7 +56,7 @@ export class UIMessageBuilder {
         return this;
     }
 
-    public addTask(groupId: string, message: string) {
+    public addTask(groupId: string, message: TLocString) {
         this._messages.push({
             groupId: groupId, body: `
             <div style="display: flex; align-items: center; color: var(--text-standard)">
@@ -79,7 +89,7 @@ export class UIMessageBuilder {
         `;
     }
 
-    public static fromString(groupId: string, string: string, style: OutputStyle): UIMessageBuilder {
+    public static fromString(groupId: string, string: TLocString, style: OutputStyle): UIMessageBuilder {
         const builder = new UIMessageBuilder();
         builder.addItem(groupId, [string], style);
         return builder;

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { RGBA, RGBAColours } from '../colour';
+import { LOC } from '../localise';
 import { checkFractional, checkNaN } from '../math';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { StatusHandler } from '../status';
@@ -283,7 +284,7 @@ export class ObjImporter extends IImporter {
         this._parseOBJ(filePath);
 
         if (this._mtlLibs.length === 0) {
-            StatusHandler.Get.add('warning', 'Could not find associated .mtl file');
+            StatusHandler.Get.add('warning', LOC.t('warning.missing_mtl'));
         }
         for (let i = 0; i < this._mtlLibs.length; ++i) {
             const mtlLib = this._mtlLibs[i];
@@ -347,7 +348,7 @@ export class ObjImporter extends IImporter {
     private _parseMTL() {
         for (const mtlLib of this._mtlLibs) {
             if (!fs.existsSync(mtlLib)) {
-                StatusHandler.Get.add('warning', `Could not find ${mtlLib}`);
+                StatusHandler.Get.add('warning', LOC.t('common.could_not_find', { path: mtlLib }));
                 continue;
             }
             const fileContents = fs.readFileSync(mtlLib, 'utf8');

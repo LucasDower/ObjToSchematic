@@ -108,7 +108,7 @@ export class WorkerController {
             this._worker.postMessage(this._jobPending.payload);
         } else {
             const result = doWork(this._jobPending.payload);
-            if (this._jobPending.callback) {
+            if (this._jobPending.callback && result !== undefined) {
                 this._jobPending.callback(result);
             }
         }

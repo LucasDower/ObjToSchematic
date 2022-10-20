@@ -1,10 +1,11 @@
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
+import { TOptional } from './util';
 import { AppError } from './util/error_util';
 import { WorkerClient } from './worker_client';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
-export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
+export function doWork(message: TToWorkerMessage): TOptional<TFromWorkerMessage> {
     StatusHandler.Get.clear();
 
     if (message.action !== 'RenderNextVoxelMeshChunk' && message.action !== 'RenderNextBlockMeshChunk') {
@@ -14,11 +15,8 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
     try {
         switch (message.action) {
             case 'Init':
-                return {
-                    action: 'Init',
-                    result: WorkerClient.Get.init(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
-                };
+                WorkerClient.Get.init(message.params);
+                return;
             case 'Import':
                 return {
                     action: 'Import',
@@ -79,7 +77,7 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                 };
         }
     } catch (e: any) {
-        return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };
+        return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e };
     }
 }
 

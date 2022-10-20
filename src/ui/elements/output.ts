@@ -1,4 +1,5 @@
 import { ASSERT } from '../../util/error_util';
+import { TLocString } from '../../util/type_util';
 import { UIMessageBuilder } from '../misc';
 
 export type OutputStyle = 'success' | 'warning' | 'error' | 'none';
@@ -33,7 +34,7 @@ export class OutputElement {
         return this._message;
     }
 
-    public setTaskInProgress(taskId: string, taskHeading: string) {
+    public setTaskInProgress(taskId: string, taskHeading: TLocString) {
         this.getMessage()
             .clear(taskId)
             .addTask(taskId, taskHeading);
@@ -41,7 +42,7 @@ export class OutputElement {
         this.updateMessage();
     }
 
-    public setTaskComplete(taskId: string, taskHeading: string, taskItems: string[], style: OutputStyle) {
+    public setTaskComplete(taskId: string, taskHeading: TLocString, taskItems: TLocString[], style: OutputStyle) {
         const builder = this.getMessage().clear(taskId);
 
         if (taskItems.length > 0) {

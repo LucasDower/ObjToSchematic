@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { Atlas } from './atlas';
+import { LOC } from './localise';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
 import { ASSERT } from './util/error_util';
@@ -141,7 +142,9 @@ export class Palette {
         }
 
         if (missingBlocks.length > 0) {
-            StatusHandler.Get.add('warning', `${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
+            StatusHandler.Get.add('warning', LOC.t('warning.palette_blocks_missing_atlas_textures', {
+                count: missingBlocks.length,
+            }));
             LOG_WARN('Blocks missing atlas textures', missingBlocks);
         }
     }

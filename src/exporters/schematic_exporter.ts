@@ -2,6 +2,7 @@ import fs from 'fs';
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
+import { LOC } from '../localise';
 import { StatusHandler, StatusID } from '../status';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
@@ -23,7 +24,6 @@ export class Schematic extends IExporter {
 
         const blocks = blockMesh.getBlocks();
         const unsupportedBlocks = new Set<string>();
-        let numBlocksUnsupported = 0;
         for (const block of blocks) {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
             const index = this._getBufferIndex(indexVector, this._sizeVector);
@@ -35,14 +35,13 @@ export class Schematic extends IExporter {
                 blocksData[index] = 1; // Default to a Stone block
                 metaData[index] = 0;
                 unsupportedBlocks.add(block.blockInfo.name);
-                ++numBlocksUnsupported;
             }
         }
 
         if (unsupportedBlocks.size > 0) {
             StatusHandler.Get.add(
                 'warning',
-                `${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`,
+                LOC.t('warning.schematic_unsupported_blocks', { count: unsupportedBlocks.size }),
                 StatusID.SchematicUnsupportedBlocks,
             );
             LOG_WARN(unsupportedBlocks);

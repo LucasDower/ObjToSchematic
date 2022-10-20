@@ -3,6 +3,7 @@ import path from 'path';
 
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { LOC } from './localise';
 import { StatusHandler } from './status';
 import { Texture, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
@@ -110,13 +111,18 @@ export class Mesh {
         if (this._tris.length >= 100_000) {
             StatusHandler.Get.add(
                 'warning',
-                `The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`,
+                LOC.t('warning.high_triangle_count', { count: this._tris.length }),
             );
         }
 
         StatusHandler.Get.add(
             'info',
-            `${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`,
+            LOC.t('info.vertex_count', { count: this._vertices.length }),
+        );
+
+        StatusHandler.Get.add(
+            'info',
+            LOC.t('info.triangle_count', { count: this._tris.length }),
         );
 
         // Give warning if normals are not defined
@@ -140,7 +146,7 @@ export class Mesh {
         if (giveNormalsWarning) {
             StatusHandler.Get.add(
                 'warning',
-                'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
+                LOC.t('warning.missing_vertex_normals'),
             );
         };
     }
@@ -169,7 +175,7 @@ export class Mesh {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
             StatusHandler.Get.add(
                 'warning',
-                'Some materials were not loaded correctly',
+                LOC.t('warning.incorrect_materials'),
             );
             this._materials[debugName] = {
                 type: MaterialType.solid,
@@ -185,7 +191,7 @@ export class Mesh {
                 if (!fs.existsSync(material.path)) {
                     StatusHandler.Get.add(
                         'warning',
-                        `Could not find ${material.path}`,
+                        LOC.t('common.could_not_find', { path: material.path }),
                     );
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {

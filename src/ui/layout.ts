@@ -2,17 +2,20 @@ import fs from 'fs';
 
 import { AppContext } from '../app_context';
 import { TBlockAssigners } from '../assigners/assigners';
+import { TFallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
 import { TExporters } from '../exporters/exporters';
+import { LOC } from '../localise';
 import { PaletteManager } from '../palette';
 import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
+import { TTextureFiltering, TToggle } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
-import { BaseUIElement } from './elements/base';
+import { BaseUIElement } from './elements/base_element';
 import { ButtonElement } from './elements/button';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
@@ -41,138 +44,190 @@ export class UI {
         'import': {
             label: 'Import',
             elements: {
-                'input': new FileInputElement('Wavefront .obj file', 'obj'),
+                'input': new FileInputElement()
+                    .setFileExtensions(['obj'])
+                    .setLabel(LOC.t('common.obj_file')),
             },
             elementsOrder: ['input'],
-            submitButton: new ButtonElement('Load mesh', () => {
-                this._appContext.do(EAction.Import);
-            }),
+            submitButton: new ButtonElement()
+                .setOnClick(() => {
+                    this._appContext.do(EAction.Import);
+                })
+                .setLabel(LOC.t('common.load_mesh')),
             output: new OutputElement(),
         },
         'voxelise': {
             label: 'Voxelise',
             elements: {
-                'desiredHeight': new SliderElement('Desired height', 3, 380, 0, 80, 1),
-                'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
-                    {
-                        id: 'bvh-ray',
+                'desiredHeight': new SliderElement()
+                    .setMin(3)
+                    .setMax(380)
+                    .setDefaultValue(80)
+                    .setDecimals(0)
+                    .setStep(1)
+                    .setLabel(LOC.t('common.height')),
+                'voxeliser': new ComboBoxElement<TVoxelisers>()
+                    .addItems([{
                         displayText: 'BVH Ray-based',
+                        payload: 'bvh-ray',
                     },
                     {
-                        id: 'ncrb',
                         displayText: 'NCRB',
+                        payload: 'ncrb',
                     },
                     {
-                        id: 'ray-based',
                         displayText: 'Ray-based (legacy)',
-                    },
-                ]),
-                'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
-                    {
-                        id: 'on',
+                        payload: 'ray-based',
+                    }])
+                    .setLabel(LOC.t('common.algorithm')),
+                'ambientOcclusion': new ComboBoxElement<TToggle>()
+                    .addItems([{
                         displayText: 'On (recommended)',
+                        payload: 'on',
                     },
                     {
-                        id: 'off',
                         displayText: 'Off (faster)',
-                    },
-                ]),
-                'multisampleColouring': new ComboBoxElement('Multisampling', [
-                    {
-                        id: 'on',
+                        payload: 'off',
+                    }])
+                    .setLabel(LOC.t('common.ambient_occlusion')),
+                'multisampleColouring': new ComboBoxElement<TToggle>()
+                    .addItems([{
                         displayText: 'On (recommended)',
+                        payload: 'on',
                     },
                     {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
-                'textureFiltering': new ComboBoxElement('Texture filtering', [
-                    {
-                        id: 'linear',
+                        displayText: 'Off (faster',
+                        payload: 'off',
+                    }])
+                    .setLabel(LOC.t('common.multisampling')),
+                'textureFiltering': new ComboBoxElement<TTextureFiltering>()
+                    .addItems([{
                         displayText: 'Linear (recommended)',
+                        payload: 'linear',
                     },
                     {
-                        id: 'nearest',
                         displayText: 'Nearest (faster)',
-                    },
-                ]),
-                'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>('Voxel overlap', [
-                    {
-                        id: 'average',
+                        payload: 'nearest',
+                    }])
+                    .setLabel(LOC.t('common.texture_filtering')),
+                'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>()
+                    .addItems([{
                         displayText: 'Average (recommended)',
+                        payload: 'average',
                         tooltip: 'If multiple voxels are placed in the same location, take the average of their colours',
                     },
                     {
-                        id: 'first',
                         displayText: 'First',
+                        payload: 'first',
                         tooltip: 'If multiple voxels are placed in the same location, use the first voxel\'s colour',
-                    },
-                ]),
+                    }])
+                    .setLabel(LOC.t('common.voxel_overlap_rule')),
             },
-            elementsOrder: ['desiredHeight', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
-            submitButton: new ButtonElement('Voxelise mesh', () => {
-                this._appContext.do(EAction.Voxelise);
-            }),
+            elementsOrder: [
+                'desiredHeight',
+                'voxeliser',
+                'ambientOcclusion',
+                'multisampleColouring',
+                'textureFiltering',
+                'voxelOverlapRule',
+            ],
+            submitButton: new ButtonElement()
+                .setOnClick(() => {
+                    this._appContext.do(EAction.Voxelise);
+                })
+                .setLabel(LOC.t('common.voxelise_mesh')),
             output: new OutputElement(),
         },
         'assign': {
             label: 'Assign',
             elements: {
-                'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
-                'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
-                    { id: 'ordered-dithering', displayText: 'Ordered' },
-                    { id: 'random-dithering', displayText: 'Random' },
-                    { id: 'basic', displayText: 'Off' },
-                ]),
-                'fallable': new ComboBoxElement('Fallable blocks', [
+                'textureAtlas': new ComboBoxElement<string>()
+                    .addItems(this._getTextureAtlases())
+                    .setLabel(LOC.t('common.texture_atlas')),
+                'blockPalette': new ComboBoxElement<string>()
+                    .addItems(this._getBlockPalettes())
+                    .setLabel(LOC.t('common.block_palette')),
+                'dithering': new ComboBoxElement<TBlockAssigners>()
+                    .addItems([{
+                        displayText: 'Ordered',
+                        payload: 'ordered-dithering',
+                    },
                     {
-                        id: 'replace-falling',
+                        displayText: 'Random',
+                        payload: 'random-dithering',
+                    },
+                    {
+                        displayText: 'Off',
+                        payload: 'basic',
+                    }])
+                    .setLabel(LOC.t('common.dithering')),
+                'fallable': new ComboBoxElement<TFallableBehaviour>()
+                    .addItems([{
                         displayText: 'Replace falling with solid',
+                        payload: 'replace-falling',
                         tooltip: 'Replace all blocks that can fall with solid blocks',
                     },
                     {
-                        id: 'replace-fallable',
                         displayText: 'Replace fallable with solid',
+                        payload: 'replace-fallable',
                         tooltip: 'Replace all blocks that will fall with solid blocks',
                     },
-                    /*
                     {
-                        id: 'place-string',
-                        displayText: 'Place string under',
-                        tooltip: 'Place string blocks under all blocks that would fall otherwise',
-                    },
-                    */
-                    {
-                        id: 'do-nothing',
                         displayText: 'Do nothing',
+                        payload: 'do-nothing',
                         tooltip: 'Let the block fall',
-                    },
-                ]),
-                'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
+                    }])
+                    .setLabel(LOC.t('common.fallable_blocks')),
+                'colourAccuracy': new SliderElement()
+                    .setMin(1)
+                    .setMax(8)
+                    .setDefaultValue(8)
+                    .setDecimals(1)
+                    .setStep(0.1)
+                    .setLabel(LOC.t('common.colour_accuracy')),
             },
             elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
-            submitButton: new ButtonElement('Assign blocks', () => {
-                this._appContext.do(EAction.Assign);
-            }),
+            submitButton: new ButtonElement()
+                .setOnClick(() => {
+                    this._appContext.do(EAction.Assign);
+                })
+                .setLabel(LOC.t('common.assign_blocks')),
             output: new OutputElement(),
         },
         'export': {
             label: 'Export',
             elements: {
-                'export': new ComboBoxElement<TExporters>('File format', [
-                    { id: 'litematic', displayText: 'Litematic (.litematic)' },
-                    { id: 'schematic', displayText: 'Schematic (.schematic)' },
-                    { id: 'obj', displayText: 'Wavefront OBJ (.obj)' },
-                    { id: 'schem', displayText: 'Sponge Schematic (.schem)' },
-                    { id: 'nbt', displayText: 'Structure blocks (.nbt)' },
-                ]),
+                'export': new ComboBoxElement<TExporters>()
+                    .addItems([
+                        {
+                            displayText: 'Litematic (.litematic)',
+                            payload: 'litematic',
+                        },
+                        {
+                            displayText: 'Schematic (.schematic)',
+                            payload: 'schematic',
+                        },
+                        {
+                            displayText: 'Wavefront OBJ (.obj)',
+                            payload: 'obj',
+                        },
+                        {
+                            displayText: 'Sponge Schematic (.schem)',
+                            payload: 'schem',
+                        },
+                        {
+                            displayText: 'Structure blocks (.nbt)',
+                            payload: 'nbt',
+                        },
+                    ])
+                    .setLabel(LOC.t('common.exporter_format')),
             },
             elementsOrder: ['export'],
-            submitButton: new ButtonElement('Export structure', () => {
-                this._appContext.do(EAction.Export);
-            }),
+            submitButton: new ButtonElement()
+                .setLabel(LOC.t('common.export_structure'))
+                .setOnClick(() => {
+                    this._appContext.do(EAction.Export);
+                }),
             output: new OutputElement(),
         },
     };
@@ -302,9 +357,6 @@ export class UI {
 
     constructor(appContext: AppContext) {
         this._appContext = appContext;
-
-        this._ui.assign.elements.textureAtlas.addDescription('Textures to use and colour-match with');
-        this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
     }
 
     public tick() {
@@ -381,15 +433,6 @@ export class UI {
         toolbarHTML += '</div>';
 
         document.getElementById('toolbar')!.innerHTML = toolbarHTML;
-    }
-
-    public cacheValues(action: EAction) {
-        const group = this._getEActionGroup(action);
-        for (const elementName of group.elementsOrder) {
-            LOG(`[UI]: Caching ${elementName}`);
-            const element = group.elements[elementName];
-            element.cacheValue();
-        }
     }
 
     private _buildGroup(group: Group) {
@@ -562,7 +605,10 @@ export class UI {
                 const paletteID = file.split('.')[0];
                 let paletteName = paletteID.replace('-', ' ').toLowerCase();
                 paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                textureAtlases.push({ id: paletteID, displayText: paletteName });
+                textureAtlases.push({
+                    payload: paletteID,
+                    displayText: paletteName,
+                });
             }
         });
 
@@ -575,7 +621,7 @@ export class UI {
         const palettes = PaletteManager.getPalettesInfo();
         for (const palette of palettes) {
             blockPalettes.push({
-                id: palette.paletteID,
+                payload: palette.paletteID,
                 displayText: palette.paletteDisplayName,
             });
         }

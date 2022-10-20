@@ -1,18 +1,17 @@
+/*
 import { ASSERT } from '../../util/error_util';
 import { LOG } from '../../util/log_util';
 import { Vector3 } from '../../vector';
-import { LabelledElement } from './labelled_element';
+import { ConfigElement } from './config_element';
 
-/* eslint-disable */
 enum EAxis {
     None = 'none',
     X = 'x',
     Y = 'y',
     Z = 'z',
 };
-/* eslint-enable */
 
-export class VectorSpinboxElement extends LabelledElement<Vector3> {
+export class VectorSpinboxElement extends ConfigElement<Vector3> {
     private _mouseover: EAxis;
     private _dragging: EAxis;
     private _lastClientX: number;
@@ -55,7 +54,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
     private _registerAxis(axis: EAxis) {
         ASSERT(axis !== EAxis.None);
-        
+
         const elementXK = document.getElementById(this._id + '-k' + axis) as HTMLDivElement;
         const elementXV = document.getElementById(this._id + '-v' + axis) as HTMLDivElement;
         ASSERT(elementXK !== null && elementXV !== null);
@@ -198,3 +197,4 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
         }
     }
 }
+*/

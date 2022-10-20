@@ -6,6 +6,7 @@ export enum EAppEvent {
     onTaskStart,
     onTaskProgress,
     onTaskEnd,
+    onLocaliserReady
 }
 /* eslint-enable */
 

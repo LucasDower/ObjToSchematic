@@ -1,12 +1,13 @@
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
+import { TLocString } from '../../util/type_util';
 
 export class LabelElement {
     private _id: string;
-    private _text: string;
-    private _description?: string;
+    private _text: TLocString;
+    private _description?: TLocString;
 
-    constructor(text: string, description?: string) {
+    constructor(text: TLocString, description?: TLocString) {
         this._id = getRandomID();
         this._text = text;
         this._description = description;

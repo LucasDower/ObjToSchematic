@@ -1,47 +1,57 @@
 import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { ConfigElement } from './config_element';
 
 export type ComboBoxItem<T> = {
-    id: T;
-    displayText: string;
+    payload: T;
+    displayText: string; // TODO: Should be TLocString
     tooltip?: string;
 }
 
-export class ComboBoxElement<T> extends LabelledElement<T> {
+export class ComboBoxElement<T> extends ConfigElement<T, HTMLSelectElement> {
     private _items: ComboBoxItem<T>[];
 
-    public constructor(id: string, items: ComboBoxItem<T>[]) {
-        super(id);
-        this._items = items;
+    public constructor() {
+        super();
+        this._items = [];
+    }
+
+    public addItems(items: ComboBoxItem<T>[]) {
+        items.forEach((item) => {
+            this.addItem(item);
+        });
+        return this;
+    }
+
+    public addItem(item: ComboBoxItem<T>) {
+        this._items.push(item);
+        this._setValue(this._items[0].payload);
+        return this;
     }
 
     public generateInnerHTML() {
+        ASSERT(this._items.length > 0);
+
         let itemsHTML = '';
         for (const item of this._items) {
-            itemsHTML += `<option value="${item.id}" title="${item.tooltip || ''}">${item.displayText}</option>`;
+            itemsHTML += `<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`;
         }
 
         return `
-            <select name="${this._id}" id="${this._id}">
+            <select name="${this._getId()}" id="${this._getId()}">
                 ${itemsHTML}
             </select>
         `;
     }
 
     public registerEvents(): void {
-    }
-
-    protected getValue() {
-        const element = document.getElementById(this._id) as HTMLSelectElement;
-        ASSERT(element !== null);
-        return this._items[element.selectedIndex].id;
+        this._getElement().addEventListener('onchange', (e: Event) => {
+            const selectedValue = this._items[this._getElement().selectedIndex].payload;
+            this._setValue(selectedValue);
+        });
     }
 
     protected _onEnabledChanged() {
         super._onEnabledChanged();
-
-        const element = document.getElementById(this._id) as HTMLSelectElement;
-        ASSERT(element !== null);
-        element.disabled = !this._isEnabled;
+        this._getElement().disabled = !this._getIsEnabled();
     }
 }

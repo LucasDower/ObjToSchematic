@@ -1,43 +1,46 @@
 import { remote } from 'electron';
 import * as path from 'path';
 
-import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { ConfigElement } from './config_element';
 
-export class FileInputElement extends LabelledElement<string> {
-    private _fileExtension: string;
+export class FileInputElement extends ConfigElement<string, HTMLDivElement> {
+    private _fileExtensions: string[];
     private _loadedFilePath: string;
     private _hovering: boolean;
 
-    public constructor(label: string, fileExtension: string) {
-        super(label);
-        this._fileExtension = fileExtension;
+    public constructor() {
+        super('');
+        this._fileExtensions = [];
         this._loadedFilePath = '';
         this._hovering = false;
     }
 
+    public setFileExtensions(extensions: string[]) {
+        this._fileExtensions = extensions;
+        return this;
+    }
+
     public generateInnerHTML() {
         return `
-            <div class="input-text" id="${this._id}">
+            <div class="input-text" id="${this._getId()}">
                 ${this._loadedFilePath}
             </div>
         `;
     }
 
     public registerEvents(): void {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        element.onmouseenter = () => {
+        this._getElement().addEventListener('mouseenter', () => {
             this._hovering = true;
-        };
+            this._updateStyle();
+        });
 
-        element.onmouseleave = () => {
+        this._getElement().addEventListener('mouseleave', () => {
             this._hovering = false;
-        };
+            this._updateStyle();
+        });
 
-        element.onclick = () => {
-            if (!this._isEnabled) {
+        this._getElement().addEventListener('click', () => {
+            if (!this._getIsEnabled()) {
                 return;
             }
 
@@ -45,43 +48,44 @@ export class FileInputElement extends LabelledElement<string> {
                 title: 'Load file',
                 buttonLabel: 'Load',
                 filters: [{
-                    name: 'Waveform obj file',
-                    extensions: [`${this._fileExtension}`],
+                    name: 'Model file',
+                    extensions: this._fileExtensions,
                 }],
             });
             if (files && files.length === 1) {
                 const filePath = files[0];
                 this._loadedFilePath = filePath;
-                this._value = filePath;
+                this._setValue(filePath);
             }
             const parsedPath = path.parse(this._loadedFilePath);
-            element.innerHTML = parsedPath.name + parsedPath.ext;
-        };
+            this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
+        });
 
-        document.onmousemove = () => {
-            element.classList.remove('input-text-disabled');
-            element.classList.remove('input-text-hover');
+        this._getElement().addEventListener('mousemove', () => {
+            this._updateStyle();
+        });
+    }
 
-            if (this._isEnabled) {
-                if (this._hovering) {
-                    element.classList.add('input-text-hover');
-                }
-            } else {
-                element.classList.add('input-text-disabled');
+    private _updateStyle() {
+        this._getElement().classList.remove('input-text-disabled');
+        this._getElement().classList.remove('input-text-hover');
+
+        if (this._getIsEnabled()) {
+            if (this._hovering) {
+                this._getElement().classList.add('input-text-hover');
             }
-        };
+        } else {
+            this._getElement().classList.add('input-text-disabled');
+        }
     }
 
     protected _onEnabledChanged() {
         super._onEnabledChanged();
 
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        if (this._isEnabled) {
-            element.classList.remove('input-text-disabled');
+        if (this._getIsEnabled()) {
+            this._getElement().classList.remove('input-text-disabled');
         } else {
-            element.classList.add('input-text-disabled');
+            this._getElement().classList.add('input-text-disabled');
         }
     }
 }

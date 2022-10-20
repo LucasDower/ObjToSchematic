@@ -1,4 +1,5 @@
 import { RGBA } from '../colour';
+import { LOC } from '../localise';
 import { Mesh } from '../mesh';
 import { StatusHandler } from '../status';
 import { TextureFiltering } from '../texture';
@@ -12,10 +13,16 @@ export abstract class IVoxeliser {
     public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = this._voxelise(mesh, voxeliseParams);
 
-        StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
+        StatusHandler.Get.add('info', LOC.t('info.voxel_count', {
+            count: voxelMesh.getVoxelCount(),
+        }));
 
         const dim = voxelMesh.getBounds().getDimensions().add(1);
-        StatusHandler.Get.add('info', `Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
+        StatusHandler.Get.add('info', LOC.t('info.voxel_dimensions', {
+            x: dim.x,
+            y: dim.y,
+            z: dim.z,
+        }));
 
         return voxelMesh;
     }
@@ -36,11 +43,11 @@ export abstract class IVoxeliser {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
-        
+
         if (isNaN(uv.u) || isNaN(uv.v)) {
             return undefined;
         }
-        
+
         return mesh.sampleMaterial(materialName, uv, filtering);
     }
 }

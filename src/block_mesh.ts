@@ -5,6 +5,7 @@ import { Atlas } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { LOC } from './localise';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
@@ -21,14 +22,14 @@ interface Block {
     blockInfo: BlockInfo;
 }
 
-export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
+export type TFallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
     textureAtlas: Atlas,
     blockPalette: Palette,
     blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
-    fallable: FallableBehaviour,
+    fallable: TFallableBehaviour,
 }
 
 export class BlockMesh {
@@ -76,7 +77,7 @@ export class BlockMesh {
             ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
             const voxel = voxels[voxelIndex];
-            
+
             let block = blockAssigner.assignBlock(
                 atlasPalette,
                 voxel.colour,
@@ -119,7 +120,8 @@ export class BlockMesh {
         ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
-            StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
+            StatusHandler.Get.add('warning', LOC.t('warning.falling_blocks', { count: countFalling }));
+            //StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
         }
     }
 

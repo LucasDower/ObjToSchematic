@@ -1,12 +1,13 @@
 import { remote } from 'electron';
 import path from 'path';
 
-import { FallableBehaviour } from './block_mesh';
+import { TFallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
+import { LOC, Localiser } from './localise';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
@@ -20,11 +21,18 @@ import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
-    private _ui: UI;
+    private _clientReady: boolean;
+    private _workerReady: boolean;
+    private _hasInit: boolean;
+    private _ui!: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
 
     public constructor() {
+        this._clientReady = false;
+        this._workerReady = false;
+        this._hasInit = false;
+
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
@@ -32,23 +40,43 @@ export class AppContext {
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
+        Localiser.Get.init();
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
         }
 
-        this._ui = new UI(this);
-        this._ui.build();
-        this._ui.registerEvents();
-        this._ui.disable(EAction.Voxelise);
-
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
-        this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
+        this._workerController.addJob({
+            id: 'init',
+            payload: { action: 'Init', params: {} },
+            callback: (result: TFromWorkerMessage) => {
+                ASSERT(result.action === 'Init');
+                this._workerReady = true;
+                this._init();
+            },
+        });
 
         Renderer.Get.toggleIsAxesEnabled();
         ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
+
+        EventManager.Get.add(EAppEvent.onLocaliserReady, () => {
+            this._clientReady = true;
+            this._init();
+        });
+    }
+
+    private _init() {
+        if (this._hasInit || !this._clientReady || !this._workerReady) {
+            return;
+        }
+
+        this._ui = new UI(this);
+        this._ui.build();
+        this._ui.registerEvents();
+        this._ui.disable(EAction.Voxelise);
 
         EventManager.Get.add(EAppEvent.onTaskStart, (...data) => {
             if (this._lastAction) {
@@ -72,10 +100,11 @@ export class AppContext {
                     .setProgress(0.0);
             }
         });
+
+        this._hasInit = true;
     }
 
     public do(action: EAction) {
-        this._ui.cacheValues(action);
         this._ui.disable(action);
         this._ui.disableAll();
 
@@ -95,7 +124,7 @@ export class AppContext {
                     uiOutput.setTaskComplete(
                         'action',
                         StatusHandler.Get.getDefaultFailureMessage(action),
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        [payload.action === 'KnownError' ? payload.error.locMsg : StatusHandler.Get.getGenericFailureMessage()],
                         'error',
                     );
                     LOG_ERROR(payload.error);
@@ -142,7 +171,11 @@ export class AppContext {
         const hasWarnings = warningStatuses.length > 0;
 
         const builder = new UIMessageBuilder();
-        builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
+        if (hasInfos) {
+            builder.addHeading('action', StatusHandler.Get.getDefaultSuccessMessage(action), 'success');
+        } else {
+            builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action)], 'success');
+        }
 
         builder.addItem('action', infoStatuses, 'success');
         builder.addItem('action', warningStatuses, 'warning');
@@ -168,12 +201,12 @@ export class AppContext {
         const uiElements = this._ui.layout.import.elements;
 
         this._ui.getActionOutput(EAction.Import)
-            .setTaskInProgress('action', '[Importer]: Loading...');
+            .setTaskInProgress('action', StatusHandler.Get.getDefaultInProgressMessage(EAction.Import));
 
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getCachedValue(),
+                filepath: uiElements.input.getValue(),
             },
         };
 
@@ -184,11 +217,11 @@ export class AppContext {
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
-                outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+                outputElement.setTaskInProgress('render', StatusHandler.Get.getDefaultInProgressMessage('Renderer'));
                 this._workerController.addJob(this._renderMesh());
             } else {
-                const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
-                outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
+                const message = LOC.t('warning.triangle_threshold_exceeded', { threshold: AppConfig.Get.RENDER_TRIANGLE_THRESHOLD });
+                outputElement.setTaskComplete('render', LOC.t('common.renderer_stopped'), [message], 'warning');
             }
         };
 
@@ -211,8 +244,8 @@ export class AppContext {
                 case 'UnknownError': {
                     this._ui.getActionOutput(EAction.Import).setTaskComplete(
                         'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        StatusHandler.Get.getDefaultInProgressMessage('Renderer'),
+                        [payload.action === 'KnownError' ? payload.error.locMsg : StatusHandler.Get.getGenericFailureMessage()],
                         'error',
                     );
                     LOG_ERROR(payload.error);
@@ -224,7 +257,7 @@ export class AppContext {
 
                     this._ui.getActionOutput(EAction.Import).setTaskComplete(
                         'render',
-                        '[Renderer]: Succeeded',
+                        StatusHandler.Get.getDefaultSuccessMessage('Renderer'),
                         [],
                         'success',
                     );
@@ -239,17 +272,17 @@ export class AppContext {
         const uiElements = this._ui.layout.voxelise.elements;
 
         this._ui.getActionOutput(EAction.Voxelise)
-            .setTaskInProgress('action', '[Voxel Mesh]: Loading...');
+            .setTaskInProgress('action', StatusHandler.Get.getDefaultInProgressMessage(EAction.Voxelise));
 
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
-                voxeliser: uiElements.voxeliser.getCachedValue(),
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
-                textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-                voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+                voxeliser: uiElements.voxeliser.getValue(),
+                desiredHeight: uiElements.desiredHeight.getValue(),
+                useMultisampleColouring: uiElements.multisampleColouring.getValue() === 'on',
+                textureFiltering: uiElements.textureFiltering.getValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue() === 'on',
+                voxelOverlapRule: uiElements.voxelOverlapRule.getValue(),
             },
         };
 
@@ -259,7 +292,7 @@ export class AppContext {
             ASSERT(payload.action === 'Voxelise');
             const outputElement = this._ui.getActionOutput(EAction.Voxelise);
 
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+            outputElement.setTaskInProgress('render', StatusHandler.Get.getDefaultInProgressMessage('Renderer'));
             this._workerController.addJob(this._renderVoxelMesh());
         };
 
@@ -272,8 +305,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue() === 'on',
+                desiredHeight: uiElements.desiredHeight.getValue(),
             },
         };
 
@@ -286,8 +319,8 @@ export class AppContext {
                 case 'UnknownError': {
                     this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                         'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        StatusHandler.Get.getDefaultFailureMessage('Renderer'),
+                        [payload.action === 'KnownError' ? payload.error.locMsg : StatusHandler.Get.getGenericFailureMessage()],
                         'error',
                     );
                     LOG_ERROR(payload.error);
@@ -304,7 +337,7 @@ export class AppContext {
                     } else {
                         this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
                             'render',
-                            '[Renderer]: Succeeded',
+                            StatusHandler.Get.getDefaultSuccessMessage('Renderer'),
                             [],
                             'success',
                         );
@@ -321,17 +354,17 @@ export class AppContext {
         const uiElements = this._ui.layout.assign.elements;
 
         this._ui.getActionOutput(EAction.Assign)
-            .setTaskInProgress('action', '[Block Mesh]: Loading...');
+            .setTaskInProgress('action', StatusHandler.Get.getDefaultInProgressMessage(EAction.Assign));
 
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
-                blockPalette: uiElements.blockPalette.getCachedValue(),
-                blockAssigner: uiElements.dithering.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
+                blockPalette: uiElements.blockPalette.getValue(),
+                blockAssigner: uiElements.dithering.getValue(),
                 colourSpace: ColourSpace.RGB,
-                fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
-                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                fallable: uiElements.fallable.getValue() as TFallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getValue()),
             },
         };
 
@@ -342,7 +375,7 @@ export class AppContext {
 
             const outputElement = this._ui.getActionOutput(EAction.Assign);
 
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
+            outputElement.setTaskInProgress('render', StatusHandler.Get.getDefaultInProgressMessage('Renderer'));
             this._workerController.addJob(this._renderBlockMesh());
         };
 
@@ -355,7 +388,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextBlockMeshChunk',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
             },
         };
 
@@ -368,8 +401,8 @@ export class AppContext {
                 case 'UnknownError': {
                     this._ui.getActionOutput(EAction.Assign).setTaskComplete(
                         'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
+                        StatusHandler.Get.getDefaultFailureMessage('Renderer'),
+                        [payload.action === 'KnownError' ? payload.error.locMsg : StatusHandler.Get.getGenericFailureMessage()],
                         'error',
                     );
                     LOG_ERROR(payload.error);
@@ -386,7 +419,7 @@ export class AppContext {
                     } else {
                         this._ui.getActionOutput(EAction.Assign).setTaskComplete(
                             'render',
-                            '[Renderer]: Succeeded',
+                            StatusHandler.Get.getDefaultSuccessMessage('Renderer'),
                             [],
                             'success',
                         );
@@ -400,7 +433,7 @@ export class AppContext {
     }
 
     private _export(): (TWorkerJob | undefined) {
-        const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
+        const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
         const filepath = remote.dialog.showSaveDialogSync({
@@ -414,7 +447,7 @@ export class AppContext {
         }
 
         this._ui.getActionOutput(EAction.Export)
-            .setTaskInProgress('action', '[Exporter]: Saving...');
+            .setTaskInProgress('action', StatusHandler.Get.getDefaultInProgressMessage(EAction.Export));
 
         const payload: TToWorkerMessage = {
             action: 'Export',
@@ -434,8 +467,10 @@ export class AppContext {
     }
 
     public draw() {
-        Renderer.Get.update();
-        this._ui.tick();
-        Renderer.Get.draw();
+        if (this._hasInit) {
+            Renderer.Get.update();
+            this._ui.tick();
+            Renderer.Get.draw();
+        }
     }
 }

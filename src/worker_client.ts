@@ -5,8 +5,10 @@ import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
 import { ObjImporter } from './importers/obj_importer';
+import { Localiser } from './localise';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
+import { StatusHandler } from './status';
 import { ASSERT } from './util/error_util';
 import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
@@ -23,6 +25,8 @@ export class WorkerClient {
     private constructor() {
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('worker');
+
+        Localiser.Get.init();
     }
 
     private _loadedMesh?: Mesh;
@@ -32,7 +36,17 @@ export class WorkerClient {
     /**
      * This function should only be called if the client is using the worker.
      */
-    public init(params: InitParams.Input): InitParams.Output {
+    public init(params: InitParams.Input): void {
+        EventManager.Get.add(EAppEvent.onLocaliserReady, () => {
+            const message: TFromWorkerMessage = {
+                action: 'Init',
+                result: {},
+                statusMessages: StatusHandler.Get.getAllStatusMessages(),
+            };
+            StatusHandler.Get.clear();
+            postMessage(message);
+        });
+
         EventManager.Get.add(EAppEvent.onTaskStart, (e: any) => {
             const message: TFromWorkerMessage = {
                 action: 'Progress',
@@ -66,8 +80,6 @@ export class WorkerClient {
             };
             postMessage(message);
         });
-
-        return {};
     }
 
     public import(params: ImportParams.Input): ImportParams.Output {
@@ -90,19 +102,19 @@ export class WorkerClient {
         };
     }
 
-    
+
     public voxelise(params: VoxeliseParams.Input): VoxeliseParams.Output {
         ASSERT(this._loadedMesh !== undefined);
-        
+
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
-        
+
         this._voxelMeshChunkIndex = 0;
-        
+
         return {
         };
     }
-    
+
     private _voxelMeshChunkIndex = 0;
     private _voxelMeshProgressHandle?: TTaskHandle;
     public renderChunkedVoxelMesh(params: RenderNextVoxelMeshChunkParams.Input): RenderNextVoxelMeshChunkParams.Output {

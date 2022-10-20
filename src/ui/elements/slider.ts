@@ -1,35 +1,80 @@
+import { ASSERT } from '../../../tools/misc';
 import { clamp, mapRange, wayThrough } from '../../math';
-import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { UIUtil } from '../misc';
+import { ConfigElement } from './config_element';
 
-export class SliderElement extends LabelledElement<number> {
+export type TSliderParams = {
+    min: number,
+    max: number,
+    value: number,
+    decimals: number,
+    step: number,
+}
+
+export class SliderElement extends ConfigElement<number, HTMLDivElement> {
     private _min: number;
     private _max: number;
     private _decimals: number;
-    private _dragging: boolean;
     private _step: number;
+    private _dragging: boolean;
     private _hovering: boolean;
+    private _internalValue?: number;
 
-    public constructor(label: string, min: number, max: number, decimals: number, value: number, step: number) {
-        super(label);
-        this._min = min;
-        this._max = max;
-        this._decimals = decimals;
-        this._value = value;
-        this._step = step;
+    public constructor() {
+        super();
+        this._min = 0;
+        this._max = 1;
+        this._decimals = 1;
+        this._step = 0.1;
         this._dragging = false;
         this._hovering = false;
     }
 
+    public setMin(min: number) {
+        this._min = min;
+        return this;
+    }
+
+    public setMax(max: number) {
+        this._max = max;
+        return this;
+    }
+
+    public setDefaultValue(value: number) {
+        this._internalValue = value;
+        this._setValue(value);
+        return this;
+    }
+
+    public setDecimals(decimals: number) {
+        this._decimals = decimals;
+        return this;
+    }
+
+    public setStep(step: number) {
+        this._step = step;
+        return this;
+    }
+
+    private _getSliderValueId() {
+        return this._getId() + '-value';
+    }
+
+    private _getSliderBarId() {
+        return this._getId() + '-bar';
+    }
+
     public generateInnerHTML() {
-        const norm = (this.getValue() - this._min) / (this._max - this._min);
+        ASSERT(this._internalValue !== undefined, 'Slider internal value not seet');
+        const norm = (this._internalValue! - this._min) / (this._max - this._min);
+
         return `
             <div style="display: flex; flex-direction: row;">
-                <div class="slider-value" id="${this._id + '-value'}">
-                    ${this._value?.toFixed(this._decimals)}
+                <div class="slider-value" id="${this._getSliderValueId()}">
+                    ${this.getValue()}
                 </div>
-                <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
-                    <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
+                <div class="new-slider" id="${this._getId()}" style="flex-grow: 1;">
+                    <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
                     </div>
                 </div>
             </div>
@@ -37,13 +82,12 @@ export class SliderElement extends LabelledElement<number> {
     }
 
     public registerEvents() {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        ASSERT(element !== null);
+        const element = this._getElement();
+        const elementBar = UIUtil.getElementById(this._getSliderBarId());
 
         element.onmouseenter = () => {
             this._hovering = true;
-            if (this._isEnabled) {
+            if (this._getIsEnabled()) {
                 element.classList.add('new-slider-hover');
                 elementBar.classList.add('new-slider-bar-hover');
             }
@@ -79,7 +123,7 @@ export class SliderElement extends LabelledElement<number> {
         });
 
         element.addEventListener('wheel', (e: WheelEvent) => {
-            if (!this._dragging && this._isEnabled) {
+            if (!this._dragging && this._getIsEnabled()) {
                 e.preventDefault();
                 this._onScrollSlider(e);
             }
@@ -87,58 +131,50 @@ export class SliderElement extends LabelledElement<number> {
     }
 
     private _onScrollSlider(e: WheelEvent) {
-        if (!this._isEnabled) {
+        if (!this._getIsEnabled()) {
             return;
         }
-        ASSERT(this._value);
 
-        this._value -= (e.deltaY / 150) * this._step;
-        this._value = clamp(this._value, this._min, this._max);
+        ASSERT(this._internalValue !== undefined, 'Slider internal value not set');
+        this._internalValue! -= (e.deltaY / 150) * this._step;
+        this._internalValue = clamp(this._internalValue!, this._min, this._max);
 
-        this._onValueUpdated();
+        this._onInternalValueUpdated();
     }
 
     private _onDragSlider(e: MouseEvent) {
-        if (!this._isEnabled) {
+        if (!this._getIsEnabled()) {
             return;
         }
 
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        const box = element.getBoundingClientRect();
+        const box = this._getElement().getBoundingClientRect();
         const left = box.x;
         const right = box.x + box.width;
-        
-        this._value = mapRange(e.clientX, left, right, this._min, this._max);
-        this._value = clamp(this._value, this._min, this._max);
 
-        this._onValueUpdated();
+        this._internalValue = mapRange(e.clientX, left, right, this._min, this._max);
+        this._internalValue = clamp(this._internalValue, this._min, this._max);
+
+        this._onInternalValueUpdated();
     }
 
-    private _onValueUpdated() {
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        ASSERT(elementBar !== null && elementValue !== null);
+    private _onInternalValueUpdated() {
+        const displayString = this._internalValue!.toFixed(this._decimals);
 
-        const norm = wayThrough(this.getValue(), this._min, this._max);
-        elementBar.style.width = `${norm * 100}%`;
-        elementValue.innerHTML = this.getValue().toFixed(this._decimals);
-    }
+        const norm = wayThrough(this._internalValue!, this._min, this._max);
+        UIUtil.getElementById(this._getSliderBarId()).style.width = `${norm * 100}%`;
+        UIUtil.getElementById(this._getSliderValueId()).innerHTML = this.getValue().toFixed(this._decimals);
 
-    public getDisplayValue() {
-        return parseFloat(this.getValue().toFixed(this._decimals));
+        this._setValue(parseFloat(displayString));
     }
 
     protected _onEnabledChanged() {
         super._onEnabledChanged();
 
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        ASSERT(element !== null && elementBar !== null && elementValue !== null);
+        const element = this._getElement();
+        const elementBar = UIUtil.getElementById(this._getSliderBarId());
+        const elementValue = UIUtil.getElementById(this._getSliderValueId());
 
-        if (this._isEnabled) {
+        if (this._getIsEnabled()) {
             element.classList.remove('new-slider-disabled');
             elementBar.classList.remove('new-slider-bar-disabled');
             elementValue.classList.remove('slider-value-disabled');
