@@ -45,6 +45,7 @@ export type TBlockMeshBuffer = {
     texcoord: { numComponents: 2, data: Float32Array },
     normal: { numComponents: 3, data: Float32Array },
     blockTexcoord: { numComponents: 2, data: Float32Array },
+    lighting: { numComponents: 1, data: Float32Array },
     indices: { numComponents: 3, data: Uint32Array },
 };
 
@@ -70,7 +71,7 @@ export class ChunkedBufferGenerator {
 
         for (let i = 0; i < numBufferVoxels; ++i) {
             const voxelIndex = i + voxelsStartIndex;
-            
+
             const voxel = voxels[voxelIndex];
             const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
             const voxelPositionArray = voxel.position.toArray();
@@ -114,6 +115,24 @@ export class ChunkedBufferGenerator {
     public static fromBlockMesh(blockMesh: BlockMesh, chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
         const blocks = blockMesh.getBlocks();
 
+        const lightingRamp = new Map<number, number>();
+        lightingRamp.set(15, 40 / 40);
+        lightingRamp.set(14, 40 / 40);
+        lightingRamp.set(13, 39 / 40);
+        lightingRamp.set(12, 37 / 40);
+        lightingRamp.set(11, 35 / 40);
+        lightingRamp.set(10, 32 / 40);
+        lightingRamp.set(9, 29 / 40);
+        lightingRamp.set(8, 26 / 40);
+        lightingRamp.set(7, 23 / 40);
+        lightingRamp.set(6, 20 / 40);
+        lightingRamp.set(5, 17 / 40);
+        lightingRamp.set(4, 14 / 40);
+        lightingRamp.set(3, 12 / 40);
+        lightingRamp.set(2, 9 / 40);
+        lightingRamp.set(1, 7 / 40);
+        lightingRamp.set(0, 5 / 40);
+
         const numTotalBlocks = blocks.length;
         const blocksStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
         const blocksEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalBlocks);
@@ -126,16 +145,22 @@ export class ChunkedBufferGenerator {
 
         const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
         let insertIndex = 0;
+        let lightingInsertIndex = 0;
 
         for (let i = 0; i < numBufferBlocks; ++i) {
             const blockIndex = i + blocksStartIndex;
+            const blockLighting = blockMesh.getBlockLighting(blocks[blockIndex].voxel.position);
 
             for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
                 const faceName = faceOrder[f];
+                const faceLighting = lightingRamp.get(blockLighting[f]) ?? 1.0;
+
                 const texcoord = blocks[blockIndex].blockInfo.faces[faceName].texcoord;
                 for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
                     newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
                     newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
+
+                    newBuffer.lighting.data[lightingInsertIndex++] = faceLighting;
                 }
             }
         }
@@ -393,6 +418,10 @@ export class BufferGenerator {
             blockTexcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,
                 data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+            lighting: {
+                numComponents: AppConstants.ComponentSize.LIGHTING,
+                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.LIGHTING),
             },
         };
     }

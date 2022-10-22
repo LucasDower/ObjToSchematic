@@ -233,8 +233,15 @@ export class UI {
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
+                    'night-vision': new ToolbarItemElement({ icon: 'bulb' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsNightVisionEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isNightVisionEnabled();
+                        }),
                 },
-                elementsOrder: ['grid', 'axes'],
+                elementsOrder: ['grid', 'axes', 'night-vision'],
             },
 
         },

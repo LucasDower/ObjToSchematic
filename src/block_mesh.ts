@@ -37,10 +37,12 @@ export class BlockMesh {
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
     private _atlas: Atlas;
+    private _lighting: Map<string, number>;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
         blockMesh._assignBlocks(blockMeshParams);
+        blockMesh._calculateLighting();
         return blockMesh;
     }
 
@@ -49,6 +51,7 @@ export class BlockMesh {
         this._blocks = [];
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
+        this._lighting = new Map<string, number>();
         //this._recreateBuffer = true;
 
         const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
@@ -76,7 +79,7 @@ export class BlockMesh {
             ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
             const voxel = voxels[voxelIndex];
-            
+
             let block = blockAssigner.assignBlock(
                 atlasPalette,
                 voxel.colour,
@@ -120,6 +123,83 @@ export class BlockMesh {
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
             StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
+        }
+    }
+
+    // Face order: ['north', 'south', 'up', 'down', 'east', 'west']
+    public getBlockLighting(position: Vector3) {
+        /*
+        return {
+            up: this._lighting.get(new Vector3(0, 1, 0).add(position).stringify()) ?? 15,
+            north: this._lighting.get(new Vector3(1, 0, 0).add(position).stringify()) ?? 15,
+            east: this._lighting.get(new Vector3(0, 0, 1).add(position).stringify()) ?? 15,
+            south: this._lighting.get(new Vector3(-1, 0, 0).add(position).stringify()) ?? 15,
+            west: this._lighting.get(new Vector3(0, 0, -1).add(position).stringify()) ?? 15,
+            down: this._lighting.get(new Vector3(0, -1, 0).add(position).stringify()) ?? 15,
+        };
+        */
+        return [
+            this._lighting.get(new Vector3(1, 0, 0).add(position).stringify()) ?? 15,
+            this._lighting.get(new Vector3(-1, 0, 0).add(position).stringify()) ?? 15,
+            this._lighting.get(new Vector3(0, 1, 0).add(position).stringify()) ?? 15,
+            this._lighting.get(new Vector3(0, -1, 0).add(position).stringify()) ?? 15,
+            this._lighting.get(new Vector3(0, 0, 1).add(position).stringify()) ?? 15,
+            this._lighting.get(new Vector3(0, 0, -1).add(position).stringify()) ?? 15,
+        ];
+    }
+
+    private _calculateLighting() {
+        this._lighting.clear();
+        const blocksBounds = this._voxelMesh.getBounds();
+
+        // Todo replace with Buffer as each value should only 4-bits instead of 64-bits.
+        const tmp = new Vector3(0, 0, 0);
+        for (let x = blocksBounds.min.x - 1; x <= blocksBounds.max.x + 1; ++x) {
+            tmp.x = x;
+            for (let y = blocksBounds.min.y - 1; y <= blocksBounds.max.y + 1; ++y) {
+                tmp.y = y;
+                for (let z = blocksBounds.min.z - 1; z <= blocksBounds.max.z + 1; ++z) {
+                    tmp.z = z;
+                    this._lighting.set(tmp.stringify(), 0);
+                }
+            }
+        }
+
+        // TODO: Cache stringify
+        const actions: { pos: Vector3, value: number }[] = []; // = [{ pos: blocksBounds.min, value: 15 }];
+
+        // Add initial light emitters to top of mesh to simulate sunlight
+        for (let x = blocksBounds.min.x - 1; x <= blocksBounds.max.x + 1; ++x) {
+            for (let z = blocksBounds.min.z - 1; z <= blocksBounds.max.z + 1; ++z) {
+                actions.push({
+                    pos: new Vector3(x, blocksBounds.max.y + 1, z),
+                    value: 15,
+                });
+            }
+        }
+
+        while (actions.length > 0) {
+            const action = actions.pop();
+            ASSERT(action !== undefined);
+            const newLightValue = action.value;
+
+            const currentLightValue = this._lighting.get(action.pos.stringify());
+            // We're trying to update the lighting value of an out-of-bounds block, skip.
+            if (currentLightValue === undefined) {
+                continue;
+            }
+
+            // Update lighting values only if the new value is lighter than the current brightness.
+            if (newLightValue > currentLightValue && !this._voxelMesh.isVoxelAt(action.pos)) {
+                this._lighting.set(action.pos.stringify(), newLightValue);
+
+                actions.push({ pos: new Vector3(0, 1, 0).add(action.pos), value: newLightValue - 1 }); // up
+                actions.push({ pos: new Vector3(1, 0, 0).add(action.pos), value: newLightValue - 1 });
+                actions.push({ pos: new Vector3(0, 0, 1).add(action.pos), value: newLightValue - 1 });
+                actions.push({ pos: new Vector3(-1, 0, 0).add(action.pos), value: newLightValue - 1 });
+                actions.push({ pos: new Vector3(0, 0, -1).add(action.pos), value: newLightValue - 1 });
+                actions.push({ pos: new Vector3(0, -1, 0).add(action.pos), value: newLightValue === 15 ? 15 : newLightValue - 1 }); // down
+            }
         }
     }
 

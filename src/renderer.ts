@@ -57,6 +57,7 @@ export class Renderer {
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
+    private _nightVisionEnabled: boolean;
 
     private _gridBuffers: {
         x: { [meshType: string]: RenderBuffer };
@@ -90,6 +91,7 @@ export class Renderer {
 
         this._isGridComponentEnabled = {};
         this._axesEnabled = false;
+        this._nightVisionEnabled = true;
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -138,6 +140,14 @@ export class Renderer {
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
+    }
+
+    public toggleIsNightVisionEnabled() {
+        this._nightVisionEnabled = !this._nightVisionEnabled;
+    }
+
+    public isNightVisionEnabled() {
+        return this._nightVisionEnabled;
     }
 
     public toggleIsWireframeEnabled() {
@@ -228,7 +238,7 @@ export class Renderer {
             this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-            
+
             this._modelsAvailable = 2;
             this.setModelToUse(MeshType.VoxelMesh);
         }
@@ -258,7 +268,7 @@ export class Renderer {
         this.setModelToUse(MeshType.VoxelMesh);
     }
     */
-    
+
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
@@ -393,6 +403,7 @@ export class Renderer {
             u_voxelSize: this._voxelSize,
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_nightVision: this.isNightVisionEnabled(),
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);

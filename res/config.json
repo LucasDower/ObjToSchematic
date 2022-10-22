@@ -1,7 +1,7 @@
 {
     "AMBIENT_OCCLUSION_OVERRIDE_CORNER": true,
     "LOG_TO_FILE": true,
-    "USE_WORKER_THREAD": true,
+    "USE_WORKER_THREAD": false,
     "MULTISAMPLE_COUNT": 16,
     "OLD_SPACE_SIZE_MB": 8192,
     "ALPHA_BIAS": 1.0,
