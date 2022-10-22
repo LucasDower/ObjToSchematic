@@ -32,8 +32,8 @@ export class AppConfig {
     public readonly CAMERA_SENSITIVITY_ZOOM: number;
 
     private constructor() {
-        this.RELEASE_MODE = true;
-        this.RELEASE_VERSION = '0.6.1r';
+        this.RELEASE_MODE = false;
+        this.RELEASE_VERSION = '0.7.0d';
         this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
         const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
