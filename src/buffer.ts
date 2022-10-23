@@ -153,7 +153,7 @@ export class ChunkedBufferGenerator {
 
             for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
                 const faceName = faceOrder[f];
-                const faceLighting = lightingRamp.get(blockLighting[f]) ?? 1.0;
+                const faceLighting = lightingRamp.get(blockLighting[f] ?? 15) ?? 1.0;
 
                 const texcoord = blocks[blockIndex].blockInfo.faces[faceName].texcoord;
                 for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {

@@ -84,6 +84,10 @@ export class VoxelMesh {
         return this._bounds;
     }
 
+    public getVoxelIndex(pos: Vector3) {
+        return this._voxelsHash.get(pos.stringify());
+    }
+
     public getVoxelCount() {
         return this._voxels.length;
     }
