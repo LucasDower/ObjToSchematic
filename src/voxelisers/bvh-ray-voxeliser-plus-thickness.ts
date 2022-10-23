@@ -10,15 +10,11 @@ import { IVoxeliser } from './base-voxeliser';
 
 const bvhtree = require('bvh-tree');
 
-function cross(v0: Vector3, v1: Vector3) {
-  return new Vector3(v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x)
-}
-
 /**
  * This voxeliser works by projecting rays onto each triangle
  * on each of the principle angles and testing for intersections
  */
-export class BVHRayVoxeliserThick extends IVoxeliser {
+export class BVHRayVoxeliserPlusThickness extends IVoxeliser {
     protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
         const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
@@ -81,8 +77,6 @@ export class BVHRayVoxeliserThick extends IVoxeliser {
         ASSERT(rays.length === rayIndex);
         LOG('Rays created...');
 
-        const VecZero = new Vector3(0, 0, 0)
-
         // Ray test BVH
         const taskHandle = ProgressManager.Get.start('Voxelising');
         for (rayIndex = 0; rayIndex < rays.length; ++rayIndex) {
@@ -94,21 +88,13 @@ export class BVHRayVoxeliserThick extends IVoxeliser {
                 const point = intersection.intersectionPoint;
                 const position = new Vector3(point.x, point.y, point.z);
                 
-                // // Shrinking towards the center
-                // const centerVector = VecZero.copy().sub(position)
-                // const depthPosition = position.copy().add(centerVector.normalise()).round()
-                
                 // Shrinking towards the perpendicular vector
-                const triangle = intersection.triangle
-                const p0 = new Vector3(triangle[0].x, triangle[0].y, triangle[0].z)
-                const p1 = new Vector3(triangle[1].x, triangle[1].y, triangle[1].z)
-                const p2 = new Vector3(triangle[2].x, triangle[2].y, triangle[2].z)
-                const v0 = p1.sub(p0)
-                const v1 = p2.sub(p0)
-                const crossVec = cross(v1, v0)
-                const depthPosition = position.copy().add(crossVec.normalise().mulScalar(0.5)).round()
+                const triangle = mesh.getUVTriangle(intersection.triangleIndex);
+                const v0 = Vector3.sub(triangle.v1, triangle.v0);
+                const v1 = Vector3.sub(triangle.v2, triangle.v0);
+                const crossVec = Vector3.cross(v1, v0);
+                const depthPosition = position.copy().add(crossVec.normalise().mulScalar(0.5)).round();
 
-                // const depthPosition = position.copy().add(scaler.normalise()).round()
                 position.round();
 
                 const voxelColour = this._getVoxelColour(
@@ -121,12 +107,8 @@ export class BVHRayVoxeliserThick extends IVoxeliser {
 
                 if (voxelColour) {
                   voxelMesh.addVoxel(position, voxelColour);
-                  // if (crossVec.magnitude() > 0.5) {
-                  //   const depthPosition = position.copy().add(crossVec.normalise().mulScalar(0.5)).round()
-                  //   voxelMesh.addVoxel(depthPosition, voxelColour)
-                  // }
                   if (!depthPosition.equals(position)) {
-                    voxelMesh.addVoxel(depthPosition, voxelColour)
+                    voxelMesh.addVoxel(depthPosition, voxelColour);
                   }
                 }
             }

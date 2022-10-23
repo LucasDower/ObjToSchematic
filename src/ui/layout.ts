@@ -59,8 +59,8 @@ export class UI {
                         displayText: 'BVH Ray-based',
                     },
                     {
-                        id: 'bvh-ray-thick',
-                        displayText: 'BVH But THICK',
+                        id: 'bvh-ray-plus-thickness',
+                        displayText: 'BVH Ray-based (thicker walls)',
                     },
                     {
                         id: 'ncrb',
