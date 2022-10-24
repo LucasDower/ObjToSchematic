@@ -339,14 +339,14 @@ export class UI {
             const group = this._uiDull[groupName];
             groupHTML[groupName] = `
             <div class="property">
-                <div class="prop-value-container">
+                <div style="flex-grow: 1">
                     <div class="h-div">
                     </div>
                 </div>
                 <div class="group-heading">
                     ${group.label.toUpperCase()}
                 </div>
-                <div class="prop-value-container">
+                <div style="flex-grow: 1">
                     <div class="h-div">
                     </div>
                 </div>
@@ -426,9 +426,7 @@ export class UI {
                 </div>
             </div>
             <div class="property">
-                <div class="prop-value-container">
-                    ${group.output.generateHTML()}
-                </div>
+                ${group.output.generateHTML()}
             </div>
             ${postGroupHTML}
         `;

@@ -35,14 +35,14 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
                         ${this._value.x}
                     </div>
                 </div>
-                <div class="invis-divider"></div>
+                <div class="spinbox-divider"></div>
                 <div style="display: flex; flex-direction: row; width: 33%"">
                     <div class="spinbox-key" id="${this._id}-ky" style="background-color: #34BF49;">Y</div>
                     <div class="spinbox-value" id="${this._id}-vy">
                         ${this._value.y}
                     </div>
                 </div>
-                <div class="invis-divider"></div>
+                <div class="spinbox-divider"></div>
                 <div style="display: flex; flex-direction: row; width: 33%"">
                     <div class="spinbox-key" id="${this._id}-kz" style="background-color: #0099E5;">Z</div>
                     <div class="spinbox-value" id="${this._id}-vz">
@@ -55,7 +55,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
     private _registerAxis(axis: EAxis) {
         ASSERT(axis !== EAxis.None);
-        
+
         const elementXK = document.getElementById(this._id + '-k' + axis) as HTMLDivElement;
         const elementXV = document.getElementById(this._id + '-v' + axis) as HTMLDivElement;
         ASSERT(elementXK !== null && elementXV !== null);

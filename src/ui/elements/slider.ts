@@ -24,11 +24,9 @@ export class SliderElement extends LabelledElement<number> {
     public generateInnerHTML() {
         const norm = (this.getValue() - this._min) / (this._max - this._min);
         return `
-            <div style="display: flex; flex-direction: row;">
-                <input type="number" id="${this._id}-value" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
-                <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
-                    <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
-                    </div>
+            <input type="number" id="${this._id}-value" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
+                <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
                 </div>
             </div>
         `;

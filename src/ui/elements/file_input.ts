@@ -18,7 +18,7 @@ export class FileInputElement extends LabelledElement<string> {
 
     public generateInnerHTML() {
         return `
-            <div class="input-text" id="${this._id}">
+            <div class="input-file" id="${this._id}">
                 ${this._loadedFilePath}
             </div>
         `;
@@ -59,15 +59,15 @@ export class FileInputElement extends LabelledElement<string> {
         };
 
         document.onmousemove = () => {
-            element.classList.remove('input-text-disabled');
-            element.classList.remove('input-text-hover');
+            element.classList.remove('input-file-disabled');
+            element.classList.remove('input-file-hover');
 
             if (this._isEnabled) {
                 if (this._hovering) {
-                    element.classList.add('input-text-hover');
+                    element.classList.add('input-file-hover');
                 }
             } else {
-                element.classList.add('input-text-disabled');
+                element.classList.add('input-file-disabled');
             }
         };
     }
@@ -79,9 +79,9 @@ export class FileInputElement extends LabelledElement<string> {
         ASSERT(element !== null);
 
         if (this._isEnabled) {
-            element.classList.remove('input-text-disabled');
+            element.classList.remove('input-file-disabled');
         } else {
-            element.classList.add('input-text-disabled');
+            element.classList.add('input-file-disabled');
         }
     }
 }
