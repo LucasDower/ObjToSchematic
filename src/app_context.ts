@@ -435,7 +435,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
-        this._ui.tick();
+        this._ui.tick(this._workerController.isBusy());
         Renderer.Get.draw();
     }
 }

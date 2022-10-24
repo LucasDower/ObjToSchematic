@@ -50,6 +50,7 @@ canvas {
   margin-left: var(--properties-width);
   width: calc(100% - var(--properties-width));
   height: 100%;
+  cursor: crosshair;
 }
 
 .container {
@@ -58,16 +59,20 @@ canvas {
   margin: 10px;
 }
 
-.item {
+.property {
   padding: 0px 0px;
   display: flex;
   flex-direction: row;
   align-items: center;
   color: var(--text-standard);
+  font-size: 85%;
+  margin: 0px 0px;
+  min-height: 30px;
+  padding: 5px 0px;
 }
 
 .group-heading {
-  padding: 0px 0px 0px 0px;
+  padding: 0px 10px;
   color: #303030;
   font-weight: 400;
   font-size: 85%;
@@ -75,28 +80,18 @@ canvas {
 }
 
 
-.prop-left {
+.prop-key-container {
   align-self: center;
   padding: 0px 10px;
   width: 125px;
 }
 
-.prop-left-disabled {
+.prop-key-container-disabled {
   color: var(--text-disabled) !important;
 }
 
-.prop-right {
+.prop-value-container {
   flex-grow: 1;
-  padding: 0px 10px;
-  width: 0px;
-}
-
-
-.item-body {
-  font-size: 85%;
-  margin: 0px 0px;
-  min-height: 30px;
-  padding: 5px 0px;
 }
 
 .item-body-sunken {
@@ -124,6 +119,12 @@ input {
   font-weight: 300;
   color: var(--text-standard);
   outline-color: var(--prop-accent-hovered);
+  border: 1px solid rgb(255, 255, 255, 0.0);
+}
+input:hover:enabled {
+  color: #C6C6C6;
+  border: 1px solid rgb(255, 255, 255, 0.1);
+  background: var(--prop-hovered);
 }
 input:disabled {
   background: var(--prop-disabled);
@@ -148,11 +149,13 @@ select {
   max-width: 100%;
   outline-color: var(--prop-accent-hovered);
   opacity: 1.0;
+  cursor: inherit;
 }
 select:hover:enabled {
   color: #C6C6C6;
   background: var(--prop-hovered);
   border: 1px solid rgb(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 select:disabled {
   background: var(--prop-disabled) !important;
@@ -192,7 +195,7 @@ select:disabled {
 
 .new-slider-disabled {
   background: var(--prop-disabled) !important;
-  cursor: default !important;
+  cursor: inherit !important;
 }
 
 
@@ -211,7 +214,7 @@ select:disabled {
 
 .new-slider-bar-disabled {
   background: var(--prop-accent-disabled) !important;
-  cursor: default !important;
+  cursor: inherit !important;
   border: 1px solid rgb(255, 255, 255, 0.0) !important;
 }
 
@@ -228,7 +231,7 @@ select:disabled {
   position: relative;
   cursor: pointer;
   display: inline-block;
-  width: 100%;
+  width: calc(100% - 2px);
 }
 
 .button:hover {
@@ -252,7 +255,7 @@ select:disabled {
 }
 
 .button-disabled {
-  cursor: default !important;
+  cursor: inherit !important;
   background: var(--prop-accent-disabled) !important;
   border: 1px solid rgb(255, 255, 255, 0) !important;
   color: #808080 !important;
@@ -293,7 +296,7 @@ select:disabled {
 
 .disabled {
   opacity: 0.5;
-  cursor: default !important;
+  cursor: inherit !important;
 }
 
 
@@ -391,6 +394,8 @@ select:disabled {
   flex-direction: row;
   width: 100%;
   justify-content: space-between;
+  cursor: inherit;
+  pointer-events: none;
 }
 
 .toolbar-column {
@@ -420,6 +425,7 @@ select:disabled {
   font-size: 85%;
   background-color: var(--prop-standard);
   border: 1px solid var(--prop-standard);
+  pointer-events: all;
 }
 
 .toolbar-item-hover {
@@ -436,6 +442,7 @@ select:disabled {
 .toolbar-item-disabled {
   background-color: var(--prop-disabled) !important;
   border: 1px solid var(--prop-disabled) !important;
+  cursor: default;
 }
 
 .toolbar-item-active {

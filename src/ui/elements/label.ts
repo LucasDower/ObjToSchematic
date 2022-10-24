@@ -15,13 +15,13 @@ export class LabelElement {
     public generateHTML(): string {
         if (this._description === undefined) {
             return `
-                <div class="prop-left" id="${this._id}">
+                <div class="prop-key-container" id="${this._id}">
                     ${this._text}
                 </div>
             `;
         } else {
             return `
-                <div class="prop-left" id="${this._id}">
+                <div class="prop-key-container" id="${this._id}">
                     <abbr title="${this._description}">${this._text}</abbr>
                 </div>
             `;
@@ -33,9 +33,9 @@ export class LabelElement {
         ASSERT(element !== null);
 
         if (isEnabled) {
-            element.classList.remove('prop-left-disabled');
+            element.classList.remove('prop-key-container-disabled');
         } else {
-            element.classList.add('prop-left-disabled');
+            element.classList.add('prop-key-container-disabled');
         }
     }
 }

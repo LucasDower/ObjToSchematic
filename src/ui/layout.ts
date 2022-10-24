@@ -311,7 +311,13 @@ export class UI {
         this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
     }
 
-    public tick() {
+    public tick(isBusy: boolean) {
+        if (isBusy) {
+            document.body.style.cursor = 'progress';
+        } else {
+            document.body.style.cursor = 'default';
+        }
+
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
             for (const toolbarItem of toolbarGroup.elementsOrder) {
@@ -332,15 +338,15 @@ export class UI {
         for (const groupName in this._ui) {
             const group = this._uiDull[groupName];
             groupHTML[groupName] = `
-            <div class="item item-body">
-                <div class="prop-right">
+            <div class="property">
+                <div class="prop-value-container">
                     <div class="h-div">
                     </div>
                 </div>
                 <div class="group-heading">
                     ${group.label.toUpperCase()}
                 </div>
-                <div class="prop-right">
+                <div class="prop-value-container">
                     <div class="h-div">
                     </div>
                 </div>
@@ -414,13 +420,13 @@ export class UI {
 
         return `
             ${groupHTML}
-            <div class="item item-body">
-                <div class="prop-right">
+            <div class="property">
+                <div class="prop-value-container">
                     ${group.submitButton.generateHTML()}
                 </div>
             </div>
-            <div class="item item-body">
-                <div class="prop-right">
+            <div class="property">
+                <div class="prop-value-container">
                     ${group.output.generateHTML()}
                 </div>
             </div>
@@ -430,7 +436,7 @@ export class UI {
 
     private _buildSubcomponent(element: BaseUIElement<any>) {
         return `
-            <div class="item item-body">
+            <div class="property">
                 ${element.generateHTML()}
             </div>
         `;
