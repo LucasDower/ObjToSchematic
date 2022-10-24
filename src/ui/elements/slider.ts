@@ -25,9 +25,7 @@ export class SliderElement extends LabelledElement<number> {
         const norm = (this.getValue() - this._min) / (this._max - this._min);
         return `
             <div style="display: flex; flex-direction: row;">
-                <div class="slider-value" id="${this._id + '-value'}">
-                    ${this._value?.toFixed(this._decimals)}
-                </div>
+                <input type="number" id="${this._id}-value" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
                 <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
                     <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
                     </div>
@@ -39,6 +37,7 @@ export class SliderElement extends LabelledElement<number> {
     public registerEvents() {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
+        const elementValue = document.getElementById(this._id + '-value') as HTMLInputElement;
         ASSERT(element !== null);
 
         element.onmouseenter = () => {
@@ -84,6 +83,20 @@ export class SliderElement extends LabelledElement<number> {
                 this._onScrollSlider(e);
             }
         });
+
+        elementValue.addEventListener('change', () => {
+            this._onTypedValue();
+        });
+    }
+
+    private _onTypedValue() {
+        const elementValue = document.getElementById(this._id + '-value') as HTMLInputElement;
+        const typedNumber = parseFloat(elementValue.value);
+        if (!isNaN(typedNumber)) {
+            this._value = clamp(typedNumber, this._min, this._max);
+        }
+
+        this._onValueUpdated();
     }
 
     private _onScrollSlider(e: WheelEvent) {
@@ -109,7 +122,7 @@ export class SliderElement extends LabelledElement<number> {
         const box = element.getBoundingClientRect();
         const left = box.x;
         const right = box.x + box.width;
-        
+
         this._value = mapRange(e.clientX, left, right, this._min, this._max);
         this._value = clamp(this._value, this._min, this._max);
 
@@ -118,12 +131,12 @@ export class SliderElement extends LabelledElement<number> {
 
     private _onValueUpdated() {
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
+        const elementValue = document.getElementById(this._id + '-value') as HTMLInputElement;
         ASSERT(elementBar !== null && elementValue !== null);
 
         const norm = wayThrough(this.getValue(), this._min, this._max);
         elementBar.style.width = `${norm * 100}%`;
-        elementValue.innerHTML = this.getValue().toFixed(this._decimals);
+        elementValue.value = this.getValue().toFixed(this._decimals);
     }
 
     public getDisplayValue() {
@@ -135,17 +148,17 @@ export class SliderElement extends LabelledElement<number> {
 
         const element = document.getElementById(this._id) as HTMLDivElement;
         const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
+        const elementValue = document.getElementById(this._id + '-value') as HTMLInputElement;
         ASSERT(element !== null && elementBar !== null && elementValue !== null);
 
         if (this._isEnabled) {
             element.classList.remove('new-slider-disabled');
             elementBar.classList.remove('new-slider-bar-disabled');
-            elementValue.classList.remove('slider-value-disabled');
+            elementValue.disabled = false;
         } else {
             element.classList.add('new-slider-disabled');
             elementBar.classList.add('new-slider-bar-disabled');
-            elementValue.classList.add('slider-value-disabled');
+            elementValue.disabled = true;
         }
     }
 }

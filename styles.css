@@ -88,6 +88,7 @@ canvas {
 .prop-right {
   flex-grow: 1;
   padding: 0px 10px;
+  width: 0px;
 }
 
 
@@ -113,23 +114,25 @@ canvas {
   overflow-wrap: anywhere;
 }
 
-
-.round-top {
-  border-radius: 8.5px 8.5px 0px 0px;
+input {
+  margin-right: 3px;
+  border-radius: 5px;
+  border: 1px solid rgb(255, 255, 255, 0.0);
+  text-align: center;
+  background: var(--prop-standard);
+  font-family: 'Lexend', sans-serif;
+  font-weight: 300;
+  color: var(--text-standard);
+  outline-color: var(--prop-accent-hovered);
 }
-
-.round-bottom {
-  border-radius: 0px 0px 10px 10px;
-  border-width: 0.5px 0px 0px 0px;
+input:disabled {
+  background: var(--prop-disabled);
+  color: var(--text-disabled);
 }
-
-
-code {
-  border-radius: 3px;
-  padding: 0px 5px;
-  margin: 0px 5px;
-  background: rgb(15, 15, 15);
-  font-size: 110%;
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 select {
@@ -137,23 +140,22 @@ select {
   height: 30px;
   padding-left: 10px;
   border-radius: 5px;
-  border: none;
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
   color: var(--text-standard);
   background: var(--prop-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
   max-width: 100%;
+  outline-color: var(--prop-accent-hovered);
+  opacity: 1.0;
 }
-
 select:hover:enabled {
   color: #C6C6C6;
   background: var(--prop-hovered);
   border: 1px solid rgb(255, 255, 255, 0.1);
 }
-
 select:disabled {
-  background: #282828 !important;
+  background: var(--prop-disabled) !important;
   color: var(--text-disabled);
 }
 
@@ -171,22 +173,6 @@ select:disabled {
 .file-input:hover {
   border: 1px solid rgb(255, 255, 255, 0.1);
 }
-
-.slider-value {
-  align-self: center;
-  font-weight: 300;
-  font-size: 85%;
-  margin-right: 8px;
-  color: var(--text-standard);
-  width: 20px;
-  text-align: center;
-}
-
-.slider-value-disabled {
-  color: var(--text-disabled);
-}
-
-
 
 .new-slider {
   border-radius: 5px;
