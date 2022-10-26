@@ -20,9 +20,9 @@ export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | '
 
 export class VoxelMesh {
     private _voxels: (Voxel & { collisions: number })[];
-    private _voxelsHash: Map<string, number>;
+    private _voxelsHash: Map<number, number>;
     private _bounds: Bounds;
-    private _neighbourMap: Map<string, { value: number }>;
+    private _neighbourMap: Map<number, { value: number }>;
     private _voxelMeshParams: TVoxelMeshParams;
 
     public constructor(voxelMeshParams: TVoxelMeshParams) {
@@ -39,11 +39,11 @@ export class VoxelMesh {
     }
 
     public isVoxelAt(pos: Vector3) {
-        return this._voxelsHash.has(pos.stringify());
+        return this._voxelsHash.has(pos.hash());
     }
 
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
-        const voxelIndex = this._voxelsHash.get(pos.stringify());
+        const voxelIndex = this._voxelsHash.get(pos.hash());
         if (voxelIndex !== undefined) {
             const voxel = this._voxels[voxelIndex];
             ASSERT(voxel !== undefined);
@@ -58,7 +58,7 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos.stringify());
+        const voxelIndex = this._voxelsHash.get(pos.hash());
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -74,7 +74,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.set(pos.stringify(), this._voxels.length - 1);
+            this._voxelsHash.set(pos.hash(), this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
@@ -125,15 +125,14 @@ export class VoxelMesh {
         }
     }
 
-    private _stringified: string = '';
     public getNeighbours(pos: Vector3) {
         ASSERT(this._voxelMeshParams.enableAmbientOcclusion, 'Ambient occlusion is disabled');
 
-        this._stringified = pos.stringify();
-        const neighbours = this._neighbourMap.get(this._stringified);
+        const hash = pos.hash();
+        const neighbours = this._neighbourMap.get(hash);
         if (neighbours === undefined) {
-            this._neighbourMap.set(this._stringified, { value: 0 });
-            return this._neighbourMap.get(this._stringified)!;
+            this._neighbourMap.set(hash, { value: 0 });
+            return this._neighbourMap.get(hash)!;
         } else {
             return neighbours;
         }

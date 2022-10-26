@@ -29,7 +29,7 @@ export class OcclusionManager {
 
     public getOcclusions(centre: Vector3, voxelMesh: VoxelMesh) {
         // Cache local neighbours
-        const neighbourData = voxelMesh.getNeighbourhoodMap().get(centre.stringify());
+        const neighbourData = voxelMesh.getNeighbourhoodMap().get(centre.hash());
         if (neighbourData === undefined) {
             // This voxel has no neighbours within a 1-block radius
             return this.getBlankOcclusions();
@@ -60,7 +60,7 @@ export class OcclusionManager {
 
                 // Convert from occlusion denoting the occlusion factor to the
                 // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-                occlusionValue = 1.0 - 0.2 * numNeighbours;  
+                occlusionValue = 1.0 - 0.2 * numNeighbours;
 
 
                 const baseIndex = f * 16 + v;

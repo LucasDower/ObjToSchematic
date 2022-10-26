@@ -106,10 +106,10 @@ export class BVHRayVoxeliserPlusThickness extends IVoxeliser {
                 );
 
                 if (voxelColour) {
-                  voxelMesh.addVoxel(position, voxelColour);
-                  if (!depthPosition.equals(position)) {
-                    voxelMesh.addVoxel(depthPosition, voxelColour);
-                  }
+                    voxelMesh.addVoxel(position, voxelColour);
+                    if (!depthPosition.equals(position)) {
+                        voxelMesh.addVoxel(depthPosition, voxelColour);
+                    }
                 }
             }
         }

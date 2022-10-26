@@ -1,7 +1,7 @@
 import { ASSERT } from '../util/error_util';
 import { IVoxeliser } from './base-voxeliser';
 import { BVHRayVoxeliser } from './bvh-ray-voxeliser';
-import { BVHRayVoxeliserPlusThickness } from './bvh-ray-voxeliser-plus-thickness'
+import { BVHRayVoxeliserPlusThickness } from './bvh-ray-voxeliser-plus-thickness';
 import { NormalCorrectedRayVoxeliser } from './normal-corrected-ray-voxeliser';
 import { RayVoxeliser } from './ray-voxeliser';
 
@@ -17,7 +17,7 @@ export class VoxeliserFactory {
             case 'ray-based':
                 return new RayVoxeliser();
             case 'bvh-ray-plus-thickness':
-                return new BVHRayVoxeliserPlusThickness()
+                return new BVHRayVoxeliserPlusThickness();
             default:
                 ASSERT(false, 'Unreachable');
         }

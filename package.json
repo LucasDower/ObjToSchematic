@@ -1,7 +1,7 @@
 {
   "name": "objtoschematic",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
   "main": "./dist/src/main.js",
   "engines": {
