@@ -10,7 +10,8 @@ const baseConfig: THeadlessConfig = {
     },
     voxelise: {
         voxeliser: 'bvh-ray',
-        desiredHeight: 80,
+        constraintAxis: 'y',
+        size: 80,
         useMultisampleColouring: false,
         textureFiltering: TextureFiltering.Linear,
         voxelOverlapRule: 'average',

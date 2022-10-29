@@ -17,8 +17,24 @@ const bvhtree = require('bvh-tree');
 export class BVHRayVoxeliserPlusThickness extends IVoxeliser {
     protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
-        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+
+        const meshDimensions = mesh.getBounds().getDimensions();
+        let scale: number;
+        let offset = new Vector3(0.0, 0.0, 0.0);
+        switch (voxeliseParams.constraintAxis) {
+            case 'x':
+                scale = (voxeliseParams.size - 1) / meshDimensions.x;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'y':
+                scale = (voxeliseParams.size - 1) / meshDimensions.y;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'z':
+                scale = (voxeliseParams.size - 1) / meshDimensions.z;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                break;
+        }
 
         mesh.setTransform((vertex: Vector3) => {
             return vertex.copy().mulScalar(scale).add(offset);
@@ -87,7 +103,7 @@ export class BVHRayVoxeliserPlusThickness extends IVoxeliser {
             for (const intersection of intersections) {
                 const point = intersection.intersectionPoint;
                 const position = new Vector3(point.x, point.y, point.z);
-                
+
                 // Shrinking towards the perpendicular vector
                 const triangle = mesh.getUVTriangle(intersection.triangleIndex);
                 const v0 = Vector3.sub(triangle.v1, triangle.v0);

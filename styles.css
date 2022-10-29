@@ -98,6 +98,7 @@ canvas {
   align-items: center;
   /*border: 1px solid yellow;*/
   height: var(--property-height);
+  width: 0px;
 }
 
 .item-body-sunken {

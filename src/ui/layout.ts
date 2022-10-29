@@ -10,6 +10,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
+import { TAxis } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
@@ -52,7 +53,21 @@ export class UI {
         'voxelise': {
             label: 'Voxelise',
             elements: {
-                'desiredHeight': new SliderElement('Desired height', 3, 380, 0, 80, 1),
+                'constraintAxis': new ComboBoxElement<TAxis>('Constraint axis', [
+                    {
+                        id: 'y',
+                        displayText: 'Y (height) (green)',
+                    },
+                    {
+                        id: 'x',
+                        displayText: 'X (width) (red)',
+                    },
+                    {
+                        id: 'z',
+                        displayText: 'Z (depth) (blue)',
+                    },
+                ]),
+                'size': new SliderElement('Size', 3, 380, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
@@ -114,7 +129,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['desiredHeight', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
+            elementsOrder: ['constraintAxis', 'size', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),

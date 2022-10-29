@@ -7,6 +7,7 @@ import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
+import { TAxis } from './util/type_util';
 import { Vector3 } from './vector';
 import { TVoxelOverlapRule } from './voxel_mesh';
 import { TVoxelisers } from './voxelisers/voxelisers';
@@ -42,8 +43,9 @@ export namespace RenderMeshParams {
 
 export namespace VoxeliseParams {
     export type Input = {
+        constraintAxis: TAxis,
         voxeliser: TVoxelisers,
-        desiredHeight: number,
+        size: number,
         useMultisampleColouring: boolean,
         textureFiltering: TextureFiltering,
         enableAmbientOcclusion: boolean,

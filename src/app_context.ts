@@ -244,8 +244,9 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
+                constraintAxis: uiElements.constraintAxis.getCachedValue(),
                 voxeliser: uiElements.voxeliser.getCachedValue(),
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                size: uiElements.size.getCachedValue(),
                 useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
                 textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
@@ -273,7 +274,7 @@ export class AppContext {
             action: 'RenderNextVoxelMeshChunk',
             params: {
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                desiredHeight: uiElements.size.getCachedValue(),
             },
         };
 
