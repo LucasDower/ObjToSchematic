@@ -3,6 +3,8 @@ import fs from 'fs';
 import { AppContext } from '../app_context';
 import { TBlockAssigners } from '../assigners/assigners';
 import { ArcballCamera } from '../camera';
+import { AppConfig } from '../config';
+import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../exporters/exporters';
 import { PaletteManager } from '../palette';
 import { MeshType, Renderer } from '../renderer';
@@ -67,7 +69,18 @@ export class UI {
                         displayText: 'Z (depth) (blue)',
                     },
                 ]),
-                'size': new SliderElement('Size', 3, 380, 0, 80, 1),
+                'size': new SliderElement('Size', 3, 380, 0, 80, 1)
+                    .registerCustomEvents((slider: SliderElement) => {
+                        EventManager.Get.add(EAppEvent.onComboBoxChanged, (value: any) => {
+                            if (value[0] === 'x') {
+                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_WIDTH);
+                            } else if (value[0] === 'y') {
+                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                            } else {
+                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_DEPTH);
+                            }
+                        });
+                    }),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',

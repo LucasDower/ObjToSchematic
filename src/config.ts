@@ -30,6 +30,9 @@ export class AppConfig {
     public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
     public readonly CAMERA_SENSITIVITY_ROTATION: number;
     public readonly CAMERA_SENSITIVITY_ZOOM: number;
+    public readonly CONSTRAINT_MAXIMUM_WIDTH: number;
+    public readonly CONSTRAINT_MAXIMUM_HEIGHT: number;
+    public readonly CONSTRAINT_MAXIMUM_DEPTH: number;
 
     private constructor() {
         this.RELEASE_MODE = false;
@@ -54,6 +57,9 @@ export class AppConfig {
         this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
         this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
         this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
+        this.CONSTRAINT_MAXIMUM_WIDTH = configJSON.CONSTRAINT_MAXIMUM_WIDTH;
+        this.CONSTRAINT_MAXIMUM_HEIGHT = configJSON.CONSTRAINT_MAXIMUM_HEIGHT;
+        this.CONSTRAINT_MAXIMUM_DEPTH = configJSON.CONSTRAINT_MAXIMUM_DEPTH;
     }
 
     public dumpConfig() {

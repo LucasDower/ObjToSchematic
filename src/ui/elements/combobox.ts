@@ -1,3 +1,4 @@
+import { EAppEvent, EventManager } from '../../event';
 import { ASSERT } from '../../util/error_util';
 import { LabelledElement } from './labelled_element';
 
@@ -29,6 +30,12 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
     }
 
     public registerEvents(): void {
+        const element = document.getElementById(this._id) as HTMLSelectElement;
+        ASSERT(element !== null);
+
+        element.addEventListener('change', () => {
+            EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
+        });
     }
 
     protected getValue() {
