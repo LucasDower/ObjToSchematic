@@ -356,7 +356,7 @@ export class ObjImporter extends IImporter {
             const fileLines = fileContents.split('\n');
 
             for (const line of fileLines) {
-                this._parseMTLLine(line);
+                this._parseMTLLine(line.trim());
             }
 
             this._addCurrentMaterial();
