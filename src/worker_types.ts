@@ -1,12 +1,13 @@
-import { TBlockAssigners } from './assigners/assigners';
 import { FallableBehaviour } from './block_mesh';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
+import { Ditherer } from './dither';
 import { TExporters } from './exporters/exporters';
 import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
+import { TDithering } from './util/type_util';
 import { Vector3 } from './vector';
 import { TVoxelOverlapRule } from './voxel_mesh';
 import { TVoxelisers } from './voxelisers/voxelisers';
@@ -92,7 +93,7 @@ export namespace AssignParams {
     export type Input = {
         textureAtlas: TAtlasId,
         blockPalette: TPaletteId,
-        blockAssigner: TBlockAssigners,
+        dithering: TDithering,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,

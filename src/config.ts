@@ -30,6 +30,7 @@ export class AppConfig {
     public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
     public readonly CAMERA_SENSITIVITY_ROTATION: number;
     public readonly CAMERA_SENSITIVITY_ZOOM: number;
+    public readonly DITHER_MAGNITUDE: number;
 
     private constructor() {
         this.RELEASE_MODE = false;
@@ -54,6 +55,7 @@ export class AppConfig {
         this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
         this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
         this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
+        this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
     }
 
     public dumpConfig() {
