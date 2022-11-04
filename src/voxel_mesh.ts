@@ -59,22 +59,22 @@ export class VoxelMesh {
     public getFaceVisibility(pos: Vector3) {
         let visibility: EFaceVisibility = 0;
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 1, 0)))) {
-            visibility |= EFaceVisibility.Up;
+            visibility += EFaceVisibility.Up;
         }
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, -1, 0)))) {
-            visibility |= EFaceVisibility.Down;
+            visibility += EFaceVisibility.Down;
         }
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(1, 0, 0)))) {
-            visibility |= EFaceVisibility.North;
+            visibility += EFaceVisibility.North;
         }
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(-1, 0, 0)))) {
-            visibility |= EFaceVisibility.South;
+            visibility += EFaceVisibility.South;
         }
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, 1)))) {
-            visibility |= EFaceVisibility.East;
+            visibility += EFaceVisibility.East;
         }
         if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
-            visibility |= EFaceVisibility.South;
+            visibility += EFaceVisibility.South;
         }
         return visibility;
     }

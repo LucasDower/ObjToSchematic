@@ -6,7 +6,7 @@ import { ASSERT } from './util/error_util';
 
 export type TBlockCollection = {
     blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>,
-    cache: Map<number, TAtlasBlock>,
+    cache: Map<BigInt, TAtlasBlock>,
 }
 
 export enum EFaceVisibility {
@@ -19,7 +19,7 @@ export enum EFaceVisibility {
 }
 
 /**
- * A new instance of AtlasPalette is created each time 
+ * A new instance of AtlasPalette is created each time
  * a new voxel mesh is voxelised.
  */
 export class AtlasPalette {
@@ -69,10 +69,11 @@ export class AtlasPalette {
      * @param colour The colour that the returned block should match with.
      * @param resolution The colour accuracy, a uint8 from 1 to 255, inclusive.
      * @param blockToExclude A list of blocks that should not be used, this should be a subset of the palette blocks.
-     * @returns 
+     * @returns
      */
     public getBlock(colour: RGBA_255, blockCollection: TBlockCollection, faceVisibility: EFaceVisibility) {
-        const contextHash = (RGBAUtil.hash255(colour) << 6) | faceVisibility;
+        const colourHash = RGBAUtil.hash255(colour);
+        const contextHash: BigInt = (BigInt(colourHash) << BigInt(6)) + BigInt(faceVisibility);
 
         // If we've already calculated the block associated with this colour, return it.
         const cachedBlock = blockCollection.cache.get(contextHash);
