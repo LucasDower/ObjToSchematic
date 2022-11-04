@@ -19,7 +19,7 @@ const baseConfig: THeadlessConfig = {
     assign: {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
         blockPalette: 'all-snapshot', // Must be a palette name that exists in /resources/palettes
-        blockAssigner: 'ordered-dithering',
+        dithering: 'ordered',
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,

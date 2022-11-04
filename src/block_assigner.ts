@@ -1,5 +1,5 @@
 import { Atlas, TAtlasBlock } from './atlas';
-import { RGBA, RGBAUtil } from './colour';
+import { RGBA, RGBA_255, RGBAUtil } from './colour';
 import { Palette } from './palette';
 import { AppTypes, TOptional } from './util';
 import { ASSERT } from './util/error_util';
@@ -62,8 +62,8 @@ export class AtlasPalette {
      * @param blockToExclude A list of blocks that should not be used, this should be a subset of the palette blocks.
      * @returns 
      */
-    public getBlock(colour: RGBA, blockCollection: TBlockCollection, resolution: RGBAUtil.TColourAccuracy) {
-        const { colourHash, binnedColour } = RGBAUtil.bin(colour, resolution);
+    public getBlock(colour: RGBA_255, blockCollection: TBlockCollection) {
+        const colourHash = RGBAUtil.hash255(colour);
 
         // If we've already calculated the block associated with this colour, return it.
         const cachedBlock = blockCollection.cache.get(colourHash);
@@ -76,7 +76,7 @@ export class AtlasPalette {
         let blockChoice: TOptional<TAtlasBlock>;
         {
             blockCollection.blocks.forEach((blockData) => {
-                const colourDistance = RGBAUtil.squaredDistance(binnedColour, blockData.colour);
+                const colourDistance = RGBAUtil.squaredDistance(RGBAUtil.fromRGBA255(colour), blockData.colour);
                 if (colourDistance < minDistance) {
                     minDistance = colourDistance;
                     blockChoice = blockData;

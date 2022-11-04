@@ -328,7 +328,7 @@ export class AppContext {
             params: {
                 textureAtlas: uiElements.textureAtlas.getCachedValue(),
                 blockPalette: uiElements.blockPalette.getCachedValue(),
-                blockAssigner: uiElements.dithering.getCachedValue(),
+                dithering: uiElements.dithering.getCachedValue(),
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
                 resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),

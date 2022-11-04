@@ -1,7 +1,6 @@
 import fs from 'fs';
 
 import { AppContext } from '../app_context';
-import { TBlockAssigners } from '../assigners/assigners';
 import { ArcballCamera } from '../camera';
 import { TExporters } from '../exporters/exporters';
 import { PaletteManager } from '../palette';
@@ -10,6 +9,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
+import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
@@ -125,10 +125,10 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
-                    { id: 'ordered-dithering', displayText: 'Ordered' },
-                    { id: 'random-dithering', displayText: 'Random' },
-                    { id: 'basic', displayText: 'Off' },
+                'dithering': new ComboBoxElement<TDithering>('Dithering', [
+                    { id: 'ordered', displayText: 'Ordered' },
+                    { id: 'random', displayText: 'Random' },
+                    { id: 'off', displayText: 'Off' },
                 ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
