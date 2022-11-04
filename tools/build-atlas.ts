@@ -293,7 +293,6 @@ async function buildAtlas() {
                 };
                 break;
             default:
-                console.log(modelName, modelData);
                 return;
         }
 
@@ -411,6 +410,7 @@ async function buildAtlas() {
 
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
+        version: 2,
         atlasSize: atlasSize,
         blocks: allModels,
         supportedBlockNames: Array.from(allBlockNames),

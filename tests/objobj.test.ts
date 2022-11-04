@@ -23,6 +23,7 @@ const baseConfig: THeadlessConfig = {
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,
+        contextualAveraging: 'on',
     },
     export: {
         filepath: '', // Must be an absolute path to the file (can be anywhere)

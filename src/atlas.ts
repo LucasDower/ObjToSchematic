@@ -3,7 +3,7 @@ import path from 'path';
 
 import { RGBA } from './colour';
 import { AppTypes, AppUtil, TOptional, UV } from './util';
-import { ASSERT } from './util/error_util';
+import { AppError } from './util/error_util';
 import { LOG } from './util/log_util';
 import { AppPaths } from './util/path_util';
 
@@ -66,18 +66,18 @@ export class Atlas {
         const atlasJSON = JSON.parse(atlasFile);
         const atlasVersion = atlasJSON.version;
 
-        if (atlasVersion === undefined || atlasVersion === 1) {
-            const atlasSize = atlasJSON.atlasSize as number;
-            atlas._atlasSize = atlasSize;
+        if (atlasVersion !== 2) {
+            throw new AppError(`The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
+        }
 
-            const blocks = atlasJSON.blocks;
-            for (const block of blocks) {
-                const atlasBlock = block as TAtlasBlock;
-                atlasBlock.name = AppUtil.Text.namespaceBlock(atlasBlock.name);
-                atlas._blocks.set(atlasBlock.name, atlasBlock);
-            }
-        } else {
-            ASSERT(false, `Unrecognised .atlas file version: ${atlasVersion}`);
+        const atlasSize = atlasJSON.atlasSize as number;
+        atlas._atlasSize = atlasSize;
+
+        const blocks = atlasJSON.blocks;
+        for (const block of blocks) {
+            const atlasBlock = block as TAtlasBlock;
+            atlasBlock.name = AppUtil.Text.namespaceBlock(atlasBlock.name);
+            atlas._blocks.set(atlasBlock.name, atlasBlock);
         }
 
         return atlas;
