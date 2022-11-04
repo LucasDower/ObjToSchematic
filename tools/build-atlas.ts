@@ -11,7 +11,7 @@ import { RGBA } from '../src/colour';
 import { UV } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { log, LogStyle } from './logging';
-import { ASSERT, getAverageColour, getMinecraftDir, getPermission, isDirSetup } from './misc'; ;
+import { ASSERT, getAverageColour, getMinecraftDir, getPermission, isDirSetup } from './misc';
 
 const BLOCKS_DIR = PathUtil.join(AppPaths.Get.tools, '/blocks');
 const MODELS_DIR = PathUtil.join(AppPaths.Get.tools, '/models');
@@ -293,6 +293,7 @@ async function buildAtlas() {
                 };
                 break;
             default:
+                console.log(modelName, modelData);
                 return;
         }
 
@@ -393,6 +394,7 @@ async function buildAtlas() {
             blockColour.b += faceColour.b;
             blockColour.a += faceColour.a;
             model.faces[face].texcoord = faceTexture.texcoord;
+            model.faces[face].colour = faceTexture.colour;
         }
         blockColour.r /= 6;
         blockColour.g /= 6;

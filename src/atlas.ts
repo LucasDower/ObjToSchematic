@@ -10,6 +10,7 @@ import { AppPaths } from './util/path_util';
 export type TAtlasBlockFace = {
     name: string;
     texcoord: UV;
+    colour: RGBA;
 }
 
 export type TAtlasBlock = {

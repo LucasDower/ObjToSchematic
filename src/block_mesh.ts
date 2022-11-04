@@ -61,6 +61,7 @@ export class BlockMesh {
      */
     private _getFinalVoxelColour(voxel: Voxel, blockMeshParams: AssignParams.Input) {
         const voxelColour = RGBAUtil.copy(voxel.colour);
+
         const binnedColour = RGBAUtil.bin(voxelColour, blockMeshParams.resolution);
 
         const ditheredColour: RGBA_255 = RGBAUtil.copy255(binnedColour);
@@ -102,7 +103,10 @@ export class BlockMesh {
             // Convert the voxel into a block
             const voxel = voxels[voxelIndex];
             const voxelColour = this._getFinalVoxelColour(voxel, blockMeshParams);
-            let block = atlasPalette.getBlock(voxelColour, allBlockCollection);
+            const faceVisibility = blockMeshParams.contextualAveraging === 'on' ?
+                this._voxelMesh.getFaceVisibility(voxel.position) :
+                VoxelMesh.getFullFaceVisibility();
+            let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility);
 
             // Check that this block meets the fallable behaviour, we may need
             // to choose a different block if the current one doesn't meet the requirements
@@ -118,7 +122,7 @@ export class BlockMesh {
                 (blockMeshParams.fallable === 'replace-falling' && isBlockFallable && !isBlockSupported);
 
             if (shouldReplaceBlock) {
-                block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection);
+                block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility);
             }
 
             this._blocks.push({

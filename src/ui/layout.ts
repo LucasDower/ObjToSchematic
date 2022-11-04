@@ -9,7 +9,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
-import { TDithering } from '../util/type_util';
+import { TDithering, TToggle } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
@@ -155,8 +155,18 @@ export class UI {
                     },
                 ]),
                 'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
+                'contextualAveraging': new ComboBoxElement<TToggle>('Smart averaging', [
+                    {
+                        id: 'on',
+                        displayText: 'On (recommended)',
+                    },
+                    {
+                        id: 'off',
+                        displayText: 'Off (faster)',
+                    },
+                ]),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),

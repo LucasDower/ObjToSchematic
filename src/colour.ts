@@ -31,6 +31,13 @@ export namespace RGBAUtil {
         return out;
     }
 
+    export function add(a: RGBA, b: RGBA) {
+        a.r += b.r;
+        a.g += b.g;
+        a.b += b.b;
+        a.a += b.a;
+    }
+
     export function lerp(a: RGBA, b: RGBA, alpha: number) {
         return {
             r: a.r * (1 - alpha) + b.r * alpha,

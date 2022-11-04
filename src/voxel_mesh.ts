@@ -1,3 +1,4 @@
+import { EFaceVisibility } from './block_assigner';
 import { Bounds } from './bounds';
 import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
@@ -49,6 +50,33 @@ export class VoxelMesh {
             ASSERT(voxel !== undefined);
             return voxel;
         }
+    }
+
+    public static getFullFaceVisibility(): EFaceVisibility {
+        return EFaceVisibility.Up | EFaceVisibility.Down | EFaceVisibility.North | EFaceVisibility.West | EFaceVisibility.East | EFaceVisibility.South;
+    }
+
+    public getFaceVisibility(pos: Vector3) {
+        let visibility: EFaceVisibility = 0;
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 1, 0)))) {
+            visibility |= EFaceVisibility.Up;
+        }
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, -1, 0)))) {
+            visibility |= EFaceVisibility.Down;
+        }
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(1, 0, 0)))) {
+            visibility |= EFaceVisibility.North;
+        }
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(-1, 0, 0)))) {
+            visibility |= EFaceVisibility.South;
+        }
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, 1)))) {
+            visibility |= EFaceVisibility.East;
+        }
+        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
+            visibility |= EFaceVisibility.South;
+        }
+        return visibility;
     }
 
     public addVoxel(pos: Vector3, colour: RGBA) {

@@ -332,6 +332,7 @@ export class AppContext {
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
                 resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
             },
         };
 
