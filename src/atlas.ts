@@ -8,9 +8,10 @@ import { LOG } from './util/log_util';
 import { AppPaths } from './util/path_util';
 
 export type TAtlasBlockFace = {
-    name: string;
-    texcoord: UV;
-    colour: RGBA;
+    name: string,
+    texcoord: UV,
+    colour: RGBA,
+    std: number,
 }
 
 export type TAtlasBlock = {
@@ -33,7 +34,6 @@ export type TAtlasBlock = {
  */
 export class Atlas {
     public static ATLAS_NAME_REGEX: RegExp = /^[a-zA-Z\-]+$/;
-    private static _FILE_VERSION: number = 1;
 
     private _blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>;
     private _atlasSize: number;
@@ -66,7 +66,7 @@ export class Atlas {
         const atlasJSON = JSON.parse(atlasFile);
         const atlasVersion = atlasJSON.version;
 
-        if (atlasVersion !== 2) {
+        if (atlasVersion !== 3) {
             throw new AppError(`The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
         }
 

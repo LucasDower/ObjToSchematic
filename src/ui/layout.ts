@@ -2,6 +2,7 @@ import fs from 'fs';
 
 import { AppContext } from '../app_context';
 import { ArcballCamera } from '../camera';
+import { AppConfig } from '../config';
 import { TExporters } from '../exporters/exporters';
 import { PaletteManager } from '../palette';
 import { MeshType, Renderer } from '../renderer';
@@ -165,8 +166,9 @@ export class UI {
                         displayText: 'Off (faster)',
                     },
                 ]),
+                'errorWeight': new SliderElement('Smoothness', 0.0, AppConfig.Get.SMOOTHNESS_MAX, 2, 0.2, 0.01),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging', 'errorWeight'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),

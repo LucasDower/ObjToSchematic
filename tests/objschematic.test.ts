@@ -24,6 +24,7 @@ const baseConfig: THeadlessConfig = {
         fallable: 'replace-falling',
         resolution: 32,
         contextualAveraging: 'on',
+        errorWeight: 0.0,
     },
     export: {
         filepath: '', // Must be an absolute path to the file (can be anywhere)

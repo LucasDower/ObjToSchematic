@@ -11,7 +11,7 @@ import { RGBA } from '../src/colour';
 import { UV } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { log, LogStyle } from './logging';
-import { ASSERT, getAverageColour, getMinecraftDir, getPermission, isDirSetup } from './misc';
+import { ASSERT, getAverageColour, getMinecraftDir, getPermission, getStandardDeviation, isDirSetup } from './misc';
 
 const BLOCKS_DIR = PathUtil.join(AppPaths.Get.tools, '/blocks');
 const MODELS_DIR = PathUtil.join(AppPaths.Get.tools, '/models');
@@ -197,7 +197,8 @@ async function buildAtlas() {
     interface Texture {
         name: string,
         texcoord?: UV,
-        colour?: RGBA
+        colour?: RGBA,
+        std?: number,
     }
 
     log(LogStyle.Info, 'Loading block models...');
@@ -318,7 +319,7 @@ async function buildAtlas() {
     let offsetX = 0;
     let offsetY = 0;
 
-    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGBA } } = {};
+    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGBA, std: number } } = {};
 
     const { atlasName } = await prompt.get({
         properties: {
@@ -361,12 +362,14 @@ async function buildAtlas() {
         const fileData = fs.readFileSync(absolutePath);
         const pngData = PNG.sync.read(fileData);
 
+        const avgColour = getAverageColour(pngData);
         textureDetails[textureName] = {
             texcoord: new UV(
                 16 * (3 * offsetX + 1) / atlasWidthPixels,
                 16 * (3 * offsetY + 1) / atlasWidthPixels,
             ),
-            colour: getAverageColour(pngData),
+            colour: avgColour,
+            std: getStandardDeviation(pngData, avgColour),
         };
 
         ++offsetX;
@@ -394,6 +397,7 @@ async function buildAtlas() {
             blockColour.a += faceColour.a;
             model.faces[face].texcoord = faceTexture.texcoord;
             model.faces[face].colour = faceTexture.colour;
+            model.faces[face].std = faceTexture.std;
         }
         blockColour.r /= 6;
         blockColour.g /= 6;
@@ -410,7 +414,7 @@ async function buildAtlas() {
 
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
-        version: 2,
+        version: 3,
         atlasSize: atlasSize,
         blocks: allModels,
         supportedBlockNames: Array.from(allBlockNames),
