@@ -228,7 +228,7 @@ export class Renderer {
             this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-            
+
             this._modelsAvailable = 2;
             this.setModelToUse(MeshType.VoxelMesh);
         }
@@ -258,7 +258,7 @@ export class Renderer {
         this.setModelToUse(MeshType.VoxelMesh);
     }
     */
-    
+
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];

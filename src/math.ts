@@ -8,6 +8,10 @@ export namespace AppMath {
     export const RADIANS_180 = degreesToRadians(180.0);
     export const RADIANS_270 = degreesToRadians(270.0);
 
+    export function lerp(value: number, start: number, end: number) {
+        return (1 - value) * start + value * end;
+    }
+
     export function nearlyEqual(a: number, b: number, tolerance: number = 0.0001) {
         return Math.abs(a - b) < tolerance;
     }

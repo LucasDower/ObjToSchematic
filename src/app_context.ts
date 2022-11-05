@@ -333,6 +333,7 @@ export class AppContext {
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
                 resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
                 contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
+                errorWeight: uiElements.errorWeight.getCachedValue() / 10,
             },
         };
 

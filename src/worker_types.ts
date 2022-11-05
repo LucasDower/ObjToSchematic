@@ -98,6 +98,7 @@ export namespace AssignParams {
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,
         contextualAveraging: TToggle,
+        errorWeight: number,
     }
 
     export type Output = {

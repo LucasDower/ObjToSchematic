@@ -22,6 +22,7 @@ export const headlessConfig: THeadlessConfig = {
         fallable: 'replace-falling',
         resolution: 32,
         contextualAveraging: 'on',
+        errorWeight: 0.0,
     },
     export: {
         filepath: '/Users/lucasdower/Documents/out.obj', // Must be an absolute path to the file (can be anywhere)

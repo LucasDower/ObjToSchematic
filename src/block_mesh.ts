@@ -106,7 +106,7 @@ export class BlockMesh {
             const faceVisibility = blockMeshParams.contextualAveraging === 'on' ?
                 this._voxelMesh.getFaceVisibility(voxel.position) :
                 VoxelMesh.getFullFaceVisibility();
-            let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility);
+            let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);
 
             // Check that this block meets the fallable behaviour, we may need
             // to choose a different block if the current one doesn't meet the requirements
@@ -122,7 +122,7 @@ export class BlockMesh {
                 (blockMeshParams.fallable === 'replace-falling' && isBlockFallable && !isBlockSupported);
 
             if (shouldReplaceBlock) {
-                block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility);
+                block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility, blockMeshParams.errorWeight);
             }
 
             this._blocks.push({
