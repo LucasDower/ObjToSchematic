@@ -24,7 +24,7 @@ export abstract class BaseUIElement<Type> {
     }
 
     protected getValue(): Type {
-        ASSERT(this._value);
+        ASSERT(this._value !== undefined);
         return this._value;
     }
 

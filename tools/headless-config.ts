@@ -21,6 +21,7 @@ export const headlessConfig: THeadlessConfig = {
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,
+        lightThreshold: 0,
     },
     export: {
         filepath: '/Users/lucasdower/Documents/out.obj', // Must be an absolute path to the file (can be anywhere)

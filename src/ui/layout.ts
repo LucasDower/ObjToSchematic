@@ -151,8 +151,9 @@ export class UI {
                     },
                 ]),
                 'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
+                'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'lightThreshold'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),

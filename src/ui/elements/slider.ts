@@ -90,7 +90,7 @@ export class SliderElement extends LabelledElement<number> {
         if (!this._isEnabled) {
             return;
         }
-        ASSERT(this._value);
+        ASSERT(this._value !== undefined);
 
         this._value -= (e.deltaY / 150) * this._step;
         this._value = clamp(this._value, this._min, this._max);
@@ -109,7 +109,7 @@ export class SliderElement extends LabelledElement<number> {
         const box = element.getBoundingClientRect();
         const left = box.x;
         const right = box.x + box.width;
-        
+
         this._value = mapRange(e.clientX, left, right, this._min, this._max);
         this._value = clamp(this._value, this._min, this._max);
 
