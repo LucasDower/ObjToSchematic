@@ -11,20 +11,46 @@ interface IUIOutputElement {
 
 export class UITreeBuilder implements IUIOutputElement {
     private _rootLabel: string;
-    private _children: Array<string | UITreeBuilder>;
+    private _children: Array<{ text: string, warning: boolean } | UITreeBuilder>;
     private _postBuildDelegates: Array<() => void>;
+    private _warning: boolean;
 
     private constructor(rootLabel: string) {
         this._rootLabel = rootLabel;
         this._children = [];
         this._postBuildDelegates = [];
+        this._warning = false;
     }
 
     public static create(rootLabel: string): UITreeBuilder {
         return new UITreeBuilder(rootLabel);
     }
 
-    public addChild(child: string | UITreeBuilder, postBuildDelegate?: () => void) {
+    public setWarning() {
+        this._warning = true;
+    }
+
+    public getWarning() {
+        if (this._warning) {
+            return true;
+        }
+
+        for (const child of this._children) {
+            if (child instanceof UITreeBuilder) {
+                if (child.getWarning()) {
+                    return true;
+                }
+            } else {
+                if (child.warning) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public addChild(child: { text: string, warning: boolean } | UITreeBuilder, postBuildDelegate?: () => void) {
         this._children.push(child);
         if (postBuildDelegate !== undefined) {
             this._postBuildDelegates.push(postBuildDelegate);
@@ -47,15 +73,22 @@ export class UITreeBuilder implements IUIOutputElement {
             if (child instanceof UITreeBuilder) {
                 childrenHTML += child.buildHTML();
             } else {
-                childrenHTML += child;
+                childrenHTML += child.warning ? `<p style="margin:0px; color:orange;">${child.text}</p>` : child.text;
             }
             childrenHTML += '<li>';
         });
 
-        return `
-            <span class="caret">${this._rootLabel}</span>
-            <ul class="nested">${childrenHTML}</ul>
-        `;
+        if (this.getWarning()) {
+            return `
+                <span class="caret" style="color:orange;" >${this._rootLabel}</span>
+                <ul class="nested">${childrenHTML}</ul>
+            `;
+        } else {
+            return `
+                <span class="caret">${this._rootLabel}</span>
+                <ul class="nested">${childrenHTML}</ul>
+            `;
+        }
     }
 }
 
@@ -97,6 +130,23 @@ export class UIMessageBuilder {
             body: `<div style="padding-left: 16px;">${tree.buildHTML()}</div>`,
         });
         this._postBuildDelegates.push(() => { tree.postBuild(); });
+    }
+
+    public setTree(groupId: string, tree: UITreeBuilder) {
+        let found = false;
+        this._messages.forEach((message) => {
+            if (message.groupId === groupId) {
+                this._postBuildDelegates = []; // TODO: Fix
+                message.body = `<div style="padding-left: 16px;">${tree.buildHTML()}</div>`;
+                this._postBuildDelegates.push(() => { tree.postBuild(); });
+                found = true;
+            }
+            return;
+        });
+
+        if (!found) {
+            this.addTree(groupId, tree);
+        }
     }
 
     public postBuild() {

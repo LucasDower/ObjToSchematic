@@ -49,6 +49,7 @@ export class Renderer {
         material: SolidMaterial | (TexturedMaterial & TextureMaterialRenderAddons)
         buffer: twgl.BufferInfo,
         numElements: number,
+        materialName: string,
     }>;
     public _voxelBuffer?: twgl.BufferInfo;
     public _voxelBufferRaw?: { [attribute: string]: { numComponents: number, data: Float32Array | Uint32Array } };
@@ -163,15 +164,38 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
+    public updateMeshMaterialTexture(materialName: string, material: TexturedMaterial) {
+        this._materialBuffers.forEach((buffer) => {
+            if (buffer.materialName === materialName) {
+                buffer.material = {
+                    type: MaterialType.textured,
+                    path: material.path,
+                    texture: twgl.createTexture(this._gl, {
+                        src: material.path,
+                        mag: this._gl.LINEAR,
+                    }),
+                    alphaFactor: material.alphaFactor,
+                    alpha: material.alphaPath ? twgl.createTexture(this._gl, {
+                        src: material.alphaPath,
+                        mag: this._gl.LINEAR,
+                    }) : undefined,
+                    useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                };
+                return;
+            }
+        });
+    }
+
     public useMesh(params: RenderMeshParams.Output) {
         this._materialBuffers = [];
 
-        for (const { material, buffer, numElements } of params.buffers) {
+        for (const { material, buffer, numElements, materialName } of params.buffers) {
             if (material.type === MaterialType.solid) {
                 this._materialBuffers.push({
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: material,
                     numElements: numElements,
+                    materialName: materialName,
                 });
             } else {
                 this._materialBuffers.push({
@@ -191,6 +215,7 @@ export class Renderer {
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
                     numElements: numElements,
+                    materialName: materialName,
                 });
             }
         }

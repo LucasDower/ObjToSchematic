@@ -22,6 +22,12 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                     result: WorkerClient.Get.import(message.params),
                     statusMessages: StatusHandler.Get.getAllStatusMessages(),
                 };
+            case 'SetMaterials':
+                return {
+                    action: 'SetMaterials',
+                    result: WorkerClient.Get.setMaterials(message.params),
+                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                };
             case 'RenderMesh':
                 return {
                     action: 'RenderMesh',

@@ -9,6 +9,7 @@ import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
+import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
 
 interface VertexIndices {
@@ -146,14 +147,22 @@ export class Mesh {
 
         // Check used materials exist
         let wasRemapped = false;
-        let debugName = (Math.random() + 1).toString(36).substring(7);
-        while (debugName in this._materials) {
-            debugName = (Math.random() + 1).toString(36).substring(7);
-        }
+        const debugName = (Math.random() + 1).toString(36).substring(7);
 
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
             if (!(tri.material in this._materials)) {
+                // This triangle makes use of a material we don't have info about
+                // Try infer details about this material and add it to our materials
+
+                if (tri.texcoordIndices === undefined) {
+                    // No texcoords are defined, therefore make a solid material
+                    this._materials[tri.material] = { type: MaterialType.solid, colour: RGBAColours.MAGENTA };
+                } else {
+                    // Texcoords exist, therefore make a texture material
+                    this._materials[tri.material] = { type: MaterialType.textured, path: PathUtil.join(AppPaths.Get.static, 'debug.png'), alphaFactor: 1.0 };
+                }
+
                 missingMaterials.add(tri.material);
                 wasRemapped = true;
                 tri.material = debugName;
@@ -161,10 +170,10 @@ export class Mesh {
         }
         if (wasRemapped) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            StatusHandler.Get.add(
-                'warning',
-                'Some materials were not loaded correctly',
-            );
+            //StatusHandler.Get.add(
+            //    'warning',
+            //    'Some materials were not loaded correctly',
+            //);
             this._materials[debugName] = {
                 type: MaterialType.solid,
                 colour: RGBAColours.WHITE,
@@ -177,10 +186,10 @@ export class Mesh {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    StatusHandler.Get.add(
-                        'warning',
-                        `Could not find ${material.path}`,
-                    );
+                    //StatusHandler.Get.add(
+                    //    'warning',
+                    //    `Could not find ${material.path}`,
+                    //);
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {
                         type: MaterialType.solid,
@@ -303,6 +312,11 @@ export class Mesh {
 
     public getMaterialByName(materialName: string) {
         return this._materials[materialName];
+    }
+
+    public setMaterials(materialMap: MaterialMap) {
+        this._materials = materialMap;
+        this._loadTextures();
     }
 
     public getMaterials() {

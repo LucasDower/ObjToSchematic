@@ -8,7 +8,7 @@ import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
-import { MaterialType } from './mesh';
+import { MaterialMap, MaterialType, TexturedMaterial } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
@@ -26,8 +26,11 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
+    private _materialMap: MaterialMap;
 
     public constructor() {
+        this._materialMap = {};
+
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
@@ -184,35 +187,8 @@ export class AppContext {
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
-            // Add material information to the output log
-            {
-                const messageBuilder = outputElement.getMessage();
-                const tree = UITreeBuilder.create('Materials');
-
-                for (const [materialName, material] of Object.entries(payload.result.materials)) {
-                    if (materialName === 'DEFAULT_UNASSIGNED') {
-                        continue;
-                    }
-
-                    const subTree = UITreeBuilder.create(materialName);
-                    if (material.type === MaterialType.solid) {
-                        subTree.addChild(`Colour: ${RGBAUtil.toUint8String(material.colour)}`);
-                    } else {
-                        const parsedPath = path.parse(material.path);
-                        const id = getRandomID();
-                        subTree.addChild(`Texture: <a id="${id}">${parsedPath.base}</a>`, () => {
-                            const tmp = document.getElementById(id) as HTMLLinkElement;
-                            tmp.onclick = () => {
-                                FileUtil.openDir(material.path);
-                            };
-                        });
-                    }
-
-                    tree.addChild(subTree);
-                }
-
-                messageBuilder.addTree('materials', tree);
-            }
+            this._materialMap = payload.result.materials;
+            this._onMaterialMapChanged();
 
             if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
@@ -224,6 +200,109 @@ export class AppContext {
         };
 
         return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _onMaterialTextureReplace(materialName: string, newTexturePath: string) {
+        const oldMaterial = this._materialMap[materialName];
+        ASSERT(oldMaterial.type === MaterialType.textured);
+
+        this._materialMap[materialName] = {
+            type: MaterialType.textured,
+            alphaFactor: oldMaterial.alphaFactor,
+            alphaPath: oldMaterial.alphaPath,
+            path: newTexturePath,
+        };
+
+        const payload: TToWorkerMessage = {
+            action: 'SetMaterials',
+            params: {
+                materials: this._materialMap,
+            },
+        };
+        const job: TWorkerJob = {
+            id: 'SetMaterial',
+            payload: payload,
+            callback: (result: TFromWorkerMessage) => {
+                ASSERT(result.action === 'SetMaterials');
+                // TODO: Check the action didn't fail
+                this._materialMap = result.result.materials;
+                this._onMaterialMapChanged();
+                Renderer.Get.updateMeshMaterialTexture(materialName, result.result.materials[materialName] as TexturedMaterial);
+                this._ui.enableTo(EAction.Voxelise);
+            },
+        };
+
+        this._workerController.addJob(job);
+        this._ui.disableAll();
+    }
+
+    private _onMaterialMapChanged() {
+        // Add material information to the output log
+        const outputElement = this._ui.getActionOutput(EAction.Import);
+
+        const messageBuilder = outputElement.getMessage();
+        const tree = UITreeBuilder.create('Materials');
+
+        for (const [materialName, material] of Object.entries(this._materialMap)) {
+            if (materialName === 'DEFAULT_UNASSIGNED') {
+                continue;
+            }
+
+            const subTree = UITreeBuilder.create(materialName);
+            if (material.type === MaterialType.solid) {
+                subTree.addChild({ text: `Colour: ${RGBAUtil.toUint8String(material.colour)}`, warning: false });
+            } else {
+                const parsedPath = path.parse(material.path);
+                const dirId = getRandomID();
+                const replaceId = getRandomID();
+
+                if (parsedPath.base !== 'debug.png') {
+                    subTree.addChild({ text: `Texture: <a id="${dirId}">${parsedPath.base}</a> <a id="${replaceId}">[Replace]</a>`, warning: false }, () => {
+                        const tmp = document.getElementById(dirId) as HTMLLinkElement;
+                        tmp.onclick = () => {
+                            FileUtil.openDir(material.path);
+                        };
+
+                        const tmp2 = document.getElementById(replaceId) as HTMLLinkElement;
+                        tmp2.onclick = () => {
+                            const files = remote.dialog.showOpenDialogSync({
+                                title: 'Load',
+                                buttonLabel: 'Load',
+                                filters: [{
+                                    name: 'Images',
+                                    extensions: ['png', 'jpeg', 'jpg'],
+                                }],
+                            });
+                            if (files && files[0]) {
+                                this._onMaterialTextureReplace(materialName, files[0]);
+                            }
+                        };
+                    });
+                } else {
+                    subTree.addChild({ text: `Texture: MISSING <a id="${replaceId}">[Find]</a>`, warning: true }, () => {
+                        const tmp = document.getElementById(replaceId) as HTMLLinkElement;
+                        tmp.onclick = () => {
+                            const files = remote.dialog.showOpenDialogSync({
+                                title: 'Load ',
+                                buttonLabel: 'Load',
+                                filters: [{
+                                    name: 'Images',
+                                    extensions: ['png', 'jpeg', 'jpg'],
+                                }],
+                            });
+                            if (files && files[0]) {
+                                this._onMaterialTextureReplace(materialName, files[0]);
+                            }
+                        };
+                    });
+                }
+            }
+
+            tree.addChild(subTree);
+        }
+
+        messageBuilder.setTree('materials', tree);
+        outputElement.updateMessage();
     }
 
     private _renderMesh(): TWorkerJob {

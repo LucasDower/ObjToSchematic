@@ -11,7 +11,7 @@ import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, InitParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams, SetMaterialsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -77,6 +77,16 @@ export class WorkerClient {
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
+            materials: this._loadedMesh.getMaterials(),
+        };
+    }
+
+    public setMaterials(params: SetMaterialsParams.Input): SetMaterialsParams.Output {
+        ASSERT(this._loadedMesh !== undefined);
+
+        this._loadedMesh.setMaterials(params.materials);
+
+        return {
             materials: this._loadedMesh.getMaterials(),
         };
     }
