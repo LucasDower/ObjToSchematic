@@ -43,6 +43,14 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos.hash());
     }
 
+    public isOpaqueVoxelAt(pos: Vector3) {
+        const voxel = this.getVoxelAt(pos);
+        if (voxel) {
+            return voxel.colour.a == 1.0;
+        }
+        return false;
+    }
+
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
         const voxelIndex = this._voxelsHash.get(pos.hash());
         if (voxelIndex !== undefined) {
@@ -58,22 +66,22 @@ export class VoxelMesh {
 
     public getFaceVisibility(pos: Vector3) {
         let visibility: EFaceVisibility = 0;
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 1, 0)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 1, 0)))) {
             visibility += EFaceVisibility.Up;
         }
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, -1, 0)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, -1, 0)))) {
             visibility += EFaceVisibility.Down;
         }
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(1, 0, 0)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(1, 0, 0)))) {
             visibility += EFaceVisibility.North;
         }
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(-1, 0, 0)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(-1, 0, 0)))) {
             visibility += EFaceVisibility.South;
         }
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, 1)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 0, 1)))) {
             visibility += EFaceVisibility.East;
         }
-        if (!this.isVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
             visibility += EFaceVisibility.South;
         }
         return visibility;
