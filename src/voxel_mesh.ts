@@ -82,7 +82,7 @@ export class VoxelMesh {
             visibility += EFaceVisibility.East;
         }
         if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
-            visibility += EFaceVisibility.South;
+            visibility += EFaceVisibility.West;
         }
         return visibility;
     }
