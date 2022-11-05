@@ -237,10 +237,7 @@ export class Vector3 implements IHashable {
 
     // Begin IHashable interface
     public hash() {
-        const p0 = 73856093;
-        const p1 = 19349663;
-        const p2 = 83492791;
-        return (this.x * p0) ^ (this.y * p1) ^ (this.z * p2);
+        return ((this.x + 10_000_000) << 42) + ((this.y + 10_000_000) << 21) + (this.z + 10_000_000);
     }
 
     public equals(other: Vector3) {
