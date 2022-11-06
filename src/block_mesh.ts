@@ -216,18 +216,40 @@ export class BlockMesh {
             return xValid && yValid && zValid;
         };
 
+        // Calculate the highest block in each column
+        const highestBlock = new Map<number, { height: number, x: number, z: number }>();
+        const updateHighest = (x: number, z: number, height: number) => {
+            const hash = new Vector3(x, 0, z).hash();
+            const currentHighest = highestBlock.get(hash)?.height ?? -Infinity;
+            if (height > currentHighest) {
+                highestBlock.set(hash, { height: height, x: x, z: z });
+            }
+        };
+
+        this._blocks.forEach((block) => {
+            const thisHeight = block.voxel.position.y;
+            const north = new Vector3(1, 0, 0).add(block.voxel.position);
+            const south = new Vector3(-1, 0, 0).add(block.voxel.position);
+            const east = new Vector3(0, 0, 1).add(block.voxel.position);
+            const west = new Vector3(0, 0, -1).add(block.voxel.position);
+            updateHighest(block.voxel.position.x, block.voxel.position.z, thisHeight);
+            updateHighest(north.x, north.z, thisHeight);
+            updateHighest(south.x, south.z, thisHeight);
+            updateHighest(east.x, east.z, thisHeight);
+            updateHighest(west.x, west.z, thisHeight);
+        });
+
 
         // TODO: Cache stringify
         const actions: LightAction[] = []; // = [{ pos: blocksBounds.min, value: 15 }];
         // Add initial light emitters to top of mesh to simulate sunlight
-        for (let x = blocksBounds.min.x - 1; x <= blocksBounds.max.x + 1; ++x) {
-            for (let z = blocksBounds.min.z - 1; z <= blocksBounds.max.z + 1; ++z) {
-                actions.push({
-                    pos: new Vector3(x, blocksBounds.max.y + 1, z),
-                    value: 15,
-                });
-            }
-        }
+        highestBlock.forEach((value, key) => {
+            actions.push({
+                pos: new Vector3(value.x, value.height, value.z),
+                value: 15,
+            });
+        });
+
         this._handleActionsList(actions);
         ASSERT(actions.length === 0, 'Actions still remaining');
 
