@@ -1,5 +1,6 @@
 import { IHashable } from './hash_map';
 import { ASSERT } from './util/error_util';
+import { Vector3Hash } from './util/type_util';
 
 export class Vector3 implements IHashable {
     public x: number;
@@ -236,8 +237,8 @@ export class Vector3 implements IHashable {
     }
 
     // Begin IHashable interface
-    public hash() {
-        return ((this.x + 10_000_000) << 42) + ((this.y + 10_000_000) << 21) + (this.z + 10_000_000);
+    public hash(): Vector3Hash {
+        return ((this.x + 10_000_000) << 42) + ((this.y + 10_000_000) << 21) + (this.z + 10_000_000) as Vector3Hash;
     }
 
     public equals(other: Vector3) {

@@ -1,10 +1,12 @@
 import fs from 'fs';
 
 import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
-import { Atlas } from './atlas';
+import { Atlas, TAtlasBlock } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { RGBAUtil } from './colour';
+import { BlockMeshLighting } from './lighting';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
@@ -20,8 +22,6 @@ interface Block {
     voxel: Voxel;
     blockInfo: BlockInfo;
 }
-
-type LightAction = { pos: Vector3, value: number };
 
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
@@ -41,14 +41,17 @@ export class BlockMesh {
     private _transparentBlocks: string[];
     private _emissiveBlocks: string[];
     private _atlas: Atlas;
-    private _lightingNew: Buffer;
-    private _posToLightingBufferIndex: (vec: Vector3) => { index: number, left: boolean };
-    private _posIsValid: (vec: Vector3) => boolean;
+    private _lighting: BlockMeshLighting;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
         blockMesh._assignBlocks(blockMeshParams);
-        blockMesh._calculateLighting(blockMeshParams.lightThreshold);
+
+        //blockMesh._calculateLighting(blockMeshParams.lightThreshold);
+        blockMesh._lighting.addSunLightValues();
+        blockMesh._lighting.addEmissiveBlocks();
+        blockMesh._lighting.addLightToDarkness(blockMeshParams.lightThreshold);
+
         return blockMesh;
     }
 
@@ -57,11 +60,9 @@ export class BlockMesh {
         this._blocks = [];
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
+        this._lighting = new BlockMeshLighting(this);
         //this._lighting = new Map<string, number>();
-        this._lightingNew = Buffer.alloc(0);
         //this._recreateBuffer = true;
-        this._posToLightingBufferIndex = () => { return { index: 0, left: false }; };
-        this._posIsValid = () => { return false; };
 
         const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
@@ -143,202 +144,41 @@ export class BlockMesh {
 
     // Face order: ['north', 'south', 'up', 'down', 'east', 'west']
     public getBlockLighting(position: Vector3) {
-        /*
-        return {
-            up: this._lighting.get(new Vector3(0, 1, 0).add(position).stringify()) ?? 15,
-            north: this._lighting.get(new Vector3(1, 0, 0).add(position).stringify()) ?? 15,
-            east: this._lighting.get(new Vector3(0, 0, 1).add(position).stringify()) ?? 15,
-            south: this._lighting.get(new Vector3(-1, 0, 0).add(position).stringify()) ?? 15,
-            west: this._lighting.get(new Vector3(0, 0, -1).add(position).stringify()) ?? 15,
-            down: this._lighting.get(new Vector3(0, -1, 0).add(position).stringify()) ?? 15,
-        };
-        */
+        // TODO: Shouldn't only use sunlight value, take max of either
         return [
-            this._internalGetLight(new Vector3(1, 0, 0).add(position)),
-            this._internalGetLight(new Vector3(-1, 0, 0).add(position)),
-            this._internalGetLight(new Vector3(0, 1, 0).add(position)),
-            this._internalGetLight(new Vector3(0, -1, 0).add(position)),
-            this._internalGetLight(new Vector3(0, 0, 1).add(position)),
-            this._internalGetLight(new Vector3(0, 0, -1).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(1, 0, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(-1, 0, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 1, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, -1, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 0, 1).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 0, -1).add(position)),
         ];
     }
 
-    private _internalGetLight(vec: Vector3): TOptional<number> {
-        if (this._posIsValid(vec)) {
-            const index = this._posToLightingBufferIndex(vec);
-            const value = this._lightingNew[index.index];
-            return (index.left ? (value >> 4) : value) & 0xF;
-        }
-        return undefined;
-    }
-
-    private _internalSetLight(vec: Vector3, value: number) {
-        const index = this._posToLightingBufferIndex(vec);
-        if (index.left) {
-            this._lightingNew[index.index] = (this._lightingNew[index.index] & 0xF) + (value << 4);
-        } else {
-            this._lightingNew[index.index] = (this._lightingNew[index.index] & (0xF << 4)) + value;
-        }
-    }
-
-    private _setEmissiveBlock(pos: Vector3) {
-        const emissiveBlockName = 'minecraft:glowstone';
-        const emissiveBlockData = this._atlas.getBlocks().get(emissiveBlockName);
-        ASSERT(emissiveBlockData !== undefined, 'No emissive block data found');
-        const blockIndex = this._voxelMesh.getVoxelIndex(pos);
-        ASSERT(blockIndex !== undefined, 'Setting emissive block of block that doesn\'t exist');
-        this._blocks[blockIndex].blockInfo = emissiveBlockData;
-    }
-
-    private _calculateLighting(lightThreshold: number) {
-        const blocksBounds = this._voxelMesh.getBounds();
-        const sizeVector = blocksBounds.getDimensions().add(1).add(2);
-
-        // Number of blocks to store lighting values for.
-        const numBlocks = sizeVector.x * sizeVector.y * sizeVector.z;
-        // Each block takes up 4-bits
-        const numBytes = Math.ceil(numBlocks * 0.5);
-        this._lightingNew = Buffer.alloc(numBytes);
-
-        this._posToLightingBufferIndex = (vec: Vector3) => {
-            const indexVector = Vector3.sub(vec, Vector3.sub(blocksBounds.min, 1));
-            const index = (sizeVector.z * sizeVector.x * indexVector.y) + (sizeVector.x * indexVector.z) + indexVector.x;
-            return {
-                index: Math.floor(index * 0.5),
-                left: index % 2 === 0,
-            };
-        };
-
-        this._posIsValid = (vec: Vector3) => {
-            const xValid = blocksBounds.min.x - 1 <= vec.x && vec.x <= blocksBounds.max.x + 1;
-            const yValid = blocksBounds.min.y - 1 <= vec.y && vec.y <= blocksBounds.max.y + 1;
-            const zValid = blocksBounds.min.z - 1 <= vec.z && vec.z <= blocksBounds.max.z + 1;
-            return xValid && yValid && zValid;
-        };
-
-        // Calculate the highest block in each column
-        const highestBlock = new Map<number, { height: number, x: number, z: number }>();
-        const updateHighest = (x: number, z: number, height: number) => {
-            const hash = new Vector3(x, 0, z).hash();
-            const currentHighest = highestBlock.get(hash)?.height ?? -Infinity;
-            if (height > currentHighest) {
-                highestBlock.set(hash, { height: height, x: x, z: z });
+    public setEmissiveBlock(pos: Vector3): boolean {
+        const voxel = this._voxelMesh.getVoxelAt(pos);
+        ASSERT(voxel !== undefined, 'Missing voxel');
+        const minError = Infinity;
+        let bestBlock: TAtlasBlock | undefined;
+        this._emissiveBlocks.forEach((emissiveBlockName) => {
+            const emissiveBlockData = this._atlas.getBlocks().get(emissiveBlockName);
+            if (emissiveBlockData) {
+                const error = RGBAUtil.squaredDistance(emissiveBlockData.colour, voxel.colour);
+                if (error < minError) {
+                    bestBlock = emissiveBlockData;
+                }
             }
-        };
-
-        this._blocks.forEach((block) => {
-            const thisHeight = block.voxel.position.y;
-            const north = new Vector3(1, 0, 0).add(block.voxel.position);
-            const south = new Vector3(-1, 0, 0).add(block.voxel.position);
-            const east = new Vector3(0, 0, 1).add(block.voxel.position);
-            const west = new Vector3(0, 0, -1).add(block.voxel.position);
-            updateHighest(block.voxel.position.x, block.voxel.position.z, thisHeight);
-            updateHighest(north.x, north.z, thisHeight);
-            updateHighest(south.x, south.z, thisHeight);
-            updateHighest(east.x, east.z, thisHeight);
-            updateHighest(west.x, west.z, thisHeight);
         });
 
+        if (bestBlock !== undefined) {
+            const blockIndex = this._voxelMesh.getVoxelIndex(pos);
+            ASSERT(blockIndex !== undefined, 'Setting emissive block of block that doesn\'t exist');
+            this._blocks[blockIndex].blockInfo = bestBlock;
 
-        // TODO: Cache stringify
-        const actions: LightAction[] = []; // = [{ pos: blocksBounds.min, value: 15 }];
-        // Add initial light emitters to top of mesh to simulate sunlight
-        highestBlock.forEach((value, key) => {
-            actions.push({
-                pos: new Vector3(value.x, value.height, value.z),
-                value: 15,
-            });
-        });
-
-        this._handleActionsList(actions);
-        ASSERT(actions.length === 0, 'Actions still remaining');
-
-        if (lightThreshold > 0) {
-            const blocksNeedAttention: Vector3[] = [];
-
-            this.getBlocks().forEach((block) => {
-                if (this._internalGetLight(block.voxel.position)! <= lightThreshold) {
-                    // TODO: Add additional requirement that the block must have a visible face
-                    // before being added to the list otherwise all blocks that are not visible
-                    // will be turned into an emissive block
-                    blocksNeedAttention.push(block.voxel.position);
-                }
-            });
-
-            while (blocksNeedAttention.length > 0) {
-                const blockPos = blocksNeedAttention.pop()!;
-
-                const currentLightLevel = this._internalGetLight(blockPos)!;
-                const newLightLevel = 14;
-
-                if (currentLightLevel < lightThreshold) {
-                    this._internalSetLight(blockPos, newLightLevel);
-                    this._setEmissiveBlock(blockPos);
-
-                    actions.push({ pos: new Vector3(0, 1, 0).add(blockPos), value: newLightLevel - 1 });
-                    actions.push({ pos: new Vector3(1, 0, 0).add(blockPos), value: newLightLevel - 1 });
-                    actions.push({ pos: new Vector3(0, 0, 1).add(blockPos), value: newLightLevel - 1 });
-                    actions.push({ pos: new Vector3(-1, 0, 0).add(blockPos), value: newLightLevel - 1 });
-                    actions.push({ pos: new Vector3(0, 0, -1).add(blockPos), value: newLightLevel - 1 });
-                    actions.push({ pos: new Vector3(0, -1, 0).add(blockPos), value: newLightLevel - 1 });
-                    // Assuming emissive block cannot be transparent!
-                }
-
-                this._handleActionsList(actions);
-                ASSERT(actions.length === 0, 'Actions still remaining');
-            }
+            return true;
         }
-    }
 
-    private _handleActionsList(actions: LightAction[]) {
-        while (actions.length > 0) {
-            const action = actions.pop()!;
-            let newLightValue = action.value;
-
-            if (!this._posIsValid(action.pos)) {
-                continue;
-            }
-            const currentLightValue = this._internalGetLight(action.pos) ?? 0;
-
-            // Update lighting values only if the new value is lighter than the current brightness.
-            const blockHere = this.getBlockAt(action.pos);
-            const isBlockHere = blockHere !== undefined;
-
-            if (isBlockHere) {
-                const isEmissiveBlock = this._emissiveBlocks.includes(blockHere.blockInfo.name);
-                const isTransparentBlock = this._transparentBlocks.includes(this.getBlockAt(action.pos)!.blockInfo.name);
-
-                if (isEmissiveBlock) {
-                    newLightValue = 14;
-                }
-
-                if (newLightValue > currentLightValue) {
-                    this._internalSetLight(action.pos, newLightValue);
-                    if (isEmissiveBlock || isTransparentBlock) {
-                        actions.push({ pos: new Vector3(0, 1, 0).add(action.pos), value: newLightValue - 1 });
-                        actions.push({ pos: new Vector3(1, 0, 0).add(action.pos), value: newLightValue - 1 });
-                        actions.push({ pos: new Vector3(0, 0, 1).add(action.pos), value: newLightValue - 1 });
-                        actions.push({ pos: new Vector3(-1, 0, 0).add(action.pos), value: newLightValue - 1 });
-                        actions.push({ pos: new Vector3(0, 0, -1).add(action.pos), value: newLightValue - 1 });
-                        actions.push({ pos: new Vector3(0, -1, 0).add(action.pos), value: isTransparentBlock ? newLightValue : newLightValue - 1 });
-                    }
-                }
-            } else {
-                if (newLightValue > currentLightValue) {
-                    this._internalSetLight(action.pos, newLightValue);
-                    actions.push({ pos: new Vector3(0, 1, 0).add(action.pos), value: newLightValue - 1 });
-                    actions.push({ pos: new Vector3(1, 0, 0).add(action.pos), value: newLightValue - 1 });
-                    actions.push({ pos: new Vector3(0, 0, 1).add(action.pos), value: newLightValue - 1 });
-                    actions.push({ pos: new Vector3(-1, 0, 0).add(action.pos), value: newLightValue - 1 });
-                    actions.push({ pos: new Vector3(0, 0, -1).add(action.pos), value: newLightValue - 1 });
-                    actions.push({ pos: new Vector3(0, -1, 0).add(action.pos), value: newLightValue === 15 ? 15 : newLightValue - 1 });
-                }
-            }
-        }
-    }
-
-    private _updateBlockLightLevel(pos: Vector3, value: number) {
-
+        throw new AppError('Block palette contains no light blocks to place');
     }
 
     public getBlockAt(pos: Vector3): TOptional<Block> {
@@ -365,6 +205,14 @@ export class BlockMesh {
 
     public getAtlas() {
         return this._atlas;
+    }
+
+    public isEmissiveBlock(block: Block) {
+        return this._emissiveBlocks.includes(block.blockInfo.name);
+    }
+
+    public isTransparentBlock(block: Block) {
+        return this._transparentBlocks.includes(block.blockInfo.name);
     }
 
     /*
