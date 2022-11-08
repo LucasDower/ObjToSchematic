@@ -4,11 +4,10 @@ import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 
 export class OcclusionManager {
-    private _occlusionNeighboursIndices!: Array<Array<Array<number>>>; // Ew
+    private _occlusionNeighboursIndices!: number[]; // Ew
     private _occlusions: number[];
     private _localNeighbourhoodCache: number[];
     private _occlusionsSetup: boolean;
-    private _faceNormals: Vector3[];
 
     private static _instance: OcclusionManager;
     public static get Get() {
@@ -20,7 +19,6 @@ export class OcclusionManager {
         this._setupOcclusions();
         this._occlusions = new Array<number>(6 * 4 * 4);
         this._localNeighbourhoodCache = Array<number>(27);
-        this._faceNormals = this.getFaceNormals();
     }
 
     public getBlankOcclusions() {
@@ -45,7 +43,7 @@ export class OcclusionManager {
                 let numNeighbours = 0;
                 let occlusionValue = 1.0;
                 for (let i = 0; i < 2; ++i) {
-                    const neighbourIndex = this._occlusionNeighboursIndices[f][v][i];
+                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, i)];
                     numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
                 }
                 // If both edge blocks along this vertex exist,
@@ -54,7 +52,7 @@ export class OcclusionManager {
                 if (numNeighbours == 2 && AppConfig.Get.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
                     ++numNeighbours;
                 } else {
-                    const neighbourIndex = this._occlusionNeighboursIndices[f][v][2];
+                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, 2)];
                     numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
                 }
 
@@ -64,9 +62,9 @@ export class OcclusionManager {
 
 
                 const baseIndex = f * 16 + v;
-                this._occlusions[baseIndex +  0] = occlusionValue;
-                this._occlusions[baseIndex +  4] = occlusionValue;
-                this._occlusions[baseIndex +  8] = occlusionValue;
+                this._occlusions[baseIndex + 0] = occlusionValue;
+                this._occlusions[baseIndex + 4] = occlusionValue;
+                this._occlusions[baseIndex + 8] = occlusionValue;
                 this._occlusions[baseIndex + 12] = occlusionValue;
             }
         }
@@ -74,16 +72,8 @@ export class OcclusionManager {
         return this._occlusions;
     }
 
-    public getFaceNormals() {
-        return [
-            new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
-            new Vector3(0, 1, 0), new Vector3(0, -1, 0),
-            new Vector3(0, 0, 1), new Vector3(0, 0, -1),
-        ];
-    }
-
     public static getNeighbourIndex(neighbour: Vector3) {
-        return 9*(neighbour.x+1) + 3*(neighbour.y+1) + (neighbour.z+1);
+        return 9 * (neighbour.x + 1) + 3 * (neighbour.y + 1) + (neighbour.z + 1);
     }
 
     private _setupOcclusions() {
@@ -141,15 +131,20 @@ export class OcclusionManager {
             ],
         ];
 
-        this._occlusionNeighboursIndices = new Array<Array<Array<number>>>();
+        this._occlusionNeighboursIndices = [];
         for (let i = 0; i < 6; ++i) {
-            const row = new Array<Array<number>>();
             for (let j = 0; j < 4; ++j) {
-                row.push(occlusionNeighbours[i][j].map((x) => OcclusionManager.getNeighbourIndex(x)));
+                for (let k = 0; k < 3; ++k) {
+                    const index = this._getOcclusionMapIndex(i, j, k);
+                    this._occlusionNeighboursIndices[index] = OcclusionManager.getNeighbourIndex(occlusionNeighbours[i][j][k]);
+                }
             }
-            this._occlusionNeighboursIndices.push(row);
         }
 
         this._occlusionsSetup = true;
+    }
+
+    private _getOcclusionMapIndex(faceIndex: number, vertexIndex: number, offsetIndex: number): number {
+        return (12 * faceIndex) + (3 * vertexIndex) + offsetIndex;
     }
 }
