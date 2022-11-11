@@ -29,7 +29,7 @@ export class PaletteManager {
 }
 
 export class Palette {
-    public static PALETTE_NAME_REGEX: RegExp = /^[a-zA-Z\-]+$/;
+    public static PALETTE_NAME_REGEX: RegExp = /^[a-zA-Z\- ]+$/;
     public static PALETTE_FILE_EXT: string = '.palette';
     private static _FILE_VERSION: number = 1;
 
