@@ -12,6 +12,7 @@ import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './me
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
+import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
 import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
@@ -227,7 +228,7 @@ export class AppContext {
         this._ui.disableAll();
     }
 
-    private _onMaterialTypeSwitched(materialName: string) {
+    public onMaterialTypeSwitched(materialName: string) {
         const oldMaterial = this._materialMap[materialName];
 
         if (oldMaterial.type == MaterialType.textured) {
@@ -253,7 +254,7 @@ export class AppContext {
         });
     }
 
-    private _onMaterialTextureReplace(materialName: string, newTexturePath: string) {
+    public onMaterialTextureReplace(materialName: string, newTexturePath: string) {
         const oldMaterial = this._materialMap[materialName];
         ASSERT(oldMaterial.type === MaterialType.textured);
 
@@ -271,7 +272,7 @@ export class AppContext {
         });
     }
 
-    private _onMaterialColourChanged(materialName: string, newColour: RGBA) {
+    public onMaterialColourChanged(materialName: string, newColour: RGBA) {
         ASSERT(this._materialMap[materialName].type === MaterialType.solid);
         const oldMaterial = this._materialMap[materialName] as TexturedMaterial;
         this._materialMap[materialName] = {
@@ -300,74 +301,16 @@ export class AppContext {
 
             const subTree = UITreeBuilder.create(material.edited ? `<i>'${materialName}'*</i>` : `'${materialName}'`);
             if (material.type === MaterialType.solid) {
-                const colourId = getRandomID();
-                subTree.addChild({ text: `Colour: <input class="colour-swatch" type="color" id="${colourId}" value="${RGBAUtil.toHexString(material.colour)}">`, warning: false }, () => {
-                    const tmp = document.getElementById(colourId) as HTMLInputElement;
-                    if (tmp) {
-                        tmp.addEventListener('change', () => {
-                            const newColour = RGBAUtil.fromHexString(tmp.value);
-                            this._onMaterialColourChanged(materialName, newColour);
-                        });
-                    }
-                });
+                const uiElement = new SolidMaterialUIElement(materialName, this, material);
 
-                if (material.canBeTextured) {
-                    // Add option to switch to texture material
-                    const switchId = getRandomID();
-                    subTree.addChild({ text: `<a id="${switchId}">[Switch to Texture]</a>`, warning: false }, () => {
-                        const tmp = document.getElementById(switchId) as HTMLLinkElement;
-                        tmp.onclick = () => {
-                            this._onMaterialTypeSwitched(materialName);
-                        };
-                    });
-                }
+                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
+                    uiElement.registerEvents();
+                });
             } else {
-                const parsedPath = path.parse(material.path);
-                const dirId = getRandomID();
-                const replaceId = getRandomID();
-                const switchId = getRandomID();
+                const uiElement = new TextureMaterialUIElement(materialName, this, material);
 
-                const isMissingTexture = parsedPath.base === 'debug.png';
-                if (!isMissingTexture) {
-                    subTree.addChild({ text: `Texture: <a id="${dirId}">${parsedPath.base}</a>`, warning: false }, () => {
-                        const tmp = document.getElementById(dirId) as HTMLLinkElement;
-                        if (tmp) {
-                            tmp.onclick = () => {
-                                FileUtil.openDir(material.path);
-                            };
-                        }
-                    });
-                } else {
-                    subTree.addChild({ text: `Texture: Missing`, warning: true });
-                }
-
-                // Add option to replace texture
-                const text = isMissingTexture ? `<b><a id="${replaceId}">[Find Texture]</a></b>` : `<a id="${replaceId}">[Replace Texture]</a>`;
-                subTree.addChild({ text: text, warning: false }, () => {
-                    const tmp = document.getElementById(replaceId) as HTMLLinkElement;
-                    if (tmp) {
-                        tmp.onclick = () => {
-                            const files = remote.dialog.showOpenDialogSync({
-                                title: 'Load',
-                                buttonLabel: 'Load',
-                                filters: [{
-                                    name: 'Images',
-                                    extensions: ['png', 'jpeg', 'jpg'],
-                                }],
-                            });
-                            if (files && files[0]) {
-                                this._onMaterialTextureReplace(materialName, files[0]);
-                            }
-                        };
-                    }
-                });
-
-                // Add option to switch to colour material
-                subTree.addChild({ text: `<a id="${switchId}">[Switch to Colour]</a>`, warning: false }, () => {
-                    const tmp = document.getElementById(switchId) as HTMLLinkElement;
-                    tmp.onclick = () => {
-                        this._onMaterialTypeSwitched(materialName);
-                    };
+                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
+                    uiElement.registerEvents();
                 });
             }
 

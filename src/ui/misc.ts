@@ -11,7 +11,7 @@ interface IUIOutputElement {
 
 export class UITreeBuilder implements IUIOutputElement {
     private _rootLabel: string;
-    private _children: Array<{ text: string, warning: boolean } | UITreeBuilder>;
+    private _children: Array<{ html: string, warning: boolean } | UITreeBuilder>;
     private _postBuildDelegates: Array<() => void>;
     private _warning: boolean;
 
@@ -50,7 +50,7 @@ export class UITreeBuilder implements IUIOutputElement {
         return false;
     }
 
-    public addChild(child: { text: string, warning: boolean } | UITreeBuilder, postBuildDelegate?: () => void) {
+    public addChild(child: { html: string, warning: boolean } | UITreeBuilder, postBuildDelegate?: () => void) {
         this._children.push(child);
         if (postBuildDelegate !== undefined) {
             this._postBuildDelegates.push(postBuildDelegate);
@@ -73,7 +73,7 @@ export class UITreeBuilder implements IUIOutputElement {
             if (child instanceof UITreeBuilder) {
                 childrenHTML += child.buildHTML();
             } else {
-                childrenHTML += child.warning ? `<p style="margin:0px; color:orange;">${child.text}</p>` : child.text;
+                childrenHTML += child.warning ? `<p style="margin:0px; color:orange;">${child.html}</p>` : child.html;
             }
             childrenHTML += '<li>';
         });

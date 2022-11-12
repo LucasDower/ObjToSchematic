@@ -660,14 +660,40 @@ a:hover {
 }
 
 .colour-swatch {
-  border: none;
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
   background: none;
+  width: 75%;
+  margin: 0px;
+  padding: 0px;
+}
+.colour-swatch-hover {
+  border-color: var(--text-standard) !important;
 }
 
+.colour-swatch::-webkit-color-swatch-wrapper {
+  border: none;
+  margin: 0px;
+  padding: 0px;
+}
 .colour-swatch::-webkit-color-swatch {
   border: none;
-  border-radius: 15px;
+  margin: 0px;
+  padding: 0px;
+  border-radius: 5px;
+}
+
+.texture-preview {
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
+}
+.texture-preview-missing {
+  border-color: orange !important;
+}
+
+.texture-hover {
+  border-color: var(--text-standard) !important;
 }
