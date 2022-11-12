@@ -181,6 +181,8 @@ export class Renderer {
                 material: {
                     type: MaterialType.textured,
                     path: material.path,
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
                     texture: twgl.createTexture(this._gl, {
                         src: material.path,
                         mag: this._gl.LINEAR,
@@ -204,6 +206,8 @@ export class Renderer {
                 buffer.material = {
                     type: MaterialType.textured,
                     path: material.path,
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
                     texture: twgl.createTexture(this._gl, {
                         src: material.path,
                         mag: this._gl.LINEAR,
@@ -236,6 +240,8 @@ export class Renderer {
                 this._materialBuffers.set(materialName, {
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: {
+                        edited: material.edited,
+                        canBeTextured: material.canBeTextured,
                         type: MaterialType.textured,
                         path: material.path,
                         texture: twgl.createTexture(this._gl, {

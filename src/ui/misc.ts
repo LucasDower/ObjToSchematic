@@ -80,8 +80,8 @@ export class UITreeBuilder implements IUIOutputElement {
 
         if (this.getWarning()) {
             return `
-                <span class="caret" style="color:orange;" >${this._rootLabel}</span>
-                <ul class="nested">${childrenHTML}</ul>
+                <span class="caret caret-down" style="color:orange;" >${this._rootLabel}</span>
+                <ul class="nested active">${childrenHTML}</ul>
             `;
         } else {
             return `
@@ -170,7 +170,7 @@ export class UIMessageBuilder {
         this._messages.push({
             groupId: groupId, body: `
             <div style="display: flex; align-items: center; color: var(--text-standard)">
-                <div style="margin-right: 8px;" class="loader-circle spin"></div> 
+                <div style="margin-right: 8px;" class="loader-circle spin"></div>
                 <b class="spin">${message}</b>
             </div>
         `});

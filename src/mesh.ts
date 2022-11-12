@@ -28,8 +28,13 @@ export interface Tri {
 /* eslint-disable */
 export enum MaterialType { solid, textured }
 /* eslint-enable */
-export interface SolidMaterial { colour: RGBA; type: MaterialType.solid }
-export interface TexturedMaterial {
+type BaseMaterial = {
+    edited: boolean,
+    canBeTextured: boolean,
+}
+
+export type SolidMaterial = BaseMaterial & { colour: RGBA; type: MaterialType.solid }
+export type TexturedMaterial = BaseMaterial & {
     path: string;
     type: MaterialType.textured;
     alphaPath?: string;
@@ -146,9 +151,6 @@ export class Mesh {
         }
 
         // Check used materials exist
-        let wasRemapped = false;
-        const debugName = (Math.random() + 1).toString(36).substring(7);
-
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
             if (!(tri.material in this._materials)) {
@@ -157,27 +159,28 @@ export class Mesh {
 
                 if (tri.texcoordIndices === undefined) {
                     // No texcoords are defined, therefore make a solid material
-                    this._materials[tri.material] = { type: MaterialType.solid, colour: RGBAColours.MAGENTA };
+                    this._materials[tri.material] = {
+                        type: MaterialType.solid,
+                        colour: RGBAColours.MAGENTA,
+                        edited: true,
+                        canBeTextured: false,
+                    };
                 } else {
                     // Texcoords exist, therefore make a texture material
-                    this._materials[tri.material] = { type: MaterialType.textured, path: PathUtil.join(AppPaths.Get.static, 'debug.png'), alphaFactor: 1.0 };
+                    this._materials[tri.material] = {
+                        type: MaterialType.textured,
+                        path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
+                        alphaFactor: 1.0,
+                        edited: true,
+                        canBeTextured: true,
+                    };
                 }
 
                 missingMaterials.add(tri.material);
-                wasRemapped = true;
-                tri.material = debugName;
             }
         }
-        if (wasRemapped) {
+        if (missingMaterials.size > 0) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            //StatusHandler.Get.add(
-            //    'warning',
-            //    'Some materials were not loaded correctly',
-            //);
-            this._materials[debugName] = {
-                type: MaterialType.solid,
-                colour: RGBAColours.WHITE,
-            };
         }
 
         // Check texture paths are absolute and exist
@@ -194,6 +197,8 @@ export class Mesh {
                     this._materials[materialName] = {
                         type: MaterialType.solid,
                         colour: RGBAColours.WHITE,
+                        edited: true,
+                        canBeTextured: true,
                     };
                 }
             }
@@ -365,6 +370,8 @@ export class Mesh {
                 materials[materialName] = {
                     type: MaterialType.solid,
                     colour: RGBAUtil.copy(material.colour),
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
                 };
             } else {
                 materials[materialName] = {
@@ -372,6 +379,8 @@ export class Mesh {
                     alphaFactor: material.alphaFactor,
                     alphaPath: material.alphaPath,
                     path: material.path,
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
                 };
             };
         }

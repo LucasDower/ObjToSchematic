@@ -658,3 +658,16 @@ a {
 a:hover {
   color: var(--text-standard) !important;
 }
+
+.colour-swatch {
+  border: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+}
+
+.colour-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 15px;
+}
