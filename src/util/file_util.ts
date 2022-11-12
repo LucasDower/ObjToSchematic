@@ -16,6 +16,9 @@ export namespace FileUtil {
         switch (process.platform) {
             case 'darwin':
                 child.exec(`open -R ${absolutePath}`);
+                break;
+            case 'win32':
+                child.exec(`explorer /select,"${absolutePath}"`);
         }
     }
 }

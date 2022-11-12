@@ -3,12 +3,12 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
-import { RGBAUtil } from './colour';
+import { RGBAColours, RGBAUtil, RGBA } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
-import { MaterialMap, MaterialType, TexturedMaterial } from './mesh';
+import { MaterialMap, MaterialType, TexturedMaterial, SolidMaterial } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
@@ -20,7 +20,7 @@ import { ASSERT } from './util/error_util';
 import { FileUtil } from './util/file_util';
 import { LOG, LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
-import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
     private _ui: UI;
@@ -202,17 +202,7 @@ export class AppContext {
         return { id: 'Import', payload: payload, callback: callback };
     }
 
-    private _onMaterialTextureReplace(materialName: string, newTexturePath: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: newTexturePath,
-        };
-
+    private _sendMaterialsToWorker(callback: (result: SetMaterialsParams.Output) => void) {
         const payload: TToWorkerMessage = {
             action: 'SetMaterials',
             params: {
@@ -227,13 +217,57 @@ export class AppContext {
                 // TODO: Check the action didn't fail
                 this._materialMap = result.result.materials;
                 this._onMaterialMapChanged();
-                Renderer.Get.updateMeshMaterialTexture(materialName, result.result.materials[materialName] as TexturedMaterial);
                 this._ui.enableTo(EAction.Voxelise);
+                callback(result.result);
             },
         };
 
         this._workerController.addJob(job);
         this._ui.disableAll();
+    }
+
+    private _onMaterialTypeSwitched(materialName: string) {
+        const oldMaterial = this._materialMap[materialName];
+
+        if (oldMaterial.type == MaterialType.textured) {
+            this._materialMap[materialName] = {
+                type: MaterialType.solid,
+                colour: RGBAUtil.copy(RGBAColours.WHITE),
+            };
+        }
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            // TODO: Check the action didn't fail
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
+        });
+    }
+
+    private _onMaterialTextureReplace(materialName: string, newTexturePath: string) {
+        const oldMaterial = this._materialMap[materialName];
+        ASSERT(oldMaterial.type === MaterialType.textured);
+
+        this._materialMap[materialName] = {
+            type: MaterialType.textured,
+            alphaFactor: oldMaterial.alphaFactor,
+            alphaPath: oldMaterial.alphaPath,
+            path: newTexturePath,
+        };
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            Renderer.Get.updateMeshMaterialTexture(materialName, result.materials[materialName] as TexturedMaterial);
+        });
+    }
+
+    private _onMaterialColourChanged(materialName: string, newColour: RGBA) {
+        ASSERT(this._materialMap[materialName].type === MaterialType.solid);
+        this._materialMap[materialName] = {
+            type: MaterialType.solid,
+            colour: newColour,
+        };
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName] as SolidMaterial);
+        });
     }
 
     private _onMaterialMapChanged() {
@@ -250,21 +284,41 @@ export class AppContext {
 
             const subTree = UITreeBuilder.create(materialName);
             if (material.type === MaterialType.solid) {
-                subTree.addChild({ text: `Colour: ${RGBAUtil.toUint8String(material.colour)}`, warning: false });
+                const colourId = getRandomID();
+                subTree.addChild({ text: `Colour: <input type="color" id="${colourId}" value="${RGBAUtil.toHexString(material.colour)}">`, warning: false }, () => {
+                    const tmp = document.getElementById(colourId) as HTMLInputElement;
+                    if (tmp) {
+                        tmp.addEventListener('change', () => {
+                            const newColour = RGBAUtil.fromHexString(tmp.value);
+                            this._onMaterialColourChanged(materialName, newColour);
+                        });
+                    }
+                });
             } else {
                 const parsedPath = path.parse(material.path);
                 const dirId = getRandomID();
                 const replaceId = getRandomID();
+                const switchId = getRandomID();
 
-                if (parsedPath.base !== 'debug.png') {
-                    subTree.addChild({ text: `Texture: <a id="${dirId}">${parsedPath.base}</a> <a id="${replaceId}">[Replace]</a>`, warning: false }, () => {
+                const isMissingTexture = parsedPath.base === 'debug.png';
+                if (!isMissingTexture) {
+                    subTree.addChild({ text: `Texture: <a id="${dirId}">${parsedPath.base}</a>`, warning: false }, () => {
                         const tmp = document.getElementById(dirId) as HTMLLinkElement;
-                        tmp.onclick = () => {
-                            FileUtil.openDir(material.path);
-                        };
+                        if (tmp) {
+                            tmp.onclick = () => {
+                                FileUtil.openDir(material.path);
+                            };
+                        }
+                    });
+                } else {
+                    subTree.addChild({ text: `Texture: Missing`, warning: true });
+                }
 
-                        const tmp2 = document.getElementById(replaceId) as HTMLLinkElement;
-                        tmp2.onclick = () => {
+                // Add option to replace texture
+                subTree.addChild({ text: `<a id="${replaceId}">[${isMissingTexture ? 'Find' : 'Replace' } Texture]</a>`, warning: false }, () => {
+                    const tmp = document.getElementById(replaceId) as HTMLLinkElement;
+                    if (tmp) {
+                        tmp.onclick = () => {
                             const files = remote.dialog.showOpenDialogSync({
                                 title: 'Load',
                                 buttonLabel: 'Load',
@@ -277,25 +331,16 @@ export class AppContext {
                                 this._onMaterialTextureReplace(materialName, files[0]);
                             }
                         };
-                    });
-                } else {
-                    subTree.addChild({ text: `Texture: MISSING <a id="${replaceId}">[Find]</a>`, warning: true }, () => {
-                        const tmp = document.getElementById(replaceId) as HTMLLinkElement;
-                        tmp.onclick = () => {
-                            const files = remote.dialog.showOpenDialogSync({
-                                title: 'Load ',
-                                buttonLabel: 'Load',
-                                filters: [{
-                                    name: 'Images',
-                                    extensions: ['png', 'jpeg', 'jpg'],
-                                }],
-                            });
-                            if (files && files[0]) {
-                                this._onMaterialTextureReplace(materialName, files[0]);
-                            }
-                        };
-                    });
-                }
+                    }
+                });
+
+                // Add option to switch to colour material
+                subTree.addChild({ text: `<a id="${switchId}">[Switch to Colour]</a>`, warning: false }, () => {
+                    const tmp = document.getElementById(switchId) as HTMLLinkElement;
+                    tmp.onclick = () => {
+                        this._onMaterialTypeSwitched(materialName);
+                    };
+                });
             }
 
             tree.addChild(subTree);

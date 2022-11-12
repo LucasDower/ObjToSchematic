@@ -12,6 +12,19 @@ export namespace RGBAUtil {
         return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
     }
 
+    export function toHexString(a: RGBA) {
+        return `#${Math.floor(255 * a.r).toString(16)}${Math.floor(255 * a.g).toString(16)}${Math.floor(255 * a.b).toString(16)}`;
+    }
+
+    export function fromHexString(str: string) {
+        return {
+            r: parseInt(str.substring(1, 3), 16) / 255,
+            g: parseInt(str.substring(3, 5), 16) / 255,
+            b: parseInt(str.substring(5, 7), 16) / 255,
+            a: 1.0,
+        };
+    }
+
     export function toUint8String(a: RGBA) {
         return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
     }
