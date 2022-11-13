@@ -1,7 +1,7 @@
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
+import { LOG, LOGF } from './util/log_util';
 import { doWork } from './worker';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -33,6 +33,7 @@ export class WorkerController {
             LOG('[WorkerController]: Job already queued with ID', newJob.id);
             return false;
         }
+        LOGF(`[WorkerController]: Queuing '${newJob.id}'`);
 
         this._jobQueue.push(newJob);
         this._tryStartNextJob();
@@ -98,8 +99,7 @@ export class WorkerController {
         }
 
         if (!this._timerOn) {
-            LOG(`[WorkerController]: Starting Job '${this._jobPending.id}' (${this._jobQueue.length} remaining)`);
-            LOG(`[WorkerController]: ${JSON.stringify(this._jobPending.payload, null, 4)}`);
+            LOG(`[WorkerController]: Starting '${this._jobPending.id}' (${this._jobQueue.length} remaining) ${JSON.stringify(this._jobPending.payload, null, 4)}`);
             this._jobStartTime = Date.now();
             this._timerOn = true;
         }

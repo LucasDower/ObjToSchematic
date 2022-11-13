@@ -71,7 +71,7 @@ export class SliderElement extends ConfigElement<number, HTMLDivElement> {
         return `
             <div style="display: flex; flex-direction: row;">
                 <div class="slider-value" id="${this._getSliderValueId()}">
-                    ${this.getValue()}
+                    ${this.getValue().toFixed(this._decimals)}
                 </div>
                 <div class="new-slider" id="${this._getId()}" style="flex-grow: 1;">
                     <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
@@ -159,12 +159,11 @@ export class SliderElement extends ConfigElement<number, HTMLDivElement> {
 
     private _onInternalValueUpdated() {
         const displayString = this._internalValue!.toFixed(this._decimals);
+        this._setValue(parseFloat(displayString));
 
         const norm = wayThrough(this._internalValue!, this._min, this._max);
         UIUtil.getElementById(this._getSliderBarId()).style.width = `${norm * 100}%`;
         UIUtil.getElementById(this._getSliderValueId()).innerHTML = this.getValue().toFixed(this._decimals);
-
-        this._setValue(parseFloat(displayString));
     }
 
     protected _onEnabledChanged() {

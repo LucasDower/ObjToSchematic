@@ -1,3 +1,4 @@
+import { AppConfig } from './config';
 export namespace AppUtil {
     export namespace Text {
         export function capitaliseFirstLetter(text: string) {
@@ -54,4 +55,24 @@ export type TOptional<T> = T | undefined;
 
 export function getRandomID(): string {
     return (Math.random() + 1).toString(36).substring(7);
+}
+
+export function getVersionDetails(): string {
+    if (!AppConfig.Get.RELEASE_MODE) {
+        try {
+            const branchName: Buffer = require('child_process')
+                .execSync('git rev-parse --abbrev-ref HEAD')
+                .toString()
+                .replace('\n', '');
+
+            const commitHash: (string | Buffer) = require('child_process')
+                .execSync('git rev-parse --short HEAD')
+                .toString()
+                .replace('\n', '');
+
+            return `${AppConfig.Get.RELEASE_VERSION} git ${branchName.toString()} ${commitHash.toString().trim()}`;
+        } catch (e: any) {
+        }
+    }
+    return AppConfig.Get.RELEASE_VERSION;
 }

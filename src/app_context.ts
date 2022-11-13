@@ -14,7 +14,7 @@ import { TextureFiltering } from './texture';
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
-import { ColourSpace, EAction } from './util';
+import { ColourSpace, EAction, getVersionDetails } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
@@ -30,7 +30,7 @@ export class AppContext {
 
     public constructor() {
         this._clientReady = false;
-        this._workerReady = false;
+        this._workerReady = !AppConfig.Get.USE_WORKER_THREAD;
         this._hasInit = false;
 
         Logger.Get.enableLogToFile();
@@ -63,6 +63,8 @@ export class AppContext {
         ArcballCamera.Get.toggleAngleSnap();
 
         EventManager.Get.add(EAppEvent.onLocaliserReady, () => {
+            remote.getCurrentWindow().setTitle(`ObjToSchematic - ${LOC.t('common.subtitle')} (${getVersionDetails()})`);
+
             this._clientReady = true;
             this._init();
         });

@@ -8,7 +8,7 @@ void async function main() {
     Logger.Get.enableLogToFile();
     Logger.Get.initLogFile('headless');
 
-    runHeadless(headlessConfig);
+    await runHeadless(headlessConfig);
 
     LOG_MAJOR('\nFinished!');
 }();

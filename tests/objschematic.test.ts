@@ -35,7 +35,7 @@ const baseConfig: THeadlessConfig = {
     },
 };
 
-test('FULL Obj->Schematic', () => {
+test('FULL Obj->Schematic', async () => {
     TEST_PREAMBLE();
 
     const config: THeadlessConfig = baseConfig;
@@ -44,5 +44,5 @@ test('FULL Obj->Schematic', () => {
     config.export.exporter = 'schematic';
     config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/out.schematic');
 
-    runHeadless(config);
+    await runHeadless(config);
 });

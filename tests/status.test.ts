@@ -1,4 +1,5 @@
 import { StatusHandler } from '../src/status';
+import { TLocString } from '../src/util/type_util';
 import { TEST_PREAMBLE } from './preamble';
 
 test('Status', () => {
@@ -6,7 +7,7 @@ test('Status', () => {
 
     StatusHandler.Get.add(
         'warning',
-        'This is a warning',
+        'This is a warning' as TLocString,
     );
     expect(StatusHandler.Get.getStatusMessages('warning').length).toBe(1);
     StatusHandler.Get.clear();
@@ -18,15 +19,15 @@ test('Status', () => {
 
     StatusHandler.Get.add(
         'warning',
-        'This is a warning',
+        'This is a warning' as TLocString,
     );
     StatusHandler.Get.add(
         'info',
-        'This is some info',
+        'This is some info' as TLocString,
     );
     StatusHandler.Get.add(
         'info',
-        'This is some more info',
+        'This is some more info' as TLocString,
     );
     expect(StatusHandler.Get.getStatusMessages('info').length).toBe(2);
     expect(StatusHandler.Get.getStatusMessages('warning').length).toBe(1);

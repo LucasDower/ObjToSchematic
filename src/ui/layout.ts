@@ -12,7 +12,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
-import { TTextureFiltering, TToggle } from '../util/type_util';
+import { TLocString, TTextureFiltering, TToggle } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base_element';
@@ -68,56 +68,56 @@ export class UI {
                     .setLabel(LOC.t('common.height')),
                 'voxeliser': new ComboBoxElement<TVoxelisers>()
                     .addItems([{
-                        displayText: 'BVH Ray-based',
+                        displayText: LOC.t('common.bounding_volume_hierarchy_ray_based'),
                         payload: 'bvh-ray',
                     },
                     {
-                        displayText: 'NCRB',
+                        displayText: LOC.t('common.normal_corrected_ray_based'),
                         payload: 'ncrb',
                     },
                     {
-                        displayText: 'Ray-based (legacy)',
+                        displayText: LOC.t('common.ray_based'),
                         payload: 'ray-based',
                     }])
                     .setLabel(LOC.t('common.algorithm')),
                 'ambientOcclusion': new ComboBoxElement<TToggle>()
                     .addItems([{
-                        displayText: 'On (recommended)',
+                        displayText: LOC.t('common.on_recommended'),
                         payload: 'on',
                     },
                     {
-                        displayText: 'Off (faster)',
+                        displayText: LOC.t('common.off_faster'),
                         payload: 'off',
                     }])
                     .setLabel(LOC.t('common.ambient_occlusion')),
                 'multisampleColouring': new ComboBoxElement<TToggle>()
                     .addItems([{
-                        displayText: 'On (recommended)',
+                        displayText: LOC.t('common.on_recommended'),
                         payload: 'on',
                     },
                     {
-                        displayText: 'Off (faster',
+                        displayText: LOC.t('common.off_faster'),
                         payload: 'off',
                     }])
                     .setLabel(LOC.t('common.multisampling')),
                 'textureFiltering': new ComboBoxElement<TTextureFiltering>()
                     .addItems([{
-                        displayText: 'Linear (recommended)',
+                        displayText: LOC.t('common.linear_recommended'),
                         payload: 'linear',
                     },
                     {
-                        displayText: 'Nearest (faster)',
+                        displayText: LOC.t('common.nearest_faster'),
                         payload: 'nearest',
                     }])
                     .setLabel(LOC.t('common.texture_filtering')),
                 'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>()
                     .addItems([{
-                        displayText: 'Average (recommended)',
+                        displayText: LOC.t('common.average_recommended'),
                         payload: 'average',
                         tooltip: 'If multiple voxels are placed in the same location, take the average of their colours',
                     },
                     {
-                        displayText: 'First',
+                        displayText: LOC.t('common.first'),
                         payload: 'first',
                         tooltip: 'If multiple voxels are placed in the same location, use the first voxel\'s colour',
                     }])
@@ -149,31 +149,31 @@ export class UI {
                     .setLabel(LOC.t('common.block_palette')),
                 'dithering': new ComboBoxElement<TBlockAssigners>()
                     .addItems([{
-                        displayText: 'Ordered',
+                        displayText: LOC.t('common.ordered'),
                         payload: 'ordered-dithering',
                     },
                     {
-                        displayText: 'Random',
+                        displayText: LOC.t('common.random'),
                         payload: 'random-dithering',
                     },
                     {
-                        displayText: 'Off',
+                        displayText: LOC.t('common.off'),
                         payload: 'basic',
                     }])
                     .setLabel(LOC.t('common.dithering')),
                 'fallable': new ComboBoxElement<TFallableBehaviour>()
                     .addItems([{
-                        displayText: 'Replace falling with solid',
+                        displayText: LOC.t('common.replace_falling_with_solid'),
                         payload: 'replace-falling',
                         tooltip: 'Replace all blocks that can fall with solid blocks',
                     },
                     {
-                        displayText: 'Replace fallable with solid',
+                        displayText: LOC.t('common.replace_fallable_with_solid'),
                         payload: 'replace-fallable',
                         tooltip: 'Replace all blocks that will fall with solid blocks',
                     },
                     {
-                        displayText: 'Do nothing',
+                        displayText: LOC.t('common.do_nothing'),
                         payload: 'do-nothing',
                         tooltip: 'Let the block fall',
                     }])
@@ -181,7 +181,7 @@ export class UI {
                 'colourAccuracy': new SliderElement()
                     .setMin(1)
                     .setMax(8)
-                    .setDefaultValue(8)
+                    .setDefaultValue(5)
                     .setDecimals(1)
                     .setStep(0.1)
                     .setLabel(LOC.t('common.colour_accuracy')),
@@ -200,23 +200,23 @@ export class UI {
                 'export': new ComboBoxElement<TExporters>()
                     .addItems([
                         {
-                            displayText: 'Litematic (.litematic)',
+                            displayText: LOC.t('common.exporter_litematic'),
                             payload: 'litematic',
                         },
                         {
-                            displayText: 'Schematic (.schematic)',
+                            displayText: LOC.t('common.exporter_schematic'),
                             payload: 'schematic',
                         },
                         {
-                            displayText: 'Wavefront OBJ (.obj)',
+                            displayText: LOC.t('common.exporter_wavefront_obj'),
                             payload: 'obj',
                         },
                         {
-                            displayText: 'Sponge Schematic (.schem)',
+                            displayText: LOC.t('common.exporter_sponge_schematic'),
                             payload: 'schem',
                         },
                         {
-                            displayText: 'Structure blocks (.nbt)',
+                            displayText: LOC.t('common.exporter_structure_blocks'),
                             payload: 'nbt',
                         },
                     ])
@@ -607,7 +607,7 @@ export class UI {
                 paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
                 textureAtlases.push({
                     payload: paletteID,
-                    displayText: paletteName,
+                    displayText: paletteName as TLocString,
                 });
             }
         });
@@ -622,7 +622,7 @@ export class UI {
         for (const palette of palettes) {
             blockPalettes.push({
                 payload: palette.paletteID,
-                displayText: palette.paletteDisplayName,
+                displayText: palette.paletteDisplayName as TLocString,
             });
         }
 

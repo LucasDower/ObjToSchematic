@@ -35,7 +35,7 @@ const baseConfig: THeadlessConfig = {
     },
 };
 
-test('FULL Obj->Obj', () => {
+test('FULL Obj->Obj', async () => {
     TEST_PREAMBLE();
 
     const config: THeadlessConfig = baseConfig;
@@ -44,5 +44,5 @@ test('FULL Obj->Obj', () => {
     config.export.exporter = 'litematic';
     config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/out.litematic');
 
-    runHeadless(config);
+    await runHeadless(config);
 });

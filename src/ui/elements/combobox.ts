@@ -1,9 +1,10 @@
 import { ASSERT } from '../../util/error_util';
+import { TLocString } from '../../util/type_util';
 import { ConfigElement } from './config_element';
 
 export type ComboBoxItem<T> = {
     payload: T;
-    displayText: string; // TODO: Should be TLocString
+    displayText: TLocString;
     tooltip?: string;
 }
 
