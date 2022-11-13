@@ -1,5 +1,6 @@
 import { BlockMesh } from './block_mesh';
 import { ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 import { Vector3Hash } from './util/type_util';
 import { Vector3 } from './vector';
 
@@ -9,13 +10,20 @@ export type TLightUpdate = TLightLevel & { pos: Vector3 };
 export class BlockMeshLighting {
     private _owner: BlockMesh;
 
+    private _limits: Map<number, { x: number, z: number, minY: number, maxY: number }>;
     private _sunLightValues: Map<Vector3Hash, number>;
     private _blockLightValues: Map<Vector3Hash, number>;
+    private _updates: number;
+    private _skips: number;
 
     public constructor(owner: BlockMesh) {
         this._owner = owner;
         this._sunLightValues = new Map();
         this._blockLightValues = new Map();
+        this._limits = new Map();
+
+        this._updates = 0;
+        this._skips = 0;
     }
 
     public getLightLevel(vec: Vector3): TLightLevel {
@@ -73,22 +81,46 @@ export class BlockMeshLighting {
         }
     }
 
-    public addSunLightValues() {
-        // Calculate the highest block in each column.
-        const plane = new Map<number, { x: number, z: number }>();
+    private _calculateLimits() {
+        this._limits.clear();
+
+        const updateLimit = (pos: Vector3) => {
+            const key = pos.copy();
+            key.y = 0;
+
+            const blockLimit = this._limits.get(key.hash());
+            if (blockLimit !== undefined) {
+                blockLimit.maxY = Math.max(blockLimit.maxY, pos.y);
+                blockLimit.minY = Math.min(blockLimit.minY, pos.y);
+            } else {
+                this._limits.set(key.hash(), {
+                    x: pos.x,
+                    z: pos.z,
+                    minY: pos.y,
+                    maxY: pos.y,
+                });
+            }
+        };
+
         this._owner.getBlocks().forEach((block) => {
-            const pos = block.voxel.position.copy();
-            pos.y = 0;
-            plane.set(pos.hash(), pos);
+            updateLimit(block.voxel.position);
+            updateLimit(new Vector3(1, 0, 0).add(block.voxel.position));
+            updateLimit(new Vector3(-1, 0, 0).add(block.voxel.position));
+            updateLimit(new Vector3(0, 0, 1).add(block.voxel.position));
+            updateLimit(new Vector3(0, 0, -1).add(block.voxel.position));
         });
+    }
 
-        const maxHeight = this._owner.getVoxelMesh().getBounds().max.y;
+    public init() {
+        this._calculateLimits();
+    }
 
+    public addSunLightValues() {
         // Actually commit the light level changes.
         const updates: TLightUpdate[] = [];
-        plane.forEach((value, key) => {
+        this._limits.forEach((limit, key) => {
             updates.push({
-                pos: new Vector3(value.x, maxHeight, value.z),
+                pos: new Vector3(0, 1, 0).add(new Vector3(limit.x, limit.maxY, limit.z)),
                 sunLightValue: 15,
                 blockLightValue: 0,
             });
@@ -120,19 +152,19 @@ export class BlockMeshLighting {
      */
     private _handleUpdates(updates: TLightUpdate[]) {
         while (updates.length > 0) {
+            this._updates += 1;
             const update = updates.pop()!;
 
             // Only update light values inside the bounds of the block mesh.
             // Values outside the bounds are assumed to have sunLightValue of 15
             // and blockLightValue of 0.
             if (!this._isPosValid(update.pos)) {
+                this._skips += 1;
                 continue;
             }
             const current = this.getLightLevel(update.pos);
             const toSet: TLightLevel = { sunLightValue: current.sunLightValue, blockLightValue: current.blockLightValue };
 
-            const blockHere = this._owner.getBlockAt(update.pos);
-            const isBlockHere = blockHere !== undefined;
             const hash = update.pos.hash();
 
             // Update sunLight value
@@ -146,6 +178,9 @@ export class BlockMeshLighting {
                 toSet.blockLightValue = update.blockLightValue;
                 this._blockLightValues.set(hash, toSet.blockLightValue);
             }
+
+            const blockHere = this._owner.getBlockAt(update.pos);
+            const isBlockHere = blockHere !== undefined;
 
             const shouldPropagate = isBlockHere ?
                 this._owner.isTransparentBlock(blockHere) :
@@ -161,11 +196,11 @@ export class BlockMeshLighting {
                         sunLightValue: toSet.sunLightValue - 1,
                         blockLightValue: toSet.blockLightValue - 1,
                     };
-                    updates.push({ pos: new Vector3(0, 1, 0).add(update.pos), ...attenuated });
-                    updates.push({ pos: new Vector3(1, 0, 0).add(update.pos), ...attenuated });
-                    updates.push({ pos: new Vector3(0, 0, 1).add(update.pos), ...attenuated });
-                    updates.push({ pos: new Vector3(-1, 0, 0).add(update.pos), ...attenuated });
-                    updates.push({ pos: new Vector3(0, 0, -1).add(update.pos), ...attenuated });
+                    updates.push({ pos: new Vector3(0, 1, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
+                    updates.push({ pos: new Vector3(1, 0, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
+                    updates.push({ pos: new Vector3(0, 0, 1).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
+                    updates.push({ pos: new Vector3(-1, 0, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
+                    updates.push({ pos: new Vector3(0, 0, -1).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
                     updates.push({ pos: new Vector3(0, -1, 0).add(update.pos), sunLightValue: toSet.sunLightValue === 15 ? 15 : toSet.sunLightValue - 1, blockLightValue: toSet.blockLightValue - 1 });
                 }
             }
@@ -173,10 +208,18 @@ export class BlockMeshLighting {
     }
 
     private _isPosValid(vec: Vector3) {
-        const blocksBounds = this._owner.getVoxelMesh().getBounds(); // TODO: Cache
-        const xValid = blocksBounds.min.x - 1 <= vec.x && vec.x <= blocksBounds.max.x + 1;
-        const yValid = blocksBounds.min.y - 1 <= vec.y && vec.y <= blocksBounds.max.y + 1;
-        const zValid = blocksBounds.min.z - 1 <= vec.z && vec.z <= blocksBounds.max.z + 1;
-        return xValid && yValid && zValid;
+        const key = vec.copy();
+        key.y = 0;
+
+        const limit = this._limits.get(key.hash());
+        if (limit !== undefined) {
+            return vec.y >= limit.minY - 1 && vec.y <= limit.maxY + 1;
+        } else {
+            return false;
+        }
+    }
+
+    public dumpInfo() {
+        LOG(`Skipped ${this._skips} out of ${this._updates} (${(100 * this._skips / this._updates).toFixed(4)}%)`);
     }
 }
