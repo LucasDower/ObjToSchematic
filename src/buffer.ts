@@ -6,6 +6,7 @@ import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
 import { OcclusionManager } from './occlusion';
 import { ProgressManager } from './progress';
 import { AttributeData } from './render_buffer';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 import { RenderNextVoxelMeshChunkParams } from './worker_types';
@@ -70,7 +71,7 @@ export class ChunkedBufferGenerator {
 
         for (let i = 0; i < numBufferVoxels; ++i) {
             const voxelIndex = i + voxelsStartIndex;
-            
+
             const voxel = voxels[voxelIndex];
             const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
             const voxelPositionArray = voxel.position.toArray();

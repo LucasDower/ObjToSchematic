@@ -42,6 +42,7 @@ export namespace RGBAUtil {
 
     export function toUint8String(a: RGBA) {
         return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
+    }
 
     export function toRGBA255(c: RGBA): RGBA_255 {
         const out: RGBA = {

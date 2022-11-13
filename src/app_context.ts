@@ -20,7 +20,6 @@ import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
-
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -194,7 +193,7 @@ export class AppContext {
             this._materialMap = payload.result.materials;
             this._onMaterialMapChanged();
 
-            if (payload.result.triangleCount < AppConfig.RENDER_TRIANGLE_THRESHOLD) {
+            if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
                 this._workerController.addJob(this._renderMesh());
             } else {

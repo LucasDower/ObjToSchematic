@@ -644,6 +644,7 @@ a:hover {
   appearance: none;
   background: none;
   width: 75%;
+  height: 24px;
   margin: 0px;
   padding: 0px;
 }
