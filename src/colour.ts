@@ -12,8 +12,20 @@ export namespace RGBAUtil {
         return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
     }
 
+    export function random(): RGBA {
+        return {
+            r: Math.random(),
+            g: Math.random(),
+            b: Math.random(),
+            a: 1.0,
+        };
+    }
+
     export function toHexString(a: RGBA) {
-        return `#${Math.floor(255 * a.r).toString(16)}${Math.floor(255 * a.g).toString(16)}${Math.floor(255 * a.b).toString(16)}`;
+        const r = Math.floor(255 * a.r).toString(16).padStart(2, '0');
+        const g = Math.floor(255 * a.g).toString(16).padStart(2, '0');
+        const b = Math.floor(255 * a.b).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
     }
 
     export function fromHexString(str: string) {

@@ -33,12 +33,16 @@ type BaseMaterial = {
     canBeTextured: boolean,
 }
 
-export type SolidMaterial = BaseMaterial & { colour: RGBA; type: MaterialType.solid }
+export type SolidMaterial = BaseMaterial & {
+    type: MaterialType.solid,
+    colour: RGBA,
+    set: boolean,
+}
 export type TexturedMaterial = BaseMaterial & {
-    path: string;
-    type: MaterialType.textured;
-    alphaPath?: string;
-    alphaFactor: number;
+    type: MaterialType.textured,
+    path: string,
+    alphaPath?: string,
+    alphaFactor: number,
 }
 export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
 
@@ -166,15 +170,16 @@ export class Mesh {
                         colour: RGBAColours.MAGENTA,
                         edited: true,
                         canBeTextured: false,
+                        set: false,
                     };
                 } else {
-                    // Texcoords exist, therefore make a texture material
+                    // Texcoords exist
                     this._materials[tri.material] = {
-                        type: MaterialType.textured,
-                        path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
-                        alphaFactor: 1.0,
+                        type: MaterialType.solid,
+                        colour: RGBAUtil.random(),
                         edited: true,
                         canBeTextured: true,
+                        set: false,
                     };
                 }
 
@@ -215,6 +220,7 @@ export class Mesh {
                         colour: RGBAColours.WHITE,
                         edited: true,
                         canBeTextured: true,
+                        set: false,
                     };
                 }
             }
@@ -388,6 +394,7 @@ export class Mesh {
                     colour: RGBAUtil.copy(material.colour),
                     edited: material.edited,
                     canBeTextured: material.canBeTextured,
+                    set: material.set,
                 };
             } else {
                 materials[materialName] = {

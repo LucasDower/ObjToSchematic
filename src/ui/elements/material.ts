@@ -181,6 +181,10 @@ export class SolidMaterialUIElement extends MaterialUIElement {
         return `<input class="colour-swatch" type="color" id="${this._colourId}" value="${RGBAUtil.toHexString(this._material.colour)}">`;
     }
 
+    public hasWarning(): boolean {
+        return !this._material.set;
+    }
+
     public registerEvents(): void {
         super.registerEvents();
 

@@ -234,9 +234,10 @@ export class AppContext {
         if (oldMaterial.type == MaterialType.textured) {
             this._materialMap[materialName] = {
                 type: MaterialType.solid,
-                colour: RGBAUtil.copy(RGBAColours.WHITE),
+                colour: RGBAUtil.random(),
                 edited: true,
                 canBeTextured: oldMaterial.canBeTextured,
+                set: false,
             };
         } else {
             this._materialMap[materialName] = {
@@ -280,6 +281,7 @@ export class AppContext {
             colour: newColour,
             edited: true,
             canBeTextured: oldMaterial.canBeTextured,
+            set: true,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
