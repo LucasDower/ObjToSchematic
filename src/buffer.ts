@@ -22,6 +22,7 @@ export type TMeshBufferDescription = {
     material: SolidMaterial | (TexturedMaterial)
     buffer: TMeshBuffer,
     numElements: number,
+    materialName: string,
 };
 
 export type TVoxelMeshBuffer = {
@@ -70,7 +71,7 @@ export class ChunkedBufferGenerator {
 
         for (let i = 0; i < numBufferVoxels; ++i) {
             const voxelIndex = i + voxelsStartIndex;
-            
+
             const voxel = voxels[voxelIndex];
             const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
             const voxelPositionArray = voxel.position.toArray();
@@ -222,6 +223,7 @@ export class BufferGenerator {
                 buffer: materialBuffer,
                 material: material,
                 numElements: materialBuffer.indices.data.length,
+                materialName: materialName,
             });
         });
 

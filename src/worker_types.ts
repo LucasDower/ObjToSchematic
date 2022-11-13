@@ -3,6 +3,7 @@ import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDe
 import { RGBAUtil } from './colour';
 import { Ditherer } from './dither';
 import { TExporters } from './exporters/exporters';
+import { MaterialMap } from './mesh';
 import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
@@ -20,6 +21,16 @@ export namespace InitParams {
     }
 }
 
+export namespace SetMaterialsParams {
+    export type Input = {
+        materials: MaterialMap
+    }
+
+    export type Output = {
+        materials: MaterialMap
+    }
+}
+
 export namespace ImportParams {
     export type Input = {
         filepath: string,
@@ -27,6 +38,7 @@ export namespace ImportParams {
 
     export type Output = {
         triangleCount: number,
+        materials: MaterialMap
     }
 }
 
@@ -159,6 +171,7 @@ export type TaskParams =
 export type TToWorkerMessage =
     | { action: 'Init', params: InitParams.Input }
     | { action: 'Import', params: ImportParams.Input }
+    | { action: 'SetMaterials', params: SetMaterialsParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
     | { action: 'Voxelise', params: VoxeliseParams.Input }
     //| { action: 'RenderVoxelMesh', params: RenderVoxelMeshParams.Input }
@@ -175,6 +188,7 @@ export type TFromWorkerMessage =
     | (TStatus & (
         | { action: 'Init', result: InitParams.Output }
         | { action: 'Import', result: ImportParams.Output }
+        | { action: 'SetMaterials', result: SetMaterialsParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }
         | { action: 'Voxelise', result: VoxeliseParams.Output }
         //| { action: 'RenderVoxelMesh', result: RenderVoxelMeshParams.Output }
