@@ -1,11 +1,22 @@
 import { BlockMesh } from './block_mesh';
+import { Bounds } from './bounds';
 import { ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { Vector3Hash } from './util/type_util';
 import { Vector3 } from './vector';
 
+enum EFace {
+    Up,
+    Down,
+    North,
+    South,
+    East,
+    West,
+    None,
+};
+
 export type TLightLevel = { blockLightValue: number, sunLightValue: number };
-export type TLightUpdate = TLightLevel & { pos: Vector3 };
+export type TLightUpdate = TLightLevel & { pos: Vector3, from: EFace };
 
 export class BlockMeshLighting {
     private _owner: BlockMesh;
@@ -15,12 +26,14 @@ export class BlockMeshLighting {
     private _blockLightValues: Map<Vector3Hash, number>;
     private _updates: number;
     private _skips: number;
+    private _bounds: Bounds;
 
     public constructor(owner: BlockMesh) {
         this._owner = owner;
         this._sunLightValues = new Map();
         this._blockLightValues = new Map();
         this._limits = new Map();
+        this._bounds = new Bounds(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
 
         this._updates = 0;
         this._skips = 0;
@@ -68,13 +81,14 @@ export class BlockMeshLighting {
                         blockLightValue: newBlockLight - 1,
                     };
                     const updates: TLightUpdate[] = [];
-                    updates.push({ pos: new Vector3(0, 1, 0).add(potentialBlockPos), ...attenuated });
-                    updates.push({ pos: new Vector3(1, 0, 0).add(potentialBlockPos), ...attenuated });
-                    updates.push({ pos: new Vector3(0, 0, 1).add(potentialBlockPos), ...attenuated });
-                    updates.push({ pos: new Vector3(-1, 0, 0).add(potentialBlockPos), ...attenuated });
-                    updates.push({ pos: new Vector3(0, 0, -1).add(potentialBlockPos), ...attenuated });
-                    updates.push({ pos: new Vector3(0, -1, 0).add(potentialBlockPos), ...attenuated });
-                    this._handleUpdates(updates);
+                    updates.push({ pos: new Vector3(0, 1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Down });
+                    updates.push({ pos: new Vector3(0, -1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Up });
+                    updates.push({ pos: new Vector3(1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.South });
+                    updates.push({ pos: new Vector3(-1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.North });
+                    updates.push({ pos: new Vector3(0, 0, 1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.West });
+                    updates.push({ pos: new Vector3(0, 0, -1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.East });
+                    //this._handleUpdates(updates, false, true);
+                    this._handleBlockLightUpdates(updates);
                     ASSERT(updates.length === 0);
                 }
             }
@@ -82,6 +96,8 @@ export class BlockMeshLighting {
     }
 
     private _calculateLimits() {
+        this._bounds = this._owner.getVoxelMesh().getBounds();
+
         this._limits.clear();
 
         const updateLimit = (pos: Vector3) => {
@@ -123,9 +139,10 @@ export class BlockMeshLighting {
                 pos: new Vector3(0, 1, 0).add(new Vector3(limit.x, limit.maxY, limit.z)),
                 sunLightValue: 15,
                 blockLightValue: 0,
+                from: EFace.None,
             });
         });
-        this._handleUpdates(updates);
+        this._handleSunLightUpdates(updates);
         ASSERT(updates.length === 0, 'Updates still remaining');
     }
 
@@ -137,10 +154,11 @@ export class BlockMeshLighting {
                     pos: block.voxel.position,
                     sunLightValue: 0,
                     blockLightValue: 14,
+                    from: EFace.None,
                 });
             }
         });
-        this._handleUpdates(updates);
+        this._handleBlockLightUpdates(updates);
         ASSERT(updates.length === 0, 'Updates still remaining');
     }
 
@@ -150,7 +168,8 @@ export class BlockMeshLighting {
      *
      * @Note **Modifies `updates`**
      */
-    private _handleUpdates(updates: TLightUpdate[]) {
+    /*
+    private _handleUpdates(updates: TLightUpdate[], updateSunLight: boolean, updateBlockLight: boolean) {
         while (updates.length > 0) {
             this._updates += 1;
             const update = updates.pop()!;
@@ -158,6 +177,16 @@ export class BlockMeshLighting {
             // Only update light values inside the bounds of the block mesh.
             // Values outside the bounds are assumed to have sunLightValue of 15
             // and blockLightValue of 0.
+            if (updateSunLight && !updateBlockLight && update.sunLightValue < 0) {
+                this._skips += 1;
+                ASSERT(false, 'SKIP SUNLIGHT');
+                continue;
+            }
+            if (updateBlockLight && !updateSunLight && update.blockLightValue < 0) {
+                this._skips += 1;
+                ASSERT(false, 'SKIP BLOCKLIGHT');
+                continue;
+            }
             if (!this._isPosValid(update.pos)) {
                 this._skips += 1;
                 continue;
@@ -168,13 +197,13 @@ export class BlockMeshLighting {
             const hash = update.pos.hash();
 
             // Update sunLight value
-            if (current.sunLightValue < update.sunLightValue) {
+            if (updateSunLight && current.sunLightValue < update.sunLightValue) {
                 toSet.sunLightValue = update.sunLightValue;
                 this._sunLightValues.set(hash, toSet.sunLightValue);
             }
 
             // Update blockLight values
-            if (current.blockLightValue < update.blockLightValue) {
+            if (updateBlockLight && current.blockLightValue < update.blockLightValue) {
                 toSet.blockLightValue = update.blockLightValue;
                 this._blockLightValues.set(hash, toSet.blockLightValue);
             }
@@ -196,12 +225,226 @@ export class BlockMeshLighting {
                         sunLightValue: toSet.sunLightValue - 1,
                         blockLightValue: toSet.blockLightValue - 1,
                     };
-                    updates.push({ pos: new Vector3(0, 1, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
-                    updates.push({ pos: new Vector3(1, 0, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
-                    updates.push({ pos: new Vector3(0, 0, 1).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
-                    updates.push({ pos: new Vector3(-1, 0, 0).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
-                    updates.push({ pos: new Vector3(0, 0, -1).add(update.pos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue });
-                    updates.push({ pos: new Vector3(0, -1, 0).add(update.pos), sunLightValue: toSet.sunLightValue === 15 ? 15 : toSet.sunLightValue - 1, blockLightValue: toSet.blockLightValue - 1 });
+                    if (update.from !== EFace.Up) {
+                        updates.push({
+                            pos: new Vector3(0, 1, 0).add(update.pos),
+                            sunLightValue: attenuated.sunLightValue,
+                            blockLightValue: attenuated.blockLightValue,
+                            from: EFace.Down,
+                        });
+                    }
+                    if (update.from !== EFace.Down) {
+                        updates.push({
+                            pos: new Vector3(0, -1, 0).add(update.pos),
+                            sunLightValue: toSet.sunLightValue === 15 ? 15 : toSet.sunLightValue - 1,
+                            blockLightValue: toSet.blockLightValue - 1,
+                            from: EFace.Up,
+                        });
+                    }
+                    if (update.from !== EFace.North) {
+                        updates.push({
+                            pos: new Vector3(1, 0, 0).add(update.pos),
+                            sunLightValue: attenuated.sunLightValue,
+                            blockLightValue: attenuated.blockLightValue,
+                            from: EFace.South,
+                        });
+                    }
+                    if (update.from !== EFace.South) {
+                        updates.push({
+                            pos: new Vector3(-1, 0, 0).add(update.pos),
+                            sunLightValue: attenuated.sunLightValue,
+                            blockLightValue: attenuated.blockLightValue,
+                            from: EFace.North,
+                        });
+                    }
+                    if (update.from !== EFace.East) {
+                        updates.push({
+                            pos: new Vector3(0, 0, 1).add(update.pos),
+                            sunLightValue: attenuated.sunLightValue,
+                            blockLightValue: attenuated.blockLightValue,
+                            from: EFace.West,
+                        });
+                    }
+                    if (update.from !== EFace.West) {
+                        updates.push({
+                            pos: new Vector3(0, 0, -1).add(update.pos),
+                            sunLightValue: attenuated.sunLightValue,
+                            blockLightValue: attenuated.blockLightValue,
+                            from: EFace.East,
+                        });
+                    }
+                }
+            }
+        }
+    }
+    */
+
+    private _handleBlockLightUpdates(updates: TLightUpdate[]) {
+        while (updates.length > 0) {
+            this._updates += 1;
+            const update = updates.pop()!;
+
+            if (!this._isPosValid(update.pos)) {
+                this._skips += 1;
+                continue;
+            }
+            const current = this.getLightLevel(update.pos);
+            let toSet = current.blockLightValue;
+
+            const hash = update.pos.hash();
+
+            // Update blockLight values
+            if (current.blockLightValue < update.blockLightValue) {
+                toSet = update.blockLightValue;
+                this._blockLightValues.set(hash, toSet);
+            }
+
+            const blockHere = this._owner.getBlockAt(update.pos);
+            const isBlockHere = blockHere !== undefined;
+
+            const shouldPropagate = isBlockHere ?
+                this._owner.isTransparentBlock(blockHere) :
+                true;
+
+            // Actually commit the light value changes and notify neighbours to
+            // update their values.
+            if (shouldPropagate) {
+                const blockLightChanged = current.blockLightValue !== toSet && toSet > 0;
+                if (blockLightChanged) {
+                    if (update.from !== EFace.Up) {
+                        updates.push({
+                            pos: new Vector3(0, 1, 0).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.Down,
+                        });
+                    }
+                    if (update.from !== EFace.Down) {
+                        updates.push({
+                            pos: new Vector3(0, -1, 0).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.Up,
+                        });
+                    }
+                    if (update.from !== EFace.North) {
+                        updates.push({
+                            pos: new Vector3(1, 0, 0).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.South,
+                        });
+                    }
+                    if (update.from !== EFace.South) {
+                        updates.push({
+                            pos: new Vector3(-1, 0, 0).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.North,
+                        });
+                    }
+                    if (update.from !== EFace.East) {
+                        updates.push({
+                            pos: new Vector3(0, 0, 1).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.West,
+                        });
+                    }
+                    if (update.from !== EFace.West) {
+                        updates.push({
+                            pos: new Vector3(0, 0, -1).add(update.pos),
+                            sunLightValue: current.sunLightValue,
+                            blockLightValue: toSet - 1,
+                            from: EFace.East,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    private _handleSunLightUpdates(updates: TLightUpdate[]) {
+        while (updates.length > 0) {
+            this._updates += 1;
+            const update = updates.pop()!;
+
+            if (!this._isPosValid(update.pos)) {
+                this._skips += 1;
+                continue;
+            }
+
+            const current = this.getLightLevel(update.pos);
+            let toSet = current.sunLightValue;
+
+            const hash = update.pos.hash();
+
+            // Update sunLight value
+            if (current.sunLightValue < update.sunLightValue) {
+                toSet = update.sunLightValue;
+                this._sunLightValues.set(hash, toSet);
+            }
+
+            const blockHere = this._owner.getBlockAt(update.pos);
+            const isBlockHere = blockHere !== undefined;
+
+            const shouldPropagate = isBlockHere ?
+                this._owner.isTransparentBlock(blockHere) :
+                true;
+
+            // Actually commit the light value changes and notify neighbours to
+            // update their values.
+            if (shouldPropagate) {
+                const sunLightChanged = current.sunLightValue !== toSet && toSet > 0;
+                if ((sunLightChanged)) {
+                    if (update.from !== EFace.Up) {
+                        updates.push({
+                            pos: new Vector3(0, 1, 0).add(update.pos),
+                            sunLightValue: toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.Down,
+                        });
+                    }
+                    if (update.from !== EFace.Down) {
+                        updates.push({
+                            pos: new Vector3(0, -1, 0).add(update.pos),
+                            sunLightValue: toSet === 15 ? 15 : toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.Up,
+                        });
+                    }
+                    if (update.from !== EFace.North) {
+                        updates.push({
+                            pos: new Vector3(1, 0, 0).add(update.pos),
+                            sunLightValue: toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.South,
+                        });
+                    }
+                    if (update.from !== EFace.South) {
+                        updates.push({
+                            pos: new Vector3(-1, 0, 0).add(update.pos),
+                            sunLightValue: toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.North,
+                        });
+                    }
+                    if (update.from !== EFace.East) {
+                        updates.push({
+                            pos: new Vector3(0, 0, 1).add(update.pos),
+                            sunLightValue: toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.West,
+                        });
+                    }
+                    if (update.from !== EFace.West) {
+                        updates.push({
+                            pos: new Vector3(0, 0, -1).add(update.pos),
+                            sunLightValue: toSet - 1,
+                            blockLightValue: current.blockLightValue,
+                            from: EFace.East,
+                        });
+                    }
                 }
             }
         }
@@ -213,7 +456,7 @@ export class BlockMeshLighting {
 
         const limit = this._limits.get(key.hash());
         if (limit !== undefined) {
-            return vec.y >= limit.minY - 1 && vec.y <= limit.maxY + 1;
+            return vec.y >= this._bounds.min.y && vec.y <= limit.maxY + 1;
         } else {
             return false;
         }
