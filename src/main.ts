@@ -20,7 +20,7 @@ import url from 'url';
 import { AppConfig } from './config';
 import { AppPaths, PathUtil } from './util/path_util';
 
-app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.OLD_SPACE_SIZE}`);
+app.commandLine.appendSwitch('js-flags', `--max-old-space-size=${AppConfig.Get.OLD_SPACE_SIZE_MB}`);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -46,7 +46,7 @@ function createWindow() {
             enableRemoteModule: true,
         },
     });
-    if (!AppConfig.DEBUG_ENABLED) {
+    if (AppConfig.Get.RELEASE_MODE) {
         mainWindow.removeMenu();
     }
 
@@ -58,13 +58,26 @@ function createWindow() {
     }));
 
     const baseTitle = 'ObjToSchematic – Convert 3D models into Minecraft builds';
-    try {
-        const branchName: Buffer = require('child_process').execSync('git rev-parse --abbrev-ref HEAD').toString().replace('\n', '');
-        const commitHash: (string | Buffer) = require('child_process').execSync('git rev-parse --short HEAD').toString().replace('\n', '');
-        mainWindow.setTitle(`${baseTitle} (git/${branchName.toString()}/${commitHash.toString().trim()})`);
-    } catch (e: any) {
-        mainWindow.setTitle(`${baseTitle} (release//v0.6.0)`);
+    if (AppConfig.Get.RELEASE_MODE) {
+        mainWindow.setTitle(`${baseTitle} (${AppConfig.Get.RELEASE_VERSION})`);
+    } else {
+        try {
+            const branchName: Buffer = require('child_process')
+                .execSync('git rev-parse --abbrev-ref HEAD')
+                .toString()
+                .replace('\n', '');
+
+            const commitHash: (string | Buffer) = require('child_process')
+                .execSync('git rev-parse --short HEAD')
+                .toString()
+                .replace('\n', '');
+
+            mainWindow.setTitle(`${baseTitle} (git ${branchName.toString()} ${commitHash.toString().trim()})`);
+        } catch (e: any) {
+            mainWindow.setTitle(`${baseTitle} (git)`);
+        }
     }
+
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();

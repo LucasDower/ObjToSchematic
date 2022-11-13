@@ -8,14 +8,7 @@ import { ASSERT } from './error_util';
 export function saveNBT(nbt: NBT, filepath: string) {
     ASSERT(path.isAbsolute(filepath), '[saveNBT]: filepath is not absolute');
 
-    const outBuffer = fs.createWriteStream(filepath);
-    const newBuffer = writeUncompressed(nbt, 'big');
-
-    zlib.gzip(newBuffer, (err, buffer) => {
-        if (!err) {
-            outBuffer.write(buffer);
-            outBuffer.end();
-        }
-        return err;
-    });
+    const uncompressedBuffer = writeUncompressed(nbt, 'big');
+    const compressedBuffer = zlib.gzipSync(uncompressedBuffer);
+    fs.writeFileSync(filepath, compressedBuffer);
 }

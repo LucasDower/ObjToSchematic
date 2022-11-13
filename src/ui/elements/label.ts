@@ -13,14 +13,19 @@ export class LabelElement {
     }
 
     public generateHTML(): string {
-        const description = this._description ? `<br><div style="font-weight: 300; font-size: 85%; color: var(--text-disabled);">
-            ${this._description}
-        </div>` : '';
-        return `
-            <div class="prop-left" id="${this._id}">
-                ${this._text}${description}
-            </div>
-        `;
+        if (this._description === undefined) {
+            return `
+                <div class="prop-key-container" id="${this._id}">
+                    ${this._text}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="prop-key-container" id="${this._id}">
+                    <abbr title="${this._description}">${this._text}</abbr>
+                </div>
+            `;
+        }
     }
 
     public setEnabled(isEnabled: boolean) {
@@ -28,9 +33,9 @@ export class LabelElement {
         ASSERT(element !== null);
 
         if (isEnabled) {
-            element.classList.remove('prop-left-disabled');
+            element.classList.remove('prop-key-container-disabled');
         } else {
-            element.classList.add('prop-left-disabled');
+            element.classList.add('prop-key-container-disabled');
         }
     }
 }

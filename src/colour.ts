@@ -1,4 +1,5 @@
 import { AppConfig } from './config';
+import { TBrand } from './util/type_util';
 
 export type RGBA = {
     r: number,
@@ -6,6 +7,8 @@ export type RGBA = {
     b: number,
     a: number
 }
+
+export type RGBA_255 = TBrand<RGBA, '255'>;
 
 export namespace RGBAUtil {
     export function toString(a: RGBA) {
@@ -39,6 +42,32 @@ export namespace RGBAUtil {
 
     export function toUint8String(a: RGBA) {
         return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
+
+    export function toRGBA255(c: RGBA): RGBA_255 {
+        const out: RGBA = {
+            r: c.r * 255,
+            g: c.r * 255,
+            b: c.r * 255,
+            a: c.r * 255,
+        };
+        return out as RGBA_255;
+    }
+
+    export function fromRGBA255(c: RGBA_255): RGBA {
+        const out: RGBA = {
+            r: c.r / 255,
+            g: c.g / 255,
+            b: c.b / 255,
+            a: c.a / 255,
+        };
+        return out;
+    }
+
+    export function add(a: RGBA, b: RGBA) {
+        a.r += b.r;
+        a.g += b.g;
+        a.b += b.b;
+        a.a += b.a;
     }
 
     export function lerp(a: RGBA, b: RGBA, alpha: number) {
@@ -73,7 +102,7 @@ export namespace RGBAUtil {
         squaredDistance += (a.r - b.r) * (a.r - b.r);
         squaredDistance += (a.g - b.g) * (a.g - b.g);
         squaredDistance += (a.b - b.b) * (a.b - b.b);
-        squaredDistance += (a.a - b.a) * (a.a - b.a) * AppConfig.ALPHA_BIAS;
+        squaredDistance += (a.a - b.a) * (a.a - b.a) * AppConfig.Get.ALPHA_BIAS;
         return squaredDistance;
     }
 
@@ -86,9 +115,58 @@ export namespace RGBAUtil {
         };
     }
 
+    export function copy255(a: RGBA_255): RGBA_255 {
+        return {
+            r: a.r,
+            g: a.g,
+            b: a.b,
+            a: a.a,
+        } as RGBA_255;
+    }
+
     export function toArray(a: RGBA): number[] {
         return [a.r, a.g, a.b, a.a];
     }
+
+    export function bin(col: RGBA, resolution: TColourAccuracy) {
+        const binnedColour: RGBA = {
+            r: Math.floor(Math.floor(col.r * resolution) * (255 / resolution)),
+            g: Math.floor(Math.floor(col.g * resolution) * (255 / resolution)),
+            b: Math.floor(Math.floor(col.b * resolution) * (255 / resolution)),
+            a: Math.floor(Math.ceil(col.a * resolution) * (255 / resolution)),
+        };
+
+        return binnedColour as RGBA_255;
+    }
+
+    /**
+     * Encodes a colour as a single number.
+     * Note this will bin colours together.
+     * @param col The colour to hash.
+     * @param resolution An uint8, the larger the more accurate the hash.
+     */
+    export function hash(col: RGBA, resolution: TColourAccuracy): number {
+        const r = Math.floor(col.r * resolution);
+        const g = Math.floor(col.g * resolution);
+        const b = Math.floor(col.b * resolution);
+        const a = Math.floor(col.a * resolution);
+
+        let hash = r;
+        hash = (hash << 8) + g;
+        hash = (hash << 8) + b;
+        hash = (hash << 8) + a;
+        return hash;
+    }
+
+    export function hash255(col: RGBA_255) {
+        let hash = col.r;
+        hash = (hash << 8) + col.g;
+        hash = (hash << 8) + col.b;
+        hash = (hash << 8) + col.a;
+        return hash;
+    }
+
+    export type TColourAccuracy = number;
 }
 
 export namespace RGBAColours {

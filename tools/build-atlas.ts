@@ -1,17 +1,17 @@
+import AdmZip from 'adm-zip';
 import chalk from 'chalk';
 import fs from 'fs';
-import images from 'images';
 import path from 'path';
 import { PNG } from 'pngjs';
 import prompt from 'prompt';
+import * as sharp from 'sharp';
+const copydir = require('copy-dir');
 
 import { RGBA } from '../src/colour';
 import { UV } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { log, LogStyle } from './logging';
-import { ASSERT, getAverageColour, getMinecraftDir, getPermission, isDirSetup } from './misc';
-const AdmZip = require('adm-zip');
-const copydir = require('copy-dir');
+import { ASSERT, getAverageColour, getMinecraftDir, getPermission, getStandardDeviation, isDirSetup } from './misc';
 
 const BLOCKS_DIR = PathUtil.join(AppPaths.Get.tools, '/blocks');
 const MODELS_DIR = PathUtil.join(AppPaths.Get.tools, '/models');
@@ -197,7 +197,8 @@ async function buildAtlas() {
     interface Texture {
         name: string,
         texcoord?: UV,
-        colour?: RGBA
+        colour?: RGBA,
+        std?: number,
     }
 
     log(LogStyle.Info, 'Loading block models...');
@@ -313,13 +314,12 @@ async function buildAtlas() {
     log(LogStyle.Success, `${allModels.length} blocks loaded\n`);
 
     const atlasSize = Math.ceil(Math.sqrt(usedTextures.size));
-    const atlasWidth = atlasSize * 16;
+    const atlasWidthPixels = atlasSize * 16 * 3;
 
     let offsetX = 0;
     let offsetY = 0;
-    const outputImage = images(atlasWidth * 3, atlasWidth * 3);
 
-    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGBA } } = {};
+    const textureDetails: { [textureName: string]: { texcoord: UV, colour: RGBA, std: number } } = {};
 
     const { atlasName } = await prompt.get({
         properties: {
@@ -332,26 +332,44 @@ async function buildAtlas() {
         },
     });
 
+    //const tiles: mergeImages.ImageSource[] = [];
+    let outputImage = sharp.default({
+        create: {
+            width: atlasWidthPixels,
+            height: atlasWidthPixels,
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 0.0 },
+        },
+    });
+
+    const composites: sharp.OverlayOptions[] = [];
+
     log(LogStyle.Info, `Building ${atlasName}.png...`);
     usedTextures.forEach((textureName) => {
         const shortName = textureName.split('/')[1]; // Eww
         const absolutePath = path.join(BLOCKS_DIR, shortName + '.png');
-        const fileData = fs.readFileSync(absolutePath);
-        const pngData = PNG.sync.read(fileData);
-        const image = images(absolutePath);
 
         for (let x = 0; x < 3; ++x) {
             for (let y = 0; y < 3; ++y) {
-                outputImage.draw(image, 16 * (3 * offsetX + x), 16 * (3 * offsetY + y));
+                composites.push({
+                    input: absolutePath,
+                    left: 16 * (3 * offsetX + x),
+                    top: 16 * (3 * offsetY + y),
+                });
             }
         }
 
+        const fileData = fs.readFileSync(absolutePath);
+        const pngData = PNG.sync.read(fileData);
+
+        const avgColour = getAverageColour(pngData);
         textureDetails[textureName] = {
             texcoord: new UV(
-                16 * (3 * offsetX + 1) / (atlasWidth * 3),
-                16 * (3 * offsetY + 1) / (atlasWidth * 3),
+                16 * (3 * offsetX + 1) / atlasWidthPixels,
+                16 * (3 * offsetY + 1) / atlasWidthPixels,
             ),
-            colour: getAverageColour(pngData),
+            colour: avgColour,
+            std: getStandardDeviation(pngData, avgColour),
         };
 
         ++offsetX;
@@ -360,6 +378,8 @@ async function buildAtlas() {
             offsetX = 0;
         }
     });
+
+    outputImage = outputImage.composite(composites);
 
 
     // Build up the output JSON
@@ -376,6 +396,8 @@ async function buildAtlas() {
             blockColour.b += faceColour.b;
             blockColour.a += faceColour.a;
             model.faces[face].texcoord = faceTexture.texcoord;
+            model.faces[face].colour = faceTexture.colour;
+            model.faces[face].std = faceTexture.std;
         }
         blockColour.r /= 6;
         blockColour.g /= 6;
@@ -386,10 +408,13 @@ async function buildAtlas() {
 
 
     log(LogStyle.Info, 'Exporting...');
-    const atlasDir = path.join(AppPaths.Get.atlases, `./${atlasName}.png`);
-    outputImage.save(atlasDir);
+    const atlasTextureDir = path.join(AppPaths.Get.atlases, `./${atlasName}.png`);
+    await outputImage.toFile(atlasTextureDir);
+    //ASSERT(success, 'Unsuccess save');
+
     log(LogStyle.Success, `${atlasName}.png exported to /resources/atlases/`);
     const outputJSON = {
+        version: 3,
         atlasSize: atlasSize,
         blocks: allModels,
         supportedBlockNames: Array.from(allBlockNames),

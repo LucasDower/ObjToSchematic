@@ -8,12 +8,24 @@ export namespace AppMath {
     export const RADIANS_180 = degreesToRadians(180.0);
     export const RADIANS_270 = degreesToRadians(270.0);
 
+    export function lerp(value: number, start: number, end: number) {
+        return (1 - value) * start + value * end;
+    }
+
     export function nearlyEqual(a: number, b: number, tolerance: number = 0.0001) {
         return Math.abs(a - b) < tolerance;
     }
 
     export function degreesToRadians(degrees: number) {
         return degrees * (Math.PI / 180.0);
+    }
+
+    /**
+     * Converts a float in [0, 1] to an int in [0, 255]
+     * @param decimal A number in [0, 1]
+     */
+    export function uint8(decimal: number) {
+        return Math.floor(decimal * 255);
     }
 }
 
@@ -42,7 +54,7 @@ export const between = (value: number, min: number, max: number) => {
 };
 
 export const mapRange = (value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) => {
-    return (value - fromMin)/(fromMax - fromMin) * (toMax - toMin) + toMin;
+    return (value - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
 };
 
 export const wayThrough = (value: number, min: number, max: number) => {

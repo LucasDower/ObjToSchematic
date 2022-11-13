@@ -19,6 +19,9 @@
 
   --text-standard: #A8A8A8;
   --text-disabled: #535353;
+
+  --border-radius: 5px;
+  --property-height: 34px;
 }
 
 
@@ -50,6 +53,7 @@ canvas {
   margin-left: var(--properties-width);
   width: calc(100% - var(--properties-width));
   height: 100%;
+  cursor: crosshair;
 }
 
 .container {
@@ -58,16 +62,18 @@ canvas {
   margin: 10px;
 }
 
-.item {
-  padding: 0px 0px;
+.property {
   display: flex;
   flex-direction: row;
   align-items: center;
   color: var(--text-standard);
+  font-size: 85%;
+  margin: 0px 0px;
+  padding: 5px 10px;
 }
 
 .group-heading {
-  padding: 0px 0px 0px 0px;
+  padding: 0px 10px;
   color: #303030;
   font-weight: 400;
   font-size: 85%;
@@ -75,187 +81,167 @@ canvas {
 }
 
 
-.prop-left {
+.prop-key-container {
   align-self: center;
-  padding: 0px 10px;
+  padding: 0px 10px 0px 0px;
   width: 125px;
+  /*border: 1px solid red;*/
 }
 
-.prop-left-disabled {
+.prop-key-container-disabled {
   color: var(--text-disabled) !important;
 }
 
-.prop-right {
+.prop-value-container {
   flex-grow: 1;
-  padding: 0px 10px;
-}
-
-
-.item-body {
-  font-size: 85%;
-  margin: 0px 0px;
-  min-height: 30px;
-  padding: 5px 0px;
+  display: flex;
+  align-items: center;
+  /*border: 1px solid yellow;*/
+  height: var(--property-height);
+  width: 0px;
 }
 
 .item-body-sunken {
   background: var(--prop-sunken);
   box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 10px 0px inset;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   color: #8C8C8C80;
   font-weight: 300;
   font-size: 90%;
   padding: 12px 18px;
   line-height: 180%;
   min-height: 22px;
+  width: 100%;
   border: 1.5px solid var(--prop-sunken);
   transition-duration: 1s;
   overflow-wrap: anywhere;
 }
 
-
-.round-top {
-  border-radius: 8.5px 8.5px 0px 0px;
+input {
+  user-select: none;
+  height: calc(100% - 4px);
+  margin-right: 3px;
+  border-radius: var(--border-radius);
+  text-align: center;
+  background: var(--prop-standard);
+  font-family: 'Lexend', sans-serif;
+  font-weight: 300;
+  color: var(--text-standard);
+  outline-color: var(--prop-accent-hovered);
+  border: 1px solid rgb(255, 255, 255, 0.0);
 }
-
-.round-bottom {
-  border-radius: 0px 0px 10px 10px;
-  border-width: 0.5px 0px 0px 0px;
+input:hover:enabled {
+  color: #C6C6C6;
+  border: 1px solid rgb(255, 255, 255, 0.1);
+  background: var(--prop-hovered);
 }
-
-
-code {
-  border-radius: 3px;
-  padding: 0px 5px;
-  margin: 0px 5px;
-  background: rgb(15, 15, 15);
-  font-size: 110%;
+input:disabled {
+  background: var(--prop-disabled);
+  color: var(--text-disabled);
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 select {
   width: 100%;
-  height: 30px;
-  padding-left: 8px;
-  border-radius: 5px;
-  border: none;
+  height: 100%;
+  padding-left: 10px;
+  border-radius: var(--border-radius);
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
   color: var(--text-standard);
   background: var(--prop-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
   max-width: 100%;
+  outline-color: var(--prop-accent-hovered);
+  opacity: 1.0;
+  cursor: inherit;
 }
-
 select:hover:enabled {
   color: #C6C6C6;
   background: var(--prop-hovered);
   border: 1px solid rgb(255, 255, 255, 0.1);
-}
-
-select:disabled {
-  background: #282828 !important;
-  color: var(--text-disabled);
-}
-
-.file-input {
-  border-radius: 5px;
-  border: 1px solid rgb(255, 255, 255, 0);
-  font-family: 'Lexend', sans-serif;
-  font-weight: 300;
-  background: var(--prop-standard);
-  padding: 0px 16px;
   cursor: pointer;
-  height: 40px;
 }
-
-.file-input:hover {
-  border: 1px solid rgb(255, 255, 255, 0.1);
-}
-
-.slider-value {
-  align-self: center;
-  font-weight: 300;
-  font-size: 85%;
-  margin-right: 8px;
-  color: var(--text-standard);
-  width: 20px;
-  text-align: center;
-}
-
-.slider-value-disabled {
+select:disabled {
+  background: var(--prop-disabled) !important;
   color: var(--text-disabled);
 }
-
-
 
 .new-slider {
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
   background: var(--prop-standard);
   cursor: ew-resize;
-  height: 30px;
-  font-size: 90%;
+  height: calc(100% - 2px);
   border: 1px solid var(--prop-bg);
 }
-
 .new-slider-hover {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   background: var(--prop-hovered) !important;
 }
-
 .new-slider-disabled {
   background: var(--prop-disabled) !important;
-  cursor: default !important;
+  cursor: inherit !important;
 }
 
-
-
 .new-slider-bar {
-  border-radius: 5px;
-  height: 28px;
+  border-radius: var(--border-radius);
+  height: calc(100% - 1px);
   background: var(--prop-accent-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
 }
-
 .new-slider-bar-hover {
   border: 1px solid rgb(255, 255, 255, 0.2) !important;
   background: var(--prop-accent-hovered) !important;
 }
-
 .new-slider-bar-disabled {
   background: var(--prop-accent-disabled) !important;
-  cursor: default !important;
+  cursor: inherit !important;
   border: 1px solid rgb(255, 255, 255, 0.0) !important;
 }
 
 
 
 .button {
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
   background: var(--prop-accent-standard);
-  border-radius: 5px;
-  height: 25px;
+  border-radius: var(--border-radius);
   color: white;
   text-align: center;
-  padding: 5px 0px 0px 0px;
   border: 1px solid rgb(255, 255, 255, 0);
   position: relative;
   cursor: pointer;
-  display: inline-block;
-  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
 .button:hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
   background: var(--prop-accent-hovered);
   cursor: pointer;
 }
+.button-disabled {
+  cursor: inherit !important;
+  background: var(--prop-accent-disabled) !important;
+  border: 1px solid rgb(255, 255, 255, 0) !important;
+  color: #808080 !important;
+}
 
-.progress {
+.button-label {
+}
+
+.button-progress {
+  /*border: 1px solid green;*/
 	z-index: 5;
 	background: white;
   opacity: 0.1;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   position: absolute;
 	left: 0;
 	top: 0;
@@ -265,29 +251,23 @@ select:disabled {
   transition: width 0.2s;
 }
 
-.button-disabled {
-  cursor: default !important;
-  background: var(--prop-accent-disabled) !important;
-  border: 1px solid rgb(255, 255, 255, 0) !important;
-  color: #808080 !important;
-}
-
-.input-text {
+.input-file {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: calc(100% - 2px);
   background: var(--prop-standard);
-  border-radius: 5px;
-  height: 24px;
+  border-radius: var(--border-radius);
   font-weight: 300;
-  padding: 6px 0px 0px 10px;
+  padding: 0px 10px;
   border: 1px solid rgb(255, 255, 255, 0);
 }
-
-.input-text-hover {
+.input-file-hover {
   border: 1px solid rgb(255, 255, 255, 0.2);
   background: var(--prop-hovered);
   cursor: pointer;
 }
-
-.input-text-disabled {
+.input-file-disabled {
   background: var(--prop-disabled) !important;
   color: var(--text-disabled) !important;
 }
@@ -298,16 +278,9 @@ select:disabled {
   background: var(--prop-alt);
 }
 
-.divider {
-  width: 2px;
-  border-radius: 1px;
-  background: var(--prop-alt);
-  align-self: stretch;
-}
-
 .disabled {
   opacity: 0.5;
-  cursor: default !important;
+  cursor: inherit !important;
 }
 
 
@@ -395,7 +368,7 @@ select:disabled {
   background: var(--prop-disabled) !important;
 }
 
-.invis-divider {
+.spinbox-divider {
   width: 6px;
 }
 
@@ -405,6 +378,8 @@ select:disabled {
   flex-direction: row;
   width: 100%;
   justify-content: space-between;
+  cursor: inherit;
+  pointer-events: none;
 }
 
 .toolbar-column {
@@ -421,7 +396,7 @@ select:disabled {
   display: flex;
   flex-direction: row;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 16px;
-  border-radius: 5px;
+  border-radius: var(--border-radius);
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -434,6 +409,7 @@ select:disabled {
   font-size: 85%;
   background-color: var(--prop-standard);
   border: 1px solid var(--prop-standard);
+  pointer-events: all;
 }
 
 .toolbar-item-hover {
@@ -450,6 +426,7 @@ select:disabled {
 .toolbar-item-disabled {
   background-color: var(--prop-disabled) !important;
   border: 1px solid var(--prop-disabled) !important;
+  cursor: default;
 }
 
 .toolbar-item-active {

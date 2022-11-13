@@ -20,6 +20,7 @@ import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
+
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -37,6 +38,8 @@ export class AppContext {
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
+
+        AppConfig.Get.dumpConfig();
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
@@ -195,7 +198,7 @@ export class AppContext {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
                 this._workerController.addJob(this._renderMesh());
             } else {
-                const message = `Will not render mesh as its over ${AppConfig.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
+                const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
         };
@@ -397,7 +400,7 @@ export class AppContext {
         const uiElements = this._ui.layout.voxelise.elements;
 
         const payload: TToWorkerMessage = {
-            action: 'RenderVoxelMesh',
+            action: 'RenderNextVoxelMeshChunk',
             params: {
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
                 desiredHeight: uiElements.desiredHeight.getCachedValue(),
@@ -407,7 +410,6 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Assign);
 
             switch (payload.action) {
                 case 'KnownError':
@@ -419,23 +421,30 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.enableTo(EAction.Assign);
                     break;
                 }
                 default: {
-                    ASSERT(payload.action === 'RenderVoxelMesh');
-                    Renderer.Get.useVoxelMesh(payload.result);
+                    ASSERT(payload.action === 'RenderNextVoxelMeshChunk');
+                    Renderer.Get.useVoxelMeshChunk(payload.result);
 
-                    this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
-                        'render',
-                        '[Renderer]: Succeeded',
-                        [],
-                        'success',
-                    );
+                    if (payload.result.moreVoxelsToBuffer) {
+                        this._workerController.addJob(this._renderVoxelMesh());
+                    } else {
+                        this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
+                            'render',
+                            '[Renderer]: Succeeded',
+                            [],
+                            'success',
+                        );
+                        this._ui.enableTo(EAction.Assign);
+                    }
                 }
             }
         };
 
-        return { id: 'RenderVoxelMesh', payload: payload, callback: callback };
+        return { id: 'RenderNextVoxelMeshChunk', payload: payload, callback: callback };
     }
 
     private _assign(): TWorkerJob {
@@ -449,9 +458,12 @@ export class AppContext {
             params: {
                 textureAtlas: uiElements.textureAtlas.getCachedValue(),
                 blockPalette: uiElements.blockPalette.getCachedValue(),
-                blockAssigner: uiElements.dithering.getCachedValue(),
+                dithering: uiElements.dithering.getCachedValue(),
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
+                errorWeight: uiElements.errorWeight.getCachedValue() / 10,
             },
         };
 
@@ -473,7 +485,7 @@ export class AppContext {
         const uiElements = this._ui.layout.assign.elements;
 
         const payload: TToWorkerMessage = {
-            action: 'RenderBlockMesh',
+            action: 'RenderNextBlockMeshChunk',
             params: {
                 textureAtlas: uiElements.textureAtlas.getCachedValue(),
             },
@@ -482,7 +494,6 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Export);
 
             switch (payload.action) {
                 case 'KnownError':
@@ -494,23 +505,30 @@ export class AppContext {
                         'error',
                     );
                     LOG_ERROR(payload.error);
+
+                    this._ui.enableTo(EAction.Export);
                     break;
                 }
                 default: {
-                    ASSERT(payload.action === 'RenderBlockMesh');
-                    Renderer.Get.useBlockMesh(payload.result);
+                    ASSERT(payload.action === 'RenderNextBlockMeshChunk');
+                    Renderer.Get.useBlockMeshChunk(payload.result);
 
-                    this._ui.getActionOutput(EAction.Assign).setTaskComplete(
-                        'render',
-                        '[Renderer]: Succeeded',
-                        [],
-                        'success',
-                    );
+                    if (payload.result.moreBlocksToBuffer) {
+                        this._workerController.addJob(this._renderBlockMesh());
+                    } else {
+                        this._ui.getActionOutput(EAction.Assign).setTaskComplete(
+                            'render',
+                            '[Renderer]: Succeeded',
+                            [],
+                            'success',
+                        );
+                        this._ui.enableTo(EAction.Export);
+                    }
                 }
             }
         };
 
-        return { id: 'RenderBlockMesh', payload: payload, callback: callback };
+        return { id: 'RenderNextBlockMeshChunk', payload: payload, callback: callback };
     }
 
     private _export(): (TWorkerJob | undefined) {
@@ -549,7 +567,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
-        this._ui.tick();
+        this._ui.tick(this._workerController.isBusy());
         Renderer.Get.draw();
     }
 }

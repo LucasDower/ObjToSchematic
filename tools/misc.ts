@@ -54,6 +54,24 @@ export function getAverageColour(image: PNG): RGBA {
     };
 }
 
+export function getStandardDeviation(image: PNG, average: RGBA): number {
+    let squaredDist = 0.0;
+    let weight = 0.0;
+    for (let x = 0; x < image.width; ++x) {
+        for (let y = 0; y < image.height; ++y) {
+            const index = 4 * (image.width * y + x);
+            const rgba = image.data.slice(index, index + 4);
+            const alpha = rgba[3] / 255;
+            weight += alpha;
+            const r = (rgba[0] / 255) * alpha;
+            const g = (rgba[1] / 255) * alpha;
+            const b = (rgba[2] / 255) * alpha;
+            squaredDist += Math.pow(r - average.r, 2) + Math.pow(g - average.g, 2) + Math.pow(b - average.b, 2);
+        }
+    }
+    return Math.sqrt(squaredDist / weight);
+}
+
 export async function getPermission() {
     const directory = getMinecraftDir();
     log(LogStyle.Info, `This script requires files inside of ${directory}`);

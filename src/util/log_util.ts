@@ -20,6 +20,12 @@ export const LOG = (...data: any[]) => {
     }
 };
 
+export const LOGF = (...data: any[]) => {
+    if (Logger.Get.logToFile) {
+        Logger.Get.logToFile(...data);
+    }
+};
+
 /**
  * Logs to console and file if logging `LOG_MAJOR` is enabled.
  * This is identical to `LOG` but can be enabled/disabled separately.
@@ -127,7 +133,7 @@ export class Logger {
      */
     public logToFile(...data: any[]) {
         if (this._logStream && this._enabledLogToFile) {
-            this._logStream.write(`${util.format(...data)}\n`);
+            this._logStream.write(`[${(new Date()).toISOString()}] ${util.format(...data)}\n`);
         }
     }
 
@@ -192,7 +198,7 @@ export class Logger {
      * Should be called before `initLogFile`
      */
     public enableLogToFile() {
-        if (AppConfig.LOG_TO_FILE && this._enabledLogToFile === undefined) {
+        if (AppConfig.Get.LOG_TO_FILE && this._enabledLogToFile === undefined) {
             this._enabledLogToFile = true;
         }
     }

@@ -9,7 +9,7 @@ import { ShaderManager } from './shaders';
 import { Texture } from './texture';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { RenderBlockMeshParams, RenderMeshParams, RenderVoxelMeshParams } from './worker_types';
+import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 
 /* eslint-disable */
 export enum MeshType {
@@ -52,9 +52,8 @@ export class Renderer {
         numElements: number,
         materialName: string,
     }>;
-    public _voxelBuffer?: twgl.BufferInfo;
-    public _voxelBufferRaw?: { [attribute: string]: { numComponents: number, data: Float32Array | Uint32Array } };
-    private _blockBuffer?: twgl.BufferInfo;
+    public _voxelBuffer?: twgl.BufferInfo[];
+    private _blockBuffer?: twgl.BufferInfo[];
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
@@ -83,7 +82,7 @@ export class Renderer {
         this._materialBuffers = new Map();
 
         this._gridBuffers = { x: {}, y: {}, z: {} };
-        this._gridEnabled = true;
+        this._gridEnabled = false;
 
         this._debugBuffers = {};
         this._debugBuffers[MeshType.None] = {};
@@ -269,9 +268,41 @@ export class Renderer {
         this.setModelToUse(MeshType.TriangleMesh);
     }
 
-    public useVoxelMesh(params: RenderVoxelMeshParams.Output) {
-        this._voxelBufferRaw = params.buffer.buffer;
-        this._voxelBuffer = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer);
+    private _allVoxelChunks = false;
+    public useVoxelMeshChunk(params: RenderNextVoxelMeshChunkParams.Output) {
+        if (params.isFirstChunk) {
+            this._voxelBuffer = [];
+        }
+
+        this._allVoxelChunks = !params.moreVoxelsToBuffer;
+
+        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
+        this._voxelSize = params.voxelSize;
+
+        if (params.isFirstChunk) {
+            const voxelSize = this._voxelSize;
+            const dimensions = new Vector3(0, 0, 0);
+            dimensions.setFrom(params.dimensions);
+
+            this._gridOffset = new Vector3(
+                dimensions.x % 2 === 0 ? 0 : -0.5,
+                dimensions.y % 2 === 0 ? 0 : -0.5,
+                dimensions.z % 2 === 0 ? 0 : -0.5,
+            );
+            dimensions.add(1);
+
+            this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+            this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+            this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
+
+            this._modelsAvailable = 2;
+            this.setModelToUse(MeshType.VoxelMesh);
+        }
+    }
+
+    /*
+    public useVoxelMesh(params: RenderNextVoxelMeshChunkParams.Output) {
+        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
         this._voxelSize = params.voxelSize;
 
         const voxelSize = this._voxelSize;
@@ -292,21 +323,28 @@ export class Renderer {
         this._modelsAvailable = 2;
         this.setModelToUse(MeshType.VoxelMesh);
     }
+    */
 
-    public useBlockMesh(params: RenderBlockMeshParams.Output) {
-        this._blockBuffer = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer);
+    public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
+        if (params.isFirstChunk) {
+            this._blockBuffer = [];
+        }
 
-        this._atlasTexture = twgl.createTexture(this._gl, {
-            src: params.atlasTexturePath,
-            mag: this._gl.NEAREST,
-        });
+        this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
 
-        this._atlasSize = params.atlasSize;
+        if (params.isFirstChunk) {
+            this._atlasTexture = twgl.createTexture(this._gl, {
+                src: params.atlasTexturePath,
+                mag: this._gl.NEAREST,
+            });
 
-        this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
+            this._atlasSize = params.atlasSize;
 
-        this._modelsAvailable = 3;
-        this.setModelToUse(MeshType.BlockMesh);
+            this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
+
+            this._modelsAvailable = 3;
+            this.setModelToUse(MeshType.BlockMesh);
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -402,13 +440,14 @@ export class Renderer {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_ambientOcclusion: this._allVoxelChunks,
         };
-        if (this._voxelBuffer) {
+        this._voxelBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
-            twgl.setBuffersAndAttributes(this._gl, shader, this._voxelBuffer);
+            twgl.setBuffersAndAttributes(this._gl, shader, buffer);
             twgl.setUniforms(shader, uniforms);
-            this._gl.drawElements(this._gl.TRIANGLES, this._voxelBuffer.numElements, this._gl.UNSIGNED_INT, 0);
-        }
+            this._gl.drawElements(this._gl.TRIANGLES, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        });
     }
 
     private _drawBlockMesh() {
@@ -421,12 +460,12 @@ export class Renderer {
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
         };
-        if (this._blockBuffer) {
+        this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
-            twgl.setBuffersAndAttributes(this._gl, shader, this._blockBuffer);
+            twgl.setBuffersAndAttributes(this._gl, shader, buffer);
             twgl.setUniforms(shader, uniforms);
-            this._gl.drawElements(this._gl.TRIANGLES, this._blockBuffer.numElements, this._gl.UNSIGNED_INT, 0);
-        }
+            this._gl.drawElements(this._gl.TRIANGLES, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        });
         this._gl.disable(this._gl.CULL_FACE);
     }
 
@@ -446,7 +485,7 @@ export class Renderer {
     private _setupScene() {
         twgl.resizeCanvasToDisplaySize(<HTMLCanvasElement>this._gl.canvas);
         this._gl.viewport(0, 0, this._gl.canvas.width, this._gl.canvas.height);
-        ArcballCamera.Get.aspect = this._gl.canvas.width / this._gl.canvas.height;
+        ArcballCamera.Get.setAspect(this._gl.canvas.width / this._gl.canvas.height);
         this._gl.blendFuncSeparate(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA, this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
 
         this._gl.enable(this._gl.DEPTH_TEST);

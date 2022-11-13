@@ -1,8 +1,8 @@
 import fs from 'fs';
 
 import { AppContext } from '../app_context';
-import { TBlockAssigners } from '../assigners/assigners';
 import { ArcballCamera } from '../camera';
+import { AppConfig } from '../config';
 import { TExporters } from '../exporters/exporters';
 import { PaletteManager } from '../palette';
 import { MeshType, Renderer } from '../renderer';
@@ -10,6 +10,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
+import { TDithering, TToggle } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
@@ -59,6 +60,10 @@ export class UI {
                         displayText: 'BVH Ray-based',
                     },
                     {
+                        id: 'bvh-ray-plus-thickness',
+                        displayText: 'BVH Ray-based (thicker walls)',
+                    },
+                    {
                         id: 'ncrb',
                         displayText: 'NCRB',
                     },
@@ -77,7 +82,7 @@ export class UI {
                         displayText: 'Off (faster)',
                     },
                 ]),
-                'multisampleColouring': new ComboBoxElement('Multisample colouring', [
+                'multisampleColouring': new ComboBoxElement('Multisampling', [
                     {
                         id: 'on',
                         displayText: 'On (recommended)',
@@ -121,10 +126,10 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
-                    { id: 'ordered-dithering', displayText: 'Ordered' },
-                    { id: 'random-dithering', displayText: 'Random' },
-                    { id: 'basic', displayText: 'Off' },
+                'dithering': new ComboBoxElement<TDithering>('Dithering', [
+                    { id: 'ordered', displayText: 'Ordered' },
+                    { id: 'random', displayText: 'Random' },
+                    { id: 'off', displayText: 'Off' },
                 ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
@@ -150,8 +155,20 @@ export class UI {
                         tooltip: 'Let the block fall',
                     },
                 ]),
+                'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
+                'contextualAveraging': new ComboBoxElement<TToggle>('Smart averaging', [
+                    {
+                        id: 'on',
+                        displayText: 'On (recommended)',
+                    },
+                    {
+                        id: 'off',
+                        displayText: 'Off (faster)',
+                    },
+                ]),
+                'errorWeight': new SliderElement('Smoothness', 0.0, AppConfig.Get.SMOOTHNESS_MAX, 2, 0.2, 0.01),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging', 'errorWeight'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -306,7 +323,13 @@ export class UI {
         this._ui.assign.elements.fallable.addDescription('Read tooltips for more info');
     }
 
-    public tick() {
+    public tick(isBusy: boolean) {
+        if (isBusy) {
+            document.body.style.cursor = 'progress';
+        } else {
+            document.body.style.cursor = 'default';
+        }
+
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
             for (const toolbarItem of toolbarGroup.elementsOrder) {
@@ -327,15 +350,15 @@ export class UI {
         for (const groupName in this._ui) {
             const group = this._uiDull[groupName];
             groupHTML[groupName] = `
-            <div class="item item-body">
-                <div class="prop-right">
+            <div class="property">
+                <div style="flex-grow: 1">
                     <div class="h-div">
                     </div>
                 </div>
                 <div class="group-heading">
                     ${group.label.toUpperCase()}
                 </div>
-                <div class="prop-right">
+                <div style="flex-grow: 1">
                     <div class="h-div">
                     </div>
                 </div>
@@ -409,15 +432,13 @@ export class UI {
 
         return `
             ${groupHTML}
-            <div class="item item-body">
-                <div class="prop-right">
+            <div class="property">
+                <div class="prop-value-container">
                     ${group.submitButton.generateHTML()}
                 </div>
             </div>
-            <div class="item item-body">
-                <div class="prop-right">
-                    ${group.output.generateHTML()}
-                </div>
+            <div class="property">
+                ${group.output.generateHTML()}
             </div>
             ${postGroupHTML}
         `;
@@ -425,7 +446,7 @@ export class UI {
 
     private _buildSubcomponent(element: BaseUIElement<any>) {
         return `
-            <div class="item item-body">
+            <div class="property">
                 ${element.generateHTML()}
             </div>
         `;
@@ -520,7 +541,7 @@ export class UI {
 
         for (let i = action; i < EAction.MAX; ++i) {
             const group = this._getEActionGroup(i);
-            LOG('[UI]: Disabling', group.label);
+            //LOG('[UI]: Disabling', group.label);
             for (const compName in group.elements) {
                 group.elements[compName].setEnabled(false);
             }

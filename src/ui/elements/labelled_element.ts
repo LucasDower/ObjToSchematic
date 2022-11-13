@@ -13,7 +13,7 @@ export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
     public generateHTML() {
         return `
             ${this._labelElement.generateHTML()}
-            <div class="prop-right">
+            <div class="prop-value-container">
                 ${this.generateInnerHTML()}
             </div>
         `;

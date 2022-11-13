@@ -238,7 +238,6 @@ smooth_quartz
 smooth_red_sandstone
 smooth_sandstone
 smooth_stone
-smooth_stone_slab_double
 snow_block
 soul_sand
 soul_soil

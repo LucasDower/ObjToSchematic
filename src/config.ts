@@ -1,42 +1,66 @@
-// TODO: Replace with UI options
+import fs from 'fs';
 
-export namespace AppConfig {
-    /** Darkens corner even if corner block does not exist, recommended. */
-    export const AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
+import { LOG } from './util/log_util';
+import { AppPaths, PathUtil } from './util/path_util';
 
-    /** Enable logging to the console. */
-    export const LOGGING_ENABLED = true;
+export class AppConfig {
+    /* Singleton */
+    private static _instance: AppConfig;
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
 
-    /** Enables runtime assertions, useful for debugging. */
-    export const ASSERTIONS_ENABLED = true;
+    public readonly RELEASE_MODE: boolean;
+    public readonly RELEASE_VERSION: string;
+    public readonly VOXEL_BUFFER_CHUNK_SIZE: number;
 
-    /** Optimises rendering by not rendering triangles facing away from camera's view direction. */
-    export const FACE_CULLING = false;
+    // Loaded from .json
+    public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER: boolean;
+    public readonly LOG_TO_FILE: boolean;
+    public readonly USE_WORKER_THREAD: boolean;
+    public readonly MULTISAMPLE_COUNT: number;
+    public readonly OLD_SPACE_SIZE_MB: number;
+    public readonly ALPHA_BIAS: number;
+    public readonly ANGLE_SNAP_RADIUS_DEGREES: number;
+    public readonly RENDER_TRIANGLE_THRESHOLD: number;
+    public readonly MAXIMUM_IMAGE_MEM_ALLOC: number;
+    public readonly CAMERA_FOV_DEGREES: number;
+    public readonly CAMERA_DEFAULT_DISTANCE_UNITS: number;
+    public readonly CAMERA_DEFAULT_AZIMUTH_RADIANS: number;
+    public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
+    public readonly CAMERA_SENSITIVITY_ROTATION: number;
+    public readonly CAMERA_SENSITIVITY_ZOOM: number;
+    public readonly DITHER_MAGNITUDE: number;
+    public readonly SMOOTHNESS_MAX: number;
 
-    /** Enables extra runtimes checks that slow execution. */
-    export const DEBUG_ENABLED = true;
+    private constructor() {
+        this.RELEASE_MODE = false;
+        this.RELEASE_VERSION = '0.7.0d';
+        this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
-    /** The number of samples used when sampling a voxel's colour from a textured material. */
-    export const MULTISAMPLE_COUNT = 16;
+        const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
+        const configJSON = JSON.parse(configFile);
 
-    /** Max size of Node's old space in MBs. */
-    export const OLD_SPACE_SIZE = 2048;
+        this.AMBIENT_OCCLUSION_OVERRIDE_CORNER = configJSON.AMBIENT_OCCLUSION_OVERRIDE_CORNER;
+        this.LOG_TO_FILE = configJSON.LOG_TO_FILE;
+        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD;
+        this.MULTISAMPLE_COUNT = configJSON.MULTISAMPLE_COUNT;
+        this.OLD_SPACE_SIZE_MB = configJSON.OLD_SPACE_SIZE_MB;
+        this.ALPHA_BIAS = configJSON.ALPHA_BIAS;
+        this.ANGLE_SNAP_RADIUS_DEGREES = configJSON.ANGLE_SNAP_RADIUS_DEGREES;
+        this.RENDER_TRIANGLE_THRESHOLD = configJSON.RENDER_TRIANGLE_THRESHOLD;
+        this.MAXIMUM_IMAGE_MEM_ALLOC = configJSON.MAXIMUM_IMAGE_MEM_ALLOC;
+        this.CAMERA_FOV_DEGREES = configJSON.CAMERA_FOV_DEGREES;
+        this.CAMERA_DEFAULT_DISTANCE_UNITS = configJSON.CAMERA_DEFAULT_DISTANCE_UNITS;
+        this.CAMERA_DEFAULT_AZIMUTH_RADIANS = configJSON.CAMERA_DEFAULT_AZIMUTH_RADIANS;
+        this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
+        this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
+        this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
+        this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
+        this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
+    }
 
-    /** This value determines how much more important it is to closely match a block's transparency value than its colour. */
-    export const ALPHA_BIAS = 1.0;
-
-    /** The angle radius (in degrees) around a snapping point the viewport camera must be within to snap. Must be between 0.0 and 90.0 */
-    export const ANGLE_SNAP_RADIUS_DEGREES = 10.0;
-
-    /** If the loaded mesh exceeds this number of triangles, the renderer will not attempt to draw it. */
-    export const RENDER_TRIANGLE_THRESHOLD = 1_000_000;
-
-    /** The maximum memory that should be allocated when attempting to decode JPEG images. 512MB is usually sufficient for 4k images, however this will need to be increased for 8k images */
-    export const MAXIMUM_IMAGE_MEM_ALLOC = 512;
-
-    /** Whether of not all logs should be saved to a file */
-    export const LOG_TO_FILE = true;
-
-    /** Whether or not to use a worker thread. You should probably never disable this unless debugging. */
-    export const USE_WORKER_THREAD = true;
+    public dumpConfig() {
+        LOG(this);
+    }
 }

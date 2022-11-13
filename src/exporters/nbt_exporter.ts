@@ -3,7 +3,7 @@ import { NBT, TagType } from 'prismarine-nbt';
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { StatusHandler } from '../status';
-import { LOG } from '../util/log_util';
+import { AppUtil } from '../util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
@@ -39,7 +39,7 @@ export class NBTExporter extends IExporter {
             palette.push({
                 Name: {
                     type: TagType.String,
-                    value: 'minecraft:' + blockName, // TODO: Namespace blocks
+                    value: AppUtil.Text.namespaceBlock(blockName),
                 },
             });
             blockNameToIndex.set(blockName, palette.length - 1);
@@ -67,7 +67,7 @@ export class NBTExporter extends IExporter {
                 }
             }
         }
-        
+
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'SchematicBlocks',
@@ -100,7 +100,6 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        LOG(nbt);
         saveNBT(nbt, filePath);
 
         return false;

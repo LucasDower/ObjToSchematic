@@ -1,4 +1,5 @@
 import { BlockMesh } from './block_mesh';
+import { AppConfig } from './config';
 import { AppConstants } from './constants';
 import { GeometryTemplates } from './geometry';
 import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
@@ -7,7 +8,7 @@ import { ProgressManager } from './progress';
 import { AttributeData } from './render_buffer';
 import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
-import { RenderVoxelMeshParams } from './worker_types';
+import { RenderNextVoxelMeshChunkParams } from './worker_types';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
@@ -53,6 +54,100 @@ export type TBlockMeshBufferDescription = {
 }
 
 type TMaterialID = string;
+
+export class ChunkedBufferGenerator {
+    public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderNextVoxelMeshChunkParams.Input, chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
+        const numTotalVoxels = voxelMesh.getVoxelCount();
+        const voxelsStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const voxelsEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalVoxels);
+        ASSERT(voxelsStartIndex < numTotalVoxels, 'Invalid voxel start index');
+
+        const numBufferVoxels = voxelsEndIndex - voxelsStartIndex;
+        const newBuffer: TVoxelMeshBuffer = BufferGenerator.createVoxelMeshBuffer(numBufferVoxels);
+
+        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
+        const voxels = voxelMesh.getVoxels();
+
+        for (let i = 0; i < numBufferVoxels; ++i) {
+            const voxelIndex = i + voxelsStartIndex;
+            
+            const voxel = voxels[voxelIndex];
+            const voxelColourArray = [voxel.colour.r, voxel.colour.g, voxel.colour.b, voxel.colour.a];
+            const voxelPositionArray = voxel.position.toArray();
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.COLOUR; ++j) {
+                newBuffer.colour.data[i * AppConstants.VoxelMeshBufferComponentOffsets.COLOUR + j] = voxelColourArray[j % 4];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.NORMAL; ++j) {
+                newBuffer.normal.data[i * AppConstants.VoxelMeshBufferComponentOffsets.NORMAL + j] = cube.custom.normal[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD; ++j) {
+                newBuffer.texcoord.data[i * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD + j] = cube.custom.texcoord[j];
+            }
+
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
+                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
+            }
+
+            if (params.enableAmbientOcclusion) {
+                const voxelOcclusionArray = OcclusionManager.Get.getOcclusions(voxel.position, voxelMesh);
+                for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION; ++j) {
+                    newBuffer.occlusion.data[i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION + j] = voxelOcclusionArray[j];
+                }
+            }
+        }
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+            moreVoxelsToBuffer: voxelsEndIndex !== numTotalVoxels,
+            progress: voxelsStartIndex / numTotalVoxels,
+        };
+    }
+
+    public static fromBlockMesh(blockMesh: BlockMesh, chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
+        const blocks = blockMesh.getBlocks();
+
+        const numTotalBlocks = blocks.length;
+        const blocksStartIndex = chunkIndex * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE;
+        const blocksEndIndex = Math.min((chunkIndex + 1) * AppConfig.Get.VOXEL_BUFFER_CHUNK_SIZE, numTotalBlocks);
+        ASSERT(blocksStartIndex < numTotalBlocks, 'Invalid block start index');
+
+        const numBufferBlocks = blocksEndIndex - blocksStartIndex;
+
+        const voxelChunkBuffer = blockMesh.getVoxelMesh().getChunkedBuffer(chunkIndex);
+        const newBuffer = BufferGenerator.createBlockMeshBuffer(numBufferBlocks, voxelChunkBuffer.buffer);
+
+        const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
+        let insertIndex = 0;
+
+        for (let i = 0; i < numBufferBlocks; ++i) {
+            const blockIndex = i + blocksStartIndex;
+
+            for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
+                const faceName = faceOrder[f];
+                const texcoord = blocks[blockIndex].blockInfo.faces[faceName].texcoord;
+                for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
+                    newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
+                }
+            }
+        }
+
+        return {
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
+            moreBlocksToBuffer: voxelChunkBuffer.moreVoxelsToBuffer,
+            progress: voxelChunkBuffer.progress,
+        };
+    }
+}
 
 export class BufferGenerator {
     public static fromMesh(mesh: Mesh): TMeshBufferDescription[] {
@@ -136,6 +231,7 @@ export class BufferGenerator {
         return materialBuffers;
     }
 
+    /*
     public static fromVoxelMesh(voxelMesh: VoxelMesh, params: RenderVoxelMeshParams.Input): TVoxelMeshBufferDescription {
         const numVoxels = voxelMesh.getVoxelCount();
         const newBuffer: TVoxelMeshBuffer = this.createVoxelMeshBuffer(numVoxels);
@@ -185,7 +281,9 @@ export class BufferGenerator {
             numElements: newBuffer.indices.data.length,
         };
     }
+    */
 
+    /*
     public static fromBlockMesh(blockMesh: BlockMesh): TBlockMeshBufferDescription {
         const blocks = blockMesh.getBlocks();
         const numBlocks = blocks.length;
@@ -215,8 +313,9 @@ export class BufferGenerator {
             numElements: newBuffer.indices.data.length,
         };
     }
+    */
 
-    private static createMaterialBuffer(triangleCount: number): TMeshBuffer {
+    public static createMaterialBuffer(triangleCount: number): TMeshBuffer {
         return {
             position: {
                 numComponents: 3,
@@ -237,7 +336,7 @@ export class BufferGenerator {
         };
     }
 
-    private static createVoxelMeshBuffer(numVoxels: number): TVoxelMeshBuffer {
+    public static createVoxelMeshBuffer(numVoxels: number): TVoxelMeshBuffer {
         return {
             position: {
                 numComponents: 3,
@@ -266,7 +365,7 @@ export class BufferGenerator {
         };
     }
 
-    private static createBlockMeshBuffer(numBlocks: number, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBuffer {
+    public static createBlockMeshBuffer(numBlocks: number, voxelMeshBuffer: TVoxelMeshBuffer): TBlockMeshBuffer {
         return {
             position: {
                 numComponents: AppConstants.ComponentSize.POSITION,

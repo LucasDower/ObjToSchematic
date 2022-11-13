@@ -1,5 +1,6 @@
 import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
+import { LOGF } from './util/log_util';
 
 export type TTaskID =
     | 'Importing'
@@ -37,6 +38,8 @@ export class ProgressManager {
         this._tasks.push(taskId);
         EventManager.Get.broadcast(EAppEvent.onTaskStart, taskId);
 
+        LOGF(`[PROGRESS]: Start '${taskId} (${this._tasks.length} task(s))'`);
+
         return {
             nextPercentage: 0.0,
             id: taskId,
@@ -50,6 +53,7 @@ export class ProgressManager {
      */
     public progress(tracker: TTaskHandle, percentage: number) {
         if (percentage > tracker.nextPercentage) {
+            //LOGF(`[PROGRESS]: Progress '${tracker.id}' (${this._tasks.length} task(s))'`);
             EventManager.Get.broadcast(EAppEvent.onTaskProgress, tracker.id, percentage);
             tracker.nextPercentage += 0.05;
         }
@@ -60,8 +64,10 @@ export class ProgressManager {
      * @param taskId The id of the task (created in `start`).
      */
     public end(tracker: TTaskHandle) {
+        LOGF(`[PROGRESS]: End '${tracker.id}' (${this._tasks.length} task(s))'`);
+
         const taskIndex = this._tasks.findIndex((task) => { return task === tracker.id; });
-        ASSERT(taskIndex !== -1, 'Task with that Id is not being tracked');
+        ASSERT(taskIndex !== -1, `Task with that id '${tracker.id}' is not being tracked, ${this._tasks}`);
         this._tasks.splice(taskIndex, 1);
         EventManager.Get.broadcast(EAppEvent.onTaskEnd, tracker.id);
     }

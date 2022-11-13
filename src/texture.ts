@@ -54,7 +54,7 @@ export class Texture {
             } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
                 this._useAlphaChannelValue = false;
                 return jpeg.decode(data, {
-                    maxMemoryUsageInMB: AppConfig.MAXIMUM_IMAGE_MEM_ALLOC,
+                    maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
                 });
             }
             ASSERT(false);
