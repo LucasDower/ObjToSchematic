@@ -9,7 +9,6 @@ import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
-import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
 
 interface VertexIndices {

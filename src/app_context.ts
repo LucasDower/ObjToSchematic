@@ -3,7 +3,7 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
@@ -16,10 +16,9 @@ import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
 import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
-import { ColourSpace, EAction, getRandomID } from './util';
+import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { FileUtil } from './util/file_util';
-import { LOG, LOG_ERROR, Logger } from './util/log_util';
+import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
