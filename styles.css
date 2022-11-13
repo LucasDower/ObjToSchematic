@@ -583,3 +583,100 @@ svg {
   height: 100%;
   transition: width 0.1s;
 }
+
+
+
+
+/* Remove default bullets */
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+.caret:hover {
+  color: var(--text-standard) !important;
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6";
+  display: inline-block;
+  margin-right: 6px;
+}
+
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+  display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+  display: block;
+}
+
+
+a {
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+  color: #8C8C8C80;
+}
+a:hover {
+  color: var(--text-standard) !important;
+}
+
+.colour-swatch {
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+  width: 75%;
+  height: 24px;
+  margin: 0px;
+  padding: 0px;
+}
+.colour-swatch-hover {
+  border-color: var(--text-standard) !important;
+}
+
+.colour-swatch::-webkit-color-swatch-wrapper {
+  border: none;
+  margin: 0px;
+  padding: 0px;
+}
+.colour-swatch::-webkit-color-swatch {
+  border: none;
+  margin: 0px;
+  padding: 0px;
+  border-radius: 5px;
+}
+
+.texture-preview {
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
+}
+.texture-preview-missing {
+  border-color: orange !important;
+}
+
+.texture-hover {
+  border-color: var(--text-standard) !important;
+}
+
+.material-container {
+  border-left: 1px solid #8C8C8C80;
+  padding-left: 5px;
+}

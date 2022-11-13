@@ -22,7 +22,7 @@ export class ObjImporter extends IImporter {
     private _tris: Tri[] = [];
 
     private _materials: { [key: string]: (SolidMaterial | TexturedMaterial) } = {
-        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE },
+        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE, edited: true, canBeTextured: false, set: true },
     };
     private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
@@ -396,12 +396,22 @@ export class ObjImporter extends IImporter {
                     path: this._currentTexture,
                     alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
                     alphaFactor: this._currentAlpha,
+                    edited: false,
+                    canBeTextured: true,
                 };
                 this._currentTransparencyTexture = '';
             } else {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.solid,
-                    colour: this._currentColour,
+                    colour: {
+                        r: this._currentColour.r,
+                        g: this._currentColour.g,
+                        b: this._currentColour.b,
+                        a: this._currentAlpha,
+                    },
+                    edited: false,
+                    canBeTextured: false,
+                    set: true,
                 };
             }
             this._currentAlpha = 1.0;

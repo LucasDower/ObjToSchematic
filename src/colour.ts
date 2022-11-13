@@ -11,6 +11,39 @@ export type RGBA = {
 export type RGBA_255 = TBrand<RGBA, '255'>;
 
 export namespace RGBAUtil {
+    export function toString(a: RGBA) {
+        return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
+    }
+
+    export function random(): RGBA {
+        return {
+            r: Math.random(),
+            g: Math.random(),
+            b: Math.random(),
+            a: 1.0,
+        };
+    }
+
+    export function toHexString(a: RGBA) {
+        const r = Math.floor(255 * a.r).toString(16).padStart(2, '0');
+        const g = Math.floor(255 * a.g).toString(16).padStart(2, '0');
+        const b = Math.floor(255 * a.b).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
+    }
+
+    export function fromHexString(str: string) {
+        return {
+            r: parseInt(str.substring(1, 3), 16) / 255,
+            g: parseInt(str.substring(3, 5), 16) / 255,
+            b: parseInt(str.substring(5, 7), 16) / 255,
+            a: 1.0,
+        };
+    }
+
+    export function toUint8String(a: RGBA) {
+        return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
+    }
+
     export function toRGBA255(c: RGBA): RGBA_255 {
         const out: RGBA = {
             r: c.r * 255,
