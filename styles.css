@@ -697,3 +697,8 @@ a:hover {
 .texture-hover {
   border-color: var(--text-standard) !important;
 }
+
+.material-container {
+  border-left: 1px solid #8C8C8C80;
+  padding-left: 5px;
+}

@@ -403,7 +403,12 @@ export class ObjImporter extends IImporter {
             } else {
                 this._materials[this._currentMaterialName] = {
                     type: MaterialType.solid,
-                    colour: this._currentColour,
+                    colour: {
+                        r: this._currentColour.r,
+                        g: this._currentColour.g,
+                        b: this._currentColour.b,
+                        a: this._currentAlpha,
+                    },
                     edited: false,
                     canBeTextured: false,
                 };

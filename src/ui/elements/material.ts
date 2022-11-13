@@ -5,17 +5,20 @@ import { AppContext } from '../../app_context';
 import { RGBAUtil } from '../../colour';
 import { SolidMaterial, TexturedMaterial } from '../../mesh';
 import { getRandomID } from '../../util';
+import { ASSERT } from '../../util/error_util';
 import { FileUtil } from '../../util/file_util';
 
 export abstract class MaterialUIElement {
     protected readonly _materialName: string;
     protected readonly _appContext: AppContext;
     private _actions: { text: string, onClick: () => void, id: string }[];
+    private _metadata: string[];
 
     public constructor(materialName: string, appContext: AppContext) {
         this._materialName = materialName;
         this._appContext = appContext;
         this._actions = [];
+        this._metadata = [];
     }
 
     public hasWarning() {
@@ -23,10 +26,15 @@ export abstract class MaterialUIElement {
     }
 
     public buildHTML(): string {
-        let html = this.buildChildHTML();
+        let html = `<div class="material-container">`;
+        html += this.buildChildHTML();
+        this._metadata.forEach((data) => {
+            html += `<br>${data}`;
+        });
         this._actions.forEach((action) => {
             html += `<br><a id="${action.id}">[${action.text}]</a>`;
         });
+        html += `</div>`;
         return html;
     }
 
@@ -45,17 +53,23 @@ export abstract class MaterialUIElement {
         this._actions.push({ text: text, onClick: onClick, id: getRandomID() });
     }
 
+    public addMetadata(text: string) {
+        this._metadata.push(text);
+    }
+
     protected abstract buildChildHTML(): string
 }
 
 export class TextureMaterialUIElement extends MaterialUIElement {
     private _material: TexturedMaterial;
-    private _imageId: string;
+    private _diffuseImageId: string;
+    private _alphaImageId: string;
 
     public constructor(materialName: string, appContext: AppContext, material: TexturedMaterial) {
         super(materialName, appContext);
         this._material = material;
-        this._imageId = getRandomID();
+        this._diffuseImageId = getRandomID();
+        this._alphaImageId = getRandomID();
 
         const parsedPath = path.parse(material.path);
         const isMissingTexture = parsedPath.base === 'debug.png';
@@ -77,6 +91,11 @@ export class TextureMaterialUIElement extends MaterialUIElement {
         super.addAction('Switch to colour', () => {
             this._appContext.onMaterialTypeSwitched(materialName);
         });
+
+        super.addMetadata(`Alpha multiplier: ${this._material.alphaFactor}`);
+        if (this._material.alphaPath !== undefined) {
+            super.addMetadata(`Alpha texture: ${this._material.alphaPath}`);
+        }
     }
 
     private _isMissingTexture() {
@@ -90,26 +109,51 @@ export class TextureMaterialUIElement extends MaterialUIElement {
     }
 
     protected buildChildHTML(): string {
-        return `<img id="${this._imageId}" class="texture-preview" src="${this._material.path}" width="75%" loading="lazy"></img>`;
+        let html = `<img id="${this._diffuseImageId}" class="texture-preview" src="${this._material.path}" width="75%" loading="lazy"></img>`;
+        if (this._material.alphaPath !== undefined) {
+            html += `<br><img id="${this._alphaImageId}" class="texture-preview" src="${this._material.alphaPath}" width="75%" loading="lazy"></img>`;
+        }
+        return html;
     }
 
     public registerEvents(): void {
         super.registerEvents();
 
-        const element = document.getElementById(this._imageId) as HTMLLinkElement;
-        if (element) {
-            if (!this._isMissingTexture()) {
-                element.addEventListener('mouseover', () => {
-                    element.classList.add('texture-hover');
-                });
-                element.addEventListener('mouseleave', () => {
-                    element.classList.remove('texture-hover');
-                });
-                element.addEventListener('click', () => {
-                    FileUtil.openDir(this._material.path);
-                });
-            } else {
-                element.classList.add('texture-preview-missing');
+        {
+            const element = document.getElementById(this._diffuseImageId) as HTMLLinkElement;
+            if (element) {
+                if (!this._isMissingTexture()) {
+                    element.addEventListener('mouseover', () => {
+                        element.classList.add('texture-hover');
+                    });
+                    element.addEventListener('mouseleave', () => {
+                        element.classList.remove('texture-hover');
+                    });
+                    element.addEventListener('click', () => {
+                        FileUtil.openDir(this._material.path);
+                    });
+                } else {
+                    element.classList.add('texture-preview-missing');
+                }
+            }
+        }
+        {
+            const element = document.getElementById(this._alphaImageId) as HTMLLinkElement;
+            if (element) {
+                if (!this._isMissingTexture()) {
+                    element.addEventListener('mouseover', () => {
+                        element.classList.add('texture-hover');
+                    });
+                    element.addEventListener('mouseleave', () => {
+                        element.classList.remove('texture-hover');
+                    });
+                    element.addEventListener('click', () => {
+                        ASSERT(this._material.alphaPath !== undefined);
+                        FileUtil.openDir(this._material.alphaPath);
+                    });
+                } else {
+                    element.classList.add('texture-preview-missing');
+                }
             }
         }
     }
@@ -129,6 +173,8 @@ export class SolidMaterialUIElement extends MaterialUIElement {
                 this._appContext.onMaterialTypeSwitched(materialName);
             });
         }
+
+        this.addMetadata(`Alpha multiplier: ${this._material.colour.a}`);
     }
 
     protected buildChildHTML(): string {
@@ -142,6 +188,7 @@ export class SolidMaterialUIElement extends MaterialUIElement {
         if (colourElement !== null) {
             colourElement.addEventListener('change', () => {
                 const newColour = RGBAUtil.fromHexString(colourElement.value);
+                newColour.a = this._material.colour.a;
                 this._appContext.onMaterialColourChanged(this._materialName, newColour);
             });
 

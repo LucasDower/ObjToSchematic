@@ -150,7 +150,9 @@ export class Mesh {
             throw new AppError('Loaded mesh has no materials');
         }
 
+
         // Check used materials exist
+        const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
             if (!(tri.material in this._materials)) {
@@ -178,7 +180,21 @@ export class Mesh {
 
                 missingMaterials.add(tri.material);
             }
+
+            usedMaterials.add(tri.material);
         }
+
+        const materialsToRemove = new Set<string>();
+        for (const materialName in this._materials) {
+            if (!usedMaterials.has(materialName)) {
+                LOG_WARN(`'${materialName}' is not used by any triangles, removing...`);
+                materialsToRemove.add(materialName);
+            }
+        }
+        materialsToRemove.forEach((materialName) => {
+            delete this._materials[materialName];
+        });
+
         if (missingMaterials.size > 0) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
         }

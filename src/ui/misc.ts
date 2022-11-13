@@ -75,7 +75,7 @@ export class UITreeBuilder implements IUIOutputElement {
             } else {
                 childrenHTML += child.warning ? `<p style="margin:0px; color:orange;">${child.html}</p>` : child.html;
             }
-            childrenHTML += '<li>';
+            childrenHTML += '</li>';
         });
 
         if (this.getWarning()) {
