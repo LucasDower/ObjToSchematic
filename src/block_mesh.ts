@@ -1,15 +1,16 @@
 import fs from 'fs';
 
-import { Atlas } from './atlas';
+import { Atlas, TAtlasBlock } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
 import { RGBA_255, RGBAUtil } from './colour';
 import { Ditherer } from './dither';
+import { BlockMeshLighting } from './lighting';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
-import { ColourSpace } from './util';
+import { ColourSpace, TOptional } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOGF } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
@@ -36,11 +37,24 @@ export class BlockMesh {
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
+    private _transparentBlocks: string[];
+    private _emissiveBlocks: string[];
     private _atlas: Atlas;
+    private _lighting: BlockMeshLighting;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
         blockMesh._assignBlocks(blockMeshParams);
+
+        //blockMesh._calculateLighting(blockMeshParams.lightThreshold);
+        if (blockMeshParams.calculateLighting) {
+            blockMesh._lighting.init();
+            blockMesh._lighting.addSunLightValues();
+            blockMesh._lighting.addEmissiveBlocks();
+            blockMesh._lighting.addLightToDarkness(blockMeshParams.lightThreshold);
+            blockMesh._lighting.dumpInfo();
+        }
+
         return blockMesh;
     }
 
@@ -49,10 +63,18 @@ export class BlockMesh {
         this._blocks = [];
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
+        this._lighting = new BlockMeshLighting(this);
+        //this._lighting = new Map<string, number>();
         //this._recreateBuffer = true;
 
         const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
         this._fallableBlocks = JSON.parse(fallableBlocksString).fallable_blocks;
+
+        const transparentlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'transparent_blocks.json'), 'utf-8');
+        this._transparentBlocks = JSON.parse(transparentlocksString).transparent_blocks;
+
+        const emissivelocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'emissive_blocks.json'), 'utf-8');
+        this._emissiveBlocks = JSON.parse(emissivelocksString).emissive_blocks;
     }
 
     /**
@@ -138,6 +160,52 @@ export class BlockMesh {
         }
     }
 
+    // Face order: ['north', 'south', 'up', 'down', 'east', 'west']
+    public getBlockLighting(position: Vector3) {
+        // TODO: Shouldn't only use sunlight value, take max of either
+        return [
+            this._lighting.getMaxLightLevel(new Vector3(1, 0, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(-1, 0, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 1, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, -1, 0).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 0, 1).add(position)),
+            this._lighting.getMaxLightLevel(new Vector3(0, 0, -1).add(position)),
+        ];
+    }
+
+    public setEmissiveBlock(pos: Vector3): boolean {
+        const voxel = this._voxelMesh.getVoxelAt(pos);
+        ASSERT(voxel !== undefined, 'Missing voxel');
+        const minError = Infinity;
+        let bestBlock: TAtlasBlock | undefined;
+        this._emissiveBlocks.forEach((emissiveBlockName) => {
+            const emissiveBlockData = this._atlas.getBlocks().get(emissiveBlockName);
+            if (emissiveBlockData) {
+                const error = RGBAUtil.squaredDistance(emissiveBlockData.colour, voxel.colour);
+                if (error < minError) {
+                    bestBlock = emissiveBlockData;
+                }
+            }
+        });
+
+        if (bestBlock !== undefined) {
+            const blockIndex = this._voxelMesh.getVoxelIndex(pos);
+            ASSERT(blockIndex !== undefined, 'Setting emissive block of block that doesn\'t exist');
+            this._blocks[blockIndex].blockInfo = bestBlock;
+
+            return true;
+        }
+
+        throw new AppError('Block palette contains no light blocks to place');
+    }
+
+    public getBlockAt(pos: Vector3): TOptional<Block> {
+        const index = this._voxelMesh.getVoxelIndex(pos);
+        if (index !== undefined) {
+            return this._blocks[index];
+        }
+    }
+
     public getBlocks(): Block[] {
         return this._blocks;
     }
@@ -155,6 +223,14 @@ export class BlockMesh {
 
     public getAtlas() {
         return this._atlas;
+    }
+
+    public isEmissiveBlock(block: Block) {
+        return this._emissiveBlocks.includes(block.blockInfo.name);
+    }
+
+    public isTransparentBlock(block: Block) {
+        return this._transparentBlocks.includes(block.blockInfo.name);
     }
 
     /*

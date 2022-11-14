@@ -94,7 +94,8 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos.hash());
+        const hash = pos.hash();
+        const voxelIndex = this._voxelsHash.get(hash);
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -110,7 +111,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.set(pos.hash(), this._voxels.length - 1);
+            this._voxelsHash.set(hash, this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
@@ -118,6 +119,10 @@ export class VoxelMesh {
 
     public getBounds() {
         return this._bounds;
+    }
+
+    public getVoxelIndex(pos: Vector3) {
+        return this._voxelsHash.get(pos.hash());
     }
 
     public getVoxelCount() {

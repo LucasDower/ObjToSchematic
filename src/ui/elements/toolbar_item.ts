@@ -98,8 +98,10 @@ export class ToolbarItemElement {
 
         element.classList.remove('toolbar-item-disabled');
         element.classList.remove('toolbar-item-active');
+        element.classList.remove('toolbar-item-disabled-active');
         svgElement.classList.remove('icon-disabled');
         svgElement.classList.remove('icon-active');
+        svgElement.classList.remove('icon-disabled-active');
 
         if (this._isEnabled) {
             if (this._isActive) {
@@ -107,8 +109,13 @@ export class ToolbarItemElement {
                 svgElement.classList.add('icon-active');
             }
         } else {
-            element.classList.add('toolbar-item-disabled');
-            svgElement.classList.add('icon-disabled');
+            if (this._isActive) {
+                element.classList.add('toolbar-item-disabled-active');
+                svgElement.classList.add('icon-disabled-active');
+            } else {
+                element.classList.add('toolbar-item-disabled');
+                svgElement.classList.add('icon-disabled');
+            }
         }
     }
 

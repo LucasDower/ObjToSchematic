@@ -1,7 +1,6 @@
 import { FallableBehaviour } from './block_mesh';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
-import { Ditherer } from './dither';
 import { TExporters } from './exporters/exporters';
 import { MaterialMap } from './mesh';
 import { StatusMessage } from './status';
@@ -109,6 +108,8 @@ export namespace AssignParams {
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,
+        calculateLighting: boolean,
+        lightThreshold: number,
         contextualAveraging: TToggle,
         errorWeight: number,
     }

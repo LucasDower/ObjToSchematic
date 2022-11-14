@@ -167,8 +167,20 @@ export class UI {
                     },
                 ]),
                 'errorWeight': new SliderElement('Smoothness', 0.0, AppConfig.Get.SMOOTHNESS_MAX, 2, 0.2, 0.01),
+                'calculateLighting': new ComboBoxElement<boolean>('Calculate lighting', [
+                    { id: false, displayText: 'Off' },
+                    { id: true, displayText: 'On' },
+                ]).onValueChanged((value: any) => {
+                    if (value === 'true') {
+                        this._ui.assign.elements.lightThreshold.setEnabled(true, false);
+                    } else {
+                        this._ui.assign.elements.lightThreshold.setEnabled(false, false);
+                    }
+                }),
+                'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1)
+                    .setObeyGroupEnables(false),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging', 'errorWeight'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging', 'errorWeight', 'calculateLighting', 'lightThreshold'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -249,8 +261,18 @@ export class UI {
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
+                    'night-vision': new ToolbarItemElement({ icon: 'bulb' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsNightVisionEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isNightVisionEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.canToggleNightVision();
+                        }),
                 },
-                elementsOrder: ['grid', 'axes'],
+                elementsOrder: ['grid', 'axes', 'night-vision'],
             },
 
         },

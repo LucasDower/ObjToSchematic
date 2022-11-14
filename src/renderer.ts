@@ -59,6 +59,7 @@ export class Renderer {
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
+    private _nightVisionEnabled: boolean;
 
     private _gridBuffers: {
         x: { [meshType: string]: RenderBuffer };
@@ -92,6 +93,7 @@ export class Renderer {
 
         this._isGridComponentEnabled = {};
         this._axesEnabled = false;
+        this._nightVisionEnabled = true;
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -126,6 +128,14 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
+    private _lightingAvailable: boolean = false;
+    public setLightingAvailable(isAvailable: boolean) {
+        this._lightingAvailable = isAvailable;
+        if (!isAvailable) {
+            this._nightVisionEnabled = true;
+        }
+    }
+
     public toggleIsGridEnabled() {
         this._gridEnabled = !this._gridEnabled;
     }
@@ -140,6 +150,21 @@ export class Renderer {
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
+    }
+
+    public canToggleNightVision() {
+        return this._lightingAvailable;
+    }
+
+    public toggleIsNightVisionEnabled() {
+        this._nightVisionEnabled = !this._nightVisionEnabled;
+        if (!this._lightingAvailable) {
+            this._nightVisionEnabled = true;
+        }
+    }
+
+    public isNightVisionEnabled() {
+        return this._nightVisionEnabled;
     }
 
     public toggleIsWireframeEnabled() {
@@ -459,6 +484,7 @@ export class Renderer {
             u_voxelSize: this._voxelSize,
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_nightVision: this.isNightVisionEnabled(),
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
