@@ -10,7 +10,7 @@ test('Random-dither', () => {
     const config = headlessConfig;
 
     config.import.filepath = PathUtil.join(AppPaths.Get.resources, './samples/skull.obj');
-    config.assign.blockAssigner = 'random-dithering';
+    config.assign.dithering = 'random';
 
     const worker = WorkerClient.Get;
     worker.import(headlessConfig.import);

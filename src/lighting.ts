@@ -5,6 +5,7 @@ import { LOG } from './util/log_util';
 import { Vector3Hash } from './util/type_util';
 import { Vector3 } from './vector';
 
+/* eslint-disable */
 enum EFace {
     Up,
     Down,
@@ -14,6 +15,7 @@ enum EFace {
     West,
     None,
 };
+/* eslint-enable */
 
 export type TLightLevel = { blockLightValue: number, sunLightValue: number };
 export type TLightUpdate = TLightLevel & { pos: Vector3, from: EFace };

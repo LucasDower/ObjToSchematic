@@ -26,7 +26,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
     }
 
     public generateInnerHTML() {
-        ASSERT(this._value, 'Value not found');
+        ASSERT(this._value !== undefined, 'Value not found');
         return `
             <div style="display: flex; flex-direction: row;">
                 <div style="display: flex; flex-direction: row; width: 33%">
@@ -35,14 +35,14 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
                         ${this._value.x}
                     </div>
                 </div>
-                <div class="invis-divider"></div>
+                <div class="spinbox-divider"></div>
                 <div style="display: flex; flex-direction: row; width: 33%"">
                     <div class="spinbox-key" id="${this._id}-ky" style="background-color: #34BF49;">Y</div>
                     <div class="spinbox-value" id="${this._id}-vy">
                         ${this._value.y}
                     </div>
                 </div>
-                <div class="invis-divider"></div>
+                <div class="spinbox-divider"></div>
                 <div style="display: flex; flex-direction: row; width: 33%"">
                     <div class="spinbox-key" id="${this._id}-kz" style="background-color: #0099E5;">Z</div>
                     <div class="spinbox-value" id="${this._id}-vz">
@@ -55,7 +55,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
     private _registerAxis(axis: EAxis) {
         ASSERT(axis !== EAxis.None);
-        
+
         const elementXK = document.getElementById(this._id + '-k' + axis) as HTMLDivElement;
         const elementXV = document.getElementById(this._id + '-v' + axis) as HTMLDivElement;
         ASSERT(elementXK !== null && elementXV !== null);
@@ -140,7 +140,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
     private _updateValue(e: MouseEvent) {
         ASSERT(this._isEnabled, 'Not enabled');
         ASSERT(this._dragging !== EAxis.None, 'Dragging nothing');
-        ASSERT(this._value, 'No value to update');
+        ASSERT(this._value !== undefined, 'No value to update');
 
         const deltaX = e.clientX - this._lastClientX;
         this._lastClientX = e.clientX;

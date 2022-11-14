@@ -1,11 +1,11 @@
 import fs from 'fs';
 
-import { BlockAssignerFactory, TBlockAssigners } from './assigners/assigners';
 import { Atlas, TAtlasBlock } from './atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
-import { RGBAUtil } from './colour';
+import { RGBA_255, RGBAUtil } from './colour';
+import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
@@ -28,13 +28,12 @@ export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-
 export interface BlockMeshParams {
     textureAtlas: Atlas,
     blockPalette: Palette,
-    blockAssigner: TBlockAssigners,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
 }
 
 export class BlockMesh {
-    private _blocksUsed: string[];
+    private _blocksUsed: Set<string>;
     private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
@@ -60,7 +59,7 @@ export class BlockMesh {
     }
 
     private constructor(voxelMesh: VoxelMesh) {
-        this._blocksUsed = [];
+        this._blocksUsed = new Set();
         this._blocks = [];
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
@@ -78,6 +77,33 @@ export class BlockMesh {
         this._emissiveBlocks = JSON.parse(emissivelocksString).emissive_blocks;
     }
 
+    /**
+     * Before we turn a voxel into a block we have the opportunity to alter the voxel's colour.
+     * This is where the colour accuracy bands colours together and where dithering is calculated.
+     */
+    private _getFinalVoxelColour(voxel: Voxel, blockMeshParams: AssignParams.Input) {
+        const voxelColour = RGBAUtil.copy(voxel.colour);
+
+        const binnedColour = RGBAUtil.bin(voxelColour, blockMeshParams.resolution);
+
+        const ditheredColour: RGBA_255 = RGBAUtil.copy255(binnedColour);
+        switch (blockMeshParams.dithering) {
+            case 'off': {
+                break;
+            }
+            case 'random': {
+                Ditherer.ditherRandom(ditheredColour);
+                break;
+            }
+            case 'ordered': {
+                Ditherer.ditherOrdered(ditheredColour, voxel.position);
+                break;
+            }
+        }
+
+        return ditheredColour;
+    }
+
     private _assignBlocks(blockMeshParams: AssignParams.Input) {
         const atlas = Atlas.load(blockMeshParams.textureAtlas);
         ASSERT(atlas !== undefined, 'Could not load atlas');
@@ -90,54 +116,42 @@ export class BlockMesh {
         const allBlockCollection = atlasPalette.createBlockCollection([]);
         const nonFallableBlockCollection = atlasPalette.createBlockCollection(this._fallableBlocks);
 
-        const blockAssigner = BlockAssignerFactory.GetAssigner(blockMeshParams.blockAssigner);
-
         let countFalling = 0;
         const taskHandle = ProgressManager.Get.start('Assigning');
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
             ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
+            // Convert the voxel into a block
             const voxel = voxels[voxelIndex];
+            const voxelColour = this._getFinalVoxelColour(voxel, blockMeshParams);
+            const faceVisibility = blockMeshParams.contextualAveraging === 'on' ?
+                this._voxelMesh.getFaceVisibility(voxel.position) :
+                VoxelMesh.getFullFaceVisibility();
+            let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);
 
-            let block = blockAssigner.assignBlock(
-                atlasPalette,
-                voxel.colour,
-                voxel.position,
-                blockMeshParams.resolution,
-                blockMeshParams.colourSpace,
-                allBlockCollection,
-            );
+            // Check that this block meets the fallable behaviour, we may need
+            // to choose a different block if the current one doesn't meet the requirements
+            const isBlockFallable = this._fallableBlocks.includes(block.name);
+            const isBlockSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
 
-            const isFallable = this._fallableBlocks.includes(block.name);
-            const isSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
-
-            if (isFallable && !isSupported) {
+            if (isBlockFallable && !isBlockSupported) {
                 ++countFalling;
             }
 
-            let shouldReplace = (blockMeshParams.fallable === 'replace-fallable' && isFallable);
-            shouldReplace ||= (blockMeshParams.fallable === 'replace-falling' && isFallable && !isSupported);
+            const shouldReplaceBlock =
+                (blockMeshParams.fallable === 'replace-fallable' && isBlockFallable) ||
+                (blockMeshParams.fallable === 'replace-falling' && isBlockFallable && !isBlockSupported);
 
-            if (shouldReplace) {
-                const replacedBlock = blockAssigner.assignBlock(
-                    atlasPalette,
-                    voxel.colour,
-                    voxel.position,
-                    blockMeshParams.resolution,
-                    ColourSpace.RGB,
-                    nonFallableBlockCollection,
-                );
-                block = replacedBlock;
+            if (shouldReplaceBlock) {
+                block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility, blockMeshParams.errorWeight);
             }
 
             this._blocks.push({
                 voxel: voxel,
                 blockInfo: block,
             });
-            if (!this._blocksUsed.includes(block.name)) {
-                this._blocksUsed.push(block.name);
-            }
+            this._blocksUsed.add(block.name);
         }
         ProgressManager.Get.end(taskHandle);
 
@@ -197,7 +211,7 @@ export class BlockMesh {
     }
 
     public getBlockPalette() {
-        return this._blocksUsed;
+        return Array.from(this._blocksUsed);
     }
 
     public getVoxelMesh() {

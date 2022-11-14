@@ -22,6 +22,7 @@ export type TMeshBufferDescription = {
     material: SolidMaterial | (TexturedMaterial)
     buffer: TMeshBuffer,
     numElements: number,
+    materialName: string,
 };
 
 export type TVoxelMeshBuffer = {
@@ -247,6 +248,7 @@ export class BufferGenerator {
                 buffer: materialBuffer,
                 material: material,
                 numElements: materialBuffer.indices.data.length,
+                materialName: materialName,
             });
         });
 

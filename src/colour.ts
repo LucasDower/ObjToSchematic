@@ -1,4 +1,5 @@
 import { AppConfig } from './config';
+import { TBrand } from './util/type_util';
 
 export type RGBA = {
     r: number,
@@ -7,7 +8,69 @@ export type RGBA = {
     a: number
 }
 
+export type RGBA_255 = TBrand<RGBA, '255'>;
+
 export namespace RGBAUtil {
+    export function toString(a: RGBA) {
+        return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
+    }
+
+    export function random(): RGBA {
+        return {
+            r: Math.random(),
+            g: Math.random(),
+            b: Math.random(),
+            a: 1.0,
+        };
+    }
+
+    export function toHexString(a: RGBA) {
+        const r = Math.floor(255 * a.r).toString(16).padStart(2, '0');
+        const g = Math.floor(255 * a.g).toString(16).padStart(2, '0');
+        const b = Math.floor(255 * a.b).toString(16).padStart(2, '0');
+        return `#${r}${g}${b}`;
+    }
+
+    export function fromHexString(str: string) {
+        return {
+            r: parseInt(str.substring(1, 3), 16) / 255,
+            g: parseInt(str.substring(3, 5), 16) / 255,
+            b: parseInt(str.substring(5, 7), 16) / 255,
+            a: 1.0,
+        };
+    }
+
+    export function toUint8String(a: RGBA) {
+        return `(${Math.floor(255 * a.r)}, ${Math.floor(255 * a.g)}, ${Math.floor(255 * a.b)}, ${Math.floor(255 * a.a)})`;
+    }
+
+    export function toRGBA255(c: RGBA): RGBA_255 {
+        const out: RGBA = {
+            r: c.r * 255,
+            g: c.r * 255,
+            b: c.r * 255,
+            a: c.r * 255,
+        };
+        return out as RGBA_255;
+    }
+
+    export function fromRGBA255(c: RGBA_255): RGBA {
+        const out: RGBA = {
+            r: c.r / 255,
+            g: c.g / 255,
+            b: c.b / 255,
+            a: c.a / 255,
+        };
+        return out;
+    }
+
+    export function add(a: RGBA, b: RGBA) {
+        a.r += b.r;
+        a.g += b.g;
+        a.b += b.b;
+        a.a += b.a;
+    }
+
     export function lerp(a: RGBA, b: RGBA, alpha: number) {
         return {
             r: a.r * (1 - alpha) + b.r * alpha,
@@ -53,32 +116,28 @@ export namespace RGBAUtil {
         };
     }
 
+    export function copy255(a: RGBA_255): RGBA_255 {
+        return {
+            r: a.r,
+            g: a.g,
+            b: a.b,
+            a: a.a,
+        } as RGBA_255;
+    }
+
     export function toArray(a: RGBA): number[] {
         return [a.r, a.g, a.b, a.a];
     }
 
     export function bin(col: RGBA, resolution: TColourAccuracy) {
-        const r = Math.floor(col.r * resolution);
-        const g = Math.floor(col.g * resolution);
-        const b = Math.floor(col.b * resolution);
-        const a = Math.ceil(col.a * resolution);
-
-        let hash = r;
-        hash = (hash << 8) + g;
-        hash = (hash << 8) + b;
-        hash = (hash << 8) + a;
-
         const binnedColour: RGBA = {
-            r: r / resolution,
-            g: g / resolution,
-            b: b / resolution,
-            a: a / resolution,
+            r: Math.floor(Math.floor(col.r * resolution) * (255 / resolution)),
+            g: Math.floor(Math.floor(col.g * resolution) * (255 / resolution)),
+            b: Math.floor(Math.floor(col.b * resolution) * (255 / resolution)),
+            a: Math.floor(Math.ceil(col.a * resolution) * (255 / resolution)),
         };
 
-        return {
-            colourHash: hash,
-            binnedColour: binnedColour,
-        };
+        return binnedColour as RGBA_255;
     }
 
     /**
@@ -97,6 +156,14 @@ export namespace RGBAUtil {
         hash = (hash << 8) + g;
         hash = (hash << 8) + b;
         hash = (hash << 8) + a;
+        return hash;
+    }
+
+    export function hash255(col: RGBA_255) {
+        let hash = col.r;
+        hash = (hash << 8) + col.g;
+        hash = (hash << 8) + col.b;
+        hash = (hash << 8) + col.a;
         return hash;
     }
 

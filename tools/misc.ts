@@ -4,26 +4,31 @@ import { PNG } from 'pngjs';
 import prompt from 'prompt';
 
 import { RGBA } from '../src/colour';
-import { AppPaths } from '../src/util/path_util';
-import { log, LogStyle } from './logging';
+import { clog, log } from './logging';
 
 export const ASSERT = (condition: boolean, onFailMessage: string) => {
     if (!condition) {
-        log(LogStyle.Failure, onFailMessage);
+        log('Failure', onFailMessage);
         process.exit(0);
     }
 };
 
-export function isDirSetup(relativePath: string, jarAssetDir: string) {
-    const dir = path.join(AppPaths.Get.tools, relativePath);
-    if (fs.existsSync(dir)) {
-        if (fs.readdirSync(dir).length > 0) {
+export const ASSERT_EXISTS = (path: fs.PathLike) => {
+    clog(
+        fs.existsSync(path),
+        `Found '${path}'`,
+        `Could not find '${path}'`,
+    );
+};
+
+export function isDirSetup(absolutePath: string) {
+    if (fs.existsSync(absolutePath)) {
+        if (fs.readdirSync(absolutePath).length > 0) {
             return true;
         }
     } else {
-        fs.mkdirSync(dir);
+        fs.mkdirSync(absolutePath);
     }
-    log(LogStyle.Warning, `Copy the contents of .minecraft/versions/<version>/<version>.jar/${jarAssetDir} from a Minecraft game files into ${relativePath} or fetch them automatically`);
     return false;
 }
 
@@ -54,14 +59,32 @@ export function getAverageColour(image: PNG): RGBA {
     };
 }
 
+export function getStandardDeviation(image: PNG, average: RGBA): number {
+    let squaredDist = 0.0;
+    let weight = 0.0;
+    for (let x = 0; x < image.width; ++x) {
+        for (let y = 0; y < image.height; ++y) {
+            const index = 4 * (image.width * y + x);
+            const rgba = image.data.slice(index, index + 4);
+            const alpha = rgba[3] / 255;
+            weight += alpha;
+            const r = (rgba[0] / 255) * alpha;
+            const g = (rgba[1] / 255) * alpha;
+            const b = (rgba[2] / 255) * alpha;
+            squaredDist += Math.pow(r - average.r, 2) + Math.pow(g - average.g, 2) + Math.pow(b - average.b, 2);
+        }
+    }
+    return Math.sqrt(squaredDist / weight);
+}
+
 export async function getPermission() {
     const directory = getMinecraftDir();
-    log(LogStyle.Info, `This script requires files inside of ${directory}`);
+    log('Prompt', `This script requires files inside of ${directory}`);
     const { permission } = await prompt.get({
         properties: {
             permission: {
                 pattern: /^[YyNn]$/,
-                description: 'Do you give permission to access these files? (Y/n)',
+                description: 'Do you give permission to access these files? (y/n)',
                 message: 'Response must be Y or N',
                 required: true,
             },

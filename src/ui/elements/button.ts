@@ -13,8 +13,8 @@ export class ButtonElement extends BaseUIElement<any> {
     public generateHTML() {
         return `
             <div class="button" id="${this._id}">
-                <div class="btn">${this._label}</div>
-                <div class="progress" id="${this._id}-progress"></div>
+                <div class="button-label">${this._label}</div>
+                <div class="button-progress" id="${this._id}-progress"></div>
             </div>
         `;
     }
