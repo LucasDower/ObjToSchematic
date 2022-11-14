@@ -29,6 +29,14 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
     }
 
     public registerEvents(): void {
+        const element = document.getElementById(this._id) as HTMLSelectElement;
+        ASSERT(element !== null);
+
+        element.addEventListener('change', () => {
+            if (this._onValueChangedDelegate) {
+                this._onValueChangedDelegate(element.value);
+            }
+        });
     }
 
     protected getValue() {
@@ -43,5 +51,13 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         element.disabled = !this._isEnabled;
+
+        this._onValueChangedDelegate?.(element.value);
+    }
+
+    private _onValueChangedDelegate?: (value: any) => void;
+    public onValueChanged(delegate: (value: any) => void) {
+        this._onValueChangedDelegate = delegate;
+        return this;
     }
 }

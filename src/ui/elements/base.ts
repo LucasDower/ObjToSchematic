@@ -13,7 +13,10 @@ export abstract class BaseUIElement<Type> {
         this._isEnabled = true;
     }
 
-    public setEnabled(isEnabled: boolean) {
+    public setEnabled(isEnabled: boolean, isGroupEnable: boolean = true) {
+        if (isEnabled && isGroupEnable && !this._obeyGroupEnables) {
+            return;
+        }
         this._isEnabled = isEnabled;
         this._onEnabledChanged();
     }
@@ -37,4 +40,10 @@ export abstract class BaseUIElement<Type> {
 
 
     protected abstract _onEnabledChanged(): void;
+
+    private _obeyGroupEnables: boolean = true;
+    public setObeyGroupEnables(shouldListen: boolean) {
+        this._obeyGroupEnables = shouldListen;
+        return this;
+    }
 }

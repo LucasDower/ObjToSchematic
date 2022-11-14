@@ -151,9 +151,20 @@ export class UI {
                     },
                 ]),
                 'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
-                'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1),
+                'calculateLighting': new ComboBoxElement<boolean>('Calculate lighting', [
+                    { id: false, displayText: 'Off' },
+                    { id: true, displayText: 'On' },
+                ]).onValueChanged((value: any) => {
+                    if (value === 'true') {
+                        this._ui.assign.elements.lightThreshold.setEnabled(true, false);
+                    } else {
+                        this._ui.assign.elements.lightThreshold.setEnabled(false, false);
+                    }
+                }),
+                'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1)
+                    .setObeyGroupEnables(false),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'lightThreshold'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'calculateLighting', 'lightThreshold'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -240,6 +251,9 @@ export class UI {
                         })
                         .isActive(() => {
                             return Renderer.Get.isNightVisionEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.canToggleNightVision();
                         }),
                 },
                 elementsOrder: ['grid', 'axes', 'night-vision'],

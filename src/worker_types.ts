@@ -96,6 +96,7 @@ export namespace AssignParams {
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,
+        calculateLighting: boolean,
         lightThreshold: number,
     }
 

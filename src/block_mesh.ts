@@ -48,11 +48,13 @@ export class BlockMesh {
         blockMesh._assignBlocks(blockMeshParams);
 
         //blockMesh._calculateLighting(blockMeshParams.lightThreshold);
-        blockMesh._lighting.init();
-        blockMesh._lighting.addSunLightValues();
-        blockMesh._lighting.addEmissiveBlocks();
-        blockMesh._lighting.addLightToDarkness(blockMeshParams.lightThreshold);
-        blockMesh._lighting.dumpInfo();
+        if (blockMeshParams.calculateLighting) {
+            blockMesh._lighting.init();
+            blockMesh._lighting.addSunLightValues();
+            blockMesh._lighting.addEmissiveBlocks();
+            blockMesh._lighting.addLightToDarkness(blockMeshParams.lightThreshold);
+            blockMesh._lighting.dumpInfo();
+        }
 
         return blockMesh;
     }

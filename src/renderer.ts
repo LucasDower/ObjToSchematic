@@ -126,6 +126,14 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
+    private _lightingAvailable: boolean = false;
+    public setLightingAvailable(isAvailable: boolean) {
+        this._lightingAvailable = isAvailable;
+        if (!isAvailable) {
+            this._nightVisionEnabled = true;
+        }
+    }
+
     public toggleIsGridEnabled() {
         this._gridEnabled = !this._gridEnabled;
     }
@@ -142,8 +150,15 @@ export class Renderer {
         this._axesEnabled = !this._axesEnabled;
     }
 
+    public canToggleNightVision() {
+        return this._lightingAvailable;
+    }
+
     public toggleIsNightVisionEnabled() {
         this._nightVisionEnabled = !this._nightVisionEnabled;
+        if (!this._lightingAvailable) {
+            this._nightVisionEnabled = true;
+        }
     }
 
     public isNightVisionEnabled() {

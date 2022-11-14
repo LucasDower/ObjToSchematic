@@ -323,6 +323,8 @@ export class AppContext {
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
 
+        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getCachedValue());
+
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
@@ -332,6 +334,7 @@ export class AppContext {
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
                 resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                calculateLighting: uiElements.calculateLighting.getCachedValue(),
                 lightThreshold: uiElements.lightThreshold.getCachedValue(),
             },
         };

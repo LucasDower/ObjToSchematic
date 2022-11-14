@@ -447,6 +447,11 @@ select:disabled {
   border: 1px solid var(--prop-accent-border-hovered) !important;
 }
 
+.toolbar-item-disabled-active {
+  background-color: var(--prop-accent-disabled) !important;
+  border: 1px solid var(--prop-accent-disabled) !important;
+}
+
 .toolbar-item-disabled {
   background-color: var(--prop-disabled) !important;
   border: 1px solid var(--prop-disabled) !important;
@@ -480,6 +485,10 @@ svg {
 
 .icon-disabled {
   stroke: var(--text-disabled) !important;
+}
+
+.icon-disabled-active {
+  stroke: #808080 !important;
 }
 
 .palette-container {
