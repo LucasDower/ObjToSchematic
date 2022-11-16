@@ -125,7 +125,7 @@ export class BlockMesh {
             // Convert the voxel into a block
             const voxel = voxels[voxelIndex];
             const voxelColour = this._getFinalVoxelColour(voxel, blockMeshParams);
-            const faceVisibility = blockMeshParams.contextualAveraging === 'on' ?
+            const faceVisibility = blockMeshParams.contextualAveraging ?
                 this._voxelMesh.getFaceVisibility(voxel.position) :
                 VoxelMesh.getFullFaceVisibility();
             let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);

@@ -7,7 +7,7 @@ import { StatusMessage } from './status';
 import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
-import { TDithering, TToggle } from './util/type_util';
+import { TDithering } from './util/type_util';
 import { Vector3 } from './vector';
 import { TVoxelOverlapRule } from './voxel_mesh';
 import { TVoxelisers } from './voxelisers/voxelisers';
@@ -110,7 +110,7 @@ export namespace AssignParams {
         resolution: RGBAUtil.TColourAccuracy,
         calculateLighting: boolean,
         lightThreshold: number,
-        contextualAveraging: TToggle,
+        contextualAveraging: boolean,
         errorWeight: number,
     }
 

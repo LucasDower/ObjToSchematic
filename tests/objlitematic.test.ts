@@ -25,7 +25,7 @@ const baseConfig: THeadlessConfig = {
         resolution: 32,
         calculateLighting: false,
         lightThreshold: 0,
-        contextualAveraging: 'on',
+        contextualAveraging: true,
         errorWeight: 0.0,
     },
     export: {

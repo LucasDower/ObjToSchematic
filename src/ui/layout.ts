@@ -10,11 +10,12 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
-import { TDithering, TToggle } from '../util/type_util';
+import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
 import { ButtonElement } from './elements/button';
+import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { OutputElement } from './elements/output';
@@ -72,26 +73,8 @@ export class UI {
                         displayText: 'Ray-based (legacy)',
                     },
                 ]),
-                'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
-                    {
-                        id: 'on',
-                        displayText: 'On (recommended)',
-                    },
-                    {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
-                'multisampleColouring': new ComboBoxElement('Multisampling', [
-                    {
-                        id: 'on',
-                        displayText: 'On (recommended)',
-                    },
-                    {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
+                'ambientOcclusion': new CheckboxElement('Ambient occlusion', true, 'On (recommended)', 'Off (faster)'),
+                'multisampleColouring': new CheckboxElement('Multisampling', true, 'On (recommended)', 'Off (faster)'),
                 'textureFiltering': new ComboBoxElement('Texture filtering', [
                     {
                         id: 'linear',
@@ -156,27 +139,16 @@ export class UI {
                     },
                 ]),
                 'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
-                'contextualAveraging': new ComboBoxElement<TToggle>('Smart averaging', [
-                    {
-                        id: 'on',
-                        displayText: 'On (recommended)',
-                    },
-                    {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
+                'contextualAveraging': new CheckboxElement('Smart averaging', true, 'On (recommended)', 'Off (faster)'),
                 'errorWeight': new SliderElement('Smoothness', 0.0, AppConfig.Get.SMOOTHNESS_MAX, 2, 0.2, 0.01),
-                'calculateLighting': new ComboBoxElement<boolean>('Calculate lighting', [
-                    { id: false, displayText: 'Off' },
-                    { id: true, displayText: 'On' },
-                ]).onValueChanged((value: any) => {
-                    if (value === 'true') {
-                        this._ui.assign.elements.lightThreshold.setEnabled(true, false);
-                    } else {
-                        this._ui.assign.elements.lightThreshold.setEnabled(false, false);
-                    }
-                }),
+                'calculateLighting': new CheckboxElement('Calculate lighting', false, 'On', 'Off')
+                    .onValueChanged((value: boolean) => {
+                        if (value) {
+                            this._ui.assign.elements.lightThreshold.setEnabled(true, false);
+                        } else {
+                            this._ui.assign.elements.lightThreshold.setEnabled(false, false);
+                        }
+                    }),
                 'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1)
                     .setObeyGroupEnables(false),
             },

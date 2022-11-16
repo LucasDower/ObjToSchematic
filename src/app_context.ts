@@ -375,9 +375,9 @@ export class AppContext {
             params: {
                 voxeliser: uiElements.voxeliser.getCachedValue(),
                 desiredHeight: uiElements.desiredHeight.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
+                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
                 textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
                 voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
             },
         };
@@ -401,7 +401,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
                 desiredHeight: uiElements.desiredHeight.getCachedValue(),
             },
         };
