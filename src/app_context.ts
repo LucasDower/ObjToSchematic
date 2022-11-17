@@ -20,6 +20,7 @@ import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
+import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -27,6 +28,7 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
+    public maxConstraint?: Vector3;
     private _materialMap: MaterialMap;
 
     public constructor() {
@@ -190,6 +192,13 @@ export class AppContext {
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
+            const dimensions = new Vector3(
+                payload.result.dimensions.x,
+                payload.result.dimensions.y,
+                payload.result.dimensions.z,
+            );
+            dimensions.mulScalar(380 / 8.0).floor();
+            this.maxConstraint = dimensions;
             this._materialMap = payload.result.materials;
             this._onMaterialMapChanged();
 
@@ -373,8 +382,9 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
+                constraintAxis: uiElements.constraintAxis.getCachedValue(),
                 voxeliser: uiElements.voxeliser.getCachedValue(),
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                size: uiElements.size.getCachedValue(),
                 useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
                 textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
@@ -402,7 +412,7 @@ export class AppContext {
             action: 'RenderNextVoxelMeshChunk',
             params: {
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                desiredHeight: uiElements.size.getCachedValue(),
             },
         };
 

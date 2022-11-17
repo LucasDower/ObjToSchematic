@@ -51,7 +51,7 @@ export function runHeadless(headlessConfig: THeadlessConfig) {
     {
         TIME_START('[TIMER] Exporter');
         LOG_MAJOR('\nExporting...');
-    
+
         /**
          * The OBJExporter is unique in that it uses the actual render buffer used by WebGL
          * to create its data, in headless mode this render buffer is not created so we must
@@ -62,7 +62,7 @@ export function runHeadless(headlessConfig: THeadlessConfig) {
             do {
                 result = worker.renderChunkedVoxelMesh({
                     enableAmbientOcclusion: headlessConfig.voxelise.enableAmbientOcclusion,
-                    desiredHeight: headlessConfig.voxelise.desiredHeight,
+                    desiredHeight: headlessConfig.voxelise.size,
                 });
             } while (result.moreVoxelsToBuffer);
         }

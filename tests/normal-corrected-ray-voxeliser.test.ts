@@ -18,7 +18,8 @@ test('Voxelise solid 2x2 cube', () => {
 
     const voxeliser = new NormalCorrectedRayVoxeliser();
     const voxelMesh = voxeliser.voxelise(mesh, {
-        desiredHeight: 2,
+        constraintAxis: 'y',
+        size: 2,
         useMultisampleColouring: false,
         textureFiltering: TextureFiltering.Nearest,
         enableAmbientOcclusion: false,

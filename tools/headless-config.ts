@@ -7,8 +7,9 @@ export const headlessConfig: THeadlessConfig = {
         filepath: '/Users/lucasdower/ObjToSchematic/res/samples/skull.obj', // Must be an absolute path
     },
     voxelise: {
+        constraintAxis: 'y',
         voxeliser: 'bvh-ray',
-        desiredHeight: 80,
+        size: 80,
         useMultisampleColouring: false,
         textureFiltering: TextureFiltering.Linear,
         voxelOverlapRule: 'average',

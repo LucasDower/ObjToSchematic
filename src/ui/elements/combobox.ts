@@ -1,3 +1,4 @@
+import { EAppEvent, EventManager } from '../../event';
 import { ASSERT } from '../../util/error_util';
 import { LabelledElement } from './labelled_element';
 
@@ -33,6 +34,7 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         ASSERT(element !== null);
 
         element.addEventListener('change', () => {
+            EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
             if (this._onValueChangedDelegate) {
                 this._onValueChangedDelegate(element.value);
             }

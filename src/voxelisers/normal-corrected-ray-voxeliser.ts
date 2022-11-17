@@ -27,17 +27,30 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
-        const scale = (voxeliseParams.desiredHeight) / Mesh.desiredHeight;
+        const meshDimensions = mesh.getBounds().getDimensions();
+        let scale: number;
+        switch (voxeliseParams.constraintAxis) {
+            case 'x':
+                scale = voxeliseParams.size / meshDimensions.x;
+                break;
+            case 'y':
+                scale = voxeliseParams.size / meshDimensions.y;
+                break;
+            case 'z':
+                scale = voxeliseParams.size / meshDimensions.z;
+                break;
+        }
+
         mesh.setTransform((vertex: Vector3) => {
             return vertex.copy().mulScalar(scale);
         });
 
         const bounds = mesh.getBounds();
-        this._size = Vector3.sub(bounds.max, bounds.min);
+        this._size = Vector3.sub(bounds.max.copy().ceil(), bounds.min.copy().floor());
         this._offset = new Vector3(
-            this._size.x % 2 < 0.001 ? 0.5 : 0.0,
-            this._size.y % 2 < 0.001 ? 0.5 : 0.0,
-            this._size.z % 2 < 0.001 ? 0.5 : 0.0,
+            this._size.x % 2 === 0 ? 0.5 : 0.0,
+            this._size.y % 2 === 0 ? 0.5 : 0.0,
+            this._size.z % 2 === 0 ? 0.5 : 0.0,
         );
 
         const numTris = mesh.getTriangleCount();

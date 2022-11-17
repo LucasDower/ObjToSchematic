@@ -25,8 +25,23 @@ export class RayVoxeliser extends IVoxeliser {
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
-        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        const meshDimensions = mesh.getBounds().getDimensions();
+        let scale: number;
+        let offset = new Vector3(0.0, 0.0, 0.0);
+        switch (voxeliseParams.constraintAxis) {
+            case 'x':
+                scale = (voxeliseParams.size - 1) / meshDimensions.x;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'y':
+                scale = (voxeliseParams.size - 1) / meshDimensions.y;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'z':
+                scale = (voxeliseParams.size - 1) / meshDimensions.z;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                break;
+        }
 
         mesh.setTransform((vertex: Vector3) => {
             return vertex.copy().mulScalar(scale).add(offset);
