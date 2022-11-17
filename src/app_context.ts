@@ -16,6 +16,7 @@ import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
+import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -23,6 +24,7 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
+    public maxConstraint?: Vector3;
 
     public constructor() {
         Logger.Get.enableLogToFile();
@@ -182,6 +184,10 @@ export class AppContext {
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
+
+            const dimensions = payload.result.dimensions;
+            dimensions.mulScalar(380 / 8.0).floor();
+            this.maxConstraint = dimensions;
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');

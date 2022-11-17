@@ -27,6 +27,7 @@ export namespace ImportParams {
 
     export type Output = {
         triangleCount: number,
+        dimensions: Vector3,
     }
 }
 

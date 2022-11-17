@@ -73,11 +73,11 @@ export class UI {
                     .registerCustomEvents((slider: SliderElement) => {
                         EventManager.Get.add(EAppEvent.onComboBoxChanged, (value: any) => {
                             if (value[0] === 'x') {
-                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_WIDTH);
+                                slider.setMax(this._appContext.maxConstraint?.x ?? AppConfig.Get.CONSTRAINT_MAXIMUM_WIDTH);
                             } else if (value[0] === 'y') {
-                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                                slider.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
                             } else {
-                                slider.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_DEPTH);
+                                slider.setMax(this._appContext.maxConstraint?.z ?? AppConfig.Get.CONSTRAINT_MAXIMUM_DEPTH);
                             }
                         });
                     }),

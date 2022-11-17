@@ -78,6 +78,7 @@ export class WorkerClient {
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
+            dimensions: this._loadedMesh.getBounds().getDimensions(),
         };
     }
 
@@ -90,19 +91,19 @@ export class WorkerClient {
         };
     }
 
-    
+
     public voxelise(params: VoxeliseParams.Input): VoxeliseParams.Output {
         ASSERT(this._loadedMesh !== undefined);
-        
+
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
-        
+
         this._voxelMeshChunkIndex = 0;
-        
+
         return {
         };
     }
-    
+
     private _voxelMeshChunkIndex = 0;
     private _voxelMeshProgressHandle?: TTaskHandle;
     public renderChunkedVoxelMesh(params: RenderNextVoxelMeshChunkParams.Input): RenderNextVoxelMeshChunkParams.Output {
