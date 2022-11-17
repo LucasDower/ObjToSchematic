@@ -27,12 +27,21 @@ export interface Tri {
 /* eslint-disable */
 export enum MaterialType { solid, textured }
 /* eslint-enable */
-export interface SolidMaterial { colour: RGBA; type: MaterialType.solid }
-export interface TexturedMaterial {
-    path: string;
-    type: MaterialType.textured;
-    alphaPath?: string;
-    alphaFactor: number;
+type BaseMaterial = {
+    edited: boolean,
+    canBeTextured: boolean,
+}
+
+export type SolidMaterial = BaseMaterial & {
+    type: MaterialType.solid,
+    colour: RGBA,
+    set: boolean,
+}
+export type TexturedMaterial = BaseMaterial & {
+    type: MaterialType.textured,
+    path: string,
+    alphaPath?: string,
+    alphaFactor: number,
 }
 export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
 
@@ -150,31 +159,54 @@ export class Mesh {
             throw new AppError('Loaded mesh has no materials');
         }
 
-        // Check used materials exist
-        let wasRemapped = false;
-        let debugName = (Math.random() + 1).toString(36).substring(7);
-        while (debugName in this._materials) {
-            debugName = (Math.random() + 1).toString(36).substring(7);
-        }
 
+        // Check used materials exist
+        const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
             if (!(tri.material in this._materials)) {
+                // This triangle makes use of a material we don't have info about
+                // Try infer details about this material and add it to our materials
+
+                if (tri.texcoordIndices === undefined) {
+                    // No texcoords are defined, therefore make a solid material
+                    this._materials[tri.material] = {
+                        type: MaterialType.solid,
+                        colour: RGBAColours.MAGENTA,
+                        edited: true,
+                        canBeTextured: false,
+                        set: false,
+                    };
+                } else {
+                    // Texcoords exist
+                    this._materials[tri.material] = {
+                        type: MaterialType.solid,
+                        colour: RGBAUtil.random(),
+                        edited: true,
+                        canBeTextured: true,
+                        set: false,
+                    };
+                }
+
                 missingMaterials.add(tri.material);
-                wasRemapped = true;
-                tri.material = debugName;
+            }
+
+            usedMaterials.add(tri.material);
+        }
+
+        const materialsToRemove = new Set<string>();
+        for (const materialName in this._materials) {
+            if (!usedMaterials.has(materialName)) {
+                LOG_WARN(`'${materialName}' is not used by any triangles, removing...`);
+                materialsToRemove.add(materialName);
             }
         }
-        if (wasRemapped) {
+        materialsToRemove.forEach((materialName) => {
+            delete this._materials[materialName];
+        });
+
+        if (missingMaterials.size > 0) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            StatusHandler.Get.add(
-                'warning',
-                'Some materials were not loaded correctly',
-            );
-            this._materials[debugName] = {
-                type: MaterialType.solid,
-                colour: RGBAColours.WHITE,
-            };
         }
 
         // Check texture paths are absolute and exist
@@ -183,14 +215,17 @@ export class Mesh {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    StatusHandler.Get.add(
-                        'warning',
-                        `Could not find ${material.path}`,
-                    );
+                    //StatusHandler.Get.add(
+                    //    'warning',
+                    //    `Could not find ${material.path}`,
+                    //);
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {
                         type: MaterialType.solid,
                         colour: RGBAColours.WHITE,
+                        edited: true,
+                        canBeTextured: true,
+                        set: false,
                     };
                 }
             }
@@ -302,6 +337,11 @@ export class Mesh {
 
     public getMaterialByName(materialName: string) {
         return this._materials[materialName];
+    }
+
+    public setMaterials(materialMap: MaterialMap) {
+        this._materials = materialMap;
+        this._loadTextures();
     }
 
     public getMaterials() {

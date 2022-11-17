@@ -10,7 +10,11 @@ export namespace AppUtil {
          */
         export function namespaceBlock(blockName: string): AppTypes.TNamespacedBlockName {
             // https://minecraft.fandom.com/wiki/Resource_location#Namespaces
-            return blockName.includes(':') ? blockName : ('minecraft:' + blockName);
+            return isNamespacedBlock(blockName) ? blockName : ('minecraft:' + blockName);
+        }
+
+        export function isNamespacedBlock(blockName: string): boolean {
+            return blockName.includes(':');
         }
     }
 }

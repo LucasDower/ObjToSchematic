@@ -148,7 +148,7 @@ input::-webkit-inner-spin-button {
 select {
   width: 100%;
   height: 100%;
-  padding-left: 10px;
+  padding-left: 5px;
   border-radius: var(--border-radius);
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
@@ -231,9 +231,6 @@ select:disabled {
   background: var(--prop-accent-disabled) !important;
   border: 1px solid rgb(255, 255, 255, 0) !important;
   color: #808080 !important;
-}
-
-.button-label {
 }
 
 .button-progress {
@@ -402,6 +399,9 @@ select:disabled {
 }
 
 .toolbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 32px;
   padding: 0px 8px 0px 8px;
   text-align: center;
@@ -421,6 +421,11 @@ select:disabled {
 .toolbar-item-active-hover {
   background-color: var(--prop-accent-hovered) !important;
   border: 1px solid var(--prop-accent-border-hovered) !important;
+}
+
+.toolbar-item-disabled-active {
+  background-color: var(--prop-accent-disabled) !important;
+  border: 1px solid var(--prop-accent-disabled) !important;
 }
 
 .toolbar-item-disabled {
@@ -447,7 +452,6 @@ select:disabled {
 svg {
   width: 16px;
   height: 16px;
-  padding-top: 7.5px;
   stroke: var(--text-standard);
 }
 
@@ -457,6 +461,10 @@ svg {
 
 .icon-disabled {
   stroke: var(--text-disabled) !important;
+}
+
+.icon-disabled-active {
+  stroke: #808080 !important;
 }
 
 .palette-container {
@@ -582,4 +590,142 @@ svg {
   background-color: var(--prop-accent-standard);
   height: 100%;
   transition: width 0.1s;
+}
+
+
+
+
+/* Remove default bullets */
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+.caret:hover {
+  color: var(--text-standard) !important;
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6";
+  display: inline-block;
+  margin-right: 6px;
+}
+
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+  display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+  display: block;
+}
+
+
+a {
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+  color: #8C8C8C80;
+}
+a:hover {
+  color: var(--text-standard) !important;
+}
+
+.colour-swatch {
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+  width: 75%;
+  height: 24px;
+  margin: 0px;
+  padding: 0px;
+}
+.colour-swatch-hover {
+  border-color: var(--text-standard) !important;
+}
+
+.colour-swatch::-webkit-color-swatch-wrapper {
+  border: none;
+  margin: 0px;
+  padding: 0px;
+}
+.colour-swatch::-webkit-color-swatch {
+  border: none;
+  margin: 0px;
+  padding: 0px;
+  border-radius: 5px;
+}
+
+.texture-preview {
+  border: 1px solid #8C8C8C80;
+  border-radius: 5px;
+}
+.texture-preview-missing {
+  border-color: orange !important;
+}
+
+.texture-hover {
+  border-color: var(--text-standard) !important;
+}
+
+.material-container {
+  border-left: 1px solid #8C8C8C80;
+  padding-left: 5px;
+}
+
+.checkbox {
+  height: 75%;
+  aspect-ratio: 1/1;
+  background-color: var(--prop-standard);
+  border-radius: 5px;
+  border: 1px solid var(--prop-standard);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkbox-hover {
+  background-color: var(--prop-hovered) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  cursor: pointer;
+}
+.checkbox-disabled {
+  background-color: var(--prop-disabled) !important;
+  border: 1px solid var(--prop-disabled) !important;
+}
+
+.checkbox-text {
+  padding-left: 10px;
+  font-weight: 300;
+  color: var(--text-standard)
+}
+.checkbox-text-disabled {
+  color: var(--text-disabled);
+}
+
+.checkbox-pip {
+  width: 50%;
+  height: 50%;
+  border-radius: 3px;
+}
+.checkbox-pip-hover {
+  stroke: white;
+}
+.checkbox-pip-disabled {
+  stroke: var(--text-disabled);
 }

@@ -33,6 +33,9 @@ export class AppConfig {
     public readonly CONSTRAINT_MAXIMUM_WIDTH: number;
     public readonly CONSTRAINT_MAXIMUM_HEIGHT: number;
     public readonly CONSTRAINT_MAXIMUM_DEPTH: number;
+    public readonly DITHER_MAGNITUDE: number;
+    public readonly SMOOTHNESS_MAX: number;
+    public readonly CAMERA_SMOOTHING: number;
 
     private constructor() {
         this.RELEASE_MODE = false;
@@ -60,6 +63,9 @@ export class AppConfig {
         this.CONSTRAINT_MAXIMUM_WIDTH = configJSON.CONSTRAINT_MAXIMUM_WIDTH;
         this.CONSTRAINT_MAXIMUM_HEIGHT = configJSON.CONSTRAINT_MAXIMUM_HEIGHT;
         this.CONSTRAINT_MAXIMUM_DEPTH = configJSON.CONSTRAINT_MAXIMUM_DEPTH;
+        this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
+        this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
+        this.CAMERA_SMOOTHING = configJSON.CAMERA_SMOOTHING;
     }
 
     public dumpConfig() {

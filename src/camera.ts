@@ -43,10 +43,10 @@ export class ArcballCamera {
         this._zNear = 0.5;
         this._zFar = 100.0;
         this._aspect = this._gl.canvas.width / this._gl.canvas.height;
-        this._distance = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS, 0.025);
-        this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, 0.025);
-        this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, 0.025);
-        this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
+        this._distance = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), AppConfig.Get.CAMERA_SMOOTHING);
 
         this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);

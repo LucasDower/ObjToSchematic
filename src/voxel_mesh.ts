@@ -1,3 +1,4 @@
+import { EFaceVisibility } from './block_assigner';
 import { Bounds } from './bounds';
 import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
 import { RGBA } from './colour';
@@ -42,6 +43,14 @@ export class VoxelMesh {
         return this._voxelsHash.has(pos.hash());
     }
 
+    public isOpaqueVoxelAt(pos: Vector3) {
+        const voxel = this.getVoxelAt(pos);
+        if (voxel) {
+            return voxel.colour.a == 1.0;
+        }
+        return false;
+    }
+
     public getVoxelAt(pos: Vector3): TOptional<Voxel> {
         const voxelIndex = this._voxelsHash.get(pos.hash());
         if (voxelIndex !== undefined) {
@@ -51,6 +60,33 @@ export class VoxelMesh {
         }
     }
 
+    public static getFullFaceVisibility(): EFaceVisibility {
+        return EFaceVisibility.Up | EFaceVisibility.Down | EFaceVisibility.North | EFaceVisibility.West | EFaceVisibility.East | EFaceVisibility.South;
+    }
+
+    public getFaceVisibility(pos: Vector3) {
+        let visibility: EFaceVisibility = 0;
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 1, 0)))) {
+            visibility += EFaceVisibility.Up;
+        }
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, -1, 0)))) {
+            visibility += EFaceVisibility.Down;
+        }
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(1, 0, 0)))) {
+            visibility += EFaceVisibility.North;
+        }
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(-1, 0, 0)))) {
+            visibility += EFaceVisibility.South;
+        }
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 0, 1)))) {
+            visibility += EFaceVisibility.East;
+        }
+        if (!this.isOpaqueVoxelAt(Vector3.add(pos, new Vector3(0, 0, -1)))) {
+            visibility += EFaceVisibility.West;
+        }
+        return visibility;
+    }
+
     public addVoxel(pos: Vector3, colour: RGBA) {
         if (colour.a === 0) {
             return;
@@ -58,7 +94,8 @@ export class VoxelMesh {
 
         pos.round();
 
-        const voxelIndex = this._voxelsHash.get(pos.hash());
+        const hash = pos.hash();
+        const voxelIndex = this._voxelsHash.get(hash);
         if (voxelIndex !== undefined) {
             // A voxel at this position already exists
             const voxel = this._voxels[voxelIndex];
@@ -74,7 +111,7 @@ export class VoxelMesh {
                 colour: colour,
                 collisions: 1,
             });
-            this._voxelsHash.set(pos.hash(), this._voxels.length - 1);
+            this._voxelsHash.set(hash, this._voxels.length - 1);
             this._bounds.extendByPoint(pos);
             this._updateNeighbours(pos);
         }
@@ -82,6 +119,10 @@ export class VoxelMesh {
 
     public getBounds() {
         return this._bounds;
+    }
+
+    public getVoxelIndex(pos: Vector3) {
+        return this._voxelsHash.get(pos.hash());
     }
 
     public getVoxelCount() {

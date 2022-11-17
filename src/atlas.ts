@@ -1,15 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
+import { TAtlasVersion } from '../tools/build-atlas';
 import { RGBA } from './colour';
 import { AppTypes, AppUtil, TOptional, UV } from './util';
-import { ASSERT } from './util/error_util';
+import { AppError, ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { AppPaths } from './util/path_util';
 
 export type TAtlasBlockFace = {
-    name: string;
-    texcoord: UV;
+    name: string,
+    texcoord: UV,
+    colour: RGBA,
+    std: number,
 }
 
 export type TAtlasBlock = {
@@ -32,7 +35,6 @@ export type TAtlasBlock = {
  */
 export class Atlas {
     public static ATLAS_NAME_REGEX: RegExp = /^[a-zA-Z\-]+$/;
-    private static _FILE_VERSION: number = 1;
 
     private _blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>;
     private _atlasSize: number;
@@ -63,20 +65,69 @@ export class Atlas {
 
         const atlasFile = fs.readFileSync(atlasPath, 'utf8');
         const atlasJSON = JSON.parse(atlasFile);
-        const atlasVersion = atlasJSON.version;
 
-        if (atlasVersion === undefined || atlasVersion === 1) {
-            const atlasSize = atlasJSON.atlasSize as number;
-            atlas._atlasSize = atlasSize;
+        if (atlasJSON.formatVersion !== 3) {
+            throw new AppError(`The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
+        }
 
-            const blocks = atlasJSON.blocks;
-            for (const block of blocks) {
-                const atlasBlock = block as TAtlasBlock;
-                atlasBlock.name = AppUtil.Text.namespaceBlock(atlasBlock.name);
-                atlas._blocks.set(atlasBlock.name, atlasBlock);
-            }
-        } else {
-            ASSERT(false, `Unrecognised .atlas file version: ${atlasVersion}`);
+        const atlasData = atlasJSON as TAtlasVersion;
+        atlas._atlasSize = atlasData.atlasSize;
+
+        const getTextureUV = (name: string) => {
+            const tex = atlasData.textures[name];
+            return new UV(
+                (3 * tex.atlasColumn + 1) / (atlas._atlasSize * 3),
+                (3 * tex.atlasRow + 1) / (atlas._atlasSize * 3),
+            );
+        };
+
+        for (const block of atlasData.blocks) {
+            ASSERT(AppUtil.Text.isNamespacedBlock(block.name), 'Atlas block not namespaced');
+
+            const atlasBlock: TAtlasBlock = {
+                name: block.name,
+                colour: block.colour,
+                faces: {
+                    up: {
+                        name: block.faces.up,
+                        texcoord: getTextureUV(block.faces.up),
+                        std: atlasData.textures[block.faces.up].std,
+                        colour: atlasData.textures[block.faces.up].colour,
+                    },
+                    down: {
+                        name: block.faces.down,
+                        texcoord: getTextureUV(block.faces.down),
+                        std: atlasData.textures[block.faces.down].std,
+                        colour: atlasData.textures[block.faces.down].colour,
+                    },
+                    north: {
+                        name: block.faces.north,
+                        texcoord: getTextureUV(block.faces.north),
+                        std: atlasData.textures[block.faces.north].std,
+                        colour: atlasData.textures[block.faces.north].colour,
+                    },
+                    east: {
+                        name: block.faces.east,
+                        texcoord: getTextureUV(block.faces.east),
+                        std: atlasData.textures[block.faces.east].std,
+                        colour: atlasData.textures[block.faces.east].colour,
+                    },
+                    south: {
+                        name: block.faces.south,
+                        texcoord: getTextureUV(block.faces.south),
+                        std: atlasData.textures[block.faces.south].std,
+                        colour: atlasData.textures[block.faces.south].colour,
+                    },
+                    west: {
+                        name: block.faces.west,
+                        texcoord: getTextureUV(block.faces.west),
+                        std: atlasData.textures[block.faces.west].std,
+                        colour: atlasData.textures[block.faces.west].colour,
+                    },
+                },
+            };
+
+            atlas._blocks.set(block.name, atlasBlock);
         }
 
         return atlas;

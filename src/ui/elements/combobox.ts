@@ -35,6 +35,9 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
 
         element.addEventListener('change', () => {
             EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
+            if (this._onValueChangedDelegate) {
+                this._onValueChangedDelegate(element.value);
+            }
         });
     }
 
@@ -50,5 +53,13 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         const element = document.getElementById(this._id) as HTMLSelectElement;
         ASSERT(element !== null);
         element.disabled = !this._isEnabled;
+
+        this._onValueChangedDelegate?.(element.value);
+    }
+
+    private _onValueChangedDelegate?: (value: any) => void;
+    public onValueChanged(delegate: (value: any) => void) {
+        this._onValueChangedDelegate = delegate;
+        return this;
     }
 }

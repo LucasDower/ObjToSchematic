@@ -7,6 +7,7 @@ import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
 import { Texture } from './texture';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 
@@ -45,10 +46,11 @@ export class Renderer {
 
     private _modelsAvailable: number;
 
-    private _materialBuffers: Array<{
+    private _materialBuffers: Map<string, {
         material: SolidMaterial | (TexturedMaterial & TextureMaterialRenderAddons)
         buffer: twgl.BufferInfo,
         numElements: number,
+        materialName: string,
     }>;
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
@@ -57,6 +59,7 @@ export class Renderer {
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
+    private _nightVisionEnabled: boolean;
 
     private _gridBuffers: {
         x: { [meshType: string]: RenderBuffer };
@@ -77,7 +80,7 @@ export class Renderer {
         twgl.addExtensionsToContext(this._gl);
 
         this._modelsAvailable = 0;
-        this._materialBuffers = [];
+        this._materialBuffers = new Map();
 
         this._gridBuffers = { x: {}, y: {}, z: {} };
         this._gridEnabled = false;
@@ -90,6 +93,7 @@ export class Renderer {
 
         this._isGridComponentEnabled = {};
         this._axesEnabled = false;
+        this._nightVisionEnabled = true;
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -124,6 +128,14 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
+    private _lightingAvailable: boolean = false;
+    public setLightingAvailable(isAvailable: boolean) {
+        this._lightingAvailable = isAvailable;
+        if (!isAvailable) {
+            this._nightVisionEnabled = true;
+        }
+    }
+
     public toggleIsGridEnabled() {
         this._gridEnabled = !this._gridEnabled;
     }
@@ -138,6 +150,21 @@ export class Renderer {
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
+    }
+
+    public canToggleNightVision() {
+        return this._lightingAvailable;
+    }
+
+    public toggleIsNightVisionEnabled() {
+        this._nightVisionEnabled = !this._nightVisionEnabled;
+        if (!this._lightingAvailable) {
+            this._nightVisionEnabled = true;
+        }
+    }
+
+    public isNightVisionEnabled() {
+        return this._nightVisionEnabled;
     }
 
     public toggleIsWireframeEnabled() {
@@ -156,26 +183,89 @@ export class Renderer {
     }
 
     public clearMesh() {
-        this._materialBuffers = [];
+        this._materialBuffers = new Map();
 
         this._modelsAvailable = 0;
         this.setModelToUse(MeshType.None);
     }
 
-    public useMesh(params: RenderMeshParams.Output) {
-        this._materialBuffers = [];
+    public recreateMaterialBuffer(materialName: string, material: SolidMaterial | TexturedMaterial) {
+        const oldBuffer = this._materialBuffers.get(materialName);
+        ASSERT(oldBuffer !== undefined);
+        if (material.type === MaterialType.solid) {
+            this._materialBuffers.set(materialName, {
+                buffer: oldBuffer.buffer,
+                material: material,
+                numElements: oldBuffer.numElements,
+                materialName: materialName,
+            });
+        } else {
+            this._materialBuffers.set(materialName, {
+                buffer: oldBuffer.buffer,
+                material: {
+                    type: MaterialType.textured,
+                    path: material.path,
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
+                    texture: twgl.createTexture(this._gl, {
+                        src: material.path,
+                        mag: this._gl.LINEAR,
+                    }),
+                    alphaFactor: material.alphaFactor,
+                    alpha: material.alphaPath ? twgl.createTexture(this._gl, {
+                        src: material.alphaPath,
+                        mag: this._gl.LINEAR,
+                    }) : undefined,
+                    useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                },
+                numElements: oldBuffer.numElements,
+                materialName: materialName,
+            });
+        }
+    }
 
-        for (const { material, buffer, numElements } of params.buffers) {
+    public updateMeshMaterialTexture(materialName: string, material: TexturedMaterial) {
+        this._materialBuffers.forEach((buffer) => {
+            if (buffer.materialName === materialName) {
+                buffer.material = {
+                    type: MaterialType.textured,
+                    path: material.path,
+                    edited: material.edited,
+                    canBeTextured: material.canBeTextured,
+                    texture: twgl.createTexture(this._gl, {
+                        src: material.path,
+                        mag: this._gl.LINEAR,
+                    }),
+                    alphaFactor: material.alphaFactor,
+                    alpha: material.alphaPath ? twgl.createTexture(this._gl, {
+                        src: material.alphaPath,
+                        mag: this._gl.LINEAR,
+                    }) : undefined,
+                    useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                };
+                return;
+            }
+        });
+    }
+
+
+    public useMesh(params: RenderMeshParams.Output) {
+        this._materialBuffers = new Map();
+
+        for (const { material, buffer, numElements, materialName } of params.buffers) {
             if (material.type === MaterialType.solid) {
-                this._materialBuffers.push({
+                this._materialBuffers.set(materialName, {
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: material,
                     numElements: numElements,
+                    materialName: materialName,
                 });
             } else {
-                this._materialBuffers.push({
+                this._materialBuffers.set(materialName, {
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: {
+                        edited: material.edited,
+                        canBeTextured: material.canBeTextured,
                         type: MaterialType.textured,
                         path: material.path,
                         texture: twgl.createTexture(this._gl, {
@@ -190,6 +280,7 @@ export class Renderer {
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
                     },
                     numElements: numElements,
+                    materialName: materialName,
                 });
             }
         }
@@ -228,7 +319,7 @@ export class Renderer {
             this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
             this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-            
+
             this._modelsAvailable = 2;
             this.setModelToUse(MeshType.VoxelMesh);
         }
@@ -258,7 +349,7 @@ export class Renderer {
         this.setModelToUse(MeshType.VoxelMesh);
     }
     */
-    
+
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
@@ -345,7 +436,7 @@ export class Renderer {
     }
 
     private _drawMesh() {
-        for (const materialBuffer of this._materialBuffers) {
+        this._materialBuffers.forEach((materialBuffer, materialName) => {
             if (materialBuffer.material.type === MaterialType.textured) {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram, {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
@@ -365,7 +456,7 @@ export class Renderer {
                     u_fillColour: RGBAUtil.toArray(materialBuffer.material.colour),
                 });
             }
-        }
+        });
     }
 
     private _drawVoxelMesh() {
@@ -393,6 +484,7 @@ export class Renderer {
             u_voxelSize: this._voxelSize,
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
+            u_nightVision: this.isNightVisionEnabled(),
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);

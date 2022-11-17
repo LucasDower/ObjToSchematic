@@ -26,7 +26,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
     }
 
     public generateInnerHTML() {
-        ASSERT(this._value, 'Value not found');
+        ASSERT(this._value !== undefined, 'Value not found');
         return `
             <div style="display: flex; flex-direction: row;">
                 <div style="display: flex; flex-direction: row; width: 33%">
@@ -140,7 +140,7 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
     private _updateValue(e: MouseEvent) {
         ASSERT(this._isEnabled, 'Not enabled');
         ASSERT(this._dragging !== EAxis.None, 'Dragging nothing');
-        ASSERT(this._value, 'No value to update');
+        ASSERT(this._value !== undefined, 'No value to update');
 
         const deltaX = e.clientX - this._lastClientX;
         this._lastClientX = e.clientX;

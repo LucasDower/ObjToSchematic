@@ -1,7 +1,6 @@
 import fs from 'fs';
 
 import { AppContext } from '../app_context';
-import { TBlockAssigners } from '../assigners/assigners';
 import { ArcballCamera } from '../camera';
 import { AppConfig } from '../config';
 import { EAppEvent, EventManager } from '../event';
@@ -13,10 +12,12 @@ import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
 import { TAxis } from '../util/type_util';
+import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { BaseUIElement } from './elements/base';
 import { ButtonElement } from './elements/button';
+import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { FileInputElement } from './elements/file_input';
 import { OutputElement } from './elements/output';
@@ -99,26 +100,8 @@ export class UI {
                         displayText: 'Ray-based (legacy)',
                     },
                 ]),
-                'ambientOcclusion': new ComboBoxElement('Ambient occlusion', [
-                    {
-                        id: 'on',
-                        displayText: 'On (recommended)',
-                    },
-                    {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
-                'multisampleColouring': new ComboBoxElement('Multisampling', [
-                    {
-                        id: 'on',
-                        displayText: 'On (recommended)',
-                    },
-                    {
-                        id: 'off',
-                        displayText: 'Off (faster)',
-                    },
-                ]),
+                'ambientOcclusion': new CheckboxElement('Ambient occlusion', true, 'On (recommended)', 'Off (faster)'),
+                'multisampleColouring': new CheckboxElement('Multisampling', true, 'On (recommended)', 'Off (faster)'),
                 'textureFiltering': new ComboBoxElement('Texture filtering', [
                     {
                         id: 'linear',
@@ -153,10 +136,10 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement('Texture atlas', this._getTextureAtlases()),
                 'blockPalette': new ComboBoxElement('Block palette', this._getBlockPalettes()),
-                'dithering': new ComboBoxElement<TBlockAssigners>('Dithering', [
-                    { id: 'ordered-dithering', displayText: 'Ordered' },
-                    { id: 'random-dithering', displayText: 'Random' },
-                    { id: 'basic', displayText: 'Off' },
+                'dithering': new ComboBoxElement<TDithering>('Dithering', [
+                    { id: 'ordered', displayText: 'Ordered' },
+                    { id: 'random', displayText: 'Random' },
+                    { id: 'off', displayText: 'Off' },
                 ]),
                 'fallable': new ComboBoxElement('Fallable blocks', [
                     {
@@ -183,8 +166,20 @@ export class UI {
                     },
                 ]),
                 'colourAccuracy': new SliderElement('Colour accuracy', 1, 8, 1, 5, 0.1),
+                'contextualAveraging': new CheckboxElement('Smart averaging', true, 'On (recommended)', 'Off (faster)'),
+                'errorWeight': new SliderElement('Smoothness', 0.0, AppConfig.Get.SMOOTHNESS_MAX, 2, 0.2, 0.01),
+                'calculateLighting': new CheckboxElement('Calculate lighting', false, 'On', 'Off')
+                    .onValueChanged((value: boolean) => {
+                        if (value) {
+                            this._ui.assign.elements.lightThreshold.setEnabled(true, false);
+                        } else {
+                            this._ui.assign.elements.lightThreshold.setEnabled(false, false);
+                        }
+                    }),
+                'lightThreshold': new SliderElement('Light threshold', 0, 14, 0, 0, 1)
+                    .setObeyGroupEnables(false),
             },
-            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy'],
+            elementsOrder: ['textureAtlas', 'blockPalette', 'dithering', 'fallable', 'colourAccuracy', 'contextualAveraging', 'errorWeight', 'calculateLighting', 'lightThreshold'],
             submitButton: new ButtonElement('Assign blocks', () => {
                 this._appContext.do(EAction.Assign);
             }),
@@ -265,8 +260,18 @@ export class UI {
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
+                    'night-vision': new ToolbarItemElement({ icon: 'bulb' })
+                        .onClick(() => {
+                            Renderer.Get.toggleIsNightVisionEnabled();
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isNightVisionEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.canToggleNightVision();
+                        }),
                 },
-                elementsOrder: ['grid', 'axes'],
+                elementsOrder: ['grid', 'axes', 'night-vision'],
             },
 
         },

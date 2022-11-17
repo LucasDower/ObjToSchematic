@@ -3,30 +3,37 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
+import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
+import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
 import { TextureFiltering } from './texture';
+import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
-import { UIMessageBuilder } from './ui/misc';
+import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { LOG_ERROR, Logger } from './util/log_util';
+import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
-import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
+    private _materialMap: MaterialMap;
 
     public constructor() {
+        this._materialMap = {};
+
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
@@ -146,7 +153,7 @@ export class AppContext {
         const builder = new UIMessageBuilder();
         builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
 
-        builder.addItem('action', infoStatuses, 'success');
+        builder.addItem('action', infoStatuses, 'none');
         builder.addItem('action', warningStatuses, 'warning');
 
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
@@ -185,9 +192,15 @@ export class AppContext {
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
-            const dimensions = payload.result.dimensions;
+            const dimensions = new Vector3(
+                payload.result.dimensions.x,
+                payload.result.dimensions.y,
+                payload.result.dimensions.z,
+            );
             dimensions.mulScalar(380 / 8.0).floor();
             this.maxConstraint = dimensions;
+            this._materialMap = payload.result.materials;
+            this._onMaterialMapChanged();
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
@@ -199,6 +212,125 @@ export class AppContext {
         };
 
         return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _sendMaterialsToWorker(callback: (result: SetMaterialsParams.Output) => void) {
+        const payload: TToWorkerMessage = {
+            action: 'SetMaterials',
+            params: {
+                materials: this._materialMap,
+            },
+        };
+        const job: TWorkerJob = {
+            id: 'SetMaterial',
+            payload: payload,
+            callback: (result: TFromWorkerMessage) => {
+                ASSERT(result.action === 'SetMaterials');
+                // TODO: Check the action didn't fail
+                this._materialMap = result.result.materials;
+                this._onMaterialMapChanged();
+                this._ui.enableTo(EAction.Voxelise);
+                callback(result.result);
+            },
+        };
+
+        this._workerController.addJob(job);
+        this._ui.disableAll();
+    }
+
+    public onMaterialTypeSwitched(materialName: string) {
+        const oldMaterial = this._materialMap[materialName];
+
+        if (oldMaterial.type == MaterialType.textured) {
+            this._materialMap[materialName] = {
+                type: MaterialType.solid,
+                colour: RGBAUtil.random(),
+                edited: true,
+                canBeTextured: oldMaterial.canBeTextured,
+                set: false,
+            };
+        } else {
+            this._materialMap[materialName] = {
+                type: MaterialType.textured,
+                alphaFactor: 1.0,
+                path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
+                edited: true,
+                canBeTextured: oldMaterial.canBeTextured,
+            };
+        }
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            // TODO: Check the action didn't fail
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
+        });
+    }
+
+    public onMaterialTextureReplace(materialName: string, newTexturePath: string) {
+        const oldMaterial = this._materialMap[materialName];
+        ASSERT(oldMaterial.type === MaterialType.textured);
+
+        this._materialMap[materialName] = {
+            type: MaterialType.textured,
+            alphaFactor: oldMaterial.alphaFactor,
+            alphaPath: oldMaterial.alphaPath,
+            path: newTexturePath,
+            edited: true,
+            canBeTextured: oldMaterial.canBeTextured,
+        };
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            Renderer.Get.updateMeshMaterialTexture(materialName, result.materials[materialName] as TexturedMaterial);
+        });
+    }
+
+    public onMaterialColourChanged(materialName: string, newColour: RGBA) {
+        ASSERT(this._materialMap[materialName].type === MaterialType.solid);
+        const oldMaterial = this._materialMap[materialName] as TexturedMaterial;
+        this._materialMap[materialName] = {
+            type: MaterialType.solid,
+            colour: newColour,
+            edited: true,
+            canBeTextured: oldMaterial.canBeTextured,
+            set: true,
+        };
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName] as SolidMaterial);
+        });
+    }
+
+    private _onMaterialMapChanged() {
+        // Add material information to the output log
+        const outputElement = this._ui.getActionOutput(EAction.Import);
+
+        const messageBuilder = outputElement.getMessage();
+        const tree = UITreeBuilder.create('Materials');
+
+        for (const [materialName, material] of Object.entries(this._materialMap)) {
+            if (materialName === 'DEFAULT_UNASSIGNED') {
+                continue;
+            }
+
+            const subTree = UITreeBuilder.create(material.edited ? `<i>'${materialName}'*</i>` : `'${materialName}'`);
+            if (material.type === MaterialType.solid) {
+                const uiElement = new SolidMaterialUIElement(materialName, this, material);
+
+                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
+                    uiElement.registerEvents();
+                });
+            } else {
+                const uiElement = new TextureMaterialUIElement(materialName, this, material);
+
+                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
+                    uiElement.registerEvents();
+                });
+            }
+
+            tree.addChild(subTree);
+        }
+
+        messageBuilder.setTree('materials', tree);
+        outputElement.updateMessage();
     }
 
     private _renderMesh(): TWorkerJob {
@@ -253,9 +385,9 @@ export class AppContext {
                 constraintAxis: uiElements.constraintAxis.getCachedValue(),
                 voxeliser: uiElements.voxeliser.getCachedValue(),
                 size: uiElements.size.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
+                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
                 textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
                 voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
             },
         };
@@ -279,8 +411,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
                 desiredHeight: uiElements.size.getCachedValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
             },
         };
 
@@ -330,15 +462,21 @@ export class AppContext {
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
 
+        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getCachedValue());
+
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
                 textureAtlas: uiElements.textureAtlas.getCachedValue(),
                 blockPalette: uiElements.blockPalette.getCachedValue(),
-                blockAssigner: uiElements.dithering.getCachedValue(),
+                dithering: uiElements.dithering.getCachedValue(),
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
                 resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                calculateLighting: uiElements.calculateLighting.getCachedValue(),
+                lightThreshold: uiElements.lightThreshold.getCachedValue(),
+                contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
+                errorWeight: uiElements.errorWeight.getCachedValue() / 10,
             },
         };
 

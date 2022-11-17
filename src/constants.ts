@@ -5,6 +5,7 @@ export namespace AppConstants {
     export const COMPONENT_PER_SIZE_OFFSET = FACES_PER_VOXEL * VERTICES_PER_FACE;
 
     export namespace ComponentSize {
+        export const LIGHTING = 1;
         export const TEXCOORD = 2;
         export const POSITION = 3;
         export const COLOUR = 4;
@@ -12,8 +13,9 @@ export namespace AppConstants {
         export const INDICES = 3;
         export const OCCLUSION = 4;
     }
-    
+
     export namespace VoxelMeshBufferComponentOffsets {
+        export const LIGHTING = ComponentSize.LIGHTING * COMPONENT_PER_SIZE_OFFSET;
         export const TEXCOORD = ComponentSize.TEXCOORD * COMPONENT_PER_SIZE_OFFSET;
         export const POSITION = ComponentSize.POSITION * COMPONENT_PER_SIZE_OFFSET;
         export const COLOUR = ComponentSize.COLOUR * COMPONENT_PER_SIZE_OFFSET;

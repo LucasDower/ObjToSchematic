@@ -116,7 +116,7 @@ export class SliderElement extends LabelledElement<number> {
         if (!this._isEnabled) {
             return;
         }
-        ASSERT(this._value);
+        ASSERT(this._value !== undefined);
 
         this._value -= (e.deltaY / 150) * this._step;
         this._value = clamp(this._value, this._min, this._max);
