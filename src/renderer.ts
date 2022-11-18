@@ -2,6 +2,7 @@ import * as twgl from 'twgl.js';
 
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
+import { AppConfig } from './config';
 import { DebugGeometryTemplates } from './geometry';
 import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { RenderBuffer } from './render_buffer';
@@ -78,6 +79,8 @@ export class Renderer {
             alpha: false,
         })!;
         twgl.addExtensionsToContext(this._gl);
+
+        this._backgroundColour = AppConfig.Get.VIEWPORT_BACKGROUND_COLOUR;
 
         this._modelsAvailable = 0;
         this._materialBuffers = new Map();

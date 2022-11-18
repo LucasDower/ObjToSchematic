@@ -19,5 +19,10 @@
     "CONSTRAINT_MAXIMUM_DEPTH": 1024,
     "DITHER_MAGNITUDE": 32,
     "SMOOTHNESS_MAX": 3.0,
-    "CAMERA_SMOOTHING": 0.1
+    "CAMERA_SMOOTHING": 0.1,
+    "VIEWPORT_BACKGROUND_COLOUR": {
+        "R": 0.125,
+        "G": 0.125,
+        "B": 0.125
+    }
 }

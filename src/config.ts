@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import { RGBA } from './colour';
 import { LOG } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
@@ -36,6 +37,7 @@ export class AppConfig {
     public readonly DITHER_MAGNITUDE: number;
     public readonly SMOOTHNESS_MAX: number;
     public readonly CAMERA_SMOOTHING: number;
+    public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA;
 
     private constructor() {
         this.RELEASE_MODE = false;
@@ -66,6 +68,12 @@ export class AppConfig {
         this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
         this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
         this.CAMERA_SMOOTHING = configJSON.CAMERA_SMOOTHING;
+        this.VIEWPORT_BACKGROUND_COLOUR = {
+            r: configJSON.VIEWPORT_BACKGROUND_COLOUR.R,
+            g: configJSON.VIEWPORT_BACKGROUND_COLOUR.G,
+            b: configJSON.VIEWPORT_BACKGROUND_COLOUR.B,
+            a: 1.0,
+        };
     }
 
     public dumpConfig() {
