@@ -13,7 +13,8 @@
   <a href="#disclaimer">Disclaimer</a> •
   <a href="https://discord.gg/McS2VrBZPD">Discord</a> •
   <a href="#contributing">Contributing</a> •
-  <a href="#gallery">Gallery</a>
+  <a href="#gallery">Gallery</a> •
+  <a href="#documentation">Documentation</a>
 </p>
 <p align="center">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build.js.yml/badge.svg" alt="Logo">
@@ -160,3 +161,32 @@ To allow for your favourite debugging tools like breakpoints and call stacks, I'
   <img src="https://imgur.com/7domJdr.png" alt="Gallery4" width="600"><br>
   <sub>"Handpainted Pancake" (https://skfb.ly/6T7yN) by Marvi is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
 </p>
+
+## Documentation
+Below is a detailed explanation into what each configurable setting does divided into each step in the program.
+
+### Import
+* **Wavefront .obj file** - This is the actual 3D model you want to voxelise. Please note that the more complex your model is the longer it will take to voxelise. It is strongly recommended that you simplify your geometry in a program such as Blender to reduce the poly count. If your triangles are smaller than the size of the voxels then you will not notice the difference and the extra detail is just wasting resources.
+
+### Voxelise
+* **Constraint axis** - This determines which axis is used to determine the size of the model. If you choose 'Y' and type in a size of 80 then the voxelised mesh will has a height of 80. If you choose 'X' instead then the width will be 80.
+* **Size** - This works in conjunction with *Constraint axis* as described above.
+* **Algorithm** - There are many ways to turn a triangle mesh into a voxel mesh and each method produces different results. Here you can choose which one you like the best.
+* **Ambient occlusion** - This is a purely visual setting and makes no difference to the outputted structure. [Ambient occlusion](https://en.wikipedia.org/wiki/Ambient_occlusion) displays the shadows between adjacent blocks just like Minecraft. This takes quite a hit to the time to voxelise so consider turning this setting off first.
+* **Multisampling** - Multisampling should only be used if your mesh uses textures. It takes multiple samples of the texture to get a more representative colour for a voxel. If your triangles and voxels are a similar size then you'll want this on. If your voxels are much smaller than the triangles then you'll probably not notice the difference this makes unless your texture is very noisey.
+* **Texture filtering** - Chances are if you need to change this then you already know what it does. [Texture filtering](https://en.wikipedia.org/wiki/Texture_filtering) determines how colours are sampled from textures. You'll probably want this as *Linear*. If your texture is stylistically pixelated then you might want this as *Nearest*.
+* **Voxel overlap** - When two triangles next to each other are voxelised one after another the second triangle may place voxels in positions where the first triangle has already placed a voxel. This setting allows you to only take the *First* voxel colour or take an *Average*.
+
+### Assign
+* **Texture atlas** - The textures to use for each block. This also determines how colour-conversions are made.
+* **Block palette** - What collection of blocks are available to choose from.
+* **Dithering** - *An [image](https://en.wikipedia.org/wiki/Dither) speaks a thousand words.*
+* **Fallable blocks** - There's a chance a block is placed such as Sand which when actually placed is going to fall under gravity. You probably don't want this to happen so *Replace falling with solid* will substitute the falling block for a similarly coloured block. Alternatively, you can *Do nothing* or replace any gravity-effected block with *Replace fallable with solid*.
+* **Colour accuracy** - This bins together similar colours to speed up colour-to-block conversions. This is a logarithmic scale.
+* **Smart averaging** - When performing colour-to-block conversions only block faces that are visible are used in calculating the 'average' face colour. There's no reason to turn this off apart from it being slower.
+* **Smoothness** - A high smoothness value will prevent block with noisey textures being used. This is very sensitive to small changes. High smoothness values will decrease the colour accuracy as under-the-hood it is trading off colour error for std error.
+* **Calculate lighting** - Turn this on if you want don't want night-vision in the editor. Only turn this on if you really need it as it is considerably slower.
+* **Light threshold** - Requires *Calculate lighting* to be on. Will place light blocks (not the [Light Block](https://minecraft.fandom.com/wiki/Light_Block)) in places where the light value is less than the threshold. Useful in automatically lighting up the dark areas of your structure.
+
+### Export
+* **File format** - The format to save your structure to. The [Litematica](https://www.curseforge.com/minecraft/mc-mods/litematica) format is strongly recommended and is significantly faster to export to for large structures. The Schematic exporter is useful if you still play in 1.12 as it uses the old block ID system before The Flattening, however many new blocks cannot be encoded in this format so they will be turned into Stone blocks. The NBT exporter is used for Minecraft's [structure blocks](https://minecraft.fandom.com/wiki/Structure_Block). The OBJ exporter can be used to render your structres in a program such as Blender.
