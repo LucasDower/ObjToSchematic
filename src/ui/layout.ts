@@ -70,15 +70,15 @@ export class UI {
                         displayText: 'Z (depth) (blue)',
                     },
                 ]),
-                'size': new SliderElement('Size', 3, 380, 0, 80, 1)
+                'size': new SliderElement('Size', 3, AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT, 0, 80, 1)
                     .registerCustomEvents((slider: SliderElement) => {
                         EventManager.Get.add(EAppEvent.onComboBoxChanged, (value: any) => {
                             if (value[0] === 'x') {
-                                slider.setMax(this._appContext.maxConstraint?.x ?? AppConfig.Get.CONSTRAINT_MAXIMUM_WIDTH);
+                                slider.setMax(this._appContext.maxConstraint?.x ?? 400);
                             } else if (value[0] === 'y') {
                                 slider.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
                             } else {
-                                slider.setMax(this._appContext.maxConstraint?.z ?? AppConfig.Get.CONSTRAINT_MAXIMUM_DEPTH);
+                                slider.setMax(this._appContext.maxConstraint?.z ?? 400);
                             }
                         });
                     }),

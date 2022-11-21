@@ -1,5 +1,6 @@
 import child from 'child_process';
 import fs from 'fs';
+
 import { LOGF } from './log_util';
 
 export namespace FileUtil {

@@ -200,7 +200,7 @@ export class AppContext {
                 payload.result.dimensions.y,
                 payload.result.dimensions.z,
             );
-            dimensions.mulScalar(380 / 8.0).floor();
+            dimensions.mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this.maxConstraint = dimensions;
             this._materialMap = payload.result.materials;
             this._onMaterialMapChanged();

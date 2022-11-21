@@ -31,9 +31,7 @@ export class AppConfig {
     public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
     public readonly CAMERA_SENSITIVITY_ROTATION: number;
     public readonly CAMERA_SENSITIVITY_ZOOM: number;
-    public readonly CONSTRAINT_MAXIMUM_WIDTH: number;
     public readonly CONSTRAINT_MAXIMUM_HEIGHT: number;
-    public readonly CONSTRAINT_MAXIMUM_DEPTH: number;
     public readonly DITHER_MAGNITUDE: number;
     public readonly SMOOTHNESS_MAX: number;
     public readonly CAMERA_SMOOTHING: number;
@@ -62,9 +60,7 @@ export class AppConfig {
         this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
         this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
         this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
-        this.CONSTRAINT_MAXIMUM_WIDTH = configJSON.CONSTRAINT_MAXIMUM_WIDTH;
         this.CONSTRAINT_MAXIMUM_HEIGHT = configJSON.CONSTRAINT_MAXIMUM_HEIGHT;
-        this.CONSTRAINT_MAXIMUM_DEPTH = configJSON.CONSTRAINT_MAXIMUM_DEPTH;
         this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
         this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
         this.CAMERA_SMOOTHING = configJSON.CAMERA_SMOOTHING;
