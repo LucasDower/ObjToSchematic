@@ -79,7 +79,7 @@ export const TIME_END = (label: string) => {
     }
 };
 
-/** 
+/**
  * Logs an error to the console and file, always.
  */
 export const LOG_ERROR = (...data: any[]) => {
@@ -122,7 +122,7 @@ export class Logger {
      */
     public initLogFile(suffix: string) {
         if (this._logStream === undefined && this._enabledLogToFile === true) {
-            FileUtil.mkdirSyncIfNotExist(AppPaths.Get.logs);
+            FileUtil.mkdirIfNotExist(AppPaths.Get.logs);
             this._logStream = fs.createWriteStream(PathUtil.join(AppPaths.Get.logs, `./${Date.now()}-${suffix}.log`));
         }
     }

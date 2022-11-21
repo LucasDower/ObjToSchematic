@@ -18,6 +18,7 @@ import { UI } from './ui/layout';
 import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
+import { FileUtil } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 import { Vector3 } from './vector';
@@ -41,6 +42,8 @@ export class AppContext {
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
+
+        FileUtil.rmdirIfExist(AppPaths.Get.gen);
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {

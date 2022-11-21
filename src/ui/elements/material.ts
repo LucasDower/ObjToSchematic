@@ -80,7 +80,7 @@ export class TextureMaterialUIElement extends MaterialUIElement {
                 buttonLabel: 'Load',
                 filters: [{
                     name: 'Images',
-                    extensions: ['png', 'jpeg', 'jpg'],
+                    extensions: ['png', 'jpeg', 'jpg', 'tga'],
                 }],
             });
             if (files && files[0]) {

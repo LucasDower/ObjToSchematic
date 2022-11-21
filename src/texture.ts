@@ -2,13 +2,16 @@ import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
 import path from 'path';
 import { PNG } from 'pngjs';
+const TGA = require('tga');
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { clamp, wayThrough } from './math';
 import { UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { LOG, LOG_ERROR } from './util/log_util';
+import { FileUtil } from './util/file_util';
+import { LOG, LOG_ERROR, LOGF } from './util/log_util';
+import { AppPaths } from './util/path_util';
 
 /* eslint-disable */
 export enum TextureFormat {
@@ -49,15 +52,31 @@ export class Texture {
         const filePath = path.parse(filename);
         try {
             const data = fs.readFileSync(filename);
-            if (filePath.ext.toLowerCase() === '.png') {
-                return PNG.sync.read(data);
-            } else if (['.jpg', '.jpeg'].includes(filePath.ext.toLowerCase())) {
-                this._useAlphaChannelValue = false;
-                return jpeg.decode(data, {
-                    maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
-                });
+
+            switch (filePath.ext.toLowerCase()) {
+                case '.png': {
+                    return PNG.sync.read(data);
+                }
+                case '.jpg':
+                case '.jpeg': {
+                    this._useAlphaChannelValue = false;
+                    return jpeg.decode(data, {
+                        maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
+                    });
+                }
+                /*
+                case '.tga': {
+                    const tga = new TGA(data);
+                    return {
+                        width: tga.width,
+                        height: tga.height,
+                        data: tga.pixels,
+                    };
+                }
+                */
+                default:
+                    ASSERT(false, 'Unsupported image format');
             }
-            ASSERT(false);
         } catch (err) {
             LOG_ERROR(err);
             throw new AppError(`Could not read ${filename}`);
@@ -163,5 +182,26 @@ export class Texture {
             b: rgba[2] / 255,
             a: rgba[3] / 255,
         };
+    }
+}
+
+export class TextureConverter {
+    public static createPNGfromTGA(filepath: string): string {
+        ASSERT(fs.existsSync(filepath), '.tga does not exist');
+        const parsed = path.parse(filepath);
+        ASSERT(parsed.ext === '.tga');
+        const data = fs.readFileSync(filepath);
+        const tga = new TGA(data);
+        const png = new PNG({
+            width: tga.width,
+            height: tga.height,
+        });
+        png.data = tga.pixels;
+        FileUtil.mkdirIfNotExist(AppPaths.Get.gen);
+        const buffer = PNG.sync.write(png);
+        const newTexturePath = path.join(AppPaths.Get.gen, parsed.name + '.gen.png');
+        LOGF(`Creating new generated texture of '${filepath}' at '${newTexturePath}'`);
+        fs.writeFileSync(newTexturePath, buffer);
+        return newTexturePath;
     }
 }

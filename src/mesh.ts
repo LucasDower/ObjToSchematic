@@ -4,7 +4,7 @@ import path from 'path';
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { StatusHandler } from './status';
-import { Texture, TextureFiltering } from './texture';
+import { Texture, TextureConverter, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -215,10 +215,6 @@ export class Mesh {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    //StatusHandler.Get.add(
-                    //    'warning',
-                    //    `Could not find ${material.path}`,
-                    //);
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
                     this._materials[materialName] = {
                         type: MaterialType.solid,
@@ -227,6 +223,11 @@ export class Mesh {
                         canBeTextured: true,
                         set: false,
                     };
+                } else {
+                    const parsedPath = path.parse(material.path);
+                    if (parsedPath.ext === '.tga') {
+                        material.path = TextureConverter.createPNGfromTGA(material.path);
+                    }
                 }
             }
         }
