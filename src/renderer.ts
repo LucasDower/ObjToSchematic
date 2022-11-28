@@ -460,7 +460,7 @@ export class Renderer {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
             if (materialBuffer.material.type === MaterialType.textured) {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.texture,
@@ -468,13 +468,19 @@ export class Renderer {
                     u_useAlphaMap: materialBuffer.material.alpha !== undefined,
                     u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
                     u_alphaFactor: materialBuffer.material.alphaFactor,
+                    u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
+                    u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
+                    u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
                 });
             } else {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(0.0, 0.0),
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_fillColour: RGBAUtil.toArray(materialBuffer.material.colour),
+                    u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
+                    u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
+                    u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
                 });
             }
         });

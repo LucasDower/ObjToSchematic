@@ -162,11 +162,11 @@ export class ArcballCamera {
             const azimuth90 = between(this._azimuth.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
             const azimuth180 = between(this._azimuth.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
             const azimuth270 = between(this._azimuth.getTarget(), 3*Math.PI/2 - axisSnapRadius, 3*Math.PI/2 + axisSnapRadius);
-            
+
             const elevationTop = between(this._elevation.getTarget(), 0.0 - axisSnapRadius, 0.0 + axisSnapRadius);
             const elevationMiddle = between(this._elevation.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
             const elevationBottom = between(this._elevation.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
-            
+
             if (elevationMiddle) {
                 if (azimuth0) {
                     this._azimuth.setTarget(0);
@@ -223,14 +223,20 @@ export class ArcballCamera {
         return this.isOrthographic() && this._angleSnap;
     }
 
-    getCameraPosition(azimuthOffset: number, elevationOffset: number) {
+    getCameraPosition(azimuthOffset: number, elevationOffset: number): Vector3 {
         const azimuth = this._azimuth.getActual() + azimuthOffset;
         const elevation = this._elevation.getActual() + elevationOffset;
-        return [
+        return new Vector3(
             this._distance.getActual() * Math.cos(azimuth) * -Math.sin(elevation),
             this._distance.getActual() * Math.cos(elevation),
             this._distance.getActual() * Math.sin(azimuth) * -Math.sin(elevation),
-        ];
+        );
+    }
+
+    public getCameraDirection(): Vector3 {
+        return this.getCameraPosition(0.0, 0.0)
+            .sub(this._target.getActual())
+            .normalise();
     }
 
     public onMouseDown(e: MouseEvent) {

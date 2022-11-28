@@ -51,8 +51,17 @@ export class UVTriangle extends Triangle {
     public uv1: UV;
     public uv2: UV;
 
-    constructor(v0: Vector3, v1: Vector3, v2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
+    public n0: Vector3;
+    public n1: Vector3;
+    public n2: Vector3;
+
+    constructor(v0: Vector3, v1: Vector3, v2: Vector3, n0: Vector3, n1: Vector3, n2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
         super(v0, v1, v2);
+
+        this.n0 = n0;
+        this.n1 = n1;
+        this.n2 = n2;
+
         this.uv0 = uv0;
         this.uv1 = uv1;
         this.uv2 = uv2;

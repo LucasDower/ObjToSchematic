@@ -224,10 +224,9 @@ export class BufferGenerator {
 
                     // Normal
                     {
-                        const normalArray = uiTriangle.getNormal().toArray();
-                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
-                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
-                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
+                        materialBuffer.normal.data.set(uiTriangle.n0.toArray(), insertIndex * 9 + 0);
+                        materialBuffer.normal.data.set(uiTriangle.n1.toArray(), insertIndex * 9 + 3);
+                        materialBuffer.normal.data.set(uiTriangle.n2.toArray(), insertIndex * 9 + 6);
                     }
 
                     // Indices

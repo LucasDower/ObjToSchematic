@@ -324,11 +324,15 @@ export class Mesh {
 
     public getUVTriangle(triIndex: number): UVTriangle {
         const vertices = this.getVertices(triIndex);
+        const normals = this.getNormals(triIndex);
         const texcoords = this.getUVs(triIndex);
         return new UVTriangle(
             vertices.v0,
             vertices.v1,
             vertices.v2,
+            normals.v0,
+            normals.v1,
+            normals.v2,
             texcoords.uv0,
             texcoords.uv1,
             texcoords.uv2,

@@ -1,8 +1,13 @@
 precision mediump float;
 
+uniform vec3 u_lightWorldPos;
 uniform vec4 u_fillColour;
+uniform vec3 u_cameraDir;
+uniform float u_fresnelExponent;
+uniform float u_fresnelMix;
 
-varying float v_lighting;
+varying vec3 v_lighting;
+varying vec3 v_normal;
 
 float dither8x8(vec2 position, float alpha) {
   int x = int(mod(position.x, 8.0));
@@ -87,5 +92,14 @@ void main() {
     discard;
   }
 
-  gl_FragColor = vec4(u_fillColour.rgb * v_lighting, u_fillColour.a);
+  float lighting = abs(dot(v_normal, normalize(u_lightWorldPos)));
+  lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
+
+  vec3 preFresnelColour = u_fillColour.rgb * lighting;
+  float fresnel = 1.0 - abs(dot(u_cameraDir, v_normal));
+  float fresnelFactor = pow(fresnel, u_fresnelExponent) * u_fresnelMix;
+
+  vec3 postFresnelColour = mix(preFresnelColour, vec3(1.0, 1.0, 1.0), fresnelFactor);
+
+  gl_FragColor = vec4(postFresnelColour, 1.0);
 }

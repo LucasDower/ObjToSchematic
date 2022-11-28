@@ -36,6 +36,8 @@ export class AppConfig {
     public readonly SMOOTHNESS_MAX: number;
     public readonly CAMERA_SMOOTHING: number;
     public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA;
+    public readonly FRESNEL_EXPONENT: number;
+    public readonly FRESNEL_MIX: number;
 
     private constructor() {
         this.RELEASE_MODE = false;
@@ -70,6 +72,8 @@ export class AppConfig {
             b: configJSON.VIEWPORT_BACKGROUND_COLOUR.B,
             a: 1.0,
         };
+        this.FRESNEL_EXPONENT = configJSON.FRESNEL_EXPONENT;
+        this.FRESNEL_MIX = configJSON.FRESNEL_MIX;
     }
 
     public dumpConfig() {

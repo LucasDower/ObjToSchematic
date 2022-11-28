@@ -22,5 +22,7 @@
         "R": 0.125,
         "G": 0.125,
         "B": 0.125
-    }
+    },
+    "FRESNEL_EXPONENT": 3.0,
+    "FRESNEL_MIX": 0.3
 }
