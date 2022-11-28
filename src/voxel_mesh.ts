@@ -87,12 +87,12 @@ export class VoxelMesh {
         return visibility;
     }
 
-    public addVoxel(pos: Vector3, colour: RGBA) {
+    public addVoxel(inPos: Vector3, colour: RGBA) {
         if (colour.a === 0) {
             return;
         }
 
-        pos.round();
+        const pos = inPos.copy().round();
 
         const hash = pos.hash();
         const voxelIndex = this._voxelsHash.get(hash);

@@ -60,7 +60,6 @@ export namespace VoxeliseParams {
         voxeliser: TVoxelisers,
         size: number,
         useMultisampleColouring: boolean,
-        textureFiltering: TextureFiltering,
         enableAmbientOcclusion: boolean,
         voxelOverlapRule: TVoxelOverlapRule,
     }

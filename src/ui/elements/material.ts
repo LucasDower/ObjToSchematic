@@ -57,6 +57,10 @@ export abstract class MaterialUIElement {
         this._metadata.push(text);
     }
 
+    public addKeyValueMetadata(key: string, value: string) {
+        this.addMetadata(`${key}: <div class="metadata-value">${value}</div>`);
+    }
+
     protected abstract buildChildHTML(): string
 }
 
@@ -74,6 +78,7 @@ export class TextureMaterialUIElement extends MaterialUIElement {
         const parsedPath = path.parse(material.path);
         const isMissingTexture = parsedPath.base === 'debug.png';
 
+        // Actions
         super.addAction(isMissingTexture ? 'Find texture' : 'Replace texture', () => {
             const files = remote.dialog.showOpenDialogSync({
                 title: 'Load',
@@ -92,10 +97,23 @@ export class TextureMaterialUIElement extends MaterialUIElement {
             this._appContext.onMaterialTypeSwitched(materialName);
         });
 
-        super.addMetadata(`Alpha multiplier: ${this._material.alphaFactor}`);
+        super.addAction('Switch interpolation', () => {
+            this._appContext.onMaterialInterpolationChanged(materialName);
+        });
+
+        super.addAction('Switch extension', () => {
+            this._appContext.onMaterialExtensionChanged(materialName);
+        });
+
+        // Metadata
+        super.addKeyValueMetadata('Alpha multiplier', this._material.alphaFactor.toLocaleString(undefined, { minimumFractionDigits: 1 }));
         if (this._material.alphaPath !== undefined) {
-            super.addMetadata(`Alpha texture: ${this._material.alphaPath}`);
+            super.addKeyValueMetadata('Alpha texture', this._material.alphaPath);
         }
+
+        super.addKeyValueMetadata('Interpolation', this._material.interpolation === 'nearest' ? 'Nearest' : 'Linear');
+
+        super.addKeyValueMetadata('Extension', this._material.extension === 'clamp' ? 'Clamp' : 'Repeat');
     }
 
     private _isMissingTexture() {

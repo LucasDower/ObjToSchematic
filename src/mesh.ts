@@ -9,6 +9,7 @@ import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
+import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 import { Vector3 } from './vector';
 
 interface VertexIndices {
@@ -42,6 +43,8 @@ export type TexturedMaterial = BaseMaterial & {
     path: string,
     alphaPath?: string,
     alphaFactor: number,
+    interpolation: TTexelInterpolation,
+    extension: TTexelExtension,
 }
 export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
 
@@ -349,17 +352,17 @@ export class Mesh {
         return this._materials;
     }
 
-    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering): RGBA {
+    public sampleTextureMaterial(materialName: string, uv: UV): RGBA {
         ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
+
         const material = this._materials[materialName];
-        if (material.type === MaterialType.solid) {
-            return RGBAUtil.copy(material.colour);
-        } else {
-            ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
-            const colour = this._loadedTextures[materialName].getRGBA(uv, textureFiltering);
-            colour.a *= material.alphaFactor;
-            return colour;
-        }
+        ASSERT(material.type === MaterialType.textured, 'Sampling texture material of non-texture material');
+
+        ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
+
+        const colour = this._loadedTextures[materialName].getRGBA(uv, material.interpolation, material.extension);
+        colour.a *= material.alphaFactor;
+        return colour;
     }
 
     public getTriangleCount(): number {

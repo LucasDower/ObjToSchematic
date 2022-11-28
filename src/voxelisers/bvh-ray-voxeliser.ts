@@ -2,7 +2,7 @@ import { Mesh } from '../mesh';
 import { ProgressManager } from '../progress';
 import { Axes, axesToDirection, Ray } from '../ray';
 import { ASSERT } from '../util/error_util';
-import { LOG, LOGF } from '../util/log_util';
+import { LOG } from '../util/log_util';
 import { Vector3 } from '../vector';
 import { VoxelMesh } from '../voxel_mesh';
 import { VoxeliseParams } from '../worker_types';
@@ -103,19 +103,16 @@ export class BVHRayVoxeliser extends IVoxeliser {
             for (const intersection of intersections) {
                 const point = intersection.intersectionPoint;
                 const position = new Vector3(point.x, point.y, point.z);
-                position.round();
 
                 const voxelColour = this._getVoxelColour(
                     mesh,
                     mesh.getUVTriangle(intersection.triangleIndex),
                     mesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
-                    voxeliseParams.textureFiltering,
+                    voxeliseParams.useMultisampleColouring,
                 );
 
-                if (voxelColour) {
-                    voxelMesh.addVoxel(position, voxelColour);
-                }
+                voxelMesh.addVoxel(position, voxelColour);
             }
         }
         ProgressManager.Get.end(taskHandle);

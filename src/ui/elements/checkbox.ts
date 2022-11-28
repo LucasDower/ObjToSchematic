@@ -49,7 +49,7 @@ export class CheckboxElement extends LabelledElement<boolean> {
                 checkboxPipElement.classList.remove('checkbox-pip-hover');
             }
         });
-        
+
         checkboxElement.addEventListener('click', () => {
             if (this._isEnabled) {
                 this._value = !this._value;
@@ -102,8 +102,8 @@ export class CheckboxElement extends LabelledElement<boolean> {
         this._onValueChangedDelegate?.(this._value!);
     }
 
-    private _onValueChangedDelegate?: (enabled: boolean) => void;
-    public onValueChanged(delegate: (enabled: boolean) => void) {
+    private _onValueChangedDelegate?: (value: boolean) => void;
+    public onValueChanged(delegate: (value: boolean) => void) {
         this._onValueChangedDelegate = delegate;
         return this;
     }

@@ -259,8 +259,52 @@ export class AppContext {
                 path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
                 edited: true,
                 canBeTextured: oldMaterial.canBeTextured,
+                extension: 'repeat',
+                interpolation: 'linear',
             };
         }
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            // TODO: Check the action didn't fail
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
+        });
+    }
+
+    public onMaterialExtensionChanged(materialName: string) {
+        const oldMaterial = this._materialMap[materialName];
+        ASSERT(oldMaterial.type === MaterialType.textured);
+
+        this._materialMap[materialName] = {
+            type: MaterialType.textured,
+            alphaFactor: oldMaterial.alphaFactor,
+            alphaPath: oldMaterial.alphaPath,
+            path: oldMaterial.path,
+            edited: true,
+            canBeTextured: oldMaterial.canBeTextured,
+            extension: oldMaterial.extension === 'clamp' ? 'repeat' : 'clamp',
+            interpolation: oldMaterial.interpolation,
+        };
+
+        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
+            // TODO: Check the action didn't fail
+            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
+        });
+    }
+
+    public onMaterialInterpolationChanged(materialName: string) {
+        const oldMaterial = this._materialMap[materialName];
+        ASSERT(oldMaterial.type === MaterialType.textured);
+
+        this._materialMap[materialName] = {
+            type: MaterialType.textured,
+            alphaFactor: oldMaterial.alphaFactor,
+            alphaPath: oldMaterial.alphaPath,
+            path: oldMaterial.path,
+            edited: true,
+            canBeTextured: oldMaterial.canBeTextured,
+            extension: oldMaterial.extension,
+            interpolation: oldMaterial.interpolation === 'linear' ? 'nearest' : 'linear',
+        };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
             // TODO: Check the action didn't fail
@@ -279,6 +323,8 @@ export class AppContext {
             path: newTexturePath,
             edited: true,
             canBeTextured: oldMaterial.canBeTextured,
+            extension: oldMaterial.extension,
+            interpolation: oldMaterial.interpolation,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
@@ -389,7 +435,6 @@ export class AppContext {
                 voxeliser: uiElements.voxeliser.getCachedValue(),
                 size: uiElements.size.getCachedValue(),
                 useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
-                textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
                 enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
                 voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
             },

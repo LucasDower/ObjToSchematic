@@ -12,6 +12,7 @@ import { AppError, ASSERT } from './util/error_util';
 import { FileUtil } from './util/file_util';
 import { LOG, LOG_ERROR, LOGF } from './util/log_util';
 import { AppPaths } from './util/path_util';
+import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 
 /* eslint-disable */
 export enum TextureFormat {
@@ -83,49 +84,66 @@ export class Texture {
         }
     }
 
-    public getRGBA(uv: UV, filtering: TextureFiltering): RGBA {
-        if (filtering === TextureFiltering.Nearest) {
+    /**
+     * UV can be in any range and is not limited to [0, 1]
+     */
+    public getRGBA(inUV: UV, interpolation: TTexelInterpolation, extension: TTexelExtension): RGBA {
+        const uv = new UV(0.0, 0.0);
+
+        if (extension === 'clamp') {
+            uv.u = clamp(inUV.u, 0.0, 1.0);
+            uv.v = clamp(inUV.v, 0.0, 1.0);
+        } else {
+            uv.u = Math.abs(inUV.u) - Math.floor(Math.abs(inUV.u));
+            uv.v = Math.abs(inUV.v) - Math.floor(Math.abs(inUV.v));
+        }
+        ASSERT(uv.u >= 0.0 && uv.u <= 1.0, 'Texcoord UV.u OOB');
+        ASSERT(uv.v >= 0.0 && uv.v <= 1.0, 'Texcoord UV.v OOB');
+        uv.v = 1.0 - uv.v;
+
+        if (interpolation === 'nearest') {
             return this._getNearestRGBA(uv);
         } else {
             return this._getLinearRGBA(uv);
         }
     }
 
+    /**
+     * UV is assumed to be in [0, 1] range.
+     */
     private _getLinearRGBA(uv: UV): RGBA {
-        uv.v = 1.0 - uv.v;
-
-        uv.u = uv.u % 1.0;
-        uv.v = uv.v % 1.0;
-
         const x = uv.u * this._image.width;
         const y = uv.v * this._image.height;
 
-        const xL = Math.floor(x);
-        const xU = xL + 1;
-        const yL = Math.floor(y);
-        const yU = yL + 1;
+        const xLeft = Math.floor(x);
+        const xRight = xLeft + 1;
+        const yUp = Math.floor(y);
+        const yDown = yUp + 1;
 
-        const u = wayThrough(x, xL, xU);
-        const v = wayThrough(y, yL, yU);
+        const u = x - xLeft;
+        const v = y - yUp;
 
         if (!(u >= 0.0 && u <= 1.0 && v >= 0.0 && v <= 1.0)) {
             return RGBAColours.MAGENTA;
         }
 
-        const A = this._getFromXY(xL, yU);
-        const B = this._getFromXY(xU, yU);
+        const A = this._getFromXY(xLeft, yUp);
+        const B = this._getFromXY(xRight, yUp);
         const AB = RGBAUtil.lerp(A, B, u);
 
-        const C = this._getFromXY(xL, yL);
-        const D = this._getFromXY(xU, yL);
+        const C = this._getFromXY(xLeft, yDown);
+        const D = this._getFromXY(xRight, yDown);
         const CD = RGBAUtil.lerp(C, D, u);
 
         return RGBAUtil.lerp(AB, CD, v);
     }
 
+    /**
+     * UV is assumed to be in [0, 1] range.
+     */
     private _getNearestRGBA(uv: UV): RGBA {
         const x = Math.floor(uv.u * this._image.width);
-        const y = Math.floor((1 - uv.v) * this._image.height);
+        const y = Math.floor(uv.v * this._image.height);
 
         return this._getFromXY(x, y);
     }

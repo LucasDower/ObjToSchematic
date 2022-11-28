@@ -11,7 +11,7 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
-import { TAxis } from '../util/type_util';
+import { TAxis, TTexelExtension } from '../util/type_util';
 import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
@@ -69,19 +69,16 @@ export class UI {
                         id: 'z',
                         displayText: 'Z (depth) (blue)',
                     },
-                ]),
-                'size': new SliderElement('Size', 3, AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT, 0, 80, 1)
-                    .registerCustomEvents((slider: SliderElement) => {
-                        EventManager.Get.add(EAppEvent.onComboBoxChanged, (value: any) => {
-                            if (value[0] === 'x') {
-                                slider.setMax(this._appContext.maxConstraint?.x ?? 400);
-                            } else if (value[0] === 'y') {
-                                slider.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
-                            } else {
-                                slider.setMax(this._appContext.maxConstraint?.z ?? 400);
-                            }
-                        });
-                    }),
+                ]).onValueChanged((value: string) => {
+                    if (value === 'x') {
+                        this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.x ?? 400);
+                    } else if (value === 'y') {
+                        this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                    } else {
+                        this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.z ?? 400);
+                    }
+                }),
+                'size': new SliderElement('Size', 3, AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT, 0, 80, 1),
                 'voxeliser': new ComboBoxElement<TVoxelisers>('Algorithm', [
                     {
                         id: 'bvh-ray',
@@ -102,16 +99,6 @@ export class UI {
                 ]),
                 'ambientOcclusion': new CheckboxElement('Ambient occlusion', true, 'On (recommended)', 'Off (faster)'),
                 'multisampleColouring': new CheckboxElement('Multisampling', true, 'On (recommended)', 'Off (faster)'),
-                'textureFiltering': new ComboBoxElement('Texture filtering', [
-                    {
-                        id: 'linear',
-                        displayText: 'Linear (recommended)',
-                    },
-                    {
-                        id: 'nearest',
-                        displayText: 'Nearest (faster)',
-                    },
-                ]),
                 'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>('Voxel overlap', [
                     {
                         id: 'average',
@@ -125,7 +112,7 @@ export class UI {
                     },
                 ]),
             },
-            elementsOrder: ['constraintAxis', 'size', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'textureFiltering', 'voxelOverlapRule'],
+            elementsOrder: ['constraintAxis', 'size', 'voxeliser', 'ambientOcclusion', 'multisampleColouring', 'voxelOverlapRule'],
             submitButton: new ButtonElement('Voxelise mesh', () => {
                 this._appContext.do(EAction.Voxelise);
             }),

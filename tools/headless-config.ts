@@ -11,7 +11,6 @@ export const headlessConfig: THeadlessConfig = {
         voxeliser: 'bvh-ray',
         size: 80,
         useMultisampleColouring: false,
-        textureFiltering: TextureFiltering.Linear,
         voxelOverlapRule: 'average',
         enableAmbientOcclusion: false, // Only want true if exporting to .obj
     },

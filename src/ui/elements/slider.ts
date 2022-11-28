@@ -19,7 +19,6 @@ export class SliderElement extends LabelledElement<number> {
         this._step = step;
         this._dragging = false;
         this._hovering = false;
-        this._customEvents = () => { };
     }
 
     public generateInnerHTML() {
@@ -86,14 +85,6 @@ export class SliderElement extends LabelledElement<number> {
         elementValue.addEventListener('change', () => {
             this._onTypedValue();
         });
-
-        this._customEvents(this);
-    }
-
-    private _customEvents: (slider: SliderElement) => void;
-    public registerCustomEvents(delegate: (slider: SliderElement) => void) {
-        this._customEvents = delegate;
-        return this;
     }
 
     public setMax(value: number) {

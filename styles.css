@@ -729,3 +729,12 @@ a:hover {
 .checkbox-pip-disabled {
   stroke: var(--text-disabled);
 }
+
+
+.metadata-value {
+  display: inline;
+  color: rgb(128, 128, 128);
+  background-color: rgb(12, 12, 12);
+  padding: 0px 2px;
+  border-radius: 2px;
+}

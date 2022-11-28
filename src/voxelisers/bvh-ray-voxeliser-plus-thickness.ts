@@ -111,21 +111,17 @@ export class BVHRayVoxeliserPlusThickness extends IVoxeliser {
                 const crossVec = Vector3.cross(v1, v0);
                 const depthPosition = position.copy().add(crossVec.normalise().mulScalar(0.5)).round();
 
-                position.round();
-
                 const voxelColour = this._getVoxelColour(
                     mesh,
                     mesh.getUVTriangle(intersection.triangleIndex),
                     mesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
-                    voxeliseParams.textureFiltering,
+                    voxeliseParams.useMultisampleColouring,
                 );
 
-                if (voxelColour) {
-                    voxelMesh.addVoxel(position, voxelColour);
-                    if (!depthPosition.equals(position)) {
-                        voxelMesh.addVoxel(depthPosition, voxelColour);
-                    }
+                voxelMesh.addVoxel(position, voxelColour);
+                if (!depthPosition.equals(position)) {
+                    voxelMesh.addVoxel(depthPosition, voxelColour);
                 }
             }
         }

@@ -21,7 +21,6 @@ test('Voxelise solid 2x2 cube', () => {
         constraintAxis: 'y',
         size: 2,
         useMultisampleColouring: false,
-        textureFiltering: TextureFiltering.Nearest,
         enableAmbientOcclusion: false,
         voxelOverlapRule: 'average',
         voxeliser: 'ncrb',

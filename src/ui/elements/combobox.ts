@@ -34,8 +34,8 @@ export class ComboBoxElement<T> extends LabelledElement<T> {
         ASSERT(element !== null);
 
         element.addEventListener('change', () => {
-            EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
             if (this._onValueChangedDelegate) {
+                //EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
                 this._onValueChangedDelegate(element.value);
             }
         });

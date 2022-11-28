@@ -398,6 +398,8 @@ export class ObjImporter extends IImporter {
                     alphaFactor: this._currentAlpha,
                     edited: false,
                     canBeTextured: true,
+                    extension: 'repeat',
+                    interpolation: 'linear',
                 };
                 this._currentTransparencyTexture = '';
             } else {
