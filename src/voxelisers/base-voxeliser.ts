@@ -30,7 +30,7 @@ export abstract class IVoxeliser {
     protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, multisample: boolean): RGBA {
         const material = mesh.getMaterialByName(materialName);
         if (material.type === MaterialType.solid) {
-            return material.colour;
+            return RGBAUtil.copy(material.colour);
         }
 
         const samples: RGBA[] = [];
