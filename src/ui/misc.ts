@@ -14,16 +14,26 @@ export class UITreeBuilder implements IUIOutputElement {
     private _children: Array<{ html: string, warning: boolean } | UITreeBuilder>;
     private _postBuildDelegates: Array<() => void>;
     private _warning: boolean;
+    private _open: boolean;
 
     private constructor(rootLabel: string) {
         this._rootLabel = rootLabel;
         this._children = [];
         this._postBuildDelegates = [];
         this._warning = false;
+        this._open = false;
     }
 
     public static create(rootLabel: string): UITreeBuilder {
         return new UITreeBuilder(rootLabel);
+    }
+
+    public isOpen() {
+        return this._open;
+    }
+
+    public toggleIsOpen() {
+        this._open = !this._open;
     }
 
     public setWarning() {
@@ -81,6 +91,11 @@ export class UITreeBuilder implements IUIOutputElement {
         if (this.getWarning()) {
             return `
                 <span class="caret caret-down" style="color:orange;" >${this._rootLabel}</span>
+                <ul class="nested active">${childrenHTML}</ul>
+            `;
+        } else if (this.isOpen()) {
+            return `
+                <span class="caret caret-down">${this._rootLabel}</span>
                 <ul class="nested active">${childrenHTML}</ul>
             `;
         } else {

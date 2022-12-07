@@ -31,6 +31,7 @@ export enum MaterialType { solid, textured }
 type BaseMaterial = {
     edited: boolean,
     canBeTextured: boolean,
+    open: boolean, // TODO: Refactor, this is UI specific, shouldn't exist here
 }
 
 export type SolidMaterial = BaseMaterial & {
@@ -179,6 +180,7 @@ export class Mesh {
                         edited: true,
                         canBeTextured: false,
                         set: false,
+                        open: false,
                     };
                 } else {
                     // Texcoords exist
@@ -188,6 +190,7 @@ export class Mesh {
                         edited: true,
                         canBeTextured: true,
                         set: false,
+                        open: false,
                     };
                 }
 
@@ -225,6 +228,7 @@ export class Mesh {
                         edited: true,
                         canBeTextured: true,
                         set: false,
+                        open: false,
                     };
                 } else {
                     const parsedPath = path.parse(material.path);

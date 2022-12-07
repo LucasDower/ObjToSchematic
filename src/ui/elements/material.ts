@@ -50,7 +50,7 @@ export abstract class MaterialUIElement {
     }
 
     public addAction(text: string, onClick: () => void) {
-        this._actions.push({ text: text, onClick: onClick, id: getRandomID() });
+        this._actions.push({ text: `<b>${text}</b>`, onClick: onClick, id: getRandomID() });
     }
 
     public addMetadata(text: string) {
@@ -77,6 +77,7 @@ export class TextureMaterialUIElement extends MaterialUIElement {
 
         const parsedPath = path.parse(material.path);
         const isMissingTexture = parsedPath.base === 'debug.png';
+        const hasAlphaTexture = material.alphaPath !== undefined;
 
         // Actions
         super.addAction(isMissingTexture ? 'Find texture' : 'Replace texture', () => {

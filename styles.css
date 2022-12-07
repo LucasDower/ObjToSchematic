@@ -599,7 +599,7 @@ svg {
 ul {
   list-style-type: none;
   margin: 0;
-  padding-left: 20px;
+  padding-left: 10px;
 }
 
 /* Style the caret/arrow */
@@ -685,8 +685,6 @@ a:hover {
 }
 
 .material-container {
-  border-left: 1px solid #8C8C8C80;
-  padding-left: 5px;
 }
 
 .checkbox {
@@ -737,4 +735,5 @@ a:hover {
   background-color: rgb(12, 12, 12);
   padding: 0px 2px;
   border-radius: 2px;
+  word-wrap: break-word;
 }

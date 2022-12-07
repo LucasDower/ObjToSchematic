@@ -251,6 +251,7 @@ export class AppContext {
                 edited: true,
                 canBeTextured: oldMaterial.canBeTextured,
                 set: false,
+                open: true,
             };
         } else {
             this._materialMap[materialName] = {
@@ -261,6 +262,7 @@ export class AppContext {
                 canBeTextured: oldMaterial.canBeTextured,
                 extension: 'repeat',
                 interpolation: 'linear',
+                open: true,
             };
         }
 
@@ -283,6 +285,7 @@ export class AppContext {
             canBeTextured: oldMaterial.canBeTextured,
             extension: oldMaterial.extension === 'clamp' ? 'repeat' : 'clamp',
             interpolation: oldMaterial.interpolation,
+            open: true,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
@@ -304,6 +307,7 @@ export class AppContext {
             canBeTextured: oldMaterial.canBeTextured,
             extension: oldMaterial.extension,
             interpolation: oldMaterial.interpolation === 'linear' ? 'nearest' : 'linear',
+            open: true,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
@@ -325,6 +329,7 @@ export class AppContext {
             canBeTextured: oldMaterial.canBeTextured,
             extension: oldMaterial.extension,
             interpolation: oldMaterial.interpolation,
+            open: true,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
@@ -341,6 +346,7 @@ export class AppContext {
             edited: true,
             canBeTextured: oldMaterial.canBeTextured,
             set: true,
+            open: true,
         };
 
         this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
@@ -354,13 +360,19 @@ export class AppContext {
 
         const messageBuilder = outputElement.getMessage();
         const tree = UITreeBuilder.create('Materials');
+        tree.toggleIsOpen();
 
         for (const [materialName, material] of Object.entries(this._materialMap)) {
             if (materialName === 'DEFAULT_UNASSIGNED') {
                 continue;
             }
 
-            const subTree = UITreeBuilder.create(material.edited ? `<i>'${materialName}'*</i>` : `'${materialName}'`);
+            const subTree = UITreeBuilder.create(material.edited ? `<i>${materialName}*</i>` : materialName);
+
+            if (material.open) {
+                subTree.toggleIsOpen();
+            }
+
             if (material.type === MaterialType.solid) {
                 const uiElement = new SolidMaterialUIElement(materialName, this, material);
 

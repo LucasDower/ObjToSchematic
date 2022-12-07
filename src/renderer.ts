@@ -226,6 +226,7 @@ export class Renderer {
                         wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                     }) : undefined,
                     useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                    open: material.open,
                 },
                 numElements: oldBuffer.numElements,
                 materialName: materialName,
@@ -257,6 +258,7 @@ export class Renderer {
                         wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                     }) : undefined,
                     useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                    open: material.open,
                 };
                 return;
             }
@@ -299,6 +301,7 @@ export class Renderer {
                             wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                         }) : undefined,
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
+                        open: material.open,
                     },
                     numElements: numElements,
                     materialName: materialName,
