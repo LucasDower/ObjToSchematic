@@ -73,7 +73,7 @@ canvas {
 }
 
 .group-heading {
-  padding: 0px 10px;
+  padding: 10px 10px;
   color: #303030;
   font-weight: 400;
   font-size: 85%;
@@ -191,7 +191,7 @@ select:disabled {
 
 .new-slider-bar {
   border-radius: var(--border-radius);
-  height: calc(100% - 1px);
+  height: calc(100% - 2px);
   background: var(--prop-accent-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
 }
@@ -317,15 +317,10 @@ select:disabled {
 }
 
 .spinbox-key {
-  border-radius: 5px 0px 0px 5px;
-  height: calc(32px - 8.5px);
   color: #ffffffb9;
-  padding: 8.5px 8px 0px 8px;
   font-size: 85%;
-  font-weight: 400;
-  border-width: 1px 0px 1px 1px;
-  border-style: solid;
-  border: rgba(255, 255, 255, 0.0);
+  font-weight: 300;
+  padding-right: 5px;
 }
 
 .spinbox-key-hover {
@@ -340,7 +335,7 @@ select:disabled {
 
 .spinbox-value {
   background: var(--prop-standard);
-  border-radius: 0px 5px 5px 0px;
+  border-radius: 5px;
   flex-grow: 1;
   height: calc(32px - 8.5px);
   padding: 8.5px 0px 0px 0px;
@@ -366,7 +361,7 @@ select:disabled {
 }
 
 .spinbox-divider {
-  width: 6px;
+  width: 3px;
 }
 
 .toolbar {
@@ -737,4 +732,23 @@ a:hover {
   background-color: rgb(12, 12, 12);
   padding: 0px 2px;
   border-radius: 2px;
+}
+
+.spinbox-main-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.spinbox-element-container {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  height: 50%;
+  align-items: center;
+  padding-left: 5px;
+}
+
+.spinbox-element-container:first-child {
+  padding-right: 0px;
 }

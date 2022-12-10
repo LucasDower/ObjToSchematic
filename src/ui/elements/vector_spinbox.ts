@@ -16,41 +16,49 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
     private _mouseover: EAxis;
     private _dragging: EAxis;
     private _lastClientX: number;
+    private _showY: boolean;
 
-    public constructor(label: string, decimals: number, value: Vector3) {
+    public constructor(label: string, decimals: number, value: Vector3, showY: boolean) {
         super(label);
         this._value = value;
         this._mouseover = EAxis.None;
         this._dragging = EAxis.None;
         this._lastClientX = 0.0;
+        this._showY = showY;
     }
 
     public generateInnerHTML() {
         ASSERT(this._value !== undefined, 'Value not found');
-        return `
-            <div style="display: flex; flex-direction: row;">
-                <div style="display: flex; flex-direction: row; width: 33%">
-                    <div class="spinbox-key" id="${this._id}-kx" style="background-color: #FF4C4C;">X</div>
-                    <div class="spinbox-value" id="${this._id}-vx">
-                        ${this._value.x}
-                    </div>
+        let html = '';
+        html += '<div class="spinbox-main-container">';
+        html += `
+            <div class="spinbox-element-container">
+                <div class="spinbox-key" id="${this._id}-kx">X</div>
+                <div class="spinbox-value" id="${this._id}-vx">
+                    ${this._value.x}
                 </div>
-                <div class="spinbox-divider"></div>
-                <div style="display: flex; flex-direction: row; width: 33%"">
-                    <div class="spinbox-key" id="${this._id}-ky" style="background-color: #34BF49;">Y</div>
+            </div>
+        `;
+        if (this._showY) {
+            html += `
+                <div class="spinbox-element-container">
+                    <div class="spinbox-key" id="${this._id}-ky">Y</div>
                     <div class="spinbox-value" id="${this._id}-vy">
                         ${this._value.y}
                     </div>
                 </div>
-                <div class="spinbox-divider"></div>
-                <div style="display: flex; flex-direction: row; width: 33%"">
-                    <div class="spinbox-key" id="${this._id}-kz" style="background-color: #0099E5;">Z</div>
-                    <div class="spinbox-value" id="${this._id}-vz">
-                        ${this._value.z}
-                    </div>
+            `;
+        }
+        html += `
+            <div class="spinbox-element-container">
+                <div class="spinbox-key" id="${this._id}-kz">Z</div>
+                <div class="spinbox-value" id="${this._id}-vz">
+                    ${this._value.z}
                 </div>
             </div>
         `;
+        html += '</div>';
+        return html;
     }
 
     private _registerAxis(axis: EAxis) {
@@ -95,7 +103,9 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
     public registerEvents() {
         this._registerAxis(EAxis.X);
-        this._registerAxis(EAxis.Y);
+        if (this._showY) {
+            this._registerAxis(EAxis.Y);
+        }
         this._registerAxis(EAxis.Z);
 
         document.addEventListener('mousedown', (e: any) => {
@@ -113,20 +123,20 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
         document.addEventListener('mouseup', () => {
             const elementXK = document.getElementById(this._id + '-kx') as HTMLDivElement;
-            const elementYK = document.getElementById(this._id + '-ky') as HTMLDivElement;
+            const elementYK = document.getElementById(this._id + '-ky') as (HTMLDivElement | undefined);
             const elementZK = document.getElementById(this._id + '-kz') as HTMLDivElement;
             const elementXV = document.getElementById(this._id + '-vx') as HTMLDivElement;
-            const elementYV = document.getElementById(this._id + '-vy') as HTMLDivElement;
+            const elementYV = document.getElementById(this._id + '-vy') as (HTMLDivElement | undefined);
             const elementZV = document.getElementById(this._id + '-vz') as HTMLDivElement;
 
             switch (this._dragging) {
                 case EAxis.X:
-                    elementXK.classList.remove('spinbox-key-hover');
+                    elementXK?.classList.remove('spinbox-key-hover');
                     elementXV.classList.remove('spinbox-value-hover');
                     break;
                 case EAxis.Y:
-                    elementYK.classList.remove('spinbox-key-hover');
-                    elementYV.classList.remove('spinbox-value-hover');
+                    elementYK?.classList.remove('spinbox-key-hover');
+                    elementYV?.classList.remove('spinbox-value-hover');
                     break;
                 case EAxis.Z:
                     elementZK.classList.remove('spinbox-key-hover');
@@ -158,10 +168,12 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
         }
 
         const elementXV = document.getElementById(this._id + '-vx') as HTMLDivElement;
-        const elementYV = document.getElementById(this._id + '-vy') as HTMLDivElement;
+        const elementYV = document.getElementById(this._id + '-vy') as (HTMLDivElement | undefined);
         const elementZV = document.getElementById(this._id + '-vz') as HTMLDivElement;
         elementXV.innerHTML = this._value.x.toString();
-        elementYV.innerHTML = this._value.y.toString();
+        if (elementYV) {
+            elementYV.innerHTML = this._value.y.toString();
+        }
         elementZV.innerHTML = this._value.z.toString();
     }
 
@@ -172,28 +184,28 @@ export class VectorSpinboxElement extends LabelledElement<Vector3> {
 
         const keyElements = [
             document.getElementById(this._id + '-kx') as HTMLDivElement,
-            document.getElementById(this._id + '-ky') as HTMLDivElement,
+            document.getElementById(this._id + '-ky') as (HTMLDivElement | undefined),
             document.getElementById(this._id + '-kz') as HTMLDivElement,
         ];
         const valueElements = [
             document.getElementById(this._id + '-vx') as HTMLDivElement,
-            document.getElementById(this._id + '-vy') as HTMLDivElement,
+            document.getElementById(this._id + '-vy') as (HTMLDivElement | undefined),
             document.getElementById(this._id + '-vz') as HTMLDivElement,
         ];
 
         if (this._isEnabled) {
             for (const keyElement of keyElements) {
-                keyElement.classList.remove('spinbox-key-disabled');
+                keyElement?.classList.remove('spinbox-key-disabled');
             }
             for (const valueElement of valueElements) {
-                valueElement.classList.remove('spinbox-value-disabled');
+                valueElement?.classList.remove('spinbox-value-disabled');
             }
         } else {
             for (const keyElement of keyElements) {
-                keyElement.classList.add('spinbox-key-disabled');
+                keyElement?.classList.add('spinbox-key-disabled');
             }
             for (const valueElement of valueElements) {
-                valueElement.classList.add('spinbox-value-disabled');
+                valueElement?.classList.add('spinbox-value-disabled');
             }
         }
     }
