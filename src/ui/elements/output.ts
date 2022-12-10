@@ -18,20 +18,6 @@ export class OutputElement {
         `;
     }
 
-    public registerEvents() {
-        const toggler = document.getElementsByClassName('caret');
-
-        for (let i = 0; i < toggler.length; i++) {
-            const temp = toggler[i];
-            temp.addEventListener('click', function () {
-                temp.parentElement?.querySelector('.nested')?.classList.toggle('active');
-                temp.classList.toggle('caret-down');
-            });
-        }
-
-        this._message.postBuild();
-    }
-
     private _message: UIMessageBuilder;
 
     public setMessage(message: UIMessageBuilder, style?: OutputStyle) {
@@ -74,7 +60,6 @@ export class OutputElement {
         ASSERT(element !== null);
 
         element.innerHTML = this._message.toString();
-        this.registerEvents();
     }
 
     public setStyle(style: OutputStyle) {

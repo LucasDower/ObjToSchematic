@@ -11,7 +11,6 @@ import { ExporterFactory, TExporters } from './exporters/exporters';
 import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
-import { TextureFiltering } from './texture';
 import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
 import { UI } from './ui/layout';
@@ -185,7 +184,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getCachedValue(),
+                filepath: uiElements.input.getValue(),
             },
         };
 
@@ -443,12 +442,12 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
-                constraintAxis: uiElements.constraintAxis.getCachedValue(),
-                voxeliser: uiElements.voxeliser.getCachedValue(),
-                size: uiElements.size.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
-                voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+                constraintAxis: uiElements.constraintAxis.getValue(),
+                voxeliser: uiElements.voxeliser.getValue(),
+                size: uiElements.size.getValue(),
+                useMultisampleColouring: uiElements.multisampleColouring.getValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                voxelOverlapRule: uiElements.voxelOverlapRule.getValue(),
             },
         };
 
@@ -471,8 +470,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
-                desiredHeight: uiElements.size.getCachedValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                desiredHeight: uiElements.size.getValue(),
             },
         };
 
@@ -522,21 +521,21 @@ export class AppContext {
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
 
-        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getCachedValue());
+        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getValue());
 
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
-                blockPalette: uiElements.blockPalette.getCachedValue(),
-                dithering: uiElements.dithering.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
+                blockPalette: uiElements.blockPalette.getValue(),
+                dithering: uiElements.dithering.getValue(),
                 colourSpace: ColourSpace.RGB,
-                fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
-                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
-                calculateLighting: uiElements.calculateLighting.getCachedValue(),
-                lightThreshold: uiElements.lightThreshold.getCachedValue(),
-                contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
-                errorWeight: uiElements.errorWeight.getCachedValue() / 10,
+                fallable: uiElements.fallable.getValue() as FallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getValue()),
+                calculateLighting: uiElements.calculateLighting.getValue(),
+                lightThreshold: uiElements.lightThreshold.getValue(),
+                contextualAveraging: uiElements.contextualAveraging.getValue(),
+                errorWeight: uiElements.errorWeight.getValue() / 10,
             },
         };
 
@@ -560,7 +559,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextBlockMeshChunk',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
             },
         };
 
@@ -605,7 +604,7 @@ export class AppContext {
     }
 
     private _export(): (TWorkerJob | undefined) {
-        const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
+        const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
         const filepath = remote.dialog.showSaveDialogSync({

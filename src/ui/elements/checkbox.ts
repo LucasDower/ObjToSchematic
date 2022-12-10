@@ -1,95 +1,86 @@
-import { getRandomID } from '../../util';
-import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { UIUtil } from '../../util/ui_util';
+import { ConfigUIElement } from './config_element';
 
-export class CheckboxElement extends LabelledElement<boolean> {
-    private _checkboxId: string;
-    private _checkboxPipId: string;
-    private _checkboxTextId: string;
-    private _onText: string;
-    private _offText: string;
+export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement> {
+    private _labelChecked: string;
+    private _labelUnchecked: string;
 
-    public constructor(label: string, value: boolean, onText: string, offText: string) {
-        super(label);
-        this._checkboxId = getRandomID();
-        this._checkboxPipId = getRandomID();
-        this._checkboxTextId = getRandomID();
-        this._value = value;
-        this._onText = onText;
-        this._offText = offText;
+    public constructor() {
+        super(false);
+        this._labelChecked = 'On';
+        this._labelUnchecked = 'Off';
     }
 
-    protected generateInnerHTML(): string {
-        return `
-            <div class="checkbox" id="${this._checkboxId}">
-                <svg id="${this._checkboxPipId}" xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                    <path d="M5 12l5 5l10 -10" />
-                </svg>
-            </div>
-            <div class="checkbox-text" id="${this._checkboxTextId}">${this.getValue() ? this._onText : this._offText}</div>
-        `;
+    public setCheckedText(label: string) {
+        this._labelChecked = label;
+        return this;
     }
 
-    public registerEvents(): void {
-        const checkboxElement = document.getElementById(this._checkboxId);
-        const checkboxPipElement = document.getElementById(this._checkboxPipId);
-        ASSERT(checkboxElement !== null && checkboxPipElement !== null);
+    public setUncheckedText(label: string) {
+        this._labelUnchecked = label;
+        return this;
+    }
 
-        checkboxElement?.addEventListener('mouseenter', () => {
-            if (this._isEnabled) {
+    public override registerEvents(): void {
+        const checkboxElement = this._getElement();
+        const checkboxPipElement = UIUtil.getElementById(this._getPipId());
+
+        checkboxElement.addEventListener('mouseenter', () => {
+            if (this.getEnabled()) {
                 checkboxElement.classList.add('checkbox-hover');
                 checkboxPipElement.classList.add('checkbox-pip-hover');
             }
         });
 
-        checkboxElement?.addEventListener('mouseleave', () => {
-            if (this._isEnabled) {
+        checkboxElement.addEventListener('mouseleave', () => {
+            if (this.getEnabled()) {
                 checkboxElement.classList.remove('checkbox-hover');
                 checkboxPipElement.classList.remove('checkbox-pip-hover');
             }
         });
 
         checkboxElement.addEventListener('click', () => {
-            if (this._isEnabled) {
-                this._value = !this._value;
-                this._onValueChanged();
+            if (this.getEnabled()) {
+                this._setValue(!this.getValue());
             }
         });
     }
 
-    private _onValueChanged() {
-        const checkboxElement = document.getElementById(this._checkboxId);
-        const checkboxPipElement = document.getElementById(this._checkboxPipId);
-        ASSERT(checkboxElement !== null && checkboxPipElement !== null);
-        const checkboxTextElement = document.getElementById(this._checkboxTextId);
-        ASSERT(checkboxTextElement !== null);
+    protected override _generateInnerHTML(): string {
+        return `
+            <div class="checkbox" id="${this._getId()}">
+                <svg id="${this._getPipId()}" xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M5 12l5 5l10 -10" />
+                </svg>
+            </div>
+            <div class="checkbox-text" id="${this._getLabelId()}">${this.getValue() ? this._labelChecked : this._labelUnchecked}</div>
+        `;
+    }
 
-        checkboxTextElement.innerHTML = this.getValue() ? this._onText : this._offText;
+    protected override _onValueChanged(): void {
+        const checkboxElement = this._getElement();
+        const checkboxPipElement = UIUtil.getElementById(this._getPipId());
+        const checkboxTextElement = UIUtil.getElementById(this._getLabelId());
+
+        checkboxTextElement.innerHTML = this.getValue() ? this._labelChecked : this._labelUnchecked;
         checkboxPipElement.style.visibility = this.getValue() ? 'visible' : 'hidden';
 
-        if (this._isEnabled) {
+        if (this.getEnabled()) {
             checkboxElement.classList.remove('checkbox-disabled');
         } else {
             checkboxElement.classList.add('checkbox-disabled');
         }
-
-        this._onValueChangedDelegate?.(this._value!);
     }
 
-    protected _onEnabledChanged(): void {
+    protected override _onEnabledChanged(): void {
         super._onEnabledChanged();
 
-        const checkboxElement = document.getElementById(this._checkboxId);
-        const checkboxPipElement = document.getElementById(this._checkboxPipId);
-        ASSERT(checkboxElement !== null && checkboxPipElement !== null);
-        const checkboxTextElement = document.getElementById(this._checkboxTextId);
-        ASSERT(checkboxTextElement !== null);
+        const checkboxElement = this._getElement();
+        const checkboxPipElement = UIUtil.getElementById(this._getPipId());
+        const checkboxTextElement = UIUtil.getElementById(this._getLabelId());
 
-        checkboxTextElement.innerHTML = this.getValue() ? this._onText : this._offText;
-        checkboxPipElement.style.visibility = this.getValue() ? 'visible' : 'hidden';
-
-        if (this._isEnabled) {
+        if (this.getEnabled()) {
             checkboxElement.classList.remove('checkbox-disabled');
             checkboxTextElement.classList.remove('checkbox-text-disabled');
             checkboxPipElement.classList.remove('checkbox-pip-disabled');
@@ -98,13 +89,13 @@ export class CheckboxElement extends LabelledElement<boolean> {
             checkboxTextElement.classList.add('checkbox-text-disabled');
             checkboxPipElement.classList.add('checkbox-pip-disabled');
         }
-
-        this._onValueChangedDelegate?.(this._value!);
     }
 
-    private _onValueChangedDelegate?: (value: boolean) => void;
-    public onValueChanged(delegate: (value: boolean) => void) {
-        this._onValueChangedDelegate = delegate;
-        return this;
+    private _getPipId() {
+        return this._getId() + '-pip';
+    }
+
+    private _getLabelId() {
+        return this._getId() + '-label';
     }
 }
