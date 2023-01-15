@@ -74,6 +74,16 @@ export class UITreeBuilder implements IUIOutputElement {
         this._postBuildDelegates.forEach((delegate) => {
             delegate();
         });
+
+        const toggler = document.getElementsByClassName('caret') as HTMLCollectionOf<HTMLElement>;
+
+        for (let i = 0; i < toggler.length; i++) {
+            const temp = toggler[i];
+            temp.onclick = () => {
+                temp.parentElement?.querySelector('.nested')?.classList.toggle('active');
+                temp.classList.toggle('caret-down');
+            };
+        }
     }
 
     public buildHTML(): string {

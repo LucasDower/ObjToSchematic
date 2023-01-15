@@ -276,8 +276,6 @@ export class ObjImporter extends IImporter {
     ];
 
     override parseFile(filePath: string) {
-        ASSERT(path.isAbsolute(filePath), `ObjImporter: ${filePath} not absolute`);
-
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
@@ -302,8 +300,11 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseOBJ(path: string) {
+        if (path === '') {
+            throw new AppError(`No filepath given`);
+        }
         if (!fs.existsSync(path)) {
-            throw new AppError(`Could not find ${path}`);
+            throw new AppError(`Could not find '${path}'`);
         }
         const fileContents = fs.readFileSync(path, 'utf8');
         if (fileContents.includes('�')) {

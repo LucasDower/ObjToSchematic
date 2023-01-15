@@ -9,7 +9,7 @@ export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
     private _hovering: boolean;
 
     public constructor() {
-        super();
+        super('');
         this._fileExtensions = [];
         this._loadedFilePath = '';
         this._hovering = false;
