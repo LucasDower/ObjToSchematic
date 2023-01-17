@@ -17,6 +17,7 @@ export class ToolbarItemElement {
     private _iconPath: string;
     private _isEnabled: boolean;
     private _isActive: boolean;
+    private _isHovering: boolean;
     private _onClick?: () => void;
 
     public constructor(params: TToolbarItemParams) {
@@ -27,15 +28,22 @@ export class ToolbarItemElement {
 
         this._isEnabled = true;
         this._isActive = false;
+        this._isHovering = false;
     }
 
     public tick() {
         if (this._isEnabledDelegate !== undefined) {
-            this.setEnabled(this._isEnabledDelegate());
+            const newIsEnabled = this._isEnabledDelegate();
+            if (newIsEnabled !== this._isEnabled) {
+                this.setEnabled(newIsEnabled);
+            }
         }
 
         if (this._isActiveDelegate !== undefined) {
-            this.setActive(this._isActiveDelegate());
+            const newIsActive = this._isActiveDelegate();
+            if (newIsActive !== this._isActive) {
+                this.setActive(newIsActive);
+            }
         }
     }
 
@@ -77,15 +85,13 @@ export class ToolbarItemElement {
         });
 
         element.addEventListener('mouseenter', () => {
-            if (this._isEnabled) {
-                element.classList.add('toolbar-item-hover');
-            }
+            this._isHovering = true;
+            this._updateElements();
         });
 
         element.addEventListener('mouseleave', () => {
-            if (this._isEnabled) {
-                element.classList.remove('toolbar-item-hover');
-            }
+            this._isHovering = false;
+            this._updateElements();
         });
 
         this._updateElements();
@@ -96,15 +102,25 @@ export class ToolbarItemElement {
         const svgElement = document.getElementById(this._iconName + '-svg') as HTMLDivElement;
         ASSERT(element !== null && svgElement !== null);
 
+        element.classList.remove('toolbar-item-active-hover');
         element.classList.remove('toolbar-item-disabled');
         element.classList.remove('toolbar-item-active');
+        element.classList.remove('toolbar-item-hover');
         svgElement.classList.remove('icon-disabled');
         svgElement.classList.remove('icon-active');
 
         if (this._isEnabled) {
             if (this._isActive) {
-                element.classList.add('toolbar-item-active');
+                if (this._isHovering) {
+                    element.classList.add('toolbar-item-active-hover');
+                } else {
+                    element.classList.add('toolbar-item-active');
+                }
                 svgElement.classList.add('icon-active');
+            } else {
+                if (this._isHovering) {
+                    element.classList.add('toolbar-item-hover');
+                }
             }
         } else {
             element.classList.add('toolbar-item-disabled');

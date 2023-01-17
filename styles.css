@@ -416,6 +416,7 @@ select:disabled {
 .toolbar-item-active-hover {
   background-color: var(--prop-accent-hovered) !important;
   border: 1px solid var(--prop-accent-border-hovered) !important;
+  cursor: pointer;
 }
 
 .toolbar-item-disabled-active {
