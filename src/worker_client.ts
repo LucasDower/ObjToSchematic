@@ -90,6 +90,7 @@ export class WorkerClient {
 
         return {
             materials: this._loadedMesh.getMaterials(),
+            materialsChanged: Object.keys(params.materials), // TODO: Change to actual materials changed
         };
     }
 

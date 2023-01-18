@@ -27,7 +27,8 @@ export namespace SetMaterialsParams {
     }
 
     export type Output = {
-        materials: MaterialMap
+        materials: MaterialMap,
+        materialsChanged: string[],
     }
 }
 

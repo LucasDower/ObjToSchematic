@@ -32,8 +32,6 @@ export interface Group {
     elementsOrder: string[];
     submitButton: ButtonElement;
     output: OutputElement;
-    postElements?: { [key: string]: ConfigUIElement<any, any> };
-    postElementsOrder?: string[];
 }
 
 export interface ToolbarGroup {
@@ -42,7 +40,7 @@ export interface ToolbarGroup {
 }
 
 export class UI {
-    public uiOrder = ['import', 'voxelise', 'assign', 'export'];
+    public uiOrder = ['import', 'materials', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
             label: 'Import',
@@ -57,6 +55,18 @@ export class UI {
                     this._appContext.do(EAction.Import);
                 })
                 .setLabel('Load mesh'),
+            output: new OutputElement(),
+        },
+        'materials': {
+            label: 'Materials',
+            elements: {
+            },
+            elementsOrder: [],
+            submitButton: new ButtonElement()
+                .setOnClick(() => {
+                    this._appContext.do(EAction.Materials);
+                })
+                .setLabel('Update materials'),
             output: new OutputElement(),
         },
         'voxelise': {
@@ -445,7 +455,7 @@ export class UI {
                 </div>
             </div>
             `;
-            groupHTML[groupName] += this._buildGroup(group);
+            groupHTML[groupName] += this._getGroupHTML(group);
         }
 
         let itemHTML = '';
@@ -495,26 +505,34 @@ export class UI {
         }
     }
 
-    private _buildGroup(group: Group) {
+    public refreshSubcomponents(group: Group) {
+        const element = document.getElementById(`subcomponents_${group.label}`);
+        ASSERT(element !== null);
+
+        element.innerHTML = this._getGroupSubcomponentsHTML(group);
+
+        for (const elementName in group.elements) {
+            const element = group.elements[elementName];
+            element.registerEvents();
+            element.finalise();
+        }
+    }
+
+    private _getGroupSubcomponentsHTML(group: Group) {
         let groupHTML = '';
         for (const elementName of group.elementsOrder) {
             const element = group.elements[elementName];
             ASSERT(element !== undefined, `No element for: ${elementName}`);
             groupHTML += this._buildSubcomponent(element);
         }
+        return groupHTML;
+    }
 
-        let postGroupHTML = '';
-        if (group.postElements) {
-            ASSERT(group.postElementsOrder, 'No post elements order');
-            for (const elementName of group.postElementsOrder) {
-                const element = group.postElements[elementName];
-                ASSERT(element !== undefined, `No element for: ${elementName}`);
-                postGroupHTML += this._buildSubcomponent(element);
-            }
-        }
-
+    private _getGroupHTML(group: Group) {
         return `
-            ${groupHTML}
+            <div id="subcomponents_${group.label}">
+                ${this._getGroupSubcomponentsHTML(group)}
+            </div>
             <div class="property">
                 <div class="prop-value-container">
                     ${group.submitButton.generateHTML()}
@@ -523,7 +541,6 @@ export class UI {
             <div class="property">
                 ${group.output.generateHTML()}
             </div>
-            ${postGroupHTML}
         `;
     }
 
@@ -554,14 +571,6 @@ export class UI {
                 element.finalise();
             }
             group.submitButton.registerEvents();
-            if (group.postElements) {
-                ASSERT(group.postElementsOrder);
-                for (const elementName in group.postElements) {
-                    const element = group.postElements[elementName];
-                    element.registerEvents();
-                    element.finalise();
-                }
-            }
         }
 
         // Register toolbar left
@@ -605,14 +614,6 @@ export class UI {
             group.elements[compName].setEnabled(true);
         }
         group.submitButton.setEnabled(true);
-        // Enable the post elements of the previous group
-        const prevGroup = this._getEActionGroup(action - 1);
-        if (prevGroup && prevGroup.postElements) {
-            ASSERT(prevGroup.postElementsOrder);
-            for (const postElementName in prevGroup.postElements) {
-                prevGroup.postElements[postElementName].setEnabled(true);
-            }
-        }
     }
 
     public disableAll() {
@@ -634,22 +635,6 @@ export class UI {
             if (clearOutput) {
                 group.output.getMessage().clearAll();
                 group.output.updateMessage();
-            }
-            if (group.postElements) {
-                LOG(group.label, 'has post-element');
-                ASSERT(group.postElementsOrder);
-                for (const postElementName in group.postElements) {
-                    LOG('disabling post-element', postElementName, 'for', group.label);
-                    group.postElements[postElementName].setEnabled(false);
-                }
-            }
-        }
-        // Disable the post elements of the previous group
-        const prevGroup = this._getEActionGroup(action - 1);
-        if (prevGroup && prevGroup.postElements) {
-            ASSERT(prevGroup.postElementsOrder);
-            for (const postElementName in prevGroup.postElements) {
-                prevGroup.postElements[postElementName].setEnabled(false);
             }
         }
     }

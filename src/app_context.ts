@@ -11,8 +11,11 @@ import { ExporterFactory, TExporters } from './exporters/exporters';
 import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
+import { CheckboxElement } from './ui/elements/checkbox';
 import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
+import { SolidMaterialElement } from './ui/elements/solid_material_element';
+import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
 import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
@@ -52,7 +55,7 @@ export class AppContext {
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
-        this._ui.disable(EAction.Voxelise);
+        this._ui.disable(EAction.Materials);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
         this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
@@ -165,6 +168,8 @@ export class AppContext {
         switch (action) {
             case EAction.Import:
                 return this._import();
+            case EAction.Materials:
+                return this._materials();
             case EAction.Voxelise:
                 return this._voxelise();
             case EAction.Assign:
@@ -211,9 +216,67 @@ export class AppContext {
                 const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
+
+            this._updateMaterialsAction(payload.result.materials);
         };
 
         return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _materials(): TWorkerJob {
+        this._ui.getActionOutput(EAction.Materials)
+            .setTaskInProgress('action', '[Materials]: Loading...');
+
+        const payload: TToWorkerMessage = {
+            action: 'SetMaterials',
+            params: {
+                materials: this._materialMap,
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'SetMaterials');
+            const outputElement = this._ui.getActionOutput(EAction.Materials);
+            outputElement.setTaskComplete('action', '[Materials]: Updated', [], 'success');
+
+            // The material map shouldn't need updating because the materials
+            // returned from the worker **should** be the same as the materials
+            // sent.
+            {
+                //this._materialMap = payload.result.materials;
+                //this._onMaterialMapChanged();
+            }
+
+            payload.result.materialsChanged.forEach((materialName) => {
+                const material = this._materialMap[materialName];
+                Renderer.Get.recreateMaterialBuffer(materialName, material);
+            });
+
+            this._ui.enableTo(EAction.Voxelise);
+        };
+
+        return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _updateMaterialsAction(materials: MaterialMap) {
+        this._ui.layoutDull['materials'].elements = {};
+        this._ui.layoutDull['materials'].elementsOrder = [];
+
+        for (const materialName in materials) {
+            const material = this._materialMap[materialName];
+            if (material.type === MaterialType.solid) {
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
+                    .setLabel(materialName);
+            } else {
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
+                    .setLabel(materialName);
+            }
+
+            this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
+        }
+        this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
     }
 
     private _sendMaterialsToWorker(callback: (result: SetMaterialsParams.Output) => void) {
@@ -391,6 +454,8 @@ export class AppContext {
 
         messageBuilder.setTree('materials', tree);
         outputElement.updateMessage();
+
+        this._updateMaterialsAction(this._materialMap);
     }
 
     private _renderMesh(): TWorkerJob {
@@ -402,7 +467,7 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Voxelise);
+            this._ui.enableTo(EAction.Materials);
 
             switch (payload.action) {
                 case 'KnownError':

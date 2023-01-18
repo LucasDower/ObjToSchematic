@@ -127,7 +127,7 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         const norm = (this._internalValue - this._min) / (this._max - this._min);
 
         return `
-            <input type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <input class="slider-number-input" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
             <div class="new-slider" id="${this._getId()}" style="flex-grow: 1;">
                 <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
                 </div>

@@ -9,10 +9,12 @@ export type ComboBoxItem<T> = {
 
 export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     private _items: ComboBoxItem<T>[];
+    private _small: boolean;
 
     public constructor() {
         super();
         this._items = [];
+        this._small = false;
     }
 
     public addItems(items: ComboBoxItem<T>[]) {
@@ -28,6 +30,11 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
         return this;
     }
 
+    public setSmall() {
+        this._small = true;
+        return this;
+    }
+
     public override registerEvents(): void {
         this._getElement().addEventListener('onchange', (e: Event) => {
             const selectedValue = this._items[this._getElement().selectedIndex].payload;
@@ -35,7 +42,7 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
         });
     }
 
-    protected override _generateInnerHTML() {
+    public override _generateInnerHTML() {
         ASSERT(this._items.length > 0);
 
         let itemsHTML = '';
@@ -44,7 +51,7 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
         }
 
         return `
-            <select name="${this._getId()}" id="${this._getId()}">
+            <select class="${this._small ? 'height-small' : 'height-normal'}" name="${this._getId()}" id="${this._getId()}">
                 ${itemsHTML}
             </select>
         `;

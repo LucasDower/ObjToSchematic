@@ -18,6 +18,8 @@ export class ToolbarItemElement {
     private _isEnabled: boolean;
     private _isActive: boolean;
     private _isHovering: boolean;
+    private _small: boolean;
+    private _label: string;
     private _onClick?: () => void;
 
     public constructor(params: TToolbarItemParams) {
@@ -29,6 +31,19 @@ export class ToolbarItemElement {
         this._isEnabled = true;
         this._isActive = false;
         this._isHovering = false;
+
+        this._small = false;
+        this._label = '';
+    }
+
+    public setSmall() {
+        this._small = true;
+        return this;
+    }
+
+    public setLabel(label: string) {
+        this._label = label;
+        return this;
     }
 
     public tick() {
@@ -68,8 +83,8 @@ export class ToolbarItemElement {
     public generateHTML() {
         const svg = fs.readFileSync(this._iconPath, 'utf8');
         return `
-            <div class="toolbar-item" id="${this._id}">
-                ${svg}
+            <div class="toolbar-item ${this._small ? 'toolbar-item-small' : ''}" id="${this._id}">
+                ${svg} ${this._label}
             </div>
         `;
     }
