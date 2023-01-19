@@ -4,6 +4,7 @@ import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { AppPaths } from '../../util/path_util';
 import { PathUtil } from '../../util/path_util';
+import { UIUtil } from '../../util/ui_util';
 
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 
@@ -49,16 +50,16 @@ export class ToolbarItemElement {
     public tick() {
         if (this._isEnabledDelegate !== undefined) {
             const newIsEnabled = this._isEnabledDelegate();
-            if (newIsEnabled !== this._isEnabled) {
-                this.setEnabled(newIsEnabled);
-            }
+            //if (newIsEnabled !== this._isEnabled) {
+            this.setEnabled(newIsEnabled);
+            //}
         }
 
         if (this._isActiveDelegate !== undefined) {
             const newIsActive = this._isActiveDelegate();
-            if (newIsActive !== this._isActive) {
-                this.setActive(newIsActive);
-            }
+            //if (newIsActive !== this._isActive) {
+            this.setActive(newIsActive);
+            //}
         }
     }
 
@@ -109,20 +110,27 @@ export class ToolbarItemElement {
             this._updateElements();
         });
 
+        // Modify the svg's Id so that multiple svgs can be used without Id clashes
+        const svgElement = document.getElementById(this._iconName + '-svg') as HTMLDivElement;
+        svgElement.id += `-${this._id}`;
+
         this._updateElements();
+    }
+
+    private _getSVGElement() {
+        const svgId = `${this._iconName}-svg-${this._id}`;
+        return UIUtil.getElementById(svgId);
     }
 
     private _updateElements() {
         const element = document.getElementById(this._id) as HTMLDivElement;
-        const svgElement = document.getElementById(this._iconName + '-svg') as HTMLDivElement;
+        const svgElement = this._getSVGElement();
         ASSERT(element !== null && svgElement !== null);
 
         element.classList.remove('toolbar-item-active-hover');
         element.classList.remove('toolbar-item-disabled');
         element.classList.remove('toolbar-item-active');
         element.classList.remove('toolbar-item-hover');
-        svgElement.classList.remove('icon-disabled');
-        svgElement.classList.remove('icon-active');
 
         if (this._isEnabled) {
             if (this._isActive) {
@@ -131,7 +139,6 @@ export class ToolbarItemElement {
                 } else {
                     element.classList.add('toolbar-item-active');
                 }
-                svgElement.classList.add('icon-active');
             } else {
                 if (this._isHovering) {
                     element.classList.add('toolbar-item-hover');
@@ -139,6 +146,15 @@ export class ToolbarItemElement {
             }
         } else {
             element.classList.add('toolbar-item-disabled');
+        }
+
+        svgElement.classList.remove('icon-disabled');
+        svgElement.classList.remove('icon-active');
+        if (this._isEnabled) {
+            if (this._isActive) {
+                svgElement.classList.add('icon-active');
+            }
+        } else {
             svgElement.classList.add('icon-disabled');
         }
     }
