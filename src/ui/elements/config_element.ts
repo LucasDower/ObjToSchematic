@@ -10,6 +10,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     private _label: string;
     private _description?: string;
     private _labelElement: LabelElement;
+    private _hasLabel: boolean;
     private _value?: T;
     private _cachedValue?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
@@ -18,6 +19,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
         super();
         this._value = defaultValue;
         this._label = 'unknown';
+        this._hasLabel = false;
         this._labelElement = new LabelElement(this._label, this._description);
         this._onValueChangedListeners = [];
     }
@@ -28,6 +30,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     }
 
     public setLabel(label: string) {
+        this._hasLabel = true;
         this._label = label;
         this._labelElement = new LabelElement(this._label, this._description);
         return this;
@@ -92,7 +95,9 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     protected abstract _generateInnerHTML(): string;
 
     protected override _onEnabledChanged() {
-        this._labelElement.setEnabled(this.getEnabled());
+        if (this._hasLabel) {
+            this._labelElement.setEnabled(this.getEnabled());
+        }
     }
 
     /**

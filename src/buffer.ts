@@ -243,6 +243,8 @@ export class BufferGenerator {
             }
 
             const material = mesh.getMaterialByName(materialName);
+            ASSERT(material !== undefined);
+
             materialBuffers.push({
                 buffer: materialBuffer,
                 material: material,

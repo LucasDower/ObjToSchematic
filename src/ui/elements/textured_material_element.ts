@@ -21,12 +21,14 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._filteringElement = new ComboBoxElement<'linear' | 'nearest'>()
             .addItem({ payload: 'linear', displayText: 'Linear' })
             .addItem({ payload: 'nearest', displayText: 'Nearest' })
-            .setSmall();
+            .setSmall()
+            .setDefaultValue(material.interpolation);
 
         this._wrapElement = new ComboBoxElement<'clamp' | 'repeat'>()
             .addItem({ payload: 'clamp', displayText: 'Clamp' })
             .addItem({ payload: 'repeat', displayText: 'Repeat' })
-            .setSmall();
+            .setSmall()
+            .setDefaultValue(material.extension);
 
         this._imageElement = new ImageElement(material.path);
 
@@ -38,6 +40,25 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._typeElement.registerEvents();
         this._filteringElement.registerEvents();
         this._wrapElement.registerEvents();
+
+        this._imageElement.addValueChangedListener((newPath) => {
+            const material = this.getValue();
+            material.path = newPath;
+        });
+
+        this._filteringElement.addValueChangedListener((newFiltering) => {
+            const material = this.getValue();
+            material.interpolation = newFiltering;
+        });
+
+        this._wrapElement.addValueChangedListener((newWrap) => {
+            const material = this.getValue();
+            material.extension = newWrap;
+        });
+
+        this._typeElement.onClickChangeTypeDelegate(() => {
+            this._onChangeTypeDelegate?.();
+        });
     }
 
     protected override _generateInnerHTML(): string {
@@ -78,6 +99,17 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
     }
 
     public override finalise(): void {
+        super.finalise();
+
         this._imageElement.finalise();
+        this._typeElement.finalise();
+        this._filteringElement.finalise();
+        this._wrapElement.finalise();
+    }
+
+    private _onChangeTypeDelegate?: () => void;
+    public onChangeTypeDelegate(delegate: () => void) {
+        this._onChangeTypeDelegate = delegate;
+        return this;
     }
 }

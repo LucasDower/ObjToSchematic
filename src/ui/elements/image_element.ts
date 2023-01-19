@@ -80,6 +80,8 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
     }
 
     public override finalise(): void {
+        super.finalise();
+
         this._onValueChanged();
     }
 }

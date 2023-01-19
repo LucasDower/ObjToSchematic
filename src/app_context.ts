@@ -3,39 +3,37 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
-import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
-import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
-import { Renderer } from './renderer';
+import { MaterialMapManager } from './material-map';
+import { MaterialType } from './mesh';
+import { MeshType, Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
-import { CheckboxElement } from './ui/elements/checkbox';
-import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
 import { SolidMaterialElement } from './ui/elements/solid_material_element';
 import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
-import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
+import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { FileUtil } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
-import { AppPaths, PathUtil } from './util/path_util';
+import { AppPaths } from './util/path_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
-import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
-    private _materialMap: MaterialMap;
+    private _materialManager: MaterialMapManager;
 
     public constructor() {
-        this._materialMap = {};
+        this._materialManager = new MaterialMapManager(new Map());
 
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
@@ -206,8 +204,7 @@ export class AppContext {
             );
             dimensions.mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this.maxConstraint = dimensions;
-            this._materialMap = payload.result.materials;
-            this._onMaterialMapChanged();
+            this._materialManager = new MaterialMapManager(payload.result.materials);
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
@@ -217,8 +214,9 @@ export class AppContext {
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
 
-            this._updateMaterialsAction(payload.result.materials);
+            this._updateMaterialsAction();
         };
+        callback.bind(this);
 
         return { id: 'Import', payload: payload, callback: callback };
     }
@@ -230,7 +228,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'SetMaterials',
             params: {
-                materials: this._materialMap,
+                materials: this._materialManager.materials,
             },
         };
 
@@ -250,8 +248,10 @@ export class AppContext {
             }
 
             payload.result.materialsChanged.forEach((materialName) => {
-                const material = this._materialMap[materialName];
+                const material = this._materialManager.materials.get(materialName);
+                ASSERT(material !== undefined);
                 Renderer.Get.recreateMaterialBuffer(materialName, material);
+                Renderer.Get.setModelToUse(MeshType.TriangleMesh);
             });
 
             this._ui.enableTo(EAction.Voxelise);
@@ -260,202 +260,30 @@ export class AppContext {
         return { id: 'Import', payload: payload, callback: callback };
     }
 
-    private _updateMaterialsAction(materials: MaterialMap) {
+    private _updateMaterialsAction() {
         this._ui.layoutDull['materials'].elements = {};
         this._ui.layoutDull['materials'].elementsOrder = [];
 
-        for (const materialName in materials) {
-            const material = this._materialMap[materialName];
+        this._materialManager.materials.forEach((material, materialName) => {
             if (material.type === MaterialType.solid) {
                 this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
-                    .setLabel(materialName);
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.textured);
+                        this._updateMaterialsAction();
+                    });
             } else {
                 this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
-                    .setLabel(materialName);
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.solid);
+                        this._updateMaterialsAction();
+                    });
             }
 
             this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
-        }
+        });
         this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
-    }
-
-    private _sendMaterialsToWorker(callback: (result: SetMaterialsParams.Output) => void) {
-        const payload: TToWorkerMessage = {
-            action: 'SetMaterials',
-            params: {
-                materials: this._materialMap,
-            },
-        };
-        const job: TWorkerJob = {
-            id: 'SetMaterial',
-            payload: payload,
-            callback: (result: TFromWorkerMessage) => {
-                ASSERT(result.action === 'SetMaterials');
-                // TODO: Check the action didn't fail
-                this._materialMap = result.result.materials;
-                this._onMaterialMapChanged();
-                this._ui.enableTo(EAction.Voxelise);
-                callback(result.result);
-            },
-        };
-
-        this._workerController.addJob(job);
-        this._ui.disableAll();
-    }
-
-    public onMaterialTypeSwitched(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-
-        if (oldMaterial.type == MaterialType.textured) {
-            this._materialMap[materialName] = {
-                type: MaterialType.solid,
-                colour: RGBAUtil.random(),
-                edited: true,
-                canBeTextured: oldMaterial.canBeTextured,
-                set: false,
-                open: true,
-            };
-        } else {
-            this._materialMap[materialName] = {
-                type: MaterialType.textured,
-                alphaFactor: 1.0,
-                path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
-                edited: true,
-                canBeTextured: oldMaterial.canBeTextured,
-                extension: 'repeat',
-                interpolation: 'linear',
-                open: true,
-            };
-        }
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialExtensionChanged(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: oldMaterial.path,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension === 'clamp' ? 'repeat' : 'clamp',
-            interpolation: oldMaterial.interpolation,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialInterpolationChanged(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: oldMaterial.path,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension,
-            interpolation: oldMaterial.interpolation === 'linear' ? 'nearest' : 'linear',
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialTextureReplace(materialName: string, newTexturePath: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: newTexturePath,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension,
-            interpolation: oldMaterial.interpolation,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            Renderer.Get.updateMeshMaterialTexture(materialName, result.materials[materialName] as TexturedMaterial);
-        });
-    }
-
-    public onMaterialColourChanged(materialName: string, newColour: RGBA) {
-        ASSERT(this._materialMap[materialName].type === MaterialType.solid);
-        const oldMaterial = this._materialMap[materialName] as TexturedMaterial;
-        this._materialMap[materialName] = {
-            type: MaterialType.solid,
-            colour: newColour,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            set: true,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName] as SolidMaterial);
-        });
-    }
-
-    private _onMaterialMapChanged() {
-        // Add material information to the output log
-        const outputElement = this._ui.getActionOutput(EAction.Import);
-
-        const messageBuilder = outputElement.getMessage();
-        const tree = UITreeBuilder.create('Materials');
-        tree.toggleIsOpen();
-
-        for (const [materialName, material] of Object.entries(this._materialMap)) {
-            if (materialName === 'DEFAULT_UNASSIGNED') {
-                continue;
-            }
-
-            const subTree = UITreeBuilder.create(material.edited ? `<i>${materialName}*</i>` : materialName);
-
-            if (material.open) {
-                subTree.toggleIsOpen();
-            }
-
-            if (material.type === MaterialType.solid) {
-                const uiElement = new SolidMaterialUIElement(materialName, this, material);
-
-                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
-                    uiElement.registerEvents();
-                });
-            } else {
-                const uiElement = new TextureMaterialUIElement(materialName, this, material);
-
-                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
-                    uiElement.registerEvents();
-                });
-            }
-
-            tree.addChild(subTree);
-        }
-
-        messageBuilder.setTree('materials', tree);
-        outputElement.updateMessage();
-
-        this._updateMaterialsAction(this._materialMap);
     }
 
     private _renderMesh(): TWorkerJob {

@@ -29,15 +29,13 @@ export interface Tri {
 export enum MaterialType { solid, textured }
 /* eslint-enable */
 type BaseMaterial = {
-    edited: boolean,
     canBeTextured: boolean,
-    open: boolean, // TODO: Refactor, this is UI specific, shouldn't exist here
+    needsAttention: boolean, // True if the user should make edits to this material
 }
 
 export type SolidMaterial = BaseMaterial & {
     type: MaterialType.solid,
     colour: RGBA,
-    set: boolean,
 }
 export type TexturedMaterial = BaseMaterial & {
     type: MaterialType.textured,
@@ -47,7 +45,7 @@ export type TexturedMaterial = BaseMaterial & {
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
 }
-export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
+export type MaterialMap = Map<string, SolidMaterial | TexturedMaterial>;
 
 export class Mesh {
     public readonly id: string;
@@ -159,7 +157,7 @@ export class Mesh {
     }
 
     private _checkMaterials() {
-        if (Object.keys(this._materials).length === 0) {
+        if (this._materials.size === 0) {
             throw new AppError('Loaded mesh has no materials');
         }
 
@@ -168,30 +166,26 @@ export class Mesh {
         const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
-            if (!(tri.material in this._materials)) {
+            if (!this._materials.has(tri.material)) {
                 // This triangle makes use of a material we don't have info about
                 // Try infer details about this material and add it to our materials
 
                 if (tri.texcoordIndices === undefined) {
                     // No texcoords are defined, therefore make a solid material
-                    this._materials[tri.material] = {
+                    this._materials.set(tri.material, {
                         type: MaterialType.solid,
                         colour: RGBAColours.MAGENTA,
-                        edited: true,
                         canBeTextured: false,
-                        set: false,
-                        open: false,
-                    };
+                        needsAttention: true,
+                    });
                 } else {
                     // Texcoords exist
-                    this._materials[tri.material] = {
+                    this._materials.set(tri.material, {
                         type: MaterialType.solid,
                         colour: RGBAUtil.random(),
-                        edited: true,
                         canBeTextured: true,
-                        set: false,
-                        open: false,
-                    };
+                        needsAttention: true,
+                    });
                 }
 
                 missingMaterials.add(tri.material);
@@ -201,14 +195,15 @@ export class Mesh {
         }
 
         const materialsToRemove = new Set<string>();
-        for (const materialName in this._materials) {
+        this._materials.forEach((material, materialName) => {
             if (!usedMaterials.has(materialName)) {
                 LOG_WARN(`'${materialName}' is not used by any triangles, removing...`);
                 materialsToRemove.add(materialName);
             }
-        }
+        });
+
         materialsToRemove.forEach((materialName) => {
-            delete this._materials[materialName];
+            this._materials.delete(materialName);
         });
 
         if (missingMaterials.size > 0) {
@@ -216,20 +211,17 @@ export class Mesh {
         }
 
         // Check texture paths are absolute and exist
-        for (const materialName in this._materials) {
-            const material = this._materials[materialName];
+        this._materials.forEach((material, materialName) => {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
-                    this._materials[materialName] = {
+                    LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid material`);
+                    this._materials.set(materialName, {
                         type: MaterialType.solid,
-                        colour: RGBAColours.WHITE,
-                        edited: true,
+                        colour: RGBAColours.MAGENTA,
                         canBeTextured: true,
-                        set: false,
-                        open: false,
-                    };
+                        needsAttention: true,
+                    });
                 } else {
                     const parsedPath = path.parse(material.path);
                     if (parsedPath.ext === '.tga') {
@@ -237,7 +229,7 @@ export class Mesh {
                     }
                 }
             }
-        }
+        });
     }
 
     private _centreMesh() {
@@ -266,7 +258,9 @@ export class Mesh {
     private _loadTextures() {
         this._loadedTextures = {};
         for (const tri of this._tris) {
-            const material = this._materials[tri.material];
+            const material = this._materials.get(tri.material);
+            ASSERT(material !== undefined, 'Triangle uses a material that doesn\'t exist in the material map');
+
             if (material.type == MaterialType.textured) {
                 if (!(tri.material in this._loadedTextures)) {
                     this._loadedTextures[tri.material] = new Texture(material.path, material.alphaPath);
@@ -348,7 +342,7 @@ export class Mesh {
     }
 
     public getMaterialByName(materialName: string) {
-        return this._materials[materialName];
+        return this._materials.get(materialName);
     }
 
     public setMaterials(materialMap: MaterialMap) {
@@ -361,9 +355,8 @@ export class Mesh {
     }
 
     public sampleTextureMaterial(materialName: string, uv: UV): RGBA {
-        ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
-
-        const material = this._materials[materialName];
+        const material = this._materials.get(materialName);
+        ASSERT(material !== undefined, `Sampling material that does not exist: ${materialName}`);
         ASSERT(material.type === MaterialType.textured, 'Sampling texture material of non-texture material');
 
         ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');

@@ -1,4 +1,3 @@
-import { ASSERT } from '../../../tools/misc';
 import { MaterialType } from '../../mesh';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
@@ -12,7 +11,7 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
             .setSmall()
             .setLabel('Switch')
             .onClick(() => {
-                ASSERT(false, 'UNIMPLEMENTED!!!'); // TODO
+                this._onClickChangeTypeDelegate?.();
             });
     }
 
@@ -43,5 +42,11 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
     }
 
     protected override _onValueChanged(): void {
+    }
+
+    private _onClickChangeTypeDelegate?: () => void;
+    public onClickChangeTypeDelegate(delegate: () => void) {
+        this._onClickChangeTypeDelegate = delegate;
+        return this;
     }
 }

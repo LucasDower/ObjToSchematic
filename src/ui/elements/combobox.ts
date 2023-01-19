@@ -36,11 +36,25 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     }
 
     public override registerEvents(): void {
-        this._getElement().addEventListener('onchange', (e: Event) => {
+        this._getElement().addEventListener('change', (e: Event) => {
             const selectedValue = this._items[this._getElement().selectedIndex].payload;
             this._setValue(selectedValue);
         });
     }
+
+    /*
+    public override setDefaultValue(value: T): this {
+        super.setDefaultValue(value);
+
+        const element = this._getElement();
+
+        const newSelectedIndex = this._items.findIndex((item) => item.payload === value);
+        ASSERT(newSelectedIndex !== -1, 'Invalid selected index');
+        element.selectedIndex = newSelectedIndex;
+
+        return this;
+    }
+    */
 
     public override _generateInnerHTML() {
         ASSERT(this._items.length > 0);
@@ -59,10 +73,19 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
 
     protected override _onEnabledChanged() {
         super._onEnabledChanged();
-
         this._getElement().disabled = !this.getEnabled();
     }
 
+    // TODO: Subproperty combo boxes are not updating values when changed!!!
+
     protected override _onValueChanged(): void {
+    }
+
+    public override finalise(): void {
+        const selectedIndex = this._items.findIndex((item) => item.payload === this.getValue());
+        const element = this._getElement();
+
+        ASSERT(selectedIndex !== -1, 'Invalid selected index');
+        element.selectedIndex = selectedIndex;
     }
 }
