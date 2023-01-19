@@ -14,6 +14,7 @@ export class MouseManager {
 
     private prevMouse: MouseState;
     private currMouse: MouseState;
+    private lastMove: number;
 
     private static _instance: MouseManager;
 
@@ -23,14 +24,18 @@ export class MouseManager {
 
     private constructor(gl: WebGLRenderingContext) {
         this._gl = gl;
+        this.lastMove = 0;
 
         this.currMouse = { x: -1, y: -1, buttons: 0 };
         this.prevMouse = { x: -1, y: -1, buttons: 0 };
     }
 
     public onMouseMove(e: MouseEvent) {
-        this.prevMouse = this.currMouse;
-        this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
+        if (Date.now() - this.lastMove > 40){
+            this.prevMouse = this.currMouse;
+            this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
+            this.lastMove = Date.now();
+        }
     }
 
     public isMouseLeftDown() {
