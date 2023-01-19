@@ -31,11 +31,8 @@ export class MouseManager {
     }
 
     public onMouseMove(e: MouseEvent) {
-        if (Date.now() - this.lastMove > 40){
-            this.prevMouse = this.currMouse;
             this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
             this.lastMove = Date.now();
-        }
     }
 
     public isMouseLeftDown() {
