@@ -3,37 +3,37 @@ import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
-import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
-import { MaterialMap, MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
-import { Renderer } from './renderer';
+import { MaterialMapManager } from './material-map';
+import { MaterialType } from './mesh';
+import { MeshType, Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
-import { TextureFiltering } from './texture';
-import { SolidMaterialUIElement, TextureMaterialUIElement } from './ui/elements/material';
 import { OutputStyle } from './ui/elements/output';
+import { SolidMaterialElement } from './ui/elements/solid_material_element';
+import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
-import { UIMessageBuilder, UITreeBuilder } from './ui/misc';
+import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
 import { FileUtil } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
-import { AppPaths, PathUtil } from './util/path_util';
+import { AppPaths } from './util/path_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
-import { SetMaterialsParams, TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
-    private _materialMap: MaterialMap;
+    private _materialManager: MaterialMapManager;
 
     public constructor() {
-        this._materialMap = {};
+        this._materialManager = new MaterialMapManager(new Map());
 
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
@@ -53,7 +53,7 @@ export class AppContext {
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
-        this._ui.disable(EAction.Voxelise);
+        this._ui.disable(EAction.Materials);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
         this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
@@ -166,6 +166,8 @@ export class AppContext {
         switch (action) {
             case EAction.Import:
                 return this._import();
+            case EAction.Materials:
+                return this._materials();
             case EAction.Voxelise:
                 return this._voxelise();
             case EAction.Assign:
@@ -185,7 +187,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getCachedValue(),
+                filepath: uiElements.input.getValue(),
             },
         };
 
@@ -202,8 +204,7 @@ export class AppContext {
             );
             dimensions.mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this.maxConstraint = dimensions;
-            this._materialMap = payload.result.materials;
-            this._onMaterialMapChanged();
+            this._materialManager = new MaterialMapManager(payload.result.materials);
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
@@ -212,186 +213,77 @@ export class AppContext {
                 const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
+
+            this._updateMaterialsAction();
+        };
+        callback.bind(this);
+
+        return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _materials(): TWorkerJob {
+        this._ui.getActionOutput(EAction.Materials)
+            .setTaskInProgress('action', '[Materials]: Loading...');
+
+        const payload: TToWorkerMessage = {
+            action: 'SetMaterials',
+            params: {
+                materials: this._materialManager.materials,
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'SetMaterials');
+            const outputElement = this._ui.getActionOutput(EAction.Materials);
+            outputElement.setTaskComplete('action', '[Materials]: Updated', [], 'success');
+
+            // The material map shouldn't need updating because the materials
+            // returned from the worker **should** be the same as the materials
+            // sent.
+            {
+                //this._materialMap = payload.result.materials;
+                //this._onMaterialMapChanged();
+            }
+
+            payload.result.materialsChanged.forEach((materialName) => {
+                const material = this._materialManager.materials.get(materialName);
+                ASSERT(material !== undefined);
+                Renderer.Get.recreateMaterialBuffer(materialName, material);
+                Renderer.Get.setModelToUse(MeshType.TriangleMesh);
+            });
+
+            this._ui.enableTo(EAction.Voxelise);
         };
 
         return { id: 'Import', payload: payload, callback: callback };
     }
 
-    private _sendMaterialsToWorker(callback: (result: SetMaterialsParams.Output) => void) {
-        const payload: TToWorkerMessage = {
-            action: 'SetMaterials',
-            params: {
-                materials: this._materialMap,
-            },
-        };
-        const job: TWorkerJob = {
-            id: 'SetMaterial',
-            payload: payload,
-            callback: (result: TFromWorkerMessage) => {
-                ASSERT(result.action === 'SetMaterials');
-                // TODO: Check the action didn't fail
-                this._materialMap = result.result.materials;
-                this._onMaterialMapChanged();
-                this._ui.enableTo(EAction.Voxelise);
-                callback(result.result);
-            },
-        };
+    private _updateMaterialsAction() {
+        this._ui.layoutDull['materials'].elements = {};
+        this._ui.layoutDull['materials'].elementsOrder = [];
 
-        this._workerController.addJob(job);
-        this._ui.disableAll();
-    }
-
-    public onMaterialTypeSwitched(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-
-        if (oldMaterial.type == MaterialType.textured) {
-            this._materialMap[materialName] = {
-                type: MaterialType.solid,
-                colour: RGBAUtil.random(),
-                edited: true,
-                canBeTextured: oldMaterial.canBeTextured,
-                set: false,
-                open: true,
-            };
-        } else {
-            this._materialMap[materialName] = {
-                type: MaterialType.textured,
-                alphaFactor: 1.0,
-                path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
-                edited: true,
-                canBeTextured: oldMaterial.canBeTextured,
-                extension: 'repeat',
-                interpolation: 'linear',
-                open: true,
-            };
-        }
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialExtensionChanged(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: oldMaterial.path,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension === 'clamp' ? 'repeat' : 'clamp',
-            interpolation: oldMaterial.interpolation,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialInterpolationChanged(materialName: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: oldMaterial.path,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension,
-            interpolation: oldMaterial.interpolation === 'linear' ? 'nearest' : 'linear',
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            // TODO: Check the action didn't fail
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName]);
-        });
-    }
-
-    public onMaterialTextureReplace(materialName: string, newTexturePath: string) {
-        const oldMaterial = this._materialMap[materialName];
-        ASSERT(oldMaterial.type === MaterialType.textured);
-
-        this._materialMap[materialName] = {
-            type: MaterialType.textured,
-            alphaFactor: oldMaterial.alphaFactor,
-            alphaPath: oldMaterial.alphaPath,
-            path: newTexturePath,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            extension: oldMaterial.extension,
-            interpolation: oldMaterial.interpolation,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            Renderer.Get.updateMeshMaterialTexture(materialName, result.materials[materialName] as TexturedMaterial);
-        });
-    }
-
-    public onMaterialColourChanged(materialName: string, newColour: RGBA) {
-        ASSERT(this._materialMap[materialName].type === MaterialType.solid);
-        const oldMaterial = this._materialMap[materialName] as TexturedMaterial;
-        this._materialMap[materialName] = {
-            type: MaterialType.solid,
-            colour: newColour,
-            edited: true,
-            canBeTextured: oldMaterial.canBeTextured,
-            set: true,
-            open: true,
-        };
-
-        this._sendMaterialsToWorker((result: SetMaterialsParams.Output) => {
-            Renderer.Get.recreateMaterialBuffer(materialName, result.materials[materialName] as SolidMaterial);
-        });
-    }
-
-    private _onMaterialMapChanged() {
-        // Add material information to the output log
-        const outputElement = this._ui.getActionOutput(EAction.Import);
-
-        const messageBuilder = outputElement.getMessage();
-        const tree = UITreeBuilder.create('Materials');
-        tree.toggleIsOpen();
-
-        for (const [materialName, material] of Object.entries(this._materialMap)) {
-            if (materialName === 'DEFAULT_UNASSIGNED') {
-                continue;
-            }
-
-            const subTree = UITreeBuilder.create(material.edited ? `<i>${materialName}*</i>` : materialName);
-
-            if (material.open) {
-                subTree.toggleIsOpen();
-            }
-
+        this._materialManager.materials.forEach((material, materialName) => {
             if (material.type === MaterialType.solid) {
-                const uiElement = new SolidMaterialUIElement(materialName, this, material);
-
-                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
-                    uiElement.registerEvents();
-                });
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.textured);
+                        this._updateMaterialsAction();
+                    });
             } else {
-                const uiElement = new TextureMaterialUIElement(materialName, this, material);
-
-                subTree.addChild({ html: uiElement.buildHTML(), warning: uiElement.hasWarning()}, () => {
-                    uiElement.registerEvents();
-                });
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.solid);
+                        this._updateMaterialsAction();
+                    });
             }
 
-            tree.addChild(subTree);
-        }
-
-        messageBuilder.setTree('materials', tree);
-        outputElement.updateMessage();
+            this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
+        });
+        this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
     }
 
     private _renderMesh(): TWorkerJob {
@@ -403,7 +295,7 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Voxelise);
+            this._ui.enableTo(EAction.Materials);
 
             switch (payload.action) {
                 case 'KnownError':
@@ -443,12 +335,12 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
-                constraintAxis: uiElements.constraintAxis.getCachedValue(),
-                voxeliser: uiElements.voxeliser.getCachedValue(),
-                size: uiElements.size.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue(),
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
-                voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+                constraintAxis: uiElements.constraintAxis.getValue(),
+                voxeliser: uiElements.voxeliser.getValue(),
+                size: uiElements.size.getValue(),
+                useMultisampleColouring: uiElements.multisampleColouring.getValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                voxelOverlapRule: uiElements.voxelOverlapRule.getValue(),
             },
         };
 
@@ -471,8 +363,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue(),
-                desiredHeight: uiElements.size.getCachedValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                desiredHeight: uiElements.size.getValue(),
             },
         };
 
@@ -522,21 +414,21 @@ export class AppContext {
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
 
-        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getCachedValue());
+        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getValue());
 
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
-                blockPalette: uiElements.blockPalette.getCachedValue(),
-                dithering: uiElements.dithering.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
+                blockPalette: uiElements.blockPalette.getValue(),
+                dithering: uiElements.dithering.getValue(),
                 colourSpace: ColourSpace.RGB,
-                fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
-                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
-                calculateLighting: uiElements.calculateLighting.getCachedValue(),
-                lightThreshold: uiElements.lightThreshold.getCachedValue(),
-                contextualAveraging: uiElements.contextualAveraging.getCachedValue(),
-                errorWeight: uiElements.errorWeight.getCachedValue() / 10,
+                fallable: uiElements.fallable.getValue() as FallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getValue()),
+                calculateLighting: uiElements.calculateLighting.getValue(),
+                lightThreshold: uiElements.lightThreshold.getValue(),
+                contextualAveraging: uiElements.contextualAveraging.getValue(),
+                errorWeight: uiElements.errorWeight.getValue() / 10,
             },
         };
 
@@ -560,7 +452,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextBlockMeshChunk',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
             },
         };
 
@@ -605,7 +497,7 @@ export class AppContext {
     }
 
     private _export(): (TWorkerJob | undefined) {
-        const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
+        const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
         const filepath = remote.dialog.showSaveDialogSync({

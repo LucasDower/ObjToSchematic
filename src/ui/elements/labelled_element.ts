@@ -1,11 +1,12 @@
-import { BaseUIElement } from './base';
+import { BaseUIElement } from './base_element';
 import { LabelElement } from './label';
 
 export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
+    private _label: string;
     private _labelElement: LabelElement;
 
     public constructor(label: string) {
-        super(label);
+        super();
         this._label = label;
         this._labelElement = new LabelElement(label);
     }
@@ -22,7 +23,7 @@ export abstract class LabelledElement<Type> extends BaseUIElement<Type> {
     protected abstract generateInnerHTML(): string;
 
     protected _onEnabledChanged() {
-        this._labelElement.setEnabled(this._isEnabled);
+        this._labelElement.setEnabled(this.getEnabled());
     }
 
     public addDescription(text: string) {

@@ -29,6 +29,8 @@ export abstract class IVoxeliser {
      */
     protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, multisample: boolean): RGBA {
         const material = mesh.getMaterialByName(materialName);
+        ASSERT(material !== undefined);
+
         if (material.type === MaterialType.solid) {
             return RGBAUtil.copy(material.colour);
         }
@@ -49,7 +51,7 @@ export abstract class IVoxeliser {
 
     private _internalGetVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3) {
         const material = mesh.getMaterialByName(materialName);
-        ASSERT(material.type === MaterialType.textured);
+        ASSERT(material !== undefined && material.type === MaterialType.textured);
 
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();

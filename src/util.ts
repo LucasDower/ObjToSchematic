@@ -4,7 +4,7 @@ export namespace AppUtil {
             return text.charAt(0).toUpperCase() + text.slice(1);
         }
 
-        /** 
+        /**
          * Namespaces a block name if it is not already namespaced
          * For example `namespaceBlock('stone')` returns `'minecraft:stone'`
          */
@@ -22,10 +22,11 @@ export namespace AppUtil {
 /* eslint-disable */
 export enum EAction {
     Import = 0,
-    Voxelise = 1,
-    Assign = 2,
-    Export = 3,
-    MAX = 4,
+    Materials = 1,
+    Voxelise = 2,
+    Assign = 3,
+    Export = 4,
+    MAX = 5,
 }
 /* eslint-enable */
 

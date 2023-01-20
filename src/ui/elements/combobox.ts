@@ -1,65 +1,91 @@
-import { EAppEvent, EventManager } from '../../event';
 import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { ConfigUIElement } from './config_element';
 
 export type ComboBoxItem<T> = {
-    id: T;
+    payload: T;
     displayText: string;
     tooltip?: string;
 }
 
-export class ComboBoxElement<T> extends LabelledElement<T> {
+export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     private _items: ComboBoxItem<T>[];
+    private _small: boolean;
 
-    public constructor(id: string, items: ComboBoxItem<T>[]) {
-        super(id);
-        this._items = items;
+    public constructor() {
+        super();
+        this._items = [];
+        this._small = false;
     }
 
-    public generateInnerHTML() {
+    public addItems(items: ComboBoxItem<T>[]) {
+        items.forEach((item) => {
+            this.addItem(item);
+        });
+        return this;
+    }
+
+    public addItem(item: ComboBoxItem<T>) {
+        this._items.push(item);
+        this._setValue(this._items[0].payload);
+        return this;
+    }
+
+    public setSmall() {
+        this._small = true;
+        return this;
+    }
+
+    public override registerEvents(): void {
+        this._getElement().addEventListener('change', (e: Event) => {
+            const selectedValue = this._items[this._getElement().selectedIndex].payload;
+            this._setValue(selectedValue);
+        });
+    }
+
+    /*
+    public override setDefaultValue(value: T): this {
+        super.setDefaultValue(value);
+
+        const element = this._getElement();
+
+        const newSelectedIndex = this._items.findIndex((item) => item.payload === value);
+        ASSERT(newSelectedIndex !== -1, 'Invalid selected index');
+        element.selectedIndex = newSelectedIndex;
+
+        return this;
+    }
+    */
+
+    public override _generateInnerHTML() {
+        ASSERT(this._items.length > 0);
+
         let itemsHTML = '';
         for (const item of this._items) {
-            itemsHTML += `<option value="${item.id}" title="${item.tooltip || ''}">${item.displayText}</option>`;
+            itemsHTML += `<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`;
         }
 
         return `
-            <select name="${this._id}" id="${this._id}">
+            <select class="${this._small ? 'height-small' : 'height-normal'}" name="${this._getId()}" id="${this._getId()}">
                 ${itemsHTML}
             </select>
         `;
     }
 
-    public registerEvents(): void {
-        const element = document.getElementById(this._id) as HTMLSelectElement;
-        ASSERT(element !== null);
-
-        element.addEventListener('change', () => {
-            if (this._onValueChangedDelegate) {
-                //EventManager.Get.broadcast(EAppEvent.onComboBoxChanged, element.value);
-                this._onValueChangedDelegate(element.value);
-            }
-        });
-    }
-
-    protected getValue() {
-        const element = document.getElementById(this._id) as HTMLSelectElement;
-        ASSERT(element !== null);
-        return this._items[element.selectedIndex].id;
-    }
-
-    protected _onEnabledChanged() {
+    protected override _onEnabledChanged() {
         super._onEnabledChanged();
-
-        const element = document.getElementById(this._id) as HTMLSelectElement;
-        ASSERT(element !== null);
-        element.disabled = !this._isEnabled;
-
-        this._onValueChangedDelegate?.(element.value);
+        this._getElement().disabled = !this.getEnabled();
     }
 
-    private _onValueChangedDelegate?: (value: any) => void;
-    public onValueChanged(delegate: (value: any) => void) {
-        this._onValueChangedDelegate = delegate;
-        return this;
+    // TODO: Subproperty combo boxes are not updating values when changed!!!
+
+    protected override _onValueChanged(): void {
+    }
+
+    public override finalise(): void {
+        const selectedIndex = this._items.findIndex((item) => item.payload === this.getValue());
+        const element = this._getElement();
+
+        ASSERT(selectedIndex !== -1, 'Invalid selected index');
+        element.selectedIndex = selectedIndex;
     }
 }

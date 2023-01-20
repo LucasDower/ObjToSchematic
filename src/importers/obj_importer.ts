@@ -21,9 +21,19 @@ export class ObjImporter extends IImporter {
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
 
-    private _materials: { [key: string]: (SolidMaterial | TexturedMaterial) } = {
-        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE, edited: true, canBeTextured: false, set: true, open: false },
-    };
+    private _materials: Map<string, SolidMaterial | TexturedMaterial>;
+
+    public constructor() {
+        super();
+        this._materials = new Map();
+        this._materials.set('DEFAULT_UNASSIGNED', {
+            type: MaterialType.solid,
+            colour: RGBAColours.WHITE,
+            canBeTextured: false,
+            needsAttention: false,
+        });
+    }
+
     private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
 
@@ -276,8 +286,6 @@ export class ObjImporter extends IImporter {
     ];
 
     override parseFile(filePath: string) {
-        ASSERT(path.isAbsolute(filePath), `ObjImporter: ${filePath} not absolute`);
-
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
@@ -302,8 +310,11 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseOBJ(path: string) {
+        if (path === '') {
+            throw new AppError(`No filepath given`);
+        }
         if (!fs.existsSync(path)) {
-            throw new AppError(`Could not find ${path}`);
+            throw new AppError(`Could not find '${path}'`);
         }
         const fileContents = fs.readFileSync(path, 'utf8');
         if (fileContents.includes('�')) {
@@ -391,20 +402,19 @@ export class ObjImporter extends IImporter {
     private _addCurrentMaterial() {
         if (this._materialReady && this._currentMaterialName !== '') {
             if (this._currentTexture !== '') {
-                this._materials[this._currentMaterialName] = {
+                this._materials.set(this._currentMaterialName, {
                     type: MaterialType.textured,
                     path: this._currentTexture,
                     alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
                     alphaFactor: this._currentAlpha,
-                    edited: false,
                     canBeTextured: true,
                     extension: 'repeat',
                     interpolation: 'linear',
-                    open: false,
-                };
+                    needsAttention: false,
+                });
                 this._currentTransparencyTexture = '';
             } else {
-                this._materials[this._currentMaterialName] = {
+                this._materials.set(this._currentMaterialName, {
                     type: MaterialType.solid,
                     colour: {
                         r: this._currentColour.r,
@@ -412,11 +422,9 @@ export class ObjImporter extends IImporter {
                         b: this._currentColour.b,
                         a: this._currentAlpha,
                     },
-                    edited: false,
                     canBeTextured: false,
-                    set: true,
-                    open: false,
-                };
+                    needsAttention: false,
+                });
             }
             this._currentAlpha = 1.0;
         }

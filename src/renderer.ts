@@ -198,7 +198,12 @@ export class Renderer {
         if (material.type === MaterialType.solid) {
             this._materialBuffers.set(materialName, {
                 buffer: oldBuffer.buffer,
-                material: material,
+                material: {
+                    type: MaterialType.solid,
+                    colour: RGBAUtil.copy(material.colour),
+                    needsAttention: material.needsAttention,
+                    canBeTextured: material.canBeTextured,
+                },
                 numElements: oldBuffer.numElements,
                 materialName: materialName,
             });
@@ -208,7 +213,6 @@ export class Renderer {
                 material: {
                     type: MaterialType.textured,
                     path: material.path,
-                    edited: material.edited,
                     canBeTextured: material.canBeTextured,
                     interpolation: material.interpolation,
                     extension: material.extension,
@@ -226,7 +230,7 @@ export class Renderer {
                         wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                     }) : undefined,
                     useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                    open: material.open,
+                    needsAttention: material.needsAttention,
                 },
                 numElements: oldBuffer.numElements,
                 materialName: materialName,
@@ -240,7 +244,6 @@ export class Renderer {
                 buffer.material = {
                     type: MaterialType.textured,
                     path: material.path,
-                    edited: material.edited,
                     interpolation: material.interpolation,
                     extension: material.extension,
                     canBeTextured: material.canBeTextured,
@@ -258,7 +261,7 @@ export class Renderer {
                         wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                     }) : undefined,
                     useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                    open: material.open,
+                    needsAttention: material.needsAttention,
                 };
                 return;
             }
@@ -281,7 +284,6 @@ export class Renderer {
                 this._materialBuffers.set(materialName, {
                     buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
                     material: {
-                        edited: material.edited,
                         canBeTextured: material.canBeTextured,
                         type: MaterialType.textured,
                         interpolation: material.interpolation,
@@ -301,7 +303,7 @@ export class Renderer {
                             wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
                         }) : undefined,
                         useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                        open: material.open,
+                        needsAttention: material.needsAttention,
                     },
                     numElements: numElements,
                     materialName: materialName,
