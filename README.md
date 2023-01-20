@@ -83,7 +83,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 
 [0.5](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.5-alpha)
 * 🟢 **Load custom block palettes and texture atlases**
-  * Added custom tool scripts for building atlases and palettes 
+  * Added custom tool scripts for building atlases and palettes
 * 🟢 **Major refactor for extendibility**
   * New interfaces: IImporter, IVoxeliser, IBlockAssigner, IExporter
 * 🟢 **QoL editor impovements**
@@ -126,7 +126,7 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 
 0.8
 * ⚪ .gltf importer
-* ⚪ Slice viewer 
+* ⚪ Slice viewer
 * ⚪ Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
 * ⚪ Option to simplify complex meshes
 * ⚪ Support for non-16x16 resource packs for texture atlases
@@ -143,12 +143,12 @@ This is an non-commercial **unofficial** tool that is neither approved, endorsed
 ## Contributing
 Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` by running `npm run lint` and the tests all pass by running `npm test`.
 
-Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also. 
+Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also.
 
 If you have any questions or need help getting started then feel free to join the [Discord](https://discord.gg/McS2VrBZPD) or message me **SinJi#4165**.
 
 ### Debugging
-To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in VSCode. Use `Ctrl+Shift+D`, and run "*Debug Main Process*" and once the Electron window has initialised, run "*Attach to Render Process*".
+To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in [VSCode](https://code.visualstudio.com/). **Be sure to use `npm run debug` instead of `npm start`** as this will disable the worker thread allowing you to add breakpoints anywhere in the code. Once the editor is running run "*Attach to Render Process*" and VSCode will hook to the Chromium debugger.
 
 ## Gallery
 <p align="center">

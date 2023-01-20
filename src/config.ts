@@ -49,7 +49,7 @@ export class AppConfig {
 
         this.AMBIENT_OCCLUSION_OVERRIDE_CORNER = configJSON.AMBIENT_OCCLUSION_OVERRIDE_CORNER;
         this.LOG_TO_FILE = configJSON.LOG_TO_FILE;
-        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD;
+        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD && !process.argv.includes('--OTS-ENABLE-DEBUG');
         this.MULTISAMPLE_COUNT = configJSON.MULTISAMPLE_COUNT;
         this.OLD_SPACE_SIZE_MB = configJSON.OLD_SPACE_SIZE_MB;
         this.ALPHA_BIAS = configJSON.ALPHA_BIAS;

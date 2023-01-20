@@ -41,7 +41,7 @@ export class WorkerController {
     }
 
     public isBusy() {
-        return this._jobPending !== undefined;
+        return this._jobPending !== undefined && AppConfig.Get.USE_WORKER_THREAD;
     }
 
     private _onWorkerMessage(payload: MessageEvent<TFromWorkerMessage>) {
@@ -88,7 +88,7 @@ export class WorkerController {
     }
 
     private _tryStartNextJob() {
-        if (this.isBusy() && AppConfig.Get.USE_WORKER_THREAD) {
+        if (this.isBusy()) {
             return;
         }
 
