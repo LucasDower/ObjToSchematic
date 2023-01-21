@@ -11,7 +11,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
     private _showY: boolean;
 
     public constructor() {
-        super();
+        super(new Vector3(0, 0, 0));
         this._mouseover = null;
         this._dragging = null;
         this._lastClientX = 0.0;
@@ -67,37 +67,18 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
     }
 
     private _registerAxis(axis: TAxis) {
-        const elementKey = UIUtil.getElementById(this._getKeyId(axis));
         const elementValue = UIUtil.getElementById(this._getValueId(axis));
-
-        elementKey.onmouseenter = () => {
-            this._mouseover = axis;
-            if (this.getEnabled()) {
-                elementKey.classList.add('spinbox-key-hover');
-                elementValue.classList.add('spinbox-value-hover');
-            }
-        };
 
         elementValue.onmouseenter = () => {
             this._mouseover = axis;
             if (this.getEnabled()) {
-                elementKey.classList.add('spinbox-key-hover');
                 elementValue.classList.add('spinbox-value-hover');
-            }
-        };
-
-        elementKey.onmouseleave = () => {
-            this._mouseover = null;
-            if (this._dragging !== axis) {
-                elementKey.classList.remove('spinbox-key-hover');
-                elementValue.classList.remove('spinbox-value-hover');
             }
         };
 
         elementValue.onmouseleave = () => {
             this._mouseover = null;
             if (this._dragging !== axis) {
-                elementKey.classList.remove('spinbox-key-hover');
                 elementValue.classList.remove('spinbox-value-hover');
             }
         };
@@ -125,9 +106,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
 
         document.addEventListener('mouseup', () => {
             if (this._dragging !== null) {
-                const elementKey = UIUtil.getElementById(this._getKeyId(this._dragging));
                 const elementValue = UIUtil.getElementById(this._getKeyId(this._dragging));
-                elementKey.classList.remove('spinbox-key-hover');
                 elementValue.classList.remove('spinbox-value-hover');
             }
 

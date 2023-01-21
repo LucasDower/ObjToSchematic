@@ -188,6 +188,7 @@ export class AppContext {
             action: 'Import',
             params: {
                 filepath: uiElements.input.getValue(),
+                rotation: uiElements.rotation.getValue(),
             },
         };
 
@@ -295,7 +296,7 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is not managed through `AppContext::do`, therefore
             // we need to check the payload is not an error
-            this._ui.enableTo(EAction.Materials);
+            this._ui.enableTo(EAction.Voxelise);
 
             switch (payload.action) {
                 case 'KnownError':

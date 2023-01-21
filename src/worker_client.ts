@@ -75,6 +75,7 @@ export class WorkerClient {
         importer.parseFile(params.filepath);
         this._loadedMesh = importer.toMesh();
         this._loadedMesh.processMesh();
+        this._loadedMesh.rotateMesh(params.rotation.y, params.rotation.x, params.rotation.z);
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),

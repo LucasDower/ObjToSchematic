@@ -3,6 +3,7 @@ import path from 'path';
 
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
 import { Texture, TextureConverter, TextureFiltering } from './texture';
 import { Triangle, UVTriangle } from './triangle';
@@ -79,6 +80,39 @@ export class Mesh {
         this._normaliseMesh();
 
         this._loadTextures();
+    }
+
+    public rotateMesh(pitch: number, roll: number, yaw: number) {
+        const cosa = Math.cos(yaw * degreesToRadians);
+        const sina = Math.sin(yaw * degreesToRadians);
+
+        const cosb = Math.cos(pitch * degreesToRadians);
+        const sinb = Math.sin(pitch * degreesToRadians);
+
+        const cosc = Math.cos(roll * degreesToRadians);
+        const sinc = Math.sin(roll * degreesToRadians);
+
+        const Axx = cosa*cosb;
+        const Axy = cosa*sinb*sinc - sina*cosc;
+        const Axz = cosa*sinb*cosc + sina*sinc;
+
+        const Ayx = sina*cosb;
+        const Ayy = sina*sinb*sinc + cosa*cosc;
+        const Ayz = sina*sinb*cosc - cosa*sinc;
+
+        const Azx = -sinb;
+        const Azy = cosb*sinc;
+        const Azz = cosb*cosc;
+
+        this._vertices.forEach((vertex) => {
+            const px = vertex.x;
+            const py = vertex.y;
+            const pz = vertex.z;
+
+            vertex.x = Axx * px + Axy * py + Axz * pz;
+            vertex.y = Ayx * px + Ayy * py + Ayz * pz;
+            vertex.z = Azx * px + Azy * py + Azz * pz;
+        });
     }
 
     public getBounds() {

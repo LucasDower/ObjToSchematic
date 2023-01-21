@@ -395,23 +395,20 @@ select:disabled {
 }
 
 .spinbox-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--property-height) - 2px);
   background: var(--prop-standard);
   border-radius: 5px;
   flex-grow: 1;
-  height: calc(32px - 8.5px);
-  padding: 8.5px 0px 0px 0px;
   font-weight: 300;
-  border-width: 1px 1px 1px 0px;
-  border-style: solid;
-  border: rgba(255, 255, 255, 0.0);
-
-  color: var(--text-disabled);
-  align-self: center;
-  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.0);
+  color: var(--text-standard);
 }
 
 .spinbox-value-hover {
-  border: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   background: var(--prop-hovered) !important;
   cursor: ew-resize;
 }

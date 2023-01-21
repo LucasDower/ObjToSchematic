@@ -1,10 +1,11 @@
-import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
+import { Vector3 } from '../src/vector';
 import { THeadlessConfig } from './headless';
 
 export const headlessConfig: THeadlessConfig = {
     import: {
         filepath: '/Users/lucasdower/ObjToSchematic/res/samples/skull.obj', // Must be an absolute path
+        rotation: new Vector3(0, 0, 0),
     },
     voxelise: {
         constraintAxis: 'y',

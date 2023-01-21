@@ -21,20 +21,10 @@ export namespace InitParams {
     }
 }
 
-export namespace SetMaterialsParams {
-    export type Input = {
-        materials: MaterialMap
-    }
-
-    export type Output = {
-        materials: MaterialMap,
-        materialsChanged: string[],
-    }
-}
-
 export namespace ImportParams {
     export type Input = {
         filepath: string,
+        rotation: Vector3,
     }
 
     export type Output = {
@@ -52,6 +42,17 @@ export namespace RenderMeshParams {
     export type Output = {
         buffers: TMeshBufferDescription[],
         dimensions: Vector3
+    }
+}
+
+export namespace SetMaterialsParams {
+    export type Input = {
+        materials: MaterialMap
+    }
+
+    export type Output = {
+        materials: MaterialMap,
+        materialsChanged: string[],
     }
 }
 

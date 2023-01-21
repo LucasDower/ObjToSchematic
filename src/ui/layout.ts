@@ -25,6 +25,7 @@ import { FileInputElement } from './elements/file_input';
 import { OutputElement } from './elements/output';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
+import { VectorSpinboxElement } from './elements/vector_spinbox';
 
 export interface Group {
     label: string;
@@ -48,8 +49,10 @@ export class UI {
                 'input': new FileInputElement()
                     .setFileExtensions(['obj'])
                     .setLabel('Wavefront .obj file'),
+                'rotation': new VectorSpinboxElement()
+                    .setLabel('Rotation'),
             },
-            elementsOrder: ['input'],
+            elementsOrder: ['input', 'rotation'],
             submitButton: new ButtonElement()
                 .setOnClick(() => {
                     this._appContext.do(EAction.Import);

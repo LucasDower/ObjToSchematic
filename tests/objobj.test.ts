@@ -1,12 +1,14 @@
 import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
+import { Vector3 } from '../src/vector';
 import { runHeadless, THeadlessConfig } from '../tools/headless';
 import { TEST_PREAMBLE } from './preamble';
 
 const baseConfig: THeadlessConfig = {
     import: {
         filepath: '', // Must be an absolute path
+        rotation: new Vector3(0, 0, 0),
     },
     voxelise: {
         voxeliser: 'bvh-ray',
