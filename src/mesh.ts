@@ -5,7 +5,7 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureConverter, TextureFiltering } from './texture';
+import { Texture, TextureConverter } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';

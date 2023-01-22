@@ -3,8 +3,6 @@ import fs from 'fs';
 import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
-import { AppConfig } from '../config';
-import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../exporters/exporters';
 import { PaletteManager } from '../palette';
 import { MeshType, Renderer } from '../renderer';
@@ -12,11 +10,10 @@ import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { AppPaths } from '../util/path_util';
-import { TAxis, TTexelExtension } from '../util/type_util';
+import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
-import { BaseUIElement } from './elements/base_element';
 import { ButtonElement } from './elements/button';
 import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
@@ -50,7 +47,9 @@ export class UI {
                     .setFileExtensions(['obj'])
                     .setLabel('Wavefront .obj file'),
                 'rotation': new VectorSpinboxElement()
-                    .setLabel('Rotation'),
+                    .setLabel('Rotation')
+                    .setWrap(360)
+                    .setUnits('°'),
             },
             elementsOrder: ['input', 'rotation'],
             submitButton: new ButtonElement()
@@ -413,7 +412,7 @@ export class UI {
 
     private _appContext: AppContext;
 
-    constructor(appContext: AppContext) {
+    public constructor(appContext: AppContext) {
         this._appContext = appContext;
     }
 

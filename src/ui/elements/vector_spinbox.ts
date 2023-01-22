@@ -9,6 +9,8 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
     private _dragging: TAxis | null;
     private _lastClientX: number;
     private _showY: boolean;
+    private _wrap: number;
+    private _units: string | null;
 
     public constructor() {
         super(new Vector3(0, 0, 0));
@@ -16,6 +18,8 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         this._dragging = null;
         this._lastClientX = 0.0;
         this._showY = true;
+        this._wrap = Infinity;
+        this._units = null;
     }
 
     /**
@@ -23,6 +27,17 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
      */
     public setShowY(showY: boolean) {
         this._showY = showY;
+        return this;
+    }
+
+    public setWrap(wrap: number) {
+        this._wrap = wrap;
+        return this;
+    }
+
+    public setUnits(units: string) {
+        this._units = units;
+        return this;
     }
 
     protected override _generateInnerHTML() {
@@ -70,9 +85,11 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         const elementValue = UIUtil.getElementById(this._getValueId(axis));
 
         elementValue.onmouseenter = () => {
-            this._mouseover = axis;
-            if (this.getEnabled()) {
-                elementValue.classList.add('spinbox-value-hover');
+            if (this._dragging === null) {
+                this._mouseover = axis;
+                if (this.getEnabled()) {
+                    elementValue.classList.add('spinbox-value-hover');
+                }
             }
         };
 
@@ -106,7 +123,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
 
         document.addEventListener('mouseup', () => {
             if (this._dragging !== null) {
-                const elementValue = UIUtil.getElementById(this._getKeyId(this._dragging));
+                const elementValue = UIUtil.getElementById(this._getValueId(this._dragging));
                 elementValue.classList.remove('spinbox-value-hover');
             }
 
@@ -125,13 +142,13 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
 
         switch (this._dragging) {
             case 'x':
-                current.x += deltaX;
+                current.x = (current.x + deltaX) % this._wrap;
                 break;
             case 'y':
-                current.y += deltaX;
+                current.y += (current.y + deltaX) % this._wrap;
                 break;
             case 'z':
-                current.z += deltaX;
+                current.z += (current.z + deltaX) % this._wrap;
                 break;
         }
         this._setValue(current);
@@ -175,10 +192,10 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
 
         const current = this.getValue().copy();
 
-        elementXV.innerHTML = current.x.toString();
+        elementXV.innerHTML = current.x.toString() + this._units;
         if (elementYV) {
-            elementYV.innerHTML = current.y.toString();
+            elementYV.innerHTML = current.y.toString() + this._units;
         }
-        elementZV.innerHTML = current.z.toString();
+        elementZV.innerHTML = current.z.toString() + this._units;
     }
 }

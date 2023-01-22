@@ -2,7 +2,6 @@ import { RGBA, RGBAColours, RGBAUtil } from '../colour';
 import { AppConfig } from '../config';
 import { MaterialType, Mesh } from '../mesh';
 import { StatusHandler } from '../status';
-import { TextureFiltering } from '../texture';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';

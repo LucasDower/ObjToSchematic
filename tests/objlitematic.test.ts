@@ -1,4 +1,3 @@
-import { TextureFiltering } from '../src/texture';
 import { ColourSpace } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { Vector3 } from '../src/vector';

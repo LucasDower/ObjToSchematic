@@ -2,7 +2,6 @@ import path from 'path';
 
 import { RGBAColours } from '../src/colour';
 import { ObjImporter } from '../src/importers/obj_importer';
-import { TextureFiltering } from '../src/texture';
 import { ASSERT } from '../src/util/error_util';
 import { Vector3 } from '../src/vector';
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';

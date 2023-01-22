@@ -6,7 +6,7 @@ const TGA = require('tga');
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { AppConfig } from './config';
-import { clamp, wayThrough } from './math';
+import { clamp } from './math';
 import { UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { FileUtil } from './util/file_util';

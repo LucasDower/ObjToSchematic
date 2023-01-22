@@ -171,7 +171,7 @@ canvas {
   width: 100%;
   border: 1.5px solid var(--prop-sunken);
   transition-duration: 1s;
-  overflow-wrap: anywhere;
+  overflow: hidden;
 }
 
 .slider-number-input {
@@ -360,6 +360,11 @@ select:disabled {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.message-builder-item {
+  overflow: auto;
+  white-space: nowrap;
 }
 
 .status-warning {
@@ -654,58 +659,6 @@ svg {
   transition: width 0.1s;
 }
 
-
-
-
-/* Remove default bullets */
-ul {
-  list-style-type: none;
-  margin: 0;
-  padding-left: 10px;
-}
-
-/* Style the caret/arrow */
-.caret {
-  cursor: pointer;
-  user-select: none; /* Prevent text selection */
-}
-.caret:hover {
-  color: var(--text-standard) !important;
-}
-
-/* Create the caret/arrow with a unicode, and style it */
-.caret::before {
-  content: "\25B6";
-  display: inline-block;
-  margin-right: 6px;
-}
-
-
-/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
-.caret-down::before {
-  transform: rotate(90deg);
-}
-
-/* Hide the nested list */
-.nested {
-  display: none;
-}
-
-/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
-.active {
-  display: block;
-}
-
-
-a {
-  border-bottom: 1px solid currentColor;
-  cursor: pointer;
-  color: #8C8C8C80;
-}
-a:hover {
-  color: var(--text-standard) !important;
-}
-
 .colour-swatch {
   border: 1px solid #8C8C8C80;
   border-radius: 5px;
@@ -788,16 +741,6 @@ a:hover {
 }
 .checkbox-pip-disabled {
   stroke: var(--text-disabled);
-}
-
-
-.metadata-value {
-  display: inline;
-  color: rgb(128, 128, 128);
-  background-color: rgb(12, 12, 12);
-  padding: 0px 2px;
-  border-radius: 2px;
-  word-wrap: break-word;
 }
 
 .spinbox-main-container {

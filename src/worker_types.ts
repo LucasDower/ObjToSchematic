@@ -4,7 +4,6 @@ import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
 import { MaterialMap } from './mesh';
 import { StatusMessage } from './status';
-import { TextureFiltering } from './texture';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
 import { TAxis } from './util/type_util';

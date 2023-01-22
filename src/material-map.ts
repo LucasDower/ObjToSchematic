@@ -1,4 +1,4 @@
-import { RGBAColours, RGBAUtil } from './colour';
+import { RGBAColours } from './colour';
 import { MaterialMap, MaterialType } from './mesh';
 import { ASSERT } from './util/error_util';
 import { AppPaths, PathUtil } from './util/path_util';
