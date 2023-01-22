@@ -72,8 +72,8 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
         const newPath = this.getValue();
         const parsedPath = path.parse(newPath);
 
-        this._openElement.setEnabled(parsedPath.base !== 'debug.png');
-        this._switchElement.setActive(parsedPath.base === 'debug.png');
+        this._openElement.setEnabled(parsedPath.base !== 'debug.png' && parsedPath.base !== 'debug_alpha.png');
+        this._switchElement.setActive(parsedPath.base === 'debug.png' || parsedPath.base === 'debug_alpha.png');
 
         const imageElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
         imageElement.src = newPath;

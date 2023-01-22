@@ -1,5 +1,6 @@
 import child from 'child_process';
 import fs from 'fs';
+import path from 'path';
 
 import { LOGF } from './log_util';
 
@@ -27,7 +28,8 @@ export namespace FileUtil {
                 child.exec(`open -R ${absolutePath}`);
                 break;
             case 'win32':
-                child.exec(`explorer /select,"${absolutePath}"`);
+                const parsed = path.parse(absolutePath);
+                child.exec(`start ${parsed.dir}`);
         }
     }
 }

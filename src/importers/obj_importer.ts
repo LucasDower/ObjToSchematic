@@ -5,6 +5,7 @@ import { RGBA, RGBAColours } from '../colour';
 import { checkFractional, checkNaN } from '../math';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { StatusHandler } from '../status';
+import { EImageChannel, TTransparencyOptions } from '../texture';
 import { UV } from '../util';
 import { AppError, ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
@@ -205,7 +206,7 @@ export class ObjImporter extends IImporter {
     ];
 
     private _currentColour: RGBA = RGBAColours.BLACK;
-    private _currentAlpha: number = 1.0;
+    private _currentAlpha?: number;
     private _currentTexture: string = '';
     private _currentTransparencyTexture: string = '';
     private _materialReady: boolean = false;
@@ -237,7 +238,7 @@ export class ObjImporter extends IImporter {
                 const b = parseFloat(match.b);
                 checkNaN(r, g, b);
                 checkFractional(r, g, b);
-                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha };
+                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha ?? 1.0 };
                 this._materialReady = true;
             },
         },
@@ -402,12 +403,34 @@ export class ObjImporter extends IImporter {
     private _addCurrentMaterial() {
         if (this._materialReady && this._currentMaterialName !== '') {
             if (this._currentTexture !== '') {
+                let transparency: TTransparencyOptions;
+                if (this._currentTransparencyTexture === this._currentTexture) {
+                    transparency = {
+                        type: 'UseDiffuseMapAlphaChannel',
+                    };
+                } else if (this._currentTransparencyTexture === '') {
+                    if (this._currentAlpha === undefined) {
+                        transparency = {
+                            type: 'None',
+                        };
+                    } else {
+                        transparency = {
+                            type: 'UseAlphaValue',
+                            alpha: this._currentAlpha,
+                        };
+                    }
+                } else {
+                    transparency = {
+                        type: 'UseAlphaMap',
+                        path: this._currentTransparencyTexture,
+                        channel: EImageChannel.R,
+                    };
+                }
+
                 this._materials.set(this._currentMaterialName, {
                     type: MaterialType.textured,
                     path: this._currentTexture,
-                    alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
-                    alphaFactor: this._currentAlpha,
-                    canBeTextured: true,
+                    transparency: transparency,
                     extension: 'repeat',
                     interpolation: 'linear',
                     needsAttention: false,
@@ -420,7 +443,7 @@ export class ObjImporter extends IImporter {
                         r: this._currentColour.r,
                         g: this._currentColour.g,
                         b: this._currentColour.b,
-                        a: this._currentAlpha,
+                        a: this._currentAlpha ?? 1.0,
                     },
                     canBeTextured: false,
                     needsAttention: false,

@@ -34,18 +34,37 @@ type ImageData = {
     height: number
 }
 
+/* eslint-disable */
+export enum EImageChannel {
+    R = 0,
+    G = 1,
+    B = 2,
+    A = 3,
+    MAX = 4,
+}
+/* eslint-enable */
+
+export type TTransparencyTypes = 'None' | 'UseDiffuseMapAlphaChannel' | 'UseAlphaValue' | 'UseAlphaMap';
+
+export type TTransparencyOptions =
+    | { type: 'None' }
+    | { type: 'UseDiffuseMapAlphaChannel' }
+    | { type: 'UseAlphaValue', alpha: number }
+    | { type: 'UseAlphaMap', path: string, channel: EImageChannel };
+
 export class Texture {
     private _image: ImageData;
-    private _alphaImage?: ImageData;
+    private _alphaImage: ImageData;
+    private _transparency: TTransparencyOptions;
 
-    constructor(filename: string, transparencyFilename?: string) {
-        ASSERT(path.isAbsolute(filename));
+    constructor(diffusePath: string, transparency: TTransparencyOptions) {
+        ASSERT(path.isAbsolute(diffusePath));
 
-        this._image = this._loadImageFile(filename);
-
-        if (transparencyFilename) {
-            this._alphaImage = this._loadImageFile(transparencyFilename);
-        }
+        this._image = this._loadImageFile(diffusePath);
+        this._transparency = transparency;
+        this._alphaImage = transparency.type === 'UseAlphaMap' ?
+            this._loadImageFile(transparency.path) :
+            this._image;
     }
 
     private _loadImageFile(filename: string): ImageData {
@@ -63,6 +82,7 @@ export class Texture {
                     this._useAlphaChannelValue = false;
                     return jpeg.decode(data, {
                         maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
+                        formatAsRGBA: true,
                     });
                 }
                 /*
@@ -101,19 +121,28 @@ export class Texture {
         ASSERT(uv.v >= 0.0 && uv.v <= 1.0, 'Texcoord UV.v OOB');
         uv.v = 1.0 - uv.v;
 
-        if (interpolation === 'nearest') {
-            return this._getNearestRGBA(uv);
-        } else {
-            return this._getLinearRGBA(uv);
-        }
+        const diffuse = (interpolation === 'nearest') ?
+            this._getNearestRGBA(this._image, uv) :
+            this._getLinearRGBA(this._image, uv);
+
+        const alpha = (interpolation === 'nearest') ?
+            this._getNearestRGBA(this._alphaImage, uv) :
+            this._getLinearRGBA(this._alphaImage, uv);
+
+        return {
+            r: diffuse.r,
+            g: diffuse.g,
+            b: diffuse.b,
+            a: alpha.a,
+        };
     }
 
     /**
      * UV is assumed to be in [0, 1] range.
      */
-    private _getLinearRGBA(uv: UV): RGBA {
-        const x = uv.u * this._image.width;
-        const y = uv.v * this._image.height;
+    private _getLinearRGBA(image: ImageData, uv: UV): RGBA {
+        const x = uv.u * image.width;
+        const y = uv.v * image.height;
 
         const xLeft = Math.floor(x);
         const xRight = xLeft + 1;
@@ -127,12 +156,12 @@ export class Texture {
             return RGBAColours.MAGENTA;
         }
 
-        const A = this._getFromXY(xLeft, yUp);
-        const B = this._getFromXY(xRight, yUp);
+        const A = Texture._sampleImage(this._image, xLeft, yUp);
+        const B = Texture._sampleImage(this._image, xRight, yUp);
         const AB = RGBAUtil.lerp(A, B, u);
 
-        const C = this._getFromXY(xLeft, yDown);
-        const D = this._getFromXY(xRight, yDown);
+        const C = Texture._sampleImage(this._image, xLeft, yDown);
+        const D = Texture._sampleImage(this._image, xRight, yDown);
         const CD = RGBAUtil.lerp(C, D, u);
 
         return RGBAUtil.lerp(AB, CD, v);
@@ -141,27 +170,20 @@ export class Texture {
     /**
      * UV is assumed to be in [0, 1] range.
      */
-    private _getNearestRGBA(uv: UV): RGBA {
-        const x = Math.floor(uv.u * this._image.width);
-        const y = Math.floor(uv.v * this._image.height);
+    private _getNearestRGBA(image: ImageData, uv: UV): RGBA {
+        const diffuseX = Math.floor(uv.u * image.width);
+        const diffuseY = Math.floor(uv.v * image.height);
 
-        return this._getFromXY(x, y);
+        return Texture._sampleImage(image, diffuseX, diffuseY);
     }
 
-    private _getFromXY(x: number, y: number): RGBA {
-        const diffuse = Texture._sampleImage(this._image, x, y);
-
-        if (this._alphaImage) {
-            const alpha = Texture._sampleImage(this._alphaImage, x, y);
-            return {
-                r: diffuse.r,
-                g: diffuse.g,
-                b: diffuse.b,
-                a: this._useAlphaChannel() ? alpha.a : alpha.r,
-            };
+    private _sampleChannel(colour: RGBA, channel: EImageChannel) {
+        switch (channel) {
+            case EImageChannel.R: return colour.r;
+            case EImageChannel.G: return colour.g;
+            case EImageChannel.B: return colour.b;
+            case EImageChannel.A: return colour.a;
         }
-
-        return diffuse;
     }
 
     public _useAlphaChannelValue?: boolean;

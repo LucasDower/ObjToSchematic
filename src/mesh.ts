@@ -5,7 +5,7 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureConverter } from './texture';
+import { Texture, TextureConverter, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -30,21 +30,20 @@ export interface Tri {
 export enum MaterialType { solid, textured }
 /* eslint-enable */
 type BaseMaterial = {
-    canBeTextured: boolean,
     needsAttention: boolean, // True if the user should make edits to this material
 }
 
 export type SolidMaterial = BaseMaterial & {
     type: MaterialType.solid,
     colour: RGBA,
+    canBeTextured: boolean,
 }
 export type TexturedMaterial = BaseMaterial & {
     type: MaterialType.textured,
     path: string,
-    alphaPath?: string,
-    alphaFactor: number,
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
+    transparency: TTransparencyOptions,
 }
 export type MaterialMap = Map<string, SolidMaterial | TexturedMaterial>;
 
@@ -57,7 +56,7 @@ export class Mesh {
     public _tris!: Tri[];
 
     private _materials!: MaterialMap;
-    private _loadedTextures: { [materialName: string]: Texture };
+    private _loadedTextures: Map<string, Texture>;
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
@@ -68,7 +67,7 @@ export class Mesh {
         this._uvs = uvs;
         this._tris = tris;
         this._materials = materials;
-        this._loadedTextures = {};
+        this._loadedTextures = new Map();
     }
 
     // TODO: Always check
@@ -290,17 +289,12 @@ export class Mesh {
     }
 
     private _loadTextures() {
-        this._loadedTextures = {};
-        for (const tri of this._tris) {
-            const material = this._materials.get(tri.material);
-            ASSERT(material !== undefined, 'Triangle uses a material that doesn\'t exist in the material map');
-
-            if (material.type == MaterialType.textured) {
-                if (!(tri.material in this._loadedTextures)) {
-                    this._loadedTextures[tri.material] = new Texture(material.path, material.alphaPath);
-                }
+        this._loadedTextures.clear();
+        this._materials.forEach((material, materialName) => {
+            if (material.type === MaterialType.textured && !this._loadedTextures.has(materialName)) {
+                this._loadedTextures.set(materialName, new Texture(material.path, material.transparency));
             }
-        }
+        });
     }
 
     public getVertices(triIndex: number) {
@@ -393,11 +387,10 @@ export class Mesh {
         ASSERT(material !== undefined, `Sampling material that does not exist: ${materialName}`);
         ASSERT(material.type === MaterialType.textured, 'Sampling texture material of non-texture material');
 
-        ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
+        const texture = this._loadedTextures.get(materialName);
+        ASSERT(texture !== undefined, 'Sampling texture that is not loaded');
 
-        const colour = this._loadedTextures[materialName].getRGBA(uv, material.interpolation, material.extension);
-        colour.a *= material.alphaFactor;
-        return colour;
+        return texture.getRGBA(uv, material.interpolation, material.extension);
     }
 
     public getTriangleCount(): number {

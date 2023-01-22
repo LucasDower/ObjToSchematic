@@ -279,6 +279,10 @@ export class AppContext {
                     .onChangeTypeDelegate(() => {
                         this._materialManager.changeMaterialType(materialName, MaterialType.solid);
                         this._updateMaterialsAction();
+                    })
+                    .onChangeTransparencyTypeDelegate((newTransparency) => {
+                        this._materialManager.changeTransparencyType(materialName, newTransparency);
+                        this._updateMaterialsAction();
                     });
             }
 

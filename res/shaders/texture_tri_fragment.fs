@@ -5,8 +5,7 @@ uniform vec3 u_cameraDir;
 
 uniform sampler2D u_texture;
 uniform sampler2D u_alpha;
-uniform bool u_useAlphaMap;
-uniform bool u_useAlphaChannel;
+uniform int u_alphaChannel;
 uniform float u_alphaFactor;
 uniform float u_fresnelExponent;
 uniform float u_fresnelMix;
@@ -106,10 +105,17 @@ const float ditherThreshold[64] = float[64](
 void main() {
   vec2 tex = vec2(v_texcoord.x, 1.0 - v_texcoord.y);
   vec4 diffuse = texture2D(u_texture, tex).rgba;
+  vec4 alphaSample = texture2D(u_alpha, tex);
 
-  float alpha = diffuse.a;
-  if (u_useAlphaMap) {
-    alpha = u_useAlphaChannel ? texture2D(u_alpha, tex).a : texture2D(u_alpha, tex).r;
+  float alpha = 1.0;
+  if (u_alphaChannel == 0) {
+    alpha = alphaSample.r;
+  } else if (u_alphaChannel == 1) {
+    alpha = alphaSample.g;
+  } else if (u_alphaChannel == 2) {
+    alpha = alphaSample.b;
+  } else if (u_alphaChannel == 3) {
+    alpha = alphaSample.a;
   }
 
   alpha *= u_alphaFactor;

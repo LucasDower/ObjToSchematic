@@ -7,7 +7,7 @@ import { DebugGeometryTemplates } from './geometry';
 import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { Texture } from './texture';
+import { EImageChannel, Texture } from './texture';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
@@ -30,9 +30,27 @@ enum EDebugBufferComponents {
 }
 /* eslint-enable */
 
-export type TextureMaterialRenderAddons = {
-    texture: WebGLTexture, alpha?: WebGLTexture, useAlphaChannel?: boolean,
+/**
+ * Dedicated type for passing to shaders for solid materials
+ */
+type InternalSolidMaterial = {
+    type: MaterialType.solid,
+    colourArray: number[],
 }
+
+/**
+ * Dedicated type for passing to shaders for textured materials
+ */
+type InternalTextureMaterial = {
+    type: MaterialType.textured,
+    diffuseTexture: WebGLTexture,
+    // The texture to sample alpha values from (if is using a texture map)
+    alphaTexture: WebGLTexture,
+    // What texture channel to sample the alpha value from
+    alphaChannel: EImageChannel,
+    // What alpha value to use (only used if using constant transparency mode)
+    alphaValue: number,
+};
 
 export class Renderer {
     public _gl: WebGLRenderingContext;
@@ -48,7 +66,7 @@ export class Renderer {
     private _modelsAvailable: number;
 
     private _materialBuffers: Map<string, {
-        material: SolidMaterial | (TexturedMaterial & TextureMaterialRenderAddons)
+        material: InternalSolidMaterial | InternalTextureMaterial,
         buffer: twgl.BufferInfo,
         numElements: number,
         materialName: string,
@@ -192,123 +210,77 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    public recreateMaterialBuffer(materialName: string, material: SolidMaterial | TexturedMaterial) {
-        const oldBuffer = this._materialBuffers.get(materialName);
-        ASSERT(oldBuffer !== undefined);
+    private _createInternalMaterial(material: SolidMaterial | TexturedMaterial): (InternalSolidMaterial | InternalTextureMaterial) {
         if (material.type === MaterialType.solid) {
-            this._materialBuffers.set(materialName, {
-                buffer: oldBuffer.buffer,
-                material: {
-                    type: MaterialType.solid,
-                    colour: RGBAUtil.copy(material.colour),
-                    needsAttention: material.needsAttention,
-                    canBeTextured: material.canBeTextured,
-                },
-                numElements: oldBuffer.numElements,
-                materialName: materialName,
-            });
+            return {
+                type: MaterialType.solid,
+                colourArray: RGBAUtil.toArray(material.colour),
+            };
         } else {
-            this._materialBuffers.set(materialName, {
-                buffer: oldBuffer.buffer,
-                material: {
-                    type: MaterialType.textured,
-                    path: material.path,
-                    canBeTextured: material.canBeTextured,
-                    interpolation: material.interpolation,
-                    extension: material.extension,
-                    texture: twgl.createTexture(this._gl, {
-                        src: material.path,
-                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                    }),
-                    alphaFactor: material.alphaFactor,
-                    alpha: material.alphaPath ? twgl.createTexture(this._gl, {
-                        src: material.alphaPath,
-                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                    }) : undefined,
-                    useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                    needsAttention: material.needsAttention,
-                },
-                numElements: oldBuffer.numElements,
-                materialName: materialName,
+            const diffuseTexture = twgl.createTexture(this._gl, {
+                src: material.path,
+                min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
             });
+
+            const alphaTexture = material.transparency.type === 'UseAlphaMap' ? twgl.createTexture(this._gl, {
+                src: material.transparency.path,
+                min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+            }) : diffuseTexture;
+
+            const alphaValue = material.transparency.type === 'UseAlphaValue' ?
+                material.transparency.alpha : 1.0;
+
+            let alphaChannel: EImageChannel = EImageChannel.MAX;
+            switch (material.transparency.type) {
+                case 'UseAlphaValue':
+                    alphaChannel = EImageChannel.MAX;
+                    break;
+                case 'UseDiffuseMapAlphaChannel':
+                    alphaChannel = EImageChannel.A;
+                    break;
+                case 'UseAlphaMap':
+                    alphaChannel = material.transparency.channel;
+                    break;
+            }
+
+            return {
+                type: MaterialType.textured,
+                diffuseTexture: diffuseTexture,
+                alphaTexture: alphaTexture,
+                alphaValue: alphaValue,
+                alphaChannel: alphaChannel,
+            };
         }
     }
 
-    public updateMeshMaterialTexture(materialName: string, material: TexturedMaterial) {
-        this._materialBuffers.forEach((buffer) => {
-            if (buffer.materialName === materialName) {
-                buffer.material = {
-                    type: MaterialType.textured,
-                    path: material.path,
-                    interpolation: material.interpolation,
-                    extension: material.extension,
-                    canBeTextured: material.canBeTextured,
-                    texture: twgl.createTexture(this._gl, {
-                        src: material.path,
-                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                    }),
-                    alphaFactor: material.alphaFactor,
-                    alpha: material.alphaPath ? twgl.createTexture(this._gl, {
-                        src: material.alphaPath,
-                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                    }) : undefined,
-                    useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                    needsAttention: material.needsAttention,
-                };
-                return;
-            }
+    public recreateMaterialBuffer(materialName: string, material: SolidMaterial | TexturedMaterial) {
+        const oldBuffer = this._materialBuffers.get(materialName);
+        ASSERT(oldBuffer !== undefined);
+
+        const internalMaterial = this._createInternalMaterial(material);
+        this._materialBuffers.set(materialName, {
+            buffer: oldBuffer.buffer,
+            material: internalMaterial,
+            numElements: oldBuffer.numElements,
+            materialName: materialName,
         });
     }
-
 
     public useMesh(params: RenderMeshParams.Output) {
         this._materialBuffers = new Map();
 
         for (const { material, buffer, numElements, materialName } of params.buffers) {
-            if (material.type === MaterialType.solid) {
-                this._materialBuffers.set(materialName, {
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
-                    material: material,
-                    numElements: numElements,
-                    materialName: materialName,
-                });
-            } else {
-                this._materialBuffers.set(materialName, {
-                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
-                    material: {
-                        canBeTextured: material.canBeTextured,
-                        type: MaterialType.textured,
-                        interpolation: material.interpolation,
-                        extension: material.extension,
-                        path: material.path,
-                        texture: twgl.createTexture(this._gl, {
-                            src: material.path,
-                            min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                            mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                            wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                        }),
-                        alphaFactor: material.alphaFactor,
-                        alpha: material.alphaPath ? twgl.createTexture(this._gl, {
-                            src: material.alphaPath,
-                            min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                            mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                            wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                        }) : undefined,
-                        useAlphaChannel: material.alphaPath ? new Texture(material.path, material.alphaPath)._useAlphaChannel() : undefined,
-                        needsAttention: material.needsAttention,
-                    },
-                    numElements: numElements,
-                    materialName: materialName,
-                });
-            }
+            const internalMaterial = this._createInternalMaterial(material);
+            this._materialBuffers.set(materialName, {
+                buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
+                material: internalMaterial,
+                numElements: numElements,
+                materialName: materialName,
+            });
         }
 
         this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(params.dimensions);
@@ -458,9 +430,6 @@ export class Renderer {
         }
     }
 
-    public parseRawMeshData(buffer: string, dimensions: Vector3) {
-    }
-
     private _drawMesh() {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
             if (materialBuffer.material.type === MaterialType.textured) {
@@ -468,11 +437,10 @@ export class Renderer {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_texture: materialBuffer.material.texture,
-                    u_alpha: materialBuffer.material.alpha || materialBuffer.material.texture,
-                    u_useAlphaMap: materialBuffer.material.alpha !== undefined,
-                    u_useAlphaChannel: materialBuffer.material.useAlphaChannel,
-                    u_alphaFactor: materialBuffer.material.alphaFactor,
+                    u_texture: materialBuffer.material.diffuseTexture,
+                    u_alpha: materialBuffer.material.alphaTexture ?? materialBuffer.material.diffuseTexture,
+                    u_alphaChannel: materialBuffer.material.alphaChannel,
+                    u_alphaFactor: materialBuffer.material.alphaValue,
                     u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
                     u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
                     u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
@@ -482,7 +450,7 @@ export class Renderer {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_fillColour: RGBAUtil.toArray(materialBuffer.material.colour),
+                    u_fillColour: materialBuffer.material.colourArray,
                     u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
                     u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
                     u_fresnelMix: AppConfig.Get.FRESNEL_MIX,

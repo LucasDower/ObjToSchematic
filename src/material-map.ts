@@ -1,5 +1,6 @@
 import { RGBAColours } from './colour';
 import { MaterialMap, MaterialType } from './mesh';
+import { EImageChannel, TTransparencyTypes } from './texture';
 import { ASSERT } from './util/error_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
@@ -8,6 +9,38 @@ export class MaterialMapManager {
 
     public constructor(materials: MaterialMap) {
         this.materials = materials;
+    }
+
+    public changeTransparencyType(materialName: string, newTransparencyType: TTransparencyTypes) {
+        const currentMaterial = this.materials.get(materialName);
+        ASSERT(currentMaterial !== undefined, 'Cannot change transparency type of non-existent material');
+        ASSERT(currentMaterial.type === MaterialType.textured);
+
+        switch (newTransparencyType) {
+            case 'None':
+                currentMaterial.transparency = { type: 'None' };
+                break;
+            case 'UseAlphaMap':
+                currentMaterial.transparency = {
+                    type: 'UseAlphaMap',
+                    path: PathUtil.join(AppPaths.Get.static, 'debug_alpha.png'),
+                    channel: EImageChannel.R,
+                };
+                break;
+            case 'UseAlphaValue':
+                currentMaterial.transparency = {
+                    type: 'UseAlphaValue',
+                    alpha: 1.0,
+                };
+                break;
+            case 'UseDiffuseMapAlphaChannel':
+                currentMaterial.transparency = {
+                    type: 'UseDiffuseMapAlphaChannel',
+                };
+                break;
+        }
+
+        this.materials.set(materialName, currentMaterial);
     }
 
     /**
@@ -24,19 +57,21 @@ export class MaterialMapManager {
 
         switch (newMaterialType) {
             case MaterialType.solid:
+                ASSERT(currentMaterial.type === MaterialType.textured, 'Old material expect to be texture');
                 this.materials.set(materialName, {
                     type: MaterialType.solid,
                     colour: RGBAColours.MAGENTA,
-                    canBeTextured: currentMaterial.canBeTextured,
+                    canBeTextured: true,
                     needsAttention: true,
                 });
                 break;
             case MaterialType.textured:
+                ASSERT(currentMaterial.type === MaterialType.solid, 'Old material expect to be solid');
                 this.materials.set(materialName, {
                     type: MaterialType.textured,
-                    alphaFactor: 1.0,
-                    alphaPath: undefined,
-                    canBeTextured: currentMaterial.canBeTextured,
+                    transparency: {
+                        type: 'None',
+                    },
                     extension: 'repeat',
                     interpolation: 'linear',
                     needsAttention: true,
