@@ -1398,15 +1398,5 @@
         "id": 252,
         "meta": 15,
         "name": "Black Concrete Powder"
-    },
-    "minecraft:crimson_nylium": {
-        "id": 487,
-        "meta": 0,
-        "name": "Crimson Nylium"
-    },
-    "minecraft:warped_nylium": {
-        "id": 252,
-        "meta": 15,
-        "name": "Warped Nylium"
     }
 }
