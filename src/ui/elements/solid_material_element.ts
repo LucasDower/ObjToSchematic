@@ -4,11 +4,13 @@ import { getRandomID } from '../../util';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigUIElement } from './config_element';
 import { MaterialTypeElement } from './material_type_element';
+import { SliderElement } from './slider';
 
 export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDivElement> {
     private _materialName: string;
     private _colourId: string;
     private _typeElement: MaterialTypeElement;
+    private _alphaElement: SliderElement;
 
     public constructor(materialName: string, material: SolidMaterial) {
         super(material);
@@ -16,13 +18,26 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
         this._colourId = getRandomID();
 
         this._typeElement = new MaterialTypeElement(MaterialType.solid);
+
+        this._alphaElement = new SliderElement()
+            .setMin(0.0)
+            .setMax(1.0)
+            .setDefaultValue(material.colour.a)
+            .setDecimals(2)
+            .setStep(0.01)
+            .setSmall();
     }
 
     public override registerEvents(): void {
         this._typeElement.registerEvents();
+        this._alphaElement.registerEvents();
 
         this._typeElement.onClickChangeTypeDelegate(() => {
             this._onChangeTypeDelegate?.();
+        });
+
+        this._alphaElement.addValueChangedListener((newAlpha) => {
+            this.getValue().colour.a = newAlpha;
         });
 
         const swatchElement = UIUtil.getElementById(this._colourId) as HTMLInputElement;
@@ -51,7 +66,7 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
 
         addSubproperty('Type', this._typeElement._generateInnerHTML());
         addSubproperty('Colour', `<input class="colour-swatch" type="color" id="${this._colourId}" value="${RGBAUtil.toHexString(material.colour)}">`);
-        addSubproperty('Alpha', `${material.colour.a.toFixed(4)}`);
+        addSubproperty('Alpha', this._alphaElement._generateInnerHTML());
 
         return `
             <div class="subproperty-container">

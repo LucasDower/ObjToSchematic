@@ -19,6 +19,7 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
     private _dragging: boolean;
     private _hovering: boolean;
     private _internalValue: number;
+    private _small: boolean;
 
     public constructor() {
         super();
@@ -29,11 +30,17 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         this._internalValue = 0.5;
         this._dragging = false;
         this._hovering = false;
+        this._small = false;
     }
 
     public override setDefaultValue(value: number) {
         super.setDefaultValue(value);
         this._internalValue = value;
+        return this;
+    }
+
+    public setSmall() {
+        this._small = true;
         return this;
     }
 
@@ -123,12 +130,12 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         });
     }
 
-    protected override _generateInnerHTML() {
+    public override _generateInnerHTML() {
         const norm = (this._internalValue - this._min) / (this._max - this._min);
 
         return `
-            <input class="slider-number-input" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
-            <div class="new-slider" id="${this._getId()}" style="flex-grow: 1;">
+            <input class="${this._small ? 'slider-height-small' : 'slider-height-normal'}" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <div class="new-slider ${this._small ? 'slider-bar-height-small' : 'slider-bar-height-normal'} " id="${this._getId()}" style="flex-grow: 1;">
                 <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
                 </div>
             </div>

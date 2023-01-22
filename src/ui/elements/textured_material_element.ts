@@ -4,6 +4,7 @@ import { ComboBoxElement } from './combobox';
 import { ConfigUIElement } from './config_element';
 import { ImageElement } from './image_element';
 import { MaterialTypeElement } from './material_type_element';
+import { SliderElement } from './slider';
 
 export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, HTMLDivElement> {
     private _materialName: string;
@@ -12,6 +13,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
     private _wrapElement: ComboBoxElement<'clamp' | 'repeat'>;
     private _imageElement: ImageElement;
     private _typeElement: MaterialTypeElement;
+    private _alphaElement: SliderElement;
 
     public constructor(materialName: string, material: TexturedMaterial) {
         super(material);
@@ -33,6 +35,14 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._imageElement = new ImageElement(material.path);
 
         this._typeElement = new MaterialTypeElement(MaterialType.textured);
+
+        this._alphaElement = new SliderElement()
+            .setMin(0.0)
+            .setMax(1.0)
+            .setDefaultValue(material.alphaFactor)
+            .setDecimals(2)
+            .setStep(0.01)
+            .setSmall();
     }
 
     public override registerEvents(): void {
@@ -40,6 +50,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._typeElement.registerEvents();
         this._filteringElement.registerEvents();
         this._wrapElement.registerEvents();
+        this._alphaElement.registerEvents();
 
         this._imageElement.addValueChangedListener((newPath) => {
             const material = this.getValue();
@@ -58,6 +69,10 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
 
         this._typeElement.onClickChangeTypeDelegate(() => {
             this._onChangeTypeDelegate?.();
+        });
+
+        this._alphaElement.addValueChangedListener((newAlpha) => {
+            this.getValue().alphaFactor = newAlpha;
         });
     }
 
@@ -79,7 +94,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         };
 
         addSubproperty('Type', this._typeElement._generateInnerHTML());
-        addSubproperty('Alpha', material.alphaFactor.toFixed(4));
+        addSubproperty('Alpha', this._alphaElement._generateInnerHTML());
         addSubproperty('File', this._imageElement._generateInnerHTML());
         addSubproperty('Filtering', this._filteringElement._generateInnerHTML());
         addSubproperty('Wrap', this._wrapElement._generateInnerHTML());

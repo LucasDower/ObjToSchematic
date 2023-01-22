@@ -174,8 +174,13 @@ canvas {
   overflow: hidden;
 }
 
-.slider-number-input {
+.slider-height-normal {
   height: calc(var(--property-height) - 4px);
+}
+
+.slider-height-small {
+  height: calc(var(--subproperty-height) - 4px);
+  font-size: 100%;
 }
 
 input {
@@ -231,14 +236,22 @@ select:disabled {
   color: var(--text-disabled);
 }
 
+.slider-bar-height-normal {
+  height: calc(var(--property-height) - 2px);
+}
+
+.slider-bar-height-small {
+  height: calc(var(--subproperty-height) - 2px);
+}
+
 .new-slider {
   border-radius: var(--border-radius);
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
   background: var(--prop-standard);
   cursor: ew-resize;
-  height: calc(var(--property-height) - 2px);
   border: 1px solid var(--prop-bg);
+  overflow: hidden;
 }
 .new-slider-hover {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
