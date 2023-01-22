@@ -27,7 +27,7 @@ export abstract class BaseUIElement<T> {
      * Set whether or not this UI element is interactable.
      */
     public setEnabled(isEnabled: boolean, isGroupEnable: boolean = true) {
-        if (isGroupEnable && !this._obeyGroupEnables) {
+        if (isEnabled && isGroupEnable && !this._obeyGroupEnables) {
             return;
         }
         this._isEnabled = isEnabled;
@@ -43,6 +43,7 @@ export abstract class BaseUIElement<T> {
      */
     public setShouldObeyGroupEnables(obey: boolean) {
         this._obeyGroupEnables = obey;
+        return this;
     }
 
     /**

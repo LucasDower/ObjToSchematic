@@ -208,12 +208,13 @@ export class UI {
                     .setUncheckedText('Off')
                     .setDefaultValue(false)
                     .setLabel('Calculate lighting')
-                    .addValueChangedListener((value: boolean) => {
-                        if (value) {
-                            this._ui.assign.elements.lightThreshold.setEnabled(true, false);
-                        } else {
-                            this._ui.assign.elements.lightThreshold.setEnabled(false, false);
-                        }
+                    .addValueChangedListener((newValue: boolean) => {
+                        const isEnabled = this._ui.assign.elements.calculateLighting.getEnabled();
+                        this._ui.assign.elements.lightThreshold.setEnabled(newValue && isEnabled, false);
+                    })
+                    .addEnabledChangedListener((isEnabled: boolean) => {
+                        const value = this._ui.assign.elements.calculateLighting.getValue();
+                        this._ui.assign.elements.lightThreshold.setEnabled(value && isEnabled, false);
                     }),
                 'lightThreshold': new SliderElement()
                     .setMin(0)
@@ -221,7 +222,8 @@ export class UI {
                     .setDefaultValue(1)
                     .setDecimals(0)
                     .setStep(1)
-                    .setLabel('Light threshold'),
+                    .setLabel('Light threshold')
+                    .setShouldObeyGroupEnables(false),
             },
             elementsOrder: [
                 'textureAtlas',

@@ -14,6 +14,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     private _value?: T;
     private _cachedValue?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
+    private _onEnabledChangedListeners: Array<(isEnabled: boolean) => void>;
 
     public constructor(defaultValue?: T) {
         super();
@@ -22,6 +23,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
         this._hasLabel = false;
         this._labelElement = new LabelElement(this._label, this._description);
         this._onValueChangedListeners = [];
+        this._onEnabledChangedListeners = [];
     }
 
     public setDefaultValue(value: T) {
@@ -71,6 +73,14 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
         return this;
     }
 
+    /**
+     * Add a delegate that will be called when the value changes.
+     */
+    public addEnabledChangedListener(delegate: (isEnabled: boolean) => void) {
+        this._onEnabledChangedListeners.push(delegate);
+        return this;
+    }
+
     public override finalise(): void {
         super.finalise();
 
@@ -98,6 +108,10 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
         if (this._hasLabel) {
             this._labelElement.setEnabled(this.getEnabled());
         }
+
+        this._onEnabledChangedListeners.forEach((listener) => {
+            listener(this.getEnabled());
+        });
     }
 
     /**
