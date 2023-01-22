@@ -85,11 +85,9 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         const elementValue = UIUtil.getElementById(this._getValueId(axis));
 
         elementValue.onmouseenter = () => {
-            if (this._dragging === null) {
-                this._mouseover = axis;
-                if (this.getEnabled()) {
-                    elementValue.classList.add('spinbox-value-hover');
-                }
+            this._mouseover = axis;
+            if (this.getEnabled()) {
+                elementValue.classList.add('spinbox-value-hover');
             }
         };
 
