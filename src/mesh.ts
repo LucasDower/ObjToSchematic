@@ -71,17 +71,18 @@ export class Mesh {
     }
 
     // TODO: Always check
-    public processMesh() {
+    public processMesh(pitch: number, roll: number, yaw: number) {
         this._checkMesh();
         this._checkMaterials();
 
         this._centreMesh();
+        this._rotateMesh(pitch, roll, yaw);
         this._normaliseMesh();
 
         this._loadTextures();
     }
 
-    public rotateMesh(pitch: number, roll: number, yaw: number) {
+    private _rotateMesh(pitch: number, roll: number, yaw: number) {
         const cosa = Math.cos(yaw * degreesToRadians);
         const sina = Math.sin(yaw * degreesToRadians);
 
