@@ -12,6 +12,7 @@ export type TBlockCollection = {
 
 /* eslint-disable */
 export enum EFaceVisibility {
+    None = 0,
     Up = 1 << 0,
     Down = 1 << 1,
     North = 1 << 2,
@@ -90,8 +91,8 @@ export class AtlasPalette {
         {
             blockCollection.blocks.forEach((blockData) => {
                 const context = AtlasPalette.getContextualFaceAverage(blockData, faceVisibility);
-                const contextualBlockColour = faceVisibility !== 0 ? context.colour : blockData.colour;
-                const contextualStd = faceVisibility !== 0 ? context.std : 0.0;
+                const contextualBlockColour = faceVisibility !== EFaceVisibility.None ? context.colour : blockData.colour;
+                const contextualStd = faceVisibility !== EFaceVisibility.None ? context.std : 0.0;
                 const floatColour = RGBAUtil.fromRGBA255(colour);
                 const rgbError = RGBAUtil.squaredDistance(floatColour, contextualBlockColour);
                 const stdError = contextualStd;
