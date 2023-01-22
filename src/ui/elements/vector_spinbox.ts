@@ -145,10 +145,10 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
                 current.x = (current.x + deltaX) % this._wrap;
                 break;
             case 'y':
-                current.y += (current.y + deltaX) % this._wrap;
+                current.y = (current.y + deltaX) % this._wrap;
                 break;
             case 'z':
-                current.z += (current.z + deltaX) % this._wrap;
+                current.z = (current.z + deltaX) % this._wrap;
                 break;
         }
         this._setValue(current);
