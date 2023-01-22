@@ -13,7 +13,7 @@ test('Voxelise solid 2x2 cube', () => {
     const importer = new ObjImporter();
     importer.parseFile(path.join(__dirname, './data/cube.obj'));
     const mesh = importer.toMesh();
-    mesh.processMesh();
+    mesh.processMesh(0, 0, 0);
 
     const voxeliser = new NormalCorrectedRayVoxeliser();
     const voxelMesh = voxeliser.voxelise(mesh, {
