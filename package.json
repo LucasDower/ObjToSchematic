@@ -15,9 +15,9 @@
     "atlas": "node ./dist/tools/build-atlas.js",
     "palette": "node ./dist/tools/build-palette.js",
     "headless": "tsc && node ./dist/tools/run-headless.js",
-    "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --app-version=0.6.0 --prune=true",
-    "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --app-version=0.6.0 --prune=true",
-    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --app-version=0.6.0 --prune=true"
+    "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --icon=res/static/icon.ico --prune=true --out=release",
+    "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --prune=true --out=release",
+    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --prune=true --out=release"
   },
   "repository": {
     "type": "git",

@@ -14,6 +14,7 @@ ObjToSchematic-darwin-x64
 /tools/models
 /tests/out
 /logs/
+/release/
 notes.txt
 *.DS_Store
 .dependency-cruiser.js
