@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 import { Atlas, TAtlasBlock } from './atlas';
-import { AtlasPalette } from './block_assigner';
+import { AtlasPalette, EFaceVisibility } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
 import { RGBA_255, RGBAUtil } from './colour';
@@ -23,6 +23,13 @@ interface Block {
     blockInfo: BlockInfo;
 }
 
+interface GrassLikeBlock {
+    id: number;
+    voxelColour: RGBA_255;
+    errWeight: number;
+    faceVisibility: EFaceVisibility;
+}
+
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
@@ -38,6 +45,7 @@ export class BlockMesh {
     private _voxelMesh: VoxelMesh;
     private _fallableBlocks: string[];
     private _transparentBlocks: string[];
+    private _grassLikeBlocks: string[];
     private _emissiveBlocks: string[];
     private _atlas: Atlas;
     private _lighting: BlockMeshLighting;
@@ -75,6 +83,9 @@ export class BlockMesh {
 
         const emissivelocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'emissive_blocks.json'), 'utf-8');
         this._emissiveBlocks = JSON.parse(emissivelocksString).emissive_blocks;
+
+        const grassLikeBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'grass_like_blocks.json'), 'utf-8');
+        this._grassLikeBlocks = JSON.parse(grassLikeBlocksString).grass_like_blocks;
     }
 
     /**
@@ -115,6 +126,7 @@ export class BlockMesh {
         const atlasPalette = new AtlasPalette(atlas, palette);
         const allBlockCollection = atlasPalette.createBlockCollection([]);
         const nonFallableBlockCollection = atlasPalette.createBlockCollection(this._fallableBlocks);
+        const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
 
         let countFalling = 0;
         const taskHandle = ProgressManager.Get.start('Assigning');
@@ -147,11 +159,36 @@ export class BlockMesh {
                 block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility, blockMeshParams.errorWeight);
             }
 
+            if (this._grassLikeBlocks.includes(block.name)) {
+                grassLikeBlocksBuffer.push({
+                    id: this._blocks.length,
+                    voxelColour: voxelColour,
+                    errWeight: blockMeshParams.errorWeight,
+                    faceVisibility: faceVisibility,
+                });
+            }
+
             this._blocks.push({
                 voxel: voxel,
                 blockInfo: block,
             });
             this._blocksUsed.add(block.name);
+        }
+
+        if (grassLikeBlocksBuffer.length > 0) {
+            const nonGrassLikeBlockCollection = atlasPalette.createBlockCollection(this._grassLikeBlocks);
+            for (let index=0; index < grassLikeBlocksBuffer.length; index++) {
+                ProgressManager.Get.progress(taskHandle, index / grassLikeBlocksBuffer.length);
+                const examined = grassLikeBlocksBuffer[index];
+                const examinedBlock = this._blocks[examined.id];
+                const topBlockId = this._blocks.findIndex((b) => b.voxel.position.equals(Vector3.add(examinedBlock.voxel.position, new Vector3(0, 1, 0))));
+                if (topBlockId > -1 && !this._transparentBlocks.includes(this._blocks[topBlockId].blockInfo.name)) {
+                    const block = atlasPalette.getBlock(examined.voxelColour, nonGrassLikeBlockCollection, examined.faceVisibility, examined.errWeight);
+                    examinedBlock.blockInfo = block;
+                    this._blocks[examined.id] = examinedBlock;
+                    this._blocksUsed.add(block.name);
+                };
+            }
         }
         ProgressManager.Get.end(taskHandle);
 
