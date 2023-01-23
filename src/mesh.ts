@@ -9,7 +9,7 @@ import { Texture, TextureConverter, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { LOG_WARN } from './util/log_util';
+import { LOG, LOG_WARN } from './util/log_util';
 import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 import { Vector3 } from './vector';
 
@@ -262,6 +262,38 @@ export class Mesh {
                         material.path = TextureConverter.createPNGfromTGA(material.path);
                     }
                 }
+            }
+        });
+
+        // Deduce default texture wrap mode for each material type
+        const materialsWithUVsOutOfBounds = new Set<string>();
+        this._tris.forEach((tri, triIndex) => {
+            if (materialsWithUVsOutOfBounds.has(tri.material)) {
+                // Already know this material has OOB UVs so skip
+                return;
+            }
+
+            const uv = this.getUVs(triIndex);
+            const uvsOutOfBounds =
+                (uv.uv0.u < 0.0) || (uv.uv0.u > 1.0) ||
+                (uv.uv0.v < 0.0) || (uv.uv0.v > 1.0) ||
+                (uv.uv1.u < 0.0) || (uv.uv1.u > 1.0) ||
+                (uv.uv1.v < 0.0) || (uv.uv1.v > 1.0) ||
+                (uv.uv2.u < 0.0) || (uv.uv2.u > 1.0) ||
+                (uv.uv2.v < 0.0) || (uv.uv2.v > 1.0);
+
+            if (uvsOutOfBounds) {
+                materialsWithUVsOutOfBounds.add(tri.material);
+            }
+        });
+
+        LOG(`Materials with OOB UVs`, JSON.stringify(materialsWithUVsOutOfBounds));
+
+        this._materials.forEach((material, materialName) => {
+            if (material.type === MaterialType.textured) {
+                material.extension = materialsWithUVsOutOfBounds.has(materialName) ?
+                    'repeat' :
+                    'clamp';
             }
         });
     }
