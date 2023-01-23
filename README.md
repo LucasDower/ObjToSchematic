@@ -53,85 +53,7 @@ If you play Minecraft with a resource pack, you will probably want to build your
 If you want to use the program without using the GUI, you can edit `/tools/headless-config.ts` and run `npm run headless` (make sure to run `npm run build` after **each time** you edit the `headless-config.ts`).
 
 ## Progress
-[0.1](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.1-alpha)
-* 🟢 **.json model loading**
-* 🟢 **Model voxelisation**
-* 🟢 **Optimised voxelisation & rendering overhaul**
-* 🟢 **Basic .obj file loader UI**
-
-[0.2](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.2-alpha)
-* 🟠 <s>**Greedy voxel meshing**</s> (Removed)
-* 🟢 **Export to schematic**
-
-[0.3](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.3-alpha)
-* 🟠 <s>**Voxel splitting**</s> (Removed)
-* 🟢 **Ambient occlusion**
-* 🟢 **Quality of life**
-  * Model PSR, height limit warnings
-* 🟢 **.mtl support for block choice**
-  * PNG support, JPEG support
-* 🟢 **Convert to TypeScript**
-
-[0.4](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.4-alpha)
-* 🟢 **Block choice exported**
-  * Export to .litematic
-* 🟢 **Support for non-uniform block models** (i.e. not all sides have same texture e.g. Oak Log, Crafting Table)
-* 🟢 **UI Redesign**
-* 🟢 **Optimised ambient occlusion**
-* 🟢 **Transition to ray-based voxelisation**
-* 🟢 **Dithering**
-
-[0.5](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.5-alpha)
-* 🟢 **Load custom block palettes and texture atlases**
-  * Added custom tool scripts for building atlases and palettes
-* 🟢 **Major refactor for extendibility**
-  * New interfaces: IImporter, IVoxeliser, IBlockAssigner, IExporter
-* 🟢 **QoL editor impovements**
-  * Switch between Mesh/Voxel Mesh/Block Mesh rendering, zoom accessibility options, camera translation/centreing
-  * Debug draw options: grid, wireframe, normal, voxel algorithm debug
-* 🟢 **Headless launch option**
-* 🟢 **New voxelising algorithms**
-  * Normal-corrected ray-based (NCRB)
-  * BVH-accelerated ray-based
-* 🟢 **Optimise construction of voxel mesh vertex buffers**
-* 🟢 **Buffer refactor to support `OES_element_index_uint` WebGL extension (support for uint32 index buffers instead of uint16)**
-
-[0.6](https://github.com/LucasDower/ObjToSchematic/releases/tag/v0.6.0)
-* 🟢 **Web workers**
-  * Processing UI animation
-  * Prevent UI hanging
-* 🟢 **Options for handling falling blocks and overlapping voxels**
-* 🟢 **Sponge schematics exporter (.schem)**
-* 🟢 **Structure blocks exporter (.nbt)**
-* 🟢 **Alpha support**
-  * Alpha texture maps
-  * Transparent blocks
-* 🟢 **Config file**
-* 🟢 **Log files**
-
-0.7
-* ⚪ Update .atlas format
-* ⚪ Localisation support (message me if you want to add your language!)
-* ⚪ .fbx importer
-* ⚪ UI for creating palettes
-* ⚪ Height-map and colour-map support
-* ⚪ Complete code documentation
-* ⚪ Realistic lighting instead of night-vision everywhere
-* ⚪ Block painting (be able to select blocks and swap them for another)
-* ⚪ Add option for setting seed for RNG
-* ⚪ .tga support
-* ⚪ Material editing - find missing textures, change material colours
-* ⚪ Support for splitting up exported structures
-* ⚪ Add multisampling to 'bvh-ray' voxeliser
-
-0.8
-* ⚪ .gltf importer
-* ⚪ Slice viewer
-* ⚪ Support for non-block models (e.g. slabs, stairs, trapdoors, etc.)
-* ⚪ Option to simplify complex meshes
-* ⚪ Support for non-16x16 resource packs for texture atlases
-* ⚪ Reimplement colour-space convertions
-* ⚪ Add documentation about how to add modded blocks
+The progress tracker and remaining to-dos are now maintained in the [Discord](https://discord.gg/McS2VrBZPD) server's #to-do channel.
 
 ## Disclaimer
 :warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
@@ -167,6 +89,19 @@ Below is a detailed explanation into what each configurable setting does divided
 
 ### Import
 * **Wavefront .obj file** - This is the actual 3D model you want to voxelise. Please note that the more complex your model is the longer it will take to voxelise. It is strongly recommended that you simplify your geometry in a program such as Blender to reduce the poly count. If your triangles are smaller than the size of the voxels then you will not notice the difference and the extra detail is just wasting resources.
+* **Rotation** - Change to rotate the mesh, requires clicking 'Load mesh' to update.
+
+### Materials
+Here is where you can edit the materials that the loaded model uses. Any changes you make require you to commit the changes by clicking 'Update materials'.
+* **Type** - Switch between a Solid material or a Textured material. Note, only materials that're used by triangles with defined texcoords can be turned into Textured materials.
+* Solid Materials
+  * **Colour** - The actual colour of the material.
+  * **Alpha** - The transparency value.
+* Textured Materials
+  * **Diffuse map** - The actual texture file the colour data is from.
+  * **[Filtering](https://en.wikipedia.org/wiki/Texture_filtering)** - How pixel values are sampled.
+  * **[Wrap](https://en.wikipedia.org/wiki/Wrapping_(graphics))** - How texcoords outside the [0, 1] range are sampled.
+  * **Transparency** - How transparency values are sampled, either 'None' for opaque, 'Alpha map' for custom alpha mask textures, 'Alpha constant' for a flat transparency value or 'Use diffuse map alpha channel'.
 
 ### Voxelise
 * **Constraint axis** - This determines which axis is used to determine the size of the model. If you choose 'Y' and type in a size of 80 then the voxelised mesh will has a height of 80. If you choose 'X' instead then the width will be 80.
@@ -174,7 +109,6 @@ Below is a detailed explanation into what each configurable setting does divided
 * **Algorithm** - There are many ways to turn a triangle mesh into a voxel mesh and each method produces different results. Here you can choose which one you like the best.
 * **Ambient occlusion** - This is a purely visual setting and makes no difference to the outputted structure. [Ambient occlusion](https://en.wikipedia.org/wiki/Ambient_occlusion) displays the shadows between adjacent blocks just like Minecraft. This takes quite a hit to the time to voxelise so consider turning this setting off first.
 * **Multisampling** - Multisampling should only be used if your mesh uses textures. It takes multiple samples of the texture to get a more representative colour for a voxel. If your triangles and voxels are a similar size then you'll want this on. If your voxels are much smaller than the triangles then you'll probably not notice the difference this makes unless your texture is very noisey.
-* **Texture filtering** - Chances are if you need to change this then you already know what it does. [Texture filtering](https://en.wikipedia.org/wiki/Texture_filtering) determines how colours are sampled from textures. You'll probably want this as *Linear*. If your texture is stylistically pixelated then you might want this as *Nearest*.
 * **Voxel overlap** - When two triangles next to each other are voxelised one after another the second triangle may place voxels in positions where the first triangle has already placed a voxel. This setting allows you to only take the *First* voxel colour or take an *Average*.
 
 ### Assign
