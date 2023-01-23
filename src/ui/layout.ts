@@ -527,7 +527,7 @@ export class UI {
         for (const elementName of group.elementsOrder) {
             const element = group.elements[elementName];
             ASSERT(element !== undefined, `No element for: ${elementName}`);
-            groupHTML += this._buildSubcomponent(element);
+            groupHTML += this._buildSubcomponent(element, group.label === 'Materials');
         }
         return groupHTML;
     }
@@ -548,9 +548,9 @@ export class UI {
         `;
     }
 
-    private _buildSubcomponent(element: ConfigUIElement<any, any>) {
+    private _buildSubcomponent(element: ConfigUIElement<any, any>, bigPadding: boolean) {
         return `
-            <div class="property">
+            <div class="property ${bigPadding ? 'big-padding' : ''}">
                 ${element.generateHTML()}
             </div>
         `;
