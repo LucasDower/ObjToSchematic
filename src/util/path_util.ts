@@ -64,4 +64,13 @@ export class AppPaths {
     public get logs() {
         return PathUtil.join(this._base, './logs/');
     }
+
+    /**
+     * The `gen` directory stores any data generated at runtime.
+     * This can safely be deleted when the program is not running and will
+     * be empted upon each startup.
+     */
+    public get gen() {
+        return PathUtil.join(this._base, './gen/');
+    }
 }

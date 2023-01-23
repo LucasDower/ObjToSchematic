@@ -60,6 +60,8 @@ export class StatusHandler {
         switch (action) {
             case EAction.Import:
                 return '[Importer]: Loaded';
+            case EAction.Materials:
+                return '[Materials]: Updated';
             case EAction.Voxelise:
                 return '[Voxeliser]: Succeeded';
             case EAction.Assign:
@@ -67,7 +69,7 @@ export class StatusHandler {
             case EAction.Export:
                 return '[Exporter]: Saved';
             default:
-                ASSERT(false);
+                ASSERT(false, 'Unknown action');
         }
     }
 
@@ -75,6 +77,8 @@ export class StatusHandler {
         switch (action) {
             case EAction.Import:
                 return '[Importer]: Failed';
+            case EAction.Materials:
+                return '[Materials]: Failed';
             case EAction.Voxelise:
                 return '[Voxeliser]: Failed';
             case EAction.Assign:
@@ -82,7 +86,7 @@ export class StatusHandler {
             case EAction.Export:
                 return '[Exporter]: Failed';
             default:
-                ASSERT(false);
+                ASSERT(false, 'Unknown action');
         }
     }
 

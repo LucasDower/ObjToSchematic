@@ -1,0 +1,11 @@
+{
+    "grass_like_blocks": [
+        "minecraft:grass_block",
+        "minecraft:grass_path",
+        "minecraft:podzol",
+        "minecraft:crimson_nylium",
+        "minecraft:warped_nylium",
+        "minecraft:mycelium",
+        "minecraft:farmland"
+    ]
+}

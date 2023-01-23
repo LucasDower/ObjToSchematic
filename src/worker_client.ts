@@ -12,7 +12,7 @@ import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -74,10 +74,23 @@ export class WorkerClient {
         const importer = new ObjImporter();
         importer.parseFile(params.filepath);
         this._loadedMesh = importer.toMesh();
-        this._loadedMesh.processMesh();
+        this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
+            dimensions: this._loadedMesh.getBounds().getDimensions(),
+            materials: this._loadedMesh.getMaterials(),
+        };
+    }
+
+    public setMaterials(params: SetMaterialsParams.Input): SetMaterialsParams.Output {
+        ASSERT(this._loadedMesh !== undefined);
+
+        this._loadedMesh.setMaterials(params.materials);
+
+        return {
+            materials: this._loadedMesh.getMaterials(),
+            materialsChanged: Array.from(params.materials.keys()), // TODO: Change to actual materials changed
         };
     }
 
@@ -90,19 +103,19 @@ export class WorkerClient {
         };
     }
 
-    
+
     public voxelise(params: VoxeliseParams.Input): VoxeliseParams.Output {
         ASSERT(this._loadedMesh !== undefined);
-        
+
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
-        
+
         this._voxelMeshChunkIndex = 0;
-        
+
         return {
         };
     }
-    
+
     private _voxelMeshChunkIndex = 0;
     private _voxelMeshProgressHandle?: TTaskHandle;
     public renderChunkedVoxelMesh(params: RenderNextVoxelMeshChunkParams.Input): RenderNextVoxelMeshChunkParams.Output {

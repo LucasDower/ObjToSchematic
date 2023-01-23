@@ -5,6 +5,7 @@ import { RGBA, RGBAColours } from '../colour';
 import { checkFractional, checkNaN } from '../math';
 import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
 import { StatusHandler } from '../status';
+import { EImageChannel, TTransparencyOptions } from '../texture';
 import { UV } from '../util';
 import { AppError, ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
@@ -21,9 +22,19 @@ export class ObjImporter extends IImporter {
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
 
-    private _materials: { [key: string]: (SolidMaterial | TexturedMaterial) } = {
-        'DEFAULT_UNASSIGNED': { type: MaterialType.solid, colour: RGBAColours.WHITE },
-    };
+    private _materials: Map<string, SolidMaterial | TexturedMaterial>;
+
+    public constructor() {
+        super();
+        this._materials = new Map();
+        this._materials.set('DEFAULT_UNASSIGNED', {
+            type: MaterialType.solid,
+            colour: RGBAColours.WHITE,
+            canBeTextured: false,
+            needsAttention: false,
+        });
+    }
+
     private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
 
@@ -195,7 +206,7 @@ export class ObjImporter extends IImporter {
     ];
 
     private _currentColour: RGBA = RGBAColours.BLACK;
-    private _currentAlpha: number = 1.0;
+    private _currentAlpha?: number;
     private _currentTexture: string = '';
     private _currentTransparencyTexture: string = '';
     private _materialReady: boolean = false;
@@ -227,7 +238,7 @@ export class ObjImporter extends IImporter {
                 const b = parseFloat(match.b);
                 checkNaN(r, g, b);
                 checkFractional(r, g, b);
-                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha };
+                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha ?? 1.0 };
                 this._materialReady = true;
             },
         },
@@ -276,8 +287,6 @@ export class ObjImporter extends IImporter {
     ];
 
     override parseFile(filePath: string) {
-        ASSERT(path.isAbsolute(filePath), `ObjImporter: ${filePath} not absolute`);
-
         this._objPath = path.parse(filePath);
 
         this._parseOBJ(filePath);
@@ -302,8 +311,11 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseOBJ(path: string) {
+        if (path === '') {
+            throw new AppError(`No filepath given`);
+        }
         if (!fs.existsSync(path)) {
-            throw new AppError(`Could not find ${path}`);
+            throw new AppError(`Could not find '${path}'`);
         }
         const fileContents = fs.readFileSync(path, 'utf8');
         if (fileContents.includes('�')) {
@@ -356,7 +368,7 @@ export class ObjImporter extends IImporter {
             const fileLines = fileContents.split('\n');
 
             for (const line of fileLines) {
-                this._parseMTLLine(line);
+                this._parseMTLLine(line.trim());
             }
 
             this._addCurrentMaterial();
@@ -391,18 +403,51 @@ export class ObjImporter extends IImporter {
     private _addCurrentMaterial() {
         if (this._materialReady && this._currentMaterialName !== '') {
             if (this._currentTexture !== '') {
-                this._materials[this._currentMaterialName] = {
+                let transparency: TTransparencyOptions;
+                if (this._currentTransparencyTexture === this._currentTexture) {
+                    transparency = {
+                        type: 'UseDiffuseMapAlphaChannel',
+                    };
+                } else if (this._currentTransparencyTexture === '') {
+                    if (this._currentAlpha === undefined) {
+                        transparency = {
+                            type: 'None',
+                        };
+                    } else {
+                        transparency = {
+                            type: 'UseAlphaValue',
+                            alpha: this._currentAlpha,
+                        };
+                    }
+                } else {
+                    transparency = {
+                        type: 'UseAlphaMap',
+                        path: this._currentTransparencyTexture,
+                        channel: EImageChannel.R,
+                    };
+                }
+
+                this._materials.set(this._currentMaterialName, {
                     type: MaterialType.textured,
                     path: this._currentTexture,
-                    alphaPath: this._currentTransparencyTexture === '' ? undefined : this._currentTransparencyTexture,
-                    alphaFactor: this._currentAlpha,
-                };
+                    transparency: transparency,
+                    extension: 'repeat',
+                    interpolation: 'linear',
+                    needsAttention: false,
+                });
                 this._currentTransparencyTexture = '';
             } else {
-                this._materials[this._currentMaterialName] = {
+                this._materials.set(this._currentMaterialName, {
                     type: MaterialType.solid,
-                    colour: this._currentColour,
-                };
+                    colour: {
+                        r: this._currentColour.r,
+                        g: this._currentColour.g,
+                        b: this._currentColour.b,
+                        a: this._currentAlpha ?? 1.0,
+                    },
+                    canBeTextured: false,
+                    needsAttention: false,
+                });
             }
             this._currentAlpha = 1.0;
         }

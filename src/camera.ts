@@ -43,10 +43,10 @@ export class ArcballCamera {
         this._zNear = 0.5;
         this._zFar = 100.0;
         this._aspect = this._gl.canvas.width / this._gl.canvas.height;
-        this._distance = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS, 0.025);
-        this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, 0.025);
-        this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, 0.025);
-        this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), 0.025);
+        this._distance = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_DISTANCE_UNITS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
+        this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), AppConfig.Get.CAMERA_SMOOTHING);
 
         this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);
@@ -162,11 +162,11 @@ export class ArcballCamera {
             const azimuth90 = between(this._azimuth.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
             const azimuth180 = between(this._azimuth.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
             const azimuth270 = between(this._azimuth.getTarget(), 3*Math.PI/2 - axisSnapRadius, 3*Math.PI/2 + axisSnapRadius);
-            
+
             const elevationTop = between(this._elevation.getTarget(), 0.0 - axisSnapRadius, 0.0 + axisSnapRadius);
             const elevationMiddle = between(this._elevation.getTarget(), Math.PI/2 - axisSnapRadius, Math.PI/2 + axisSnapRadius);
             const elevationBottom = between(this._elevation.getTarget(), Math.PI - axisSnapRadius, Math.PI + axisSnapRadius);
-            
+
             if (elevationMiddle) {
                 if (azimuth0) {
                     this._azimuth.setTarget(0);
@@ -223,14 +223,20 @@ export class ArcballCamera {
         return this.isOrthographic() && this._angleSnap;
     }
 
-    getCameraPosition(azimuthOffset: number, elevationOffset: number) {
+    getCameraPosition(azimuthOffset: number, elevationOffset: number): Vector3 {
         const azimuth = this._azimuth.getActual() + azimuthOffset;
         const elevation = this._elevation.getActual() + elevationOffset;
-        return [
+        return new Vector3(
             this._distance.getActual() * Math.cos(azimuth) * -Math.sin(elevation),
             this._distance.getActual() * Math.cos(elevation),
             this._distance.getActual() * Math.sin(azimuth) * -Math.sin(elevation),
-        ];
+        );
+    }
+
+    public getCameraDirection(): Vector3 {
+        return this.getCameraPosition(0.0, 0.0)
+            .sub(this._target.getActual())
+            .normalise();
     }
 
     public onMouseDown(e: MouseEvent) {

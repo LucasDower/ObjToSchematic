@@ -9,10 +9,12 @@ ObjToSchematic-darwin-x64
 /res/palettes/empty.palette
 /dist
 /dev
+/gen
 /tools/blocks
 /tools/models
 /tests/out
 /logs/
+/release/
 notes.txt
 *.DS_Store
 .dependency-cruiser.js

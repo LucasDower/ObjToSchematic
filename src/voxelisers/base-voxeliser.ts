@@ -1,9 +1,10 @@
-import { RGBA } from '../colour';
-import { Mesh } from '../mesh';
+import { RGBA, RGBAColours, RGBAUtil } from '../colour';
+import { AppConfig } from '../config';
+import { MaterialType, Mesh } from '../mesh';
 import { StatusHandler } from '../status';
-import { TextureFiltering } from '../texture';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
+import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
 import { VoxelMesh } from '../voxel_mesh';
 import { VoxeliseParams } from '../worker_types';
@@ -22,7 +23,35 @@ export abstract class IVoxeliser {
 
     protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh;
 
-    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, filtering: TextureFiltering): (RGBA | undefined) {
+    /**
+     * `Location` should be in block-space.
+     */
+    protected _getVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3, multisample: boolean): RGBA {
+        const material = mesh.getMaterialByName(materialName);
+        ASSERT(material !== undefined);
+
+        if (material.type === MaterialType.solid) {
+            return RGBAUtil.copy(material.colour);
+        }
+
+        const samples: RGBA[] = [];
+        for (let i = 0; i < (multisample ? AppConfig.Get.MULTISAMPLE_COUNT : 1); ++i) {
+            const offset = Vector3.random().sub(0.5);
+            samples.push(this._internalGetVoxelColour(
+                mesh,
+                triangle,
+                materialName,
+                offset.add(location),
+            ));
+        }
+
+        return RGBAUtil.average(...samples);
+    }
+
+    private _internalGetVoxelColour(mesh: Mesh, triangle: UVTriangle, materialName: string, location: Vector3) {
+        const material = mesh.getMaterialByName(materialName);
+        ASSERT(material !== undefined && material.type === MaterialType.textured);
+
         const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
         const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
         const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();
@@ -36,11 +65,11 @@ export abstract class IVoxeliser {
             triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
             triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
         );
-        
+
         if (isNaN(uv.u) || isNaN(uv.v)) {
-            return undefined;
+            RGBAUtil.copy(RGBAColours.MAGENTA);
         }
-        
-        return mesh.sampleMaterial(materialName, uv, filtering);
+
+        return mesh.sampleTextureMaterial(materialName, uv);
     }
 }

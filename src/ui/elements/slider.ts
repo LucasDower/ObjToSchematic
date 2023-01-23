@@ -1,49 +1,89 @@
 import { clamp, mapRange, wayThrough } from '../../math';
 import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { UIUtil } from '../../util/ui_util';
+import { ConfigUIElement } from './config_element';
 
-export class SliderElement extends LabelledElement<number> {
+export type TSliderParams = {
+    min: number,
+    max: number,
+    value: number,
+    decimals: number,
+    step: number,
+}
+
+export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
     private _min: number;
     private _max: number;
     private _decimals: number;
-    private _dragging: boolean;
     private _step: number;
+    private _dragging: boolean;
     private _hovering: boolean;
+    private _internalValue: number;
+    private _small: boolean;
 
-    public constructor(label: string, min: number, max: number, decimals: number, value: number, step: number) {
-        super(label);
-        this._min = min;
-        this._max = max;
-        this._decimals = decimals;
-        this._value = value;
-        this._step = step;
+    public constructor() {
+        super();
+        this._min = 0;
+        this._max = 1;
+        this._decimals = 1;
+        this._step = 0.1;
+        this._internalValue = 0.5;
         this._dragging = false;
         this._hovering = false;
+        this._small = false;
     }
 
-    public generateInnerHTML() {
-        const norm = (this.getValue() - this._min) / (this._max - this._min);
-        return `
-            <div style="display: flex; flex-direction: row;">
-                <div class="slider-value" id="${this._id + '-value'}">
-                    ${this._value?.toFixed(this._decimals)}
-                </div>
-                <div class="new-slider" id="${this._id}" style="flex-grow: 1;">
-                    <div class="new-slider-bar" id="${this._id}-bar"style="width: ${norm * 100}%;">
-                    </div>
-                </div>
-            </div>
-        `;
+    public override setDefaultValue(value: number) {
+        super.setDefaultValue(value);
+        this._internalValue = value;
+        return this;
     }
 
-    public registerEvents() {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        ASSERT(element !== null);
+    public setSmall() {
+        this._small = true;
+        return this;
+    }
+
+    /**
+     * Set the minimum value the slider can be set to.
+     */
+    public setMin(min: number) {
+        this._min = min;
+        return this;
+    }
+
+    /**
+     * Set the maximum value the slider can be set to.
+     */
+    public setMax(max: number) {
+        this._max = max;
+        return this;
+    }
+
+    /**
+     * Set the number of decimals to display the value to.
+     */
+    public setDecimals(decimals: number) {
+        this._decimals = decimals;
+        return this;
+    }
+
+    /**
+     * Set the step the value is increased/decreased by.
+     */
+    public setStep(step: number) {
+        this._step = step;
+        return this;
+    }
+
+    public override registerEvents() {
+        const element = this._getElement();
+        const elementBar = UIUtil.getElementById(this._getSliderBarId());
+        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
 
         element.onmouseenter = () => {
             this._hovering = true;
-            if (this._isEnabled) {
+            if (this.getEnabled()) {
                 element.classList.add('new-slider-hover');
                 elementBar.classList.add('new-slider-bar-hover');
             }
@@ -79,73 +119,107 @@ export class SliderElement extends LabelledElement<number> {
         });
 
         element.addEventListener('wheel', (e: WheelEvent) => {
-            if (!this._dragging && this._isEnabled) {
+            if (!this._dragging && this.getEnabled()) {
                 e.preventDefault();
                 this._onScrollSlider(e);
             }
         });
+
+        elementValue.addEventListener('change', () => {
+            this._onTypedValue();
+        });
     }
 
-    private _onScrollSlider(e: WheelEvent) {
-        if (!this._isEnabled) {
-            return;
-        }
-        ASSERT(this._value);
+    public override _generateInnerHTML() {
+        const norm = (this._internalValue - this._min) / (this._max - this._min);
 
-        this._value -= (e.deltaY / 150) * this._step;
-        this._value = clamp(this._value, this._min, this._max);
-
-        this._onValueUpdated();
+        return `
+            <input class="${this._small ? 'slider-height-small' : 'slider-height-normal'}" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <div class="new-slider ${this._small ? 'slider-bar-height-small' : 'slider-bar-height-normal'} " id="${this._getId()}" style="flex-grow: 1;">
+                <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
+                </div>
+            </div>
+        `;
     }
 
-    private _onDragSlider(e: MouseEvent) {
-        if (!this._isEnabled) {
-            return;
-        }
-
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        const box = element.getBoundingClientRect();
-        const left = box.x;
-        const right = box.x + box.width;
-        
-        this._value = mapRange(e.clientX, left, right, this._min, this._max);
-        this._value = clamp(this._value, this._min, this._max);
-
-        this._onValueUpdated();
-    }
-
-    private _onValueUpdated() {
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        ASSERT(elementBar !== null && elementValue !== null);
-
-        const norm = wayThrough(this.getValue(), this._min, this._max);
-        elementBar.style.width = `${norm * 100}%`;
-        elementValue.innerHTML = this.getValue().toFixed(this._decimals);
-    }
-
-    public getDisplayValue() {
-        return parseFloat(this.getValue().toFixed(this._decimals));
-    }
-
-    protected _onEnabledChanged() {
+    protected override _onEnabledChanged() {
         super._onEnabledChanged();
 
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        const elementBar = document.getElementById(this._id + '-bar') as HTMLDivElement;
-        const elementValue = document.getElementById(this._id + '-value') as HTMLDivElement;
-        ASSERT(element !== null && elementBar !== null && elementValue !== null);
+        const element = this._getElement();
+        const elementBar = UIUtil.getElementById(this._getSliderBarId());
+        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
 
-        if (this._isEnabled) {
+        if (this.getEnabled()) {
             element.classList.remove('new-slider-disabled');
             elementBar.classList.remove('new-slider-bar-disabled');
-            elementValue.classList.remove('slider-value-disabled');
+            elementValue.disabled = false;
         } else {
             element.classList.add('new-slider-disabled');
             elementBar.classList.add('new-slider-bar-disabled');
-            elementValue.classList.add('slider-value-disabled');
+            elementValue.disabled = true;
         }
+    }
+
+    protected override _onValueChanged(): void {
+        const percentage = wayThrough(this.getValue(), this._min, this._max);
+        ASSERT(percentage >= 0.0 && percentage <= 1.0);
+
+        UIUtil.getElementById(this._getSliderBarId()).style.width = `${percentage * 100}%`;
+        (UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement).value = this.getValue().toFixed(this._decimals);
+    }
+
+    private _onScrollSlider(e: WheelEvent) {
+        if (!this.getEnabled()) {
+            return;
+        }
+
+        this._internalValue -= (e.deltaY / 150) * this._step;
+        this._internalValue = clamp(this._internalValue, this._min, this._max);
+
+        this._onInternalValueUpdated();
+    }
+
+    private _onDragSlider(e: MouseEvent) {
+        if (!this.getEnabled()) {
+            return;
+        }
+
+        const box = this._getElement().getBoundingClientRect();
+        const left = box.x;
+        const right = box.x + box.width;
+
+        this._internalValue = mapRange(e.clientX, left, right, this._min, this._max);
+        this._internalValue = clamp(this._internalValue, this._min, this._max);
+
+        this._onInternalValueUpdated();
+    }
+
+    private _onTypedValue() {
+        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
+
+        const typedNumber = parseFloat(elementValue.value);
+        if (!isNaN(typedNumber)) {
+            this._internalValue = clamp(typedNumber, this._min, this._max);
+        }
+        this._onInternalValueUpdated();
+    }
+
+    private _onInternalValueUpdated() {
+        const displayString = this._internalValue!.toFixed(this._decimals);
+        this._setValue(parseFloat(displayString));
+    }
+
+    /**
+     * Gets the ID of the DOM element for the slider's value.
+     */
+    private _getSliderValueId() {
+        return this._getId() + '-value';
+    }
+
+    /**
+     * Gets the ID of the DOM element for the slider's bar.
+     */
+    private _getSliderBarId() {
+        return this._getId() + '-bar';
     }
 }

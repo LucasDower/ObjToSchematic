@@ -7,15 +7,21 @@ import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory, TExporters } from './exporters/exporters';
-import { Renderer } from './renderer';
+import { MaterialMapManager } from './material-map';
+import { MaterialType } from './mesh';
+import { MeshType, Renderer } from './renderer';
 import { StatusHandler, StatusMessage } from './status';
-import { TextureFiltering } from './texture';
 import { OutputStyle } from './ui/elements/output';
+import { SolidMaterialElement } from './ui/elements/solid_material_element';
+import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
+import { FileUtil } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
+import { AppPaths } from './util/path_util';
+import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
@@ -23,8 +29,12 @@ export class AppContext {
     private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
+    public maxConstraint?: Vector3;
+    private _materialManager: MaterialMapManager;
 
     public constructor() {
+        this._materialManager = new MaterialMapManager(new Map());
+
         Logger.Get.enableLogToFile();
         Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
@@ -32,6 +42,8 @@ export class AppContext {
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
+
+        FileUtil.rmdirIfExist(AppPaths.Get.gen);
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
@@ -41,7 +53,7 @@ export class AppContext {
         this._ui = new UI(this);
         this._ui.build();
         this._ui.registerEvents();
-        this._ui.disable(EAction.Voxelise);
+        this._ui.disable(EAction.Materials);
 
         this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
         this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
@@ -144,7 +156,7 @@ export class AppContext {
         const builder = new UIMessageBuilder();
         builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
 
-        builder.addItem('action', infoStatuses, 'success');
+        builder.addItem('action', infoStatuses, 'none');
         builder.addItem('action', warningStatuses, 'warning');
 
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
@@ -154,6 +166,8 @@ export class AppContext {
         switch (action) {
             case EAction.Import:
                 return this._import();
+            case EAction.Materials:
+                return this._materials();
             case EAction.Voxelise:
                 return this._voxelise();
             case EAction.Assign:
@@ -173,7 +187,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getCachedValue(),
+                filepath: uiElements.input.getValue(),
+                rotation: uiElements.rotation.getValue(),
             },
         };
 
@@ -183,6 +198,15 @@ export class AppContext {
             ASSERT(payload.action === 'Import');
             const outputElement = this._ui.getActionOutput(EAction.Import);
 
+            const dimensions = new Vector3(
+                payload.result.dimensions.x,
+                payload.result.dimensions.y,
+                payload.result.dimensions.z,
+            );
+            dimensions.mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
+            this.maxConstraint = dimensions;
+            this._materialManager = new MaterialMapManager(payload.result.materials);
+
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
                 outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
                 this._workerController.addJob(this._renderMesh());
@@ -190,9 +214,81 @@ export class AppContext {
                 const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
                 outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
             }
+
+            this._updateMaterialsAction();
+        };
+        callback.bind(this);
+
+        return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _materials(): TWorkerJob {
+        this._ui.getActionOutput(EAction.Materials)
+            .setTaskInProgress('action', '[Materials]: Loading...');
+
+        const payload: TToWorkerMessage = {
+            action: 'SetMaterials',
+            params: {
+                materials: this._materialManager.materials,
+            },
+        };
+
+        const callback = (payload: TFromWorkerMessage) => {
+            // This callback is managed through `AppContext::do`, therefore
+            // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'SetMaterials');
+            const outputElement = this._ui.getActionOutput(EAction.Materials);
+            outputElement.setTaskComplete('action', '[Materials]: Updated', [], 'success');
+
+            // The material map shouldn't need updating because the materials
+            // returned from the worker **should** be the same as the materials
+            // sent.
+            {
+                //this._materialMap = payload.result.materials;
+                //this._onMaterialMapChanged();
+            }
+
+            payload.result.materialsChanged.forEach((materialName) => {
+                const material = this._materialManager.materials.get(materialName);
+                ASSERT(material !== undefined);
+                Renderer.Get.recreateMaterialBuffer(materialName, material);
+                Renderer.Get.setModelToUse(MeshType.TriangleMesh);
+            });
+
+            this._ui.enableTo(EAction.Voxelise);
         };
 
         return { id: 'Import', payload: payload, callback: callback };
+    }
+
+    private _updateMaterialsAction() {
+        this._ui.layoutDull['materials'].elements = {};
+        this._ui.layoutDull['materials'].elementsOrder = [];
+
+        this._materialManager.materials.forEach((material, materialName) => {
+            if (material.type === MaterialType.solid) {
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.textured);
+                        this._updateMaterialsAction();
+                    });
+            } else {
+                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
+                    .setLabel(materialName)
+                    .onChangeTypeDelegate(() => {
+                        this._materialManager.changeMaterialType(materialName, MaterialType.solid);
+                        this._updateMaterialsAction();
+                    })
+                    .onChangeTransparencyTypeDelegate((newTransparency) => {
+                        this._materialManager.changeTransparencyType(materialName, newTransparency);
+                        this._updateMaterialsAction();
+                    });
+            }
+
+            this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
+        });
+        this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
     }
 
     private _renderMesh(): TWorkerJob {
@@ -244,12 +340,12 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
             params: {
-                voxeliser: uiElements.voxeliser.getCachedValue(),
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
-                useMultisampleColouring: uiElements.multisampleColouring.getCachedValue() === 'on',
-                textureFiltering: uiElements.textureFiltering.getCachedValue() === 'linear' ? TextureFiltering.Linear : TextureFiltering.Nearest,
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-                voxelOverlapRule: uiElements.voxelOverlapRule.getCachedValue(),
+                constraintAxis: uiElements.constraintAxis.getValue(),
+                voxeliser: uiElements.voxeliser.getValue(),
+                size: uiElements.size.getValue(),
+                useMultisampleColouring: uiElements.multisampleColouring.getValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                voxelOverlapRule: uiElements.voxelOverlapRule.getValue(),
             },
         };
 
@@ -272,8 +368,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
             params: {
-                enableAmbientOcclusion: uiElements.ambientOcclusion.getCachedValue() === 'on',
-                desiredHeight: uiElements.desiredHeight.getCachedValue(),
+                enableAmbientOcclusion: uiElements.ambientOcclusion.getValue(),
+                desiredHeight: uiElements.size.getValue(),
             },
         };
 
@@ -323,15 +419,21 @@ export class AppContext {
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
 
+        Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getValue());
+
         const payload: TToWorkerMessage = {
             action: 'Assign',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
-                blockPalette: uiElements.blockPalette.getCachedValue(),
-                blockAssigner: uiElements.dithering.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
+                blockPalette: uiElements.blockPalette.getValue(),
+                dithering: uiElements.dithering.getValue(),
                 colourSpace: ColourSpace.RGB,
-                fallable: uiElements.fallable.getCachedValue() as FallableBehaviour,
-                resolution: Math.pow(2, uiElements.colourAccuracy.getCachedValue()),
+                fallable: uiElements.fallable.getValue() as FallableBehaviour,
+                resolution: Math.pow(2, uiElements.colourAccuracy.getValue()),
+                calculateLighting: uiElements.calculateLighting.getValue(),
+                lightThreshold: uiElements.lightThreshold.getValue(),
+                contextualAveraging: uiElements.contextualAveraging.getValue(),
+                errorWeight: uiElements.errorWeight.getValue() / 10,
             },
         };
 
@@ -355,7 +457,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'RenderNextBlockMeshChunk',
             params: {
-                textureAtlas: uiElements.textureAtlas.getCachedValue(),
+                textureAtlas: uiElements.textureAtlas.getValue(),
             },
         };
 
@@ -400,7 +502,7 @@ export class AppContext {
     }
 
     private _export(): (TWorkerJob | undefined) {
-        const exporterID: TExporters = this._ui.layout.export.elements.export.getCachedValue();
+        const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
         const filepath = remote.dialog.showSaveDialogSync({
@@ -435,7 +537,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
-        this._ui.tick();
+        this._ui.tick(this._workerController.isBusy());
         Renderer.Get.draw();
     }
 }

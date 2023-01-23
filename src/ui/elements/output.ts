@@ -60,6 +60,7 @@ export class OutputElement {
         ASSERT(element !== null);
 
         element.innerHTML = this._message.toString();
+        this._message.postBuild();
     }
 
     public setStyle(style: OutputStyle) {

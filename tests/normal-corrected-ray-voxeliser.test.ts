@@ -2,7 +2,6 @@ import path from 'path';
 
 import { RGBAColours } from '../src/colour';
 import { ObjImporter } from '../src/importers/obj_importer';
-import { TextureFiltering } from '../src/texture';
 import { ASSERT } from '../src/util/error_util';
 import { Vector3 } from '../src/vector';
 import { NormalCorrectedRayVoxeliser } from '../src/voxelisers/normal-corrected-ray-voxeliser';
@@ -14,13 +13,13 @@ test('Voxelise solid 2x2 cube', () => {
     const importer = new ObjImporter();
     importer.parseFile(path.join(__dirname, './data/cube.obj'));
     const mesh = importer.toMesh();
-    mesh.processMesh();
+    mesh.processMesh(0, 0, 0);
 
     const voxeliser = new NormalCorrectedRayVoxeliser();
     const voxelMesh = voxeliser.voxelise(mesh, {
-        desiredHeight: 2,
+        constraintAxis: 'y',
+        size: 2,
         useMultisampleColouring: false,
-        textureFiltering: TextureFiltering.Nearest,
         enableAmbientOcclusion: false,
         voxelOverlapRule: 'average',
         voxeliser: 'ncrb',

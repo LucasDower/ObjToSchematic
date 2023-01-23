@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import { RGBA } from './colour';
 import { LOG } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
@@ -30,10 +31,17 @@ export class AppConfig {
     public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
     public readonly CAMERA_SENSITIVITY_ROTATION: number;
     public readonly CAMERA_SENSITIVITY_ZOOM: number;
+    public readonly CONSTRAINT_MAXIMUM_HEIGHT: number;
+    public readonly DITHER_MAGNITUDE: number;
+    public readonly SMOOTHNESS_MAX: number;
+    public readonly CAMERA_SMOOTHING: number;
+    public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA;
+    public readonly FRESNEL_EXPONENT: number;
+    public readonly FRESNEL_MIX: number;
 
     private constructor() {
         this.RELEASE_MODE = true;
-        this.RELEASE_VERSION = '0.6.1r';
+        this.RELEASE_VERSION = '0.7.0r';
         this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
         const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
@@ -41,7 +49,7 @@ export class AppConfig {
 
         this.AMBIENT_OCCLUSION_OVERRIDE_CORNER = configJSON.AMBIENT_OCCLUSION_OVERRIDE_CORNER;
         this.LOG_TO_FILE = configJSON.LOG_TO_FILE;
-        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD;
+        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD && !process.argv.includes('--OTS-ENABLE-DEBUG');
         this.MULTISAMPLE_COUNT = configJSON.MULTISAMPLE_COUNT;
         this.OLD_SPACE_SIZE_MB = configJSON.OLD_SPACE_SIZE_MB;
         this.ALPHA_BIAS = configJSON.ALPHA_BIAS;
@@ -54,6 +62,18 @@ export class AppConfig {
         this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
         this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
         this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
+        this.CONSTRAINT_MAXIMUM_HEIGHT = configJSON.CONSTRAINT_MAXIMUM_HEIGHT;
+        this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
+        this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
+        this.CAMERA_SMOOTHING = configJSON.CAMERA_SMOOTHING;
+        this.VIEWPORT_BACKGROUND_COLOUR = {
+            r: configJSON.VIEWPORT_BACKGROUND_COLOUR.R,
+            g: configJSON.VIEWPORT_BACKGROUND_COLOUR.G,
+            b: configJSON.VIEWPORT_BACKGROUND_COLOUR.B,
+            a: 1.0,
+        };
+        this.FRESNEL_EXPONENT = configJSON.FRESNEL_EXPONENT;
+        this.FRESNEL_MIX = configJSON.FRESNEL_MIX;
     }
 
     public dumpConfig() {

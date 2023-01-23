@@ -1,13 +1,13 @@
 
 /**
-                ,d                            
-                88                            
-    ,adPPYba, MM88MMM ,adPPYba,  8b,dPPYba,   
-    I8[    ""   88   a8"     "8a 88P'    "8a  
-     `"Y8ba,    88   8b       d8 88       d8  
-    aa    ]8I   88,  "8a,   ,a8" 88b,   ,a8"  
-    `"YbbdP"'   "Y888 `"YbbdP"'  88`YbbdP"'   
-                                 88           
+                ,d
+                88
+    ,adPPYba, MM88MMM ,adPPYba,  8b,dPPYba,
+    I8[    ""   88   a8"     "8a 88P'    "8a
+     `"Y8ba,    88   8b       d8 88       d8
+    aa    ]8I   88,  "8a,   ,a8" 88b,   ,a8"
+    `"YbbdP"'   "Y888 `"YbbdP"'  88`YbbdP"'
+                                 88
                                  88
 
     If you're interested in the code, I recommend starting in /src/AppContext.ts
@@ -32,6 +32,12 @@ function createWindow() {
     const width = 1400;
     const height = 800;
 
+    // Create list of args to pass from main process to render process
+    const additionalArgs = [];
+    if (process.argv.includes('--OTS-ENABLE-DEBUG')) {
+        additionalArgs.push('--OTS-ENABLE-DEBUG');
+    }
+
     // const appIcon = new Tray("../resources/icon.png");
     mainWindow = new BrowserWindow({
         width: width,
@@ -44,6 +50,7 @@ function createWindow() {
             nodeIntegrationInWorker: true,
             contextIsolation: false,
             enableRemoteModule: true,
+            additionalArguments: additionalArgs,
         },
     });
     if (AppConfig.Get.RELEASE_MODE) {
@@ -66,18 +73,18 @@ function createWindow() {
                 .execSync('git rev-parse --abbrev-ref HEAD')
                 .toString()
                 .replace('\n', '');
-            
+
             const commitHash: (string | Buffer) = require('child_process')
                 .execSync('git rev-parse --short HEAD')
                 .toString()
                 .replace('\n', '');
-            
-            mainWindow.setTitle(`${baseTitle} (git ${branchName.toString()}${commitHash.toString().trim()})`);
+
+            mainWindow.setTitle(`${baseTitle} (git ${branchName.toString()} ${commitHash.toString().trim()})`);
         } catch (e: any) {
             mainWindow.setTitle(`${baseTitle} (git)`);
         }
     }
-    
+
 
     // Open the DevTools.
     // mainWindow.webContents.openDevTools();

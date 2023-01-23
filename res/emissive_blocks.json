@@ -1,0 +1,15 @@
+{
+    "emissive_blocks": [
+        "minecraft:respawn_anchor",
+        "minecraft:magma_block",
+        "minecraft:sculk_catalyst",
+        "minecraft:crying_obsidian",
+        "minecraft:shroomlight",
+        "minecraft:sea_lantern",
+        "minecraft:jack_o_lantern",
+        "minecraft:glowstone",
+        "minecraft:pearlescent_froglight",
+        "minecraft:verdant_froglight",
+        "minecraft:ochre_froglight"
+    ]
+}

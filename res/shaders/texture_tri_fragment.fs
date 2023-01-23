@@ -1,13 +1,17 @@
 precision mediump float;
 
+uniform vec3 u_lightWorldPos;
+uniform vec3 u_cameraDir;
+
 uniform sampler2D u_texture;
 uniform sampler2D u_alpha;
-uniform bool u_useAlphaMap;
-uniform bool u_useAlphaChannel;
+uniform int u_alphaChannel;
 uniform float u_alphaFactor;
+uniform float u_fresnelExponent;
+uniform float u_fresnelMix;
 
-varying float v_lighting;
 varying vec2 v_texcoord;
+varying vec3 v_normal;
 
 float dither8x8(vec2 position, float alpha) {
   int x = int(mod(position.x, 8.0));
@@ -101,10 +105,17 @@ const float ditherThreshold[64] = float[64](
 void main() {
   vec2 tex = vec2(v_texcoord.x, 1.0 - v_texcoord.y);
   vec4 diffuse = texture2D(u_texture, tex).rgba;
+  vec4 alphaSample = texture2D(u_alpha, tex);
 
-  float alpha = diffuse.a;
-  if (u_useAlphaMap) {
-    alpha = u_useAlphaChannel ? texture2D(u_alpha, tex).a : texture2D(u_alpha, tex).r;
+  float alpha = 1.0;
+  if (u_alphaChannel == 0) {
+    alpha = alphaSample.r;
+  } else if (u_alphaChannel == 1) {
+    alpha = alphaSample.g;
+  } else if (u_alphaChannel == 2) {
+    alpha = alphaSample.b;
+  } else if (u_alphaChannel == 3) {
+    alpha = alphaSample.a;
   }
 
   alpha *= u_alphaFactor;
@@ -115,5 +126,14 @@ void main() {
     discard;
   }
 
-  gl_FragColor = vec4(diffuse.rgb * v_lighting, 1.0);
+  float lighting = abs(dot(v_normal, normalize(u_lightWorldPos)));
+  lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
+
+  vec3 preFresnelColour = diffuse.rgb * lighting;
+  float fresnel = 1.0 - abs(dot(u_cameraDir, v_normal));
+  float fresnelFactor = pow(fresnel, u_fresnelExponent) * u_fresnelMix;
+
+  vec3 postFresnelColour = mix(preFresnelColour, vec3(1.0, 1.0, 1.0), fresnelFactor);
+
+  gl_FragColor = vec4(postFresnelColour, 1.0);
 }

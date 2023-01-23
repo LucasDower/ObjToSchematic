@@ -1,11 +1,9 @@
 import { Bounds } from '../bounds';
-import { RGBA, RGBAUtil } from '../colour';
-import { AppConfig } from '../config';
-import { MaterialType, Mesh } from '../mesh';
+import { Mesh } from '../mesh';
 import { ProgressManager } from '../progress';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
-import { Triangle, UVTriangle } from '../triangle';
-import { UV } from '../util';
+import { UVTriangle } from '../triangle';
+import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
 import { VoxelMesh } from '../voxel_mesh';
 import { VoxeliseParams } from '../worker_types';
@@ -25,8 +23,23 @@ export class RayVoxeliser extends IVoxeliser {
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
 
-        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+        const meshDimensions = mesh.getBounds().getDimensions();
+        let scale: number;
+        let offset = new Vector3(0.0, 0.0, 0.0);
+        switch (voxeliseParams.constraintAxis) {
+            case 'x':
+                scale = (voxeliseParams.size - 1) / meshDimensions.x;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'y':
+                scale = (voxeliseParams.size - 1) / meshDimensions.y;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'z':
+                scale = (voxeliseParams.size - 1) / meshDimensions.z;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                break;
+        }
 
         mesh.setTransform((vertex: Vector3) => {
             return vertex.copy().mulScalar(scale).add(offset);
@@ -51,7 +64,11 @@ export class RayVoxeliser extends IVoxeliser {
     private _voxeliseTri(triangle: UVTriangle, materialName: string) {
         const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2);
 
-        rayList.forEach((ray) => {
+        ASSERT(this._mesh !== undefined);
+        ASSERT(this._voxeliseParams !== undefined);
+        ASSERT(this._voxelMesh !== undefined);
+
+        for (const ray of rayList) {
             const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
             if (intersection) {
                 let voxelPosition: Vector3;
@@ -67,40 +84,17 @@ export class RayVoxeliser extends IVoxeliser {
                         break;
                 }
 
-                let voxelColour: RGBA;
-                if (this._voxeliseParams!.useMultisampleColouring && this._mesh!.getMaterialByName(materialName).type === MaterialType.textured) {
-                    const samples: RGBA[] = [];
-                    for (let i = 0; i < AppConfig.Get.MULTISAMPLE_COUNT; ++i) {
-                        const samplePosition = Vector3.add(voxelPosition, Vector3.random().add(-0.5));
-                        samples.push(this.__getVoxelColour(triangle, materialName, samplePosition));
-                    }
-                    voxelColour = RGBAUtil.average(...samples);
-                } else {
-                    voxelColour = this.__getVoxelColour(triangle, materialName, voxelPosition);
-                }
+                const voxelColour = this._getVoxelColour(
+                    this._mesh,
+                    triangle,
+                    materialName,
+                    voxelPosition,
+                    this._voxeliseParams.useMultisampleColouring,
+                );
 
-                this._voxelMesh!.addVoxel(voxelPosition, voxelColour);
+                this._voxelMesh.addVoxel(voxelPosition, voxelColour);
             }
-        });
-    }
-
-    // TODO: Remove
-    private __getVoxelColour(triangle: UVTriangle, materialName: string, location: Vector3): RGBA {
-        const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
-        const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
-        const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();
-        const total = area01 + area12 + area20;
-
-        const w0 = area12 / total;
-        const w1 = area20 / total;
-        const w2 = area01 / total;
-
-        const uv = new UV(
-            triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
-            triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
-        );
-
-        return this._mesh!.sampleMaterial(materialName, uv, this._voxeliseParams!.textureFiltering);
+        };
     }
 
     private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3): Array<Ray> {

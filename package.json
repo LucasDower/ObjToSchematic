@@ -1,7 +1,7 @@
 {
   "name": "objtoschematic",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
   "main": "./dist/src/main.js",
   "engines": {
@@ -15,9 +15,9 @@
     "atlas": "node ./dist/tools/build-atlas.js",
     "palette": "node ./dist/tools/build-palette.js",
     "headless": "tsc && node ./dist/tools/run-headless.js",
-    "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --app-version=0.6.0 --prune=true",
-    "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --app-version=0.6.0 --prune=true",
-    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --app-version=0.6.0 --prune=true"
+    "package:win": "electron-packager . ObjToSchematic --overwrite --platform=win32 --arch=x64 --icon=res/static/icon.ico --prune=true --out=release",
+    "package:linux": "electron-packager . ObjToSchematic --overwrite --platform=linux --arch=x64 --icon=res/static/icon.png --prune=true --out=release",
+    "package:macos": "electron-packager . ObjToSchematic --overwrite --platform=darwin --arch=x64 --icon=res/static/icon.icns --prune=true --out=release"
   },
   "repository": {
     "type": "git",
@@ -62,6 +62,7 @@
     "jpeg-js": "^0.4.4",
     "pngjs": "^6.0.0",
     "prismarine-nbt": "^1.6.0",
+    "tga": "^1.0.7",
     "twgl.js": "^4.19.1",
     "varint-array": "^0.0.0"
   }

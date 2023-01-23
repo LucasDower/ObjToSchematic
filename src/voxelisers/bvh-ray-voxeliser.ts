@@ -17,8 +17,24 @@ const bvhtree = require('bvh-tree');
 export class BVHRayVoxeliser extends IVoxeliser {
     protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
-        const scale = (voxeliseParams.desiredHeight - 1) / Mesh.desiredHeight;
-        const offset = (voxeliseParams.desiredHeight % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+
+        const meshDimensions = mesh.getBounds().getDimensions();
+        let scale: number;
+        let offset = new Vector3(0.0, 0.0, 0.0);
+        switch (voxeliseParams.constraintAxis) {
+            case 'x':
+                scale = (voxeliseParams.size - 1) / meshDimensions.x;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'y':
+                scale = (voxeliseParams.size - 1) / meshDimensions.y;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                break;
+            case 'z':
+                scale = (voxeliseParams.size - 1) / meshDimensions.z;
+                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                break;
+        }
 
         mesh.setTransform((vertex: Vector3) => {
             return vertex.copy().mulScalar(scale).add(offset);
@@ -87,19 +103,16 @@ export class BVHRayVoxeliser extends IVoxeliser {
             for (const intersection of intersections) {
                 const point = intersection.intersectionPoint;
                 const position = new Vector3(point.x, point.y, point.z);
-                position.round();
 
                 const voxelColour = this._getVoxelColour(
                     mesh,
                     mesh.getUVTriangle(intersection.triangleIndex),
                     mesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
-                    voxeliseParams.textureFiltering,
+                    voxeliseParams.useMultisampleColouring,
                 );
 
-                if (voxelColour) {
-                    voxelMesh.addVoxel(position, voxelColour);
-                }
+                voxelMesh.addVoxel(position, voxelColour);
             }
         }
         ProgressManager.Get.end(taskHandle);

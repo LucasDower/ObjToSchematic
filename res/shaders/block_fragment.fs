@@ -2,11 +2,13 @@ precision mediump float;
 
 uniform sampler2D u_texture;
 uniform float u_atlasSize;
+uniform bool u_nightVision;
 
 varying float v_lighting;
 varying vec4 v_occlusion;
 varying vec2 v_texcoord;
 varying vec2 v_blockTexcoord;
+varying float v_blockLighting;
 
 float dither8x8(vec2 position, float alpha) {
   int x = int(mod(position.x, 8.0));
@@ -103,5 +105,5 @@ void main() {
     discard;
   }
 
-  gl_FragColor = vec4(diffuse.rgb * v_lighting * g, 1.0);
+  gl_FragColor = vec4(diffuse.rgb * v_lighting * g * (u_nightVision ? 1.0 : v_blockLighting), 1.0);
 }

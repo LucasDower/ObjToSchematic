@@ -1,200 +1,199 @@
 import { ASSERT } from '../../util/error_util';
-import { LOG } from '../../util/log_util';
+import { TAxis } from '../../util/type_util';
+import { UIUtil } from '../../util/ui_util';
 import { Vector3 } from '../../vector';
-import { LabelledElement } from './labelled_element';
+import { ConfigUIElement } from './config_element';
 
-/* eslint-disable */
-enum EAxis {
-    None = 'none',
-    X = 'x',
-    Y = 'y',
-    Z = 'z',
-};
-/* eslint-enable */
-
-export class VectorSpinboxElement extends LabelledElement<Vector3> {
-    private _mouseover: EAxis;
-    private _dragging: EAxis;
+export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElement> {
+    private _mouseover: TAxis | null;
+    private _dragging: TAxis | null;
     private _lastClientX: number;
+    private _showY: boolean;
+    private _wrap: number;
+    private _units: string | null;
 
-    public constructor(label: string, decimals: number, value: Vector3) {
-        super(label);
-        this._value = value;
-        this._mouseover = EAxis.None;
-        this._dragging = EAxis.None;
+    public constructor() {
+        super(new Vector3(0, 0, 0));
+        this._mouseover = null;
+        this._dragging = null;
         this._lastClientX = 0.0;
+        this._showY = true;
+        this._wrap = Infinity;
+        this._units = null;
     }
 
-    public generateInnerHTML() {
-        ASSERT(this._value, 'Value not found');
-        return `
-            <div style="display: flex; flex-direction: row;">
-                <div style="display: flex; flex-direction: row; width: 33%">
-                    <div class="spinbox-key" id="${this._id}-kx" style="background-color: #FF4C4C;">X</div>
-                    <div class="spinbox-value" id="${this._id}-vx">
-                        ${this._value.x}
-                    </div>
-                </div>
-                <div class="invis-divider"></div>
-                <div style="display: flex; flex-direction: row; width: 33%"">
-                    <div class="spinbox-key" id="${this._id}-ky" style="background-color: #34BF49;">Y</div>
-                    <div class="spinbox-value" id="${this._id}-vy">
-                        ${this._value.y}
-                    </div>
-                </div>
-                <div class="invis-divider"></div>
-                <div style="display: flex; flex-direction: row; width: 33%"">
-                    <div class="spinbox-key" id="${this._id}-kz" style="background-color: #0099E5;">Z</div>
-                    <div class="spinbox-value" id="${this._id}-vz">
-                        ${this._value.z}
-                    </div>
+    /**
+     * Set whether or not the Y axis has a UI element
+     */
+    public setShowY(showY: boolean) {
+        this._showY = showY;
+        return this;
+    }
+
+    public setWrap(wrap: number) {
+        this._wrap = wrap;
+        return this;
+    }
+
+    public setUnits(units: string) {
+        this._units = units;
+        return this;
+    }
+
+    protected override _generateInnerHTML() {
+        let html = '';
+        html += '<div class="spinbox-main-container">';
+        html += `
+            <div class="spinbox-element-container">
+                <div class="spinbox-key" id="${this._getKeyId('x')}">X</div>
+                <div class="spinbox-value" id="${this._getValueId('x')}">
+                    ${this.getValue().x}
                 </div>
             </div>
         `;
+        if (this._showY) {
+            html += `
+                <div class="spinbox-element-container">
+                    <div class="spinbox-key" id="${this._getKeyId('y')}">Y</div>
+                    <div class="spinbox-value" id="${this._getValueId('y')}">
+                        ${this.getValue().y}
+                    </div>
+                </div>
+            `;
+        }
+        html += `
+            <div class="spinbox-element-container">
+                <div class="spinbox-key" id="${this._getKeyId('z')}">Z</div>
+                <div class="spinbox-value" id="${this._getValueId('z')}">
+                    ${this.getValue().z}
+                </div>
+            </div>
+        `;
+        html += '</div>';
+        return html;
     }
 
-    private _registerAxis(axis: EAxis) {
-        ASSERT(axis !== EAxis.None);
-        
-        const elementXK = document.getElementById(this._id + '-k' + axis) as HTMLDivElement;
-        const elementXV = document.getElementById(this._id + '-v' + axis) as HTMLDivElement;
-        ASSERT(elementXK !== null && elementXV !== null);
+    private _getKeyId(axis: TAxis) {
+        return this._getId() + '-k' + axis;
+    }
 
-        elementXK.onmouseenter = () => {
+    private _getValueId(axis: TAxis) {
+        return this._getId() + '-v' + axis;
+    }
+
+    private _registerAxis(axis: TAxis) {
+        const elementValue = UIUtil.getElementById(this._getValueId(axis));
+
+        elementValue.onmouseenter = () => {
             this._mouseover = axis;
-            if (this._isEnabled) {
-                elementXK.classList.add('spinbox-key-hover');
-                elementXV.classList.add('spinbox-value-hover');
+            if (this.getEnabled()) {
+                elementValue.classList.add('spinbox-value-hover');
             }
         };
 
-        elementXV.onmouseenter = () => {
-            this._mouseover = axis;
-            if (this._isEnabled) {
-                elementXK.classList.add('spinbox-key-hover');
-                elementXV.classList.add('spinbox-value-hover');
-            }
-        };
-
-        elementXK.onmouseleave = () => {
-            this._mouseover = EAxis.None;
+        elementValue.onmouseleave = () => {
+            this._mouseover = null;
             if (this._dragging !== axis) {
-                elementXK.classList.remove('spinbox-key-hover');
-                elementXV.classList.remove('spinbox-value-hover');
-            }
-        };
-
-        elementXV.onmouseleave = () => {
-            this._mouseover = EAxis.None;
-            if (this._dragging !== axis) {
-                elementXK.classList.remove('spinbox-key-hover');
-                elementXV.classList.remove('spinbox-value-hover');
+                elementValue.classList.remove('spinbox-value-hover');
             }
         };
     }
 
     public registerEvents() {
-        this._registerAxis(EAxis.X);
-        this._registerAxis(EAxis.Y);
-        this._registerAxis(EAxis.Z);
+        this._registerAxis('x');
+        if (this._showY) {
+            this._registerAxis('y');
+        }
+        this._registerAxis('z');
 
         document.addEventListener('mousedown', (e: any) => {
-            if (this._isEnabled && this._mouseover !== EAxis.None) {
+            if (this.getEnabled() && this._mouseover !== null) {
                 this._dragging = this._mouseover;
                 this._lastClientX = e.clientX;
             }
         });
 
         document.addEventListener('mousemove', (e: any) => {
-            if (this._isEnabled && this._dragging !== EAxis.None) {
+            if (this.getEnabled() && this._dragging !== null) {
                 this._updateValue(e);
             }
         });
 
         document.addEventListener('mouseup', () => {
-            const elementXK = document.getElementById(this._id + '-kx') as HTMLDivElement;
-            const elementYK = document.getElementById(this._id + '-ky') as HTMLDivElement;
-            const elementZK = document.getElementById(this._id + '-kz') as HTMLDivElement;
-            const elementXV = document.getElementById(this._id + '-vx') as HTMLDivElement;
-            const elementYV = document.getElementById(this._id + '-vy') as HTMLDivElement;
-            const elementZV = document.getElementById(this._id + '-vz') as HTMLDivElement;
-
-            switch (this._dragging) {
-                case EAxis.X:
-                    elementXK.classList.remove('spinbox-key-hover');
-                    elementXV.classList.remove('spinbox-value-hover');
-                    break;
-                case EAxis.Y:
-                    elementYK.classList.remove('spinbox-key-hover');
-                    elementYV.classList.remove('spinbox-value-hover');
-                    break;
-                case EAxis.Z:
-                    elementZK.classList.remove('spinbox-key-hover');
-                    elementZV.classList.remove('spinbox-value-hover');
-                    break;
+            if (this._dragging !== null) {
+                const elementValue = UIUtil.getElementById(this._getValueId(this._dragging));
+                elementValue.classList.remove('spinbox-value-hover');
             }
-            this._dragging = EAxis.None;
+
+            this._dragging = null;
         });
     }
 
     private _updateValue(e: MouseEvent) {
-        ASSERT(this._isEnabled, 'Not enabled');
-        ASSERT(this._dragging !== EAxis.None, 'Dragging nothing');
-        ASSERT(this._value, 'No value to update');
+        ASSERT(this.getEnabled(), 'Not enabled');
+        ASSERT(this._dragging !== null, 'Dragging nothing');
 
         const deltaX = e.clientX - this._lastClientX;
         this._lastClientX = e.clientX;
 
+        const current = this.getValue().copy();
+
         switch (this._dragging) {
-            case EAxis.X:
-                this._value.x += deltaX;
+            case 'x':
+                current.x = (current.x + deltaX) % this._wrap;
                 break;
-            case EAxis.Y:
-                this._value.y += deltaX;
+            case 'y':
+                current.y = (current.y + deltaX) % this._wrap;
                 break;
-            case EAxis.Z:
-                this._value.z += deltaX;
+            case 'z':
+                current.z = (current.z + deltaX) % this._wrap;
                 break;
         }
-
-        const elementXV = document.getElementById(this._id + '-vx') as HTMLDivElement;
-        const elementYV = document.getElementById(this._id + '-vy') as HTMLDivElement;
-        const elementZV = document.getElementById(this._id + '-vz') as HTMLDivElement;
-        elementXV.innerHTML = this._value.x.toString();
-        elementYV.innerHTML = this._value.y.toString();
-        elementZV.innerHTML = this._value.z.toString();
+        this._setValue(current);
     }
 
-    protected _onEnabledChanged() {
+    protected override _onEnabledChanged() {
         super._onEnabledChanged();
 
-        LOG(this._label, 'is now enabled', this._isEnabled);
-
         const keyElements = [
-            document.getElementById(this._id + '-kx') as HTMLDivElement,
-            document.getElementById(this._id + '-ky') as HTMLDivElement,
-            document.getElementById(this._id + '-kz') as HTMLDivElement,
+            UIUtil.getElementById(this._getKeyId('x')),
+            UIUtil.getElementById(this._getKeyId('y')),
+            UIUtil.getElementById(this._getKeyId('z')),
         ];
         const valueElements = [
-            document.getElementById(this._id + '-vx') as HTMLDivElement,
-            document.getElementById(this._id + '-vy') as HTMLDivElement,
-            document.getElementById(this._id + '-vz') as HTMLDivElement,
+            UIUtil.getElementById(this._getValueId('x')),
+            UIUtil.getElementById(this._getValueId('y')),
+            UIUtil.getElementById(this._getValueId('z')),
         ];
 
-        if (this._isEnabled) {
+        if (this.getEnabled()) {
             for (const keyElement of keyElements) {
-                keyElement.classList.remove('spinbox-key-disabled');
+                keyElement?.classList.remove('spinbox-key-disabled');
             }
             for (const valueElement of valueElements) {
-                valueElement.classList.remove('spinbox-value-disabled');
+                valueElement?.classList.remove('spinbox-value-disabled');
             }
         } else {
             for (const keyElement of keyElements) {
-                keyElement.classList.add('spinbox-key-disabled');
+                keyElement?.classList.add('spinbox-key-disabled');
             }
             for (const valueElement of valueElements) {
-                valueElement.classList.add('spinbox-value-disabled');
+                valueElement?.classList.add('spinbox-value-disabled');
             }
         }
+    }
+
+    protected override _onValueChanged(): void {
+        const elementXV = UIUtil.getElementById(this._getValueId('x'));
+        const elementYV = UIUtil.getElementById(this._getValueId('y'));
+        const elementZV = UIUtil.getElementById(this._getValueId('z'));
+
+        const current = this.getValue().copy();
+
+        elementXV.innerHTML = current.x.toString() + this._units;
+        if (elementYV) {
+            elementYV.innerHTML = current.y.toString() + this._units;
+        }
+        elementZV.innerHTML = current.z.toString() + this._units;
     }
 }

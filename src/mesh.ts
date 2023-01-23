@@ -3,12 +3,14 @@ import path from 'path';
 
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureFiltering } from './texture';
+import { Texture, TextureConverter, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { LOG_WARN } from './util/log_util';
+import { LOG, LOG_WARN } from './util/log_util';
+import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 import { Vector3 } from './vector';
 
 interface VertexIndices {
@@ -27,14 +29,23 @@ export interface Tri {
 /* eslint-disable */
 export enum MaterialType { solid, textured }
 /* eslint-enable */
-export interface SolidMaterial { colour: RGBA; type: MaterialType.solid }
-export interface TexturedMaterial {
-    path: string;
-    type: MaterialType.textured;
-    alphaPath?: string;
-    alphaFactor: number;
+type BaseMaterial = {
+    needsAttention: boolean, // True if the user should make edits to this material
 }
-export type MaterialMap = { [key: string]: (SolidMaterial | TexturedMaterial) };
+
+export type SolidMaterial = BaseMaterial & {
+    type: MaterialType.solid,
+    colour: RGBA,
+    canBeTextured: boolean,
+}
+export type TexturedMaterial = BaseMaterial & {
+    type: MaterialType.textured,
+    path: string,
+    interpolation: TTexelInterpolation,
+    extension: TTexelExtension,
+    transparency: TTransparencyOptions,
+}
+export type MaterialMap = Map<string, SolidMaterial | TexturedMaterial>;
 
 export class Mesh {
     public readonly id: string;
@@ -45,7 +56,7 @@ export class Mesh {
     public _tris!: Tri[];
 
     private _materials!: MaterialMap;
-    private _loadedTextures: { [materialName: string]: Texture };
+    private _loadedTextures: Map<string, Texture>;
     public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
@@ -56,18 +67,52 @@ export class Mesh {
         this._uvs = uvs;
         this._tris = tris;
         this._materials = materials;
-        this._loadedTextures = {};
+        this._loadedTextures = new Map();
     }
 
     // TODO: Always check
-    public processMesh() {
+    public processMesh(pitch: number, roll: number, yaw: number) {
         this._checkMesh();
         this._checkMaterials();
 
         this._centreMesh();
+        this._rotateMesh(pitch, roll, yaw);
         this._normaliseMesh();
 
         this._loadTextures();
+    }
+
+    private _rotateMesh(pitch: number, roll: number, yaw: number) {
+        const cosa = Math.cos(yaw * degreesToRadians);
+        const sina = Math.sin(yaw * degreesToRadians);
+
+        const cosb = Math.cos(pitch * degreesToRadians);
+        const sinb = Math.sin(pitch * degreesToRadians);
+
+        const cosc = Math.cos(roll * degreesToRadians);
+        const sinc = Math.sin(roll * degreesToRadians);
+
+        const Axx = cosa*cosb;
+        const Axy = cosa*sinb*sinc - sina*cosc;
+        const Axz = cosa*sinb*cosc + sina*sinc;
+
+        const Ayx = sina*cosb;
+        const Ayy = sina*sinb*sinc + cosa*cosc;
+        const Ayz = sina*sinb*cosc - cosa*sinc;
+
+        const Azx = -sinb;
+        const Azy = cosb*sinc;
+        const Azz = cosb*cosc;
+
+        this._vertices.forEach((vertex) => {
+            const px = vertex.x;
+            const py = vertex.y;
+            const pz = vertex.z;
+
+            vertex.x = Axx * px + Axy * py + Axz * pz;
+            vertex.y = Ayx * px + Ayy * py + Ayz * pz;
+            vertex.z = Azx * px + Azy * py + Azz * pz;
+        });
     }
 
     public getBounds() {
@@ -146,55 +191,111 @@ export class Mesh {
     }
 
     private _checkMaterials() {
-        if (Object.keys(this._materials).length === 0) {
+        if (this._materials.size === 0) {
             throw new AppError('Loaded mesh has no materials');
         }
 
-        // Check used materials exist
-        let wasRemapped = false;
-        let debugName = (Math.random() + 1).toString(36).substring(7);
-        while (debugName in this._materials) {
-            debugName = (Math.random() + 1).toString(36).substring(7);
-        }
 
+        // Check used materials exist
+        const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
         for (const tri of this._tris) {
-            if (!(tri.material in this._materials)) {
+            if (!this._materials.has(tri.material)) {
+                // This triangle makes use of a material we don't have info about
+                // Try infer details about this material and add it to our materials
+
+                if (tri.texcoordIndices === undefined) {
+                    // No texcoords are defined, therefore make a solid material
+                    this._materials.set(tri.material, {
+                        type: MaterialType.solid,
+                        colour: RGBAColours.MAGENTA,
+                        canBeTextured: false,
+                        needsAttention: true,
+                    });
+                } else {
+                    // Texcoords exist
+                    this._materials.set(tri.material, {
+                        type: MaterialType.solid,
+                        colour: RGBAUtil.random(),
+                        canBeTextured: true,
+                        needsAttention: true,
+                    });
+                }
+
                 missingMaterials.add(tri.material);
-                wasRemapped = true;
-                tri.material = debugName;
             }
+
+            usedMaterials.add(tri.material);
         }
-        if (wasRemapped) {
+
+        const materialsToRemove = new Set<string>();
+        this._materials.forEach((material, materialName) => {
+            if (!usedMaterials.has(materialName)) {
+                LOG_WARN(`'${materialName}' is not used by any triangles, removing...`);
+                materialsToRemove.add(materialName);
+            }
+        });
+
+        materialsToRemove.forEach((materialName) => {
+            this._materials.delete(materialName);
+        });
+
+        if (missingMaterials.size > 0) {
             LOG_WARN('Triangles use these materials but they were not found', missingMaterials);
-            StatusHandler.Get.add(
-                'warning',
-                'Some materials were not loaded correctly',
-            );
-            this._materials[debugName] = {
-                type: MaterialType.solid,
-                colour: RGBAColours.WHITE,
-            };
         }
 
         // Check texture paths are absolute and exist
-        for (const materialName in this._materials) {
-            const material = this._materials[materialName];
+        this._materials.forEach((material, materialName) => {
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
-                    StatusHandler.Get.add(
-                        'warning',
-                        `Could not find ${material.path}`,
-                    );
-                    LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid-white material`);
-                    this._materials[materialName] = {
+                    LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid material`);
+                    this._materials.set(materialName, {
                         type: MaterialType.solid,
-                        colour: RGBAColours.WHITE,
-                    };
+                        colour: RGBAColours.MAGENTA,
+                        canBeTextured: true,
+                        needsAttention: true,
+                    });
+                } else {
+                    const parsedPath = path.parse(material.path);
+                    if (parsedPath.ext === '.tga') {
+                        material.path = TextureConverter.createPNGfromTGA(material.path);
+                    }
                 }
             }
-        }
+        });
+
+        // Deduce default texture wrap mode for each material type
+        const materialsWithUVsOutOfBounds = new Set<string>();
+        this._tris.forEach((tri, triIndex) => {
+            if (materialsWithUVsOutOfBounds.has(tri.material)) {
+                // Already know this material has OOB UVs so skip
+                return;
+            }
+
+            const uv = this.getUVs(triIndex);
+            const uvsOutOfBounds =
+                (uv.uv0.u < 0.0) || (uv.uv0.u > 1.0) ||
+                (uv.uv0.v < 0.0) || (uv.uv0.v > 1.0) ||
+                (uv.uv1.u < 0.0) || (uv.uv1.u > 1.0) ||
+                (uv.uv1.v < 0.0) || (uv.uv1.v > 1.0) ||
+                (uv.uv2.u < 0.0) || (uv.uv2.u > 1.0) ||
+                (uv.uv2.v < 0.0) || (uv.uv2.v > 1.0);
+
+            if (uvsOutOfBounds) {
+                materialsWithUVsOutOfBounds.add(tri.material);
+            }
+        });
+
+        LOG(`Materials with OOB UVs`, JSON.stringify(materialsWithUVsOutOfBounds));
+
+        this._materials.forEach((material, materialName) => {
+            if (material.type === MaterialType.textured) {
+                material.extension = materialsWithUVsOutOfBounds.has(materialName) ?
+                    'repeat' :
+                    'clamp';
+            }
+        });
     }
 
     private _centreMesh() {
@@ -221,15 +322,12 @@ export class Mesh {
     }
 
     private _loadTextures() {
-        this._loadedTextures = {};
-        for (const tri of this._tris) {
-            const material = this._materials[tri.material];
-            if (material.type == MaterialType.textured) {
-                if (!(tri.material in this._loadedTextures)) {
-                    this._loadedTextures[tri.material] = new Texture(material.path, material.alphaPath);
-                }
+        this._loadedTextures.clear();
+        this._materials.forEach((material, materialName) => {
+            if (material.type === MaterialType.textured && !this._loadedTextures.has(materialName)) {
+                this._loadedTextures.set(materialName, new Texture(material.path, material.transparency));
             }
-        }
+        });
     }
 
     public getVertices(triIndex: number) {
@@ -285,11 +383,15 @@ export class Mesh {
 
     public getUVTriangle(triIndex: number): UVTriangle {
         const vertices = this.getVertices(triIndex);
+        const normals = this.getNormals(triIndex);
         const texcoords = this.getUVs(triIndex);
         return new UVTriangle(
             vertices.v0,
             vertices.v1,
             vertices.v2,
+            normals.v0,
+            normals.v1,
+            normals.v2,
             texcoords.uv0,
             texcoords.uv1,
             texcoords.uv2,
@@ -301,24 +403,27 @@ export class Mesh {
     }
 
     public getMaterialByName(materialName: string) {
-        return this._materials[materialName];
+        return this._materials.get(materialName);
+    }
+
+    public setMaterials(materialMap: MaterialMap) {
+        this._materials = materialMap;
+        this._loadTextures();
     }
 
     public getMaterials() {
         return this._materials;
     }
 
-    public sampleMaterial(materialName: string, uv: UV, textureFiltering: TextureFiltering): RGBA {
-        ASSERT(materialName in this._materials, `Sampling material that does not exist: ${materialName}`);
-        const material = this._materials[materialName];
-        if (material.type === MaterialType.solid) {
-            return RGBAUtil.copy(material.colour);
-        } else {
-            ASSERT(materialName in this._loadedTextures, 'Sampling texture that is not loaded');
-            const colour = this._loadedTextures[materialName].getRGBA(uv, textureFiltering);
-            colour.a *= material.alphaFactor;
-            return colour;
-        }
+    public sampleTextureMaterial(materialName: string, uv: UV): RGBA {
+        const material = this._materials.get(materialName);
+        ASSERT(material !== undefined, `Sampling material that does not exist: ${materialName}`);
+        ASSERT(material.type === MaterialType.textured, 'Sampling texture material of non-texture material');
+
+        const texture = this._loadedTextures.get(materialName);
+        ASSERT(texture !== undefined, 'Sampling texture that is not loaded');
+
+        return texture.getRGBA(uv, material.interpolation, material.extension);
     }
 
     public getTriangleCount(): number {

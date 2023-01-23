@@ -1,43 +1,49 @@
 import { remote } from 'electron';
 import * as path from 'path';
 
-import { ASSERT } from '../../util/error_util';
-import { LabelledElement } from './labelled_element';
+import { ConfigUIElement } from './config_element';
 
-export class FileInputElement extends LabelledElement<string> {
-    private _fileExtension: string;
+export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
+    private _fileExtensions: string[];
     private _loadedFilePath: string;
     private _hovering: boolean;
 
-    public constructor(label: string, fileExtension: string) {
-        super(label);
-        this._fileExtension = fileExtension;
+    public constructor() {
+        super('');
+        this._fileExtensions = [];
         this._loadedFilePath = '';
         this._hovering = false;
     }
 
-    public generateInnerHTML() {
+    /**
+     * Set the allow list of file extensions that can be uploaded.
+     */
+    public setFileExtensions(extensions: string[]) {
+        this._fileExtensions = extensions;
+        return this;
+    }
+
+    protected override _generateInnerHTML() {
         return `
-            <div class="input-text" id="${this._id}">
+            <div class="input-file" id="${this._getId()}">
                 ${this._loadedFilePath}
             </div>
         `;
     }
 
-    public registerEvents(): void {
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        element.onmouseenter = () => {
+    public override registerEvents(): void {
+        this._getElement().addEventListener('mouseenter', () => {
             this._hovering = true;
-        };
+            this._updateStyle();
+        });
 
-        element.onmouseleave = () => {
+        this._getElement().addEventListener('mouseleave', () => {
             this._hovering = false;
-        };
+            this._updateStyle();
+        });
 
-        element.onclick = () => {
-            if (!this._isEnabled) {
+        this._getElement().addEventListener('click', () => {
+            if (!this.getEnabled()) {
                 return;
             }
 
@@ -45,43 +51,48 @@ export class FileInputElement extends LabelledElement<string> {
                 title: 'Load file',
                 buttonLabel: 'Load',
                 filters: [{
-                    name: 'Waveform obj file',
-                    extensions: [`${this._fileExtension}`],
+                    name: 'Model file',
+                    extensions: this._fileExtensions,
                 }],
             });
-            if (files && files.length === 1) {
+
+            if (files && files[0] !== undefined) {
                 const filePath = files[0];
                 this._loadedFilePath = filePath;
-                this._value = filePath;
+                this._setValue(filePath);
             }
-            const parsedPath = path.parse(this._loadedFilePath);
-            element.innerHTML = parsedPath.name + parsedPath.ext;
-        };
+        });
 
-        document.onmousemove = () => {
-            element.classList.remove('input-text-disabled');
-            element.classList.remove('input-text-hover');
-
-            if (this._isEnabled) {
-                if (this._hovering) {
-                    element.classList.add('input-text-hover');
-                }
-            } else {
-                element.classList.add('input-text-disabled');
-            }
-        };
+        this._getElement().addEventListener('mousemove', () => {
+            this._updateStyle();
+        });
     }
 
-    protected _onEnabledChanged() {
+    protected override _onEnabledChanged() {
         super._onEnabledChanged();
 
-        const element = document.getElementById(this._id) as HTMLDivElement;
-        ASSERT(element !== null);
-
-        if (this._isEnabled) {
-            element.classList.remove('input-text-disabled');
+        if (this.getEnabled()) {
+            this._getElement().classList.remove('input-file-disabled');
         } else {
-            element.classList.add('input-text-disabled');
+            this._getElement().classList.add('input-file-disabled');
+        }
+    }
+
+    protected override _onValueChanged(): void {
+        const parsedPath = path.parse(this._loadedFilePath);
+        this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
+    }
+
+    private _updateStyle() {
+        this._getElement().classList.remove('input-file-disabled');
+        this._getElement().classList.remove('input-file-hover');
+
+        if (this.getEnabled()) {
+            if (this._hovering) {
+                this._getElement().classList.add('input-file-hover');
+            }
+        } else {
+            this._getElement().classList.add('input-file-disabled');
         }
     }
 }
