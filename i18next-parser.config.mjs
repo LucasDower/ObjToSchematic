@@ -42,7 +42,7 @@ const config = {
     lineEnding: 'auto',
     // Control the line ending. See options at https://github.com/ryanve/eol
 
-    locales: ['en-GB', 'en-US'],
+    locales: ['en-GB', 'en-US', 'fr'],
     // An array of the locales in your applications
 
     namespaceSeparator: ':',
