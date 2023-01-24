@@ -56,8 +56,6 @@ If you want to use the program without using the GUI, you can edit `/tools/headl
 The progress tracker and remaining to-dos are now maintained in the [Discord](https://discord.gg/McS2VrBZPD) server's #to-do channel.
 
 ## Disclaimer
-:warning: This repo is in development and proper error handling is not currently my priority. Contributions are welcome.
-
 This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
 ![MinecraftPreview](https://i.imgur.com/LhTZ4G9.png)
