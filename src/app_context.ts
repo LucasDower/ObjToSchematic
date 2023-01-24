@@ -508,7 +508,10 @@ export class AppContext {
         const filepath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',
-            filters: [exporter.getFormatFilter()],
+            filters: [{
+                name: exporter.getFormatFilter().name,
+                extensions: [exporter.getFormatFilter().extension],
+            }],
         });
 
         if (filepath === undefined) {

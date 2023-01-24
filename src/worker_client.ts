@@ -216,7 +216,7 @@ export class WorkerClient {
         ASSERT(this._loadedBlockMesh !== undefined);
 
         const exporter: IExporter = ExporterFactory.GetExporter(params.exporter);
-        const fileExtension = '.' + exporter.getFileExtension();
+        const fileExtension = '.' + exporter.getFormatFilter().extension;
         if (!params.filepath.endsWith(fileExtension)) {
             params.filepath += fileExtension;
         }

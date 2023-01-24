@@ -40,7 +40,7 @@ const baseConfig: THeadlessConfig = {
     },
 };
 
-test('FULL Obj->Obj', () => {
+test('FULL Obj->Schem', () => {
     TEST_PREAMBLE();
 
     const config: THeadlessConfig = baseConfig;

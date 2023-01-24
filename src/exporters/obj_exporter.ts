@@ -7,21 +7,12 @@ import { ASSERT } from '../util/error_util';
 import { IExporter } from './base_exporter';
 
 export class ObjExporter extends IExporter {
-    public override getFormatFilter(): Electron.FileFilter {
+    public override getFormatFilter() {
         return {
             name: 'Wavefront Obj',
-            extensions: ['obj'],
+            extension: 'obj',
         };
     }
-
-    public override getFileExtension(): string {
-        return 'obj';
-    }
-
-    public override getFormatName(): string {
-        return 'Wavefront OBJ';
-    }
-
     public override export(blockMesh: BlockMesh, filepath: string) {
         ASSERT(path.isAbsolute(filepath));
         const parsedPath = path.parse(filepath);
@@ -32,8 +23,6 @@ export class ObjExporter extends IExporter {
 
         this._exportOBJ(filepathOBJ, blockMesh, parsedPath.name + '.mtl');
         this._exportMTL(filepathMTL, filepathTexture, blockMesh);
-
-        return true;
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {
@@ -85,16 +74,16 @@ export class ObjExporter extends IExporter {
         buffers.forEach(({ buffer }) => {
             positionData.set(buffer.position.data, positionIndex);
             positionIndex += buffer.position.data.length;
-            
+
             normalData.set(buffer.normal.data, normalIndex);
             normalIndex += buffer.normal.data.length;
-            
+
             texcoordData.set(buffer.texcoord.data, texcoordIndex);
             texcoordIndex += buffer.texcoord.data.length;
-            
+
             blockTexcoordData.set(buffer.blockTexcoord.data, blockTexcoordIndex);
             blockTexcoordIndex += buffer.blockTexcoord.data.length;
-            
+
             indexData.set(buffer.indices.data, indicesIndex);
             indicesIndex += buffer.indices.data.length;
         });

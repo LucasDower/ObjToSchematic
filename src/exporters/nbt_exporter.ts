@@ -4,27 +4,19 @@ import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { StatusHandler } from '../status';
 import { AppUtil } from '../util';
-import { saveNBT } from '../util/nbt_util';
+import { NBTUtil } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
 export class NBTExporter extends IExporter {
     public override getFormatFilter() {
         return {
-            name: this.getFormatName(),
-            extensions: ['nbt'],
+            name: 'Structure Blocks',
+            extension: 'nbt',
         };
     }
 
-    public override getFormatName() {
-        return 'Structure Blocks';
-    }
-
-    public override getFileExtension(): string {
-        return 'nbt';
-    }
-
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh, filePath: string) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -100,12 +92,6 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        saveNBT(nbt, filePath);
-
-        return false;
-    }
-
-    private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {
-        return vec.x + (vec.z * dimensions.x) + (vec.y * dimensions.x * dimensions.z);
+        NBTUtil.save(nbt, filePath);
     }
 }
