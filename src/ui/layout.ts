@@ -19,6 +19,7 @@ import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { ConfigUIElement } from './elements/config_element';
 import { FileInputElement } from './elements/file_input';
+import { HeaderUIElement } from './elements/header_element';
 import { OutputElement } from './elements/output';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -468,7 +469,7 @@ export class UI {
         }
 
         document.getElementById('properties')!.innerHTML = `<div class="container">
-        ` + itemHTML + `</div>`;
+        ` + HeaderUIElement.Get.generateHTML() + itemHTML + `</div>`;
 
         // Build toolbar
         let toolbarHTML = '';
@@ -567,6 +568,9 @@ export class UI {
     }
 
     public registerEvents() {
+        HeaderUIElement.Get.registerEvents();
+        HeaderUIElement.Get.finalise();
+
         for (const groupName in this._ui) {
             const group = this._uiDull[groupName];
             for (const elementName in group.elements) {

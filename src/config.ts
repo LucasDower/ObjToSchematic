@@ -12,6 +12,10 @@ export class AppConfig {
     }
 
     public readonly RELEASE_MODE: boolean;
+    public readonly MAJOR_VERSION: number;
+    public readonly MINOR_VERSION: number;
+    public readonly HOTFIX_VERSION: number;
+    public readonly VERSION_TYPE: 'd' | 'a' | 'r'; // dev, alpha, or release build
     public readonly RELEASE_VERSION: string;
     public readonly VOXEL_BUFFER_CHUNK_SIZE: number;
 
@@ -41,7 +45,11 @@ export class AppConfig {
 
     private constructor() {
         this.RELEASE_MODE = false;
-        this.RELEASE_VERSION = '0.8.0d';
+        this.MAJOR_VERSION = 0;
+        this.MINOR_VERSION = 8;
+        this.HOTFIX_VERSION = 0;
+        this.VERSION_TYPE = 'd';
+        this.RELEASE_VERSION = `${this.MAJOR_VERSION}.${this.MINOR_VERSION}.${this.HOTFIX_VERSION}${this.VERSION_TYPE}`;
         this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
 
         const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
