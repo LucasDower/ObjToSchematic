@@ -43,12 +43,12 @@
       "voxelise_mesh": "Voxeliser le modèle"
     },
     "error": {
-      "assign_failure": "[Assigneur]: Echec",
-      "export_failure": "[Exporteur]: Echec",
+      "assign_failure": "[Assigneur]: Échec",
+      "export_failure": "[Exporteur]: Échec",
       "generic_failure": "Une erreur est survenue",
-      "import_failure": "[Importeur]: Echec",
-      "renderer_failure": "[Rendu]: Echec",
-      "voxelise_failure": "[Voxeliseur]: Echec"
+      "import_failure": "[Importeur]: Échec",
+      "renderer_failure": "[Rendu]: Échec",
+      "voxelise_failure": "[Voxeliseur]: Échec"
     },
     "info": {
       "assign_in_progress": "[Assigneur]: Traitement...",
