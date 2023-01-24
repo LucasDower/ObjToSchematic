@@ -53,9 +53,9 @@ export class AppRuntimeConstants {
         this.TRANSPARENT_BLOCKS = JSON.parse(transparentBlocksString).transparent_blocks;
 
         const emissiveBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'emissive_blocks.json'), 'utf-8');
-        this.GRASS_LIKE_BLOCKS = JSON.parse(emissiveBlocksString).emissive_blocks;
+        this.EMISSIVE_BLOCKS = JSON.parse(emissiveBlocksString).emissive_blocks;
 
         const grassLikeBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'grass_like_blocks.json'), 'utf-8');
-        this.EMISSIVE_BLOCKS = JSON.parse(grassLikeBlocksString).grass_like_blocks;
+        this.GRASS_LIKE_BLOCKS = JSON.parse(grassLikeBlocksString).grass_like_blocks;
     }
 }
