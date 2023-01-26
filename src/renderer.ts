@@ -1,3 +1,4 @@
+import { Bounds } from './bounds';
 import * as twgl from 'twgl.js';
 
 import { ArcballCamera } from './camera';
@@ -9,6 +10,7 @@ import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
 import { EImageChannel, Texture } from './texture';
 import { ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 
@@ -73,6 +75,7 @@ export class Renderer {
     }>;
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
+    private _blockBounds: Bounds = new Bounds(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
@@ -351,6 +354,14 @@ export class Renderer {
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
+
+            const min = new Vector3(0, 0, 0);
+            min.setFrom(params.bounds['_min']);
+
+            const max = new Vector3(0, 0, 0);
+            max.setFrom(params.bounds['_max']);
+
+            this._blockBounds = new Bounds(min, max);
         }
 
         this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
@@ -485,6 +496,9 @@ export class Renderer {
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
             u_nightVision: this.isNightVisionEnabled(),
+            u_sliceHeight: ArcballCamera.Get.getSliceHeight(),
+            u_boundsMin: this._blockBounds.min.toArray(),
+            u_boundsMax: this._blockBounds.max.toArray(),
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);

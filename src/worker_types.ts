@@ -11,6 +11,7 @@ import { TDithering } from './util/type_util';
 import { Vector3 } from './vector';
 import { TVoxelOverlapRule } from './voxel_mesh';
 import { TVoxelisers } from './voxelisers/voxelisers';
+import { Bounds } from './bounds';
 
 export namespace InitParams {
     export type Input = {
@@ -129,7 +130,7 @@ export namespace RenderNextBlockMeshChunkParams {
 
     export type Output = {
         buffer: TBlockMeshBufferDescription,
-        dimensions: Vector3,
+        bounds: Bounds,
         atlasTexturePath: string,
         atlasSize: number,
         moreBlocksToBuffer: boolean,

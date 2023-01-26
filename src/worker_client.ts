@@ -188,7 +188,7 @@ export class WorkerClient {
 
         return {
             buffer: buffer,
-            dimensions: this._loadedBlockMesh.getVoxelMesh().getBounds().getDimensions(),
+            bounds: this._loadedBlockMesh.getVoxelMesh().getBounds(),
             atlasTexturePath: atlas.getAtlasTexturePath(),
             atlasSize: atlas.getAtlasSize(),
             moreBlocksToBuffer: buffer.moreBlocksToBuffer,
