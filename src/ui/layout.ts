@@ -351,9 +351,23 @@ export class UI {
                 },
                 elementsOrder: ['grid', 'axes', 'night-vision'],
             },
-
+            'sliceHeight': {
+                elements: {
+                    'plus': new ToolbarItemElement({icon: 'plus'})
+                        .onClick(() => {
+                            // FIXME: check current value and limits
+                            ArcballCamera.Get.setSliceHeight(ArcballCamera.Get.getSliceHeight() + 1);
+                        }),
+                    'minus': new ToolbarItemElement({icon: 'minus'})
+                        .onClick(() => {
+                            // FIXME: check current value and limits
+                            ArcballCamera.Get.setSliceHeight(ArcballCamera.Get.getSliceHeight() - 1);
+                        }),
+                },
+                elementsOrder: ['plus', 'minus'],
+            },
         },
-        groupsOrder: ['viewmode', 'debug'],
+        groupsOrder: ['viewmode', 'debug', 'sliceHeight'],
     };
 
     private _toolbarRight = {

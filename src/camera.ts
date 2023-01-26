@@ -15,6 +15,7 @@ export class ArcballCamera {
     private _zNear: number;
     private _zFar: number;
     private _aspect: number;
+    private _sliceHeight: number;
 
     private _distance: SmoothVariable;// = new SmoothVariable(this._defaultDistance, 0.025);
     private _azimuth: SmoothVariable;// = new SmoothVariable(this._defaultAzimuth, 0.025);
@@ -47,6 +48,7 @@ export class ArcballCamera {
         this._azimuth = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_AZIMUTH_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
         this._elevation = new SmoothVariable(AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS, AppConfig.Get.CAMERA_SMOOTHING);
         this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), AppConfig.Get.CAMERA_SMOOTHING);
+        this._sliceHeight = 0;
 
         this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);
@@ -78,6 +80,14 @@ export class ArcballCamera {
 
     public setCameraMode(mode: 'perspective' | 'orthographic') {
         this._isPerspective = mode === 'perspective';
+    }
+
+    public setSliceHeight(sliceHeight: number) {
+        this._sliceHeight = sliceHeight;
+    }
+
+    public getSliceHeight(): number {
+        return this._sliceHeight;
     }
 
     private _angleSnap = false;
