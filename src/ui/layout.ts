@@ -353,18 +353,34 @@ export class UI {
             },
             'sliceHeight': {
                 elements: {
-                    'plus': new ToolbarItemElement({icon: 'plus'})
+                    'slice': new ToolbarItemElement({icon: 'slice'})
                         .onClick(() => {
-                            // FIXME: check current value and limits
-                            ArcballCamera.Get.setSliceHeight(ArcballCamera.Get.getSliceHeight() + 1);
+                            Renderer.Get.toggleSliceViewerEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.BlockMesh;
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isSliceViewerEnabled();
+                        }),
+                    'plus': new ToolbarItemElement({ icon: 'plus' })
+                        .onClick(() => {
+                            Renderer.Get.incrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canIncrementSliceHeight();
                         }),
                     'minus': new ToolbarItemElement({icon: 'minus'})
                         .onClick(() => {
-                            // FIXME: check current value and limits
-                            ArcballCamera.Get.setSliceHeight(ArcballCamera.Get.getSliceHeight() - 1);
+                            Renderer.Get.decrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canDecrementSliceHeight();
                         }),
                 },
-                elementsOrder: ['plus', 'minus'],
+                elementsOrder: ['slice', 'plus', 'minus'],
             },
         },
         groupsOrder: ['viewmode', 'debug', 'sliceHeight'],

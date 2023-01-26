@@ -6,14 +6,13 @@ uniform float u_voxelSize;
 uniform vec3 u_gridOffset;
 uniform bool u_nightVision;
 uniform float u_sliceHeight;
-uniform vec3 u_boundsMin;
-uniform vec3 u_boundsMax;
 
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec4 occlusion;
 attribute vec2 texcoord;
 attribute vec2 blockTexcoord;
+attribute vec3 blockPosition;
 attribute float lighting;
 
 varying float v_lighting;
@@ -32,12 +31,22 @@ void main() {
     v_lighting = dot(light, abs(normal));
     v_blockLighting = lighting;
 
-    if(u_sliceHeight > 0.0 && (position.y + u_gridOffset.y) >= (u_sliceHeight + u_boundsMin.y))
+    v_sliced = blockPosition.y > u_sliceHeight ? 1.0 : 0.0;
+
+    // Disable ambient occlusion on the top layer of the slice view
+    bool isBlockOnTopLayer = (v_sliced < 0.5 && abs(blockPosition.y - u_sliceHeight) < 0.5);
+    if (isBlockOnTopLayer)
     {
-        v_sliced = 1.0;
-    } else {
-        v_sliced = 0.0;
+
+        if (normal.y > 0.5)
+        {
+            v_occlusion = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+        else if (normal.x > 0.5 || normal.z > 0.5 || normal.x < -0.5 || normal.z < -0.5)
+        {
+            v_occlusion = vec4(1.0, v_occlusion.y, 1.0, v_occlusion.w);
+        }
     }
 
-    gl_Position = u_worldViewProjection * vec4((position.xyz + u_gridOffset) * u_voxelSize, 1.0);
+    gl_Position = u_worldViewProjection * vec4((position + u_gridOffset) * u_voxelSize, 1.0);
 }

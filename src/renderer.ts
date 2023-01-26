@@ -1,6 +1,6 @@
-import { Bounds } from './bounds';
 import * as twgl from 'twgl.js';
 
+import { Bounds } from './bounds';
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
@@ -8,9 +8,8 @@ import { DebugGeometryTemplates } from './geometry';
 import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { EImageChannel, Texture } from './texture';
+import { EImageChannel } from './texture';
 import { ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 
@@ -64,6 +63,7 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _gridOffset: Vector3 = new Vector3(0, 0, 0);
+    private _sliceHeight: number = 0.0;
 
     private _modelsAvailable: number;
 
@@ -75,13 +75,14 @@ export class Renderer {
     }>;
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
-    private _blockBounds: Bounds = new Bounds(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+    private _blockBounds: Bounds;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
     private _nightVisionEnabled: boolean;
+    private _sliceViewEnabled: boolean;
 
     private _gridBuffers: {
         x: { [meshType: string]: RenderBuffer };
@@ -118,6 +119,9 @@ export class Renderer {
         this._isGridComponentEnabled = {};
         this._axesEnabled = false;
         this._nightVisionEnabled = true;
+        this._sliceViewEnabled = false;
+
+        this._blockBounds = new Bounds(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -151,6 +155,34 @@ export class Renderer {
     }
 
     // /////////////////////////////////////////////////////////////////////////
+
+    public isSliceViewerEnabled() {
+        return this._sliceViewEnabled;
+    }
+
+    public toggleSliceViewerEnabled() {
+        this._sliceViewEnabled = !this._sliceViewEnabled;
+    }
+
+    public canIncrementSliceHeight() {
+        return this._blockBounds.max.y > this._sliceHeight;
+    }
+
+    public canDecrementSliceHeight() {
+        return this._blockBounds.min.y < this._sliceHeight;
+    }
+
+    public incrementSliceHeight() {
+        if (this.canIncrementSliceHeight()) {
+            ++this._sliceHeight;
+        }
+    }
+
+    public decrementSliceHeight() {
+        if (this.canDecrementSliceHeight()) {
+            --this._sliceHeight;
+        }
+    }
 
     private _lightingAvailable: boolean = false;
     public setLightingAvailable(isAvailable: boolean) {
@@ -355,13 +387,8 @@ export class Renderer {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
 
-            const min = new Vector3(0, 0, 0);
-            min.setFrom(params.bounds['_min']);
-
-            const max = new Vector3(0, 0, 0);
-            max.setFrom(params.bounds['_max']);
-
-            this._blockBounds = new Bounds(min, max);
+            this._sliceHeight = params.bounds.min.y;
+            this._blockBounds = params.bounds;
         }
 
         this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
@@ -496,9 +523,7 @@ export class Renderer {
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
             u_nightVision: this.isNightVisionEnabled(),
-            u_sliceHeight: ArcballCamera.Get.getSliceHeight(),
-            u_boundsMin: this._blockBounds.min.toArray(),
-            u_boundsMax: this._blockBounds.max.toArray(),
+            u_sliceHeight: this._sliceViewEnabled ? this._sliceHeight : Infinity,
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
