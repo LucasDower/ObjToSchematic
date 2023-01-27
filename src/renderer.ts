@@ -387,8 +387,14 @@ export class Renderer {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
 
-            this._sliceHeight = params.bounds.min.y;
-            this._blockBounds = params.bounds;
+            // re-create objects, due to serialization.
+            const min = new Vector3(0, 0, 0);
+            const max = new Vector3(0, 0, 0);
+            min.setFrom(params.bounds['_min']);
+            max.setFrom(params.bounds['_max']);
+
+            this._blockBounds = new Bounds(min, max);
+            this._sliceHeight = this._blockBounds.min.y;
         }
 
         this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
