@@ -105,8 +105,8 @@ export class Texture {
     }
 
     private _correctTexcoord(a: number) {
-        if (a === 1.0) {
-            return 1.0;
+        if (Number.isInteger(a)) {
+            return a > 0.5 ? 1.0 : 0.0;
         }
         const frac = Math.abs(a) - Math.floor(Math.abs(a));
         return a < 0.0 ? 1.0 - frac : frac;
