@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import { Atlas, TAtlasBlock } from './atlas';
 import { AtlasPalette, EFaceVisibility } from './block_assigner';
 import { BlockInfo } from './block_atlas';
@@ -163,8 +161,11 @@ export class BlockMesh {
                 ProgressManager.Get.progress(taskHandle, index / grassLikeBlocksBuffer.length);
                 const examined = grassLikeBlocksBuffer[index];
                 const examinedBlock = this._blocks[examined.id];
-                const topBlockId = this._blocks.findIndex((b) => b.voxel.position.equals(Vector3.add(examinedBlock.voxel.position, new Vector3(0, 1, 0))));
-                if (topBlockId > -1 && !AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.includes(this._blocks[topBlockId].blockInfo.name)) {
+
+                const topBlockPosition = Vector3.add(examinedBlock.voxel.position, new Vector3(0, 1, 0));
+                const topBlockIndex = this._voxelMesh.getVoxelIndex(topBlockPosition);
+
+                if (topBlockIndex !== undefined && !AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.includes(this._blocks[topBlockIndex].blockInfo.name)) {
                     const block = atlasPalette.getBlock(examined.voxelColour, nonGrassLikeBlockCollection, examined.faceVisibility, examined.errWeight);
                     examinedBlock.blockInfo = block;
                     this._blocks[examined.id] = examinedBlock;

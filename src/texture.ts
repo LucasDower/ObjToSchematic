@@ -104,6 +104,14 @@ export class Texture {
         }
     }
 
+    private _correctTexcoord(a: number) {
+        if (Number.isInteger(a)) {
+            return a > 0.5 ? 1.0 : 0.0;
+        }
+        const frac = Math.abs(a) - Math.floor(Math.abs(a));
+        return a < 0.0 ? 1.0 - frac : frac;
+    }
+
     /**
      * UV can be in any range and is not limited to [0, 1]
      */
@@ -114,13 +122,13 @@ export class Texture {
             uv.u = clamp(inUV.u, 0.0, 1.0);
             uv.v = clamp(inUV.v, 0.0, 1.0);
         } else {
-            uv.u = Math.abs(inUV.u) - Math.floor(Math.abs(inUV.u));
-            uv.v = Math.abs(inUV.v) - Math.floor(Math.abs(inUV.v));
+            uv.u = this._correctTexcoord(inUV.u);
+            uv.v = this._correctTexcoord(inUV.v);
         }
         ASSERT(uv.u >= 0.0 && uv.u <= 1.0, 'Texcoord UV.u OOB');
         ASSERT(uv.v >= 0.0 && uv.v <= 1.0, 'Texcoord UV.v OOB');
         uv.v = 1.0 - uv.v;
-
+        
         const diffuse = (interpolation === 'nearest') ?
             this._getNearestRGBA(this._image, uv) :
             this._getLinearRGBA(this._image, uv);
