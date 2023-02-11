@@ -21,8 +21,6 @@ export class WorkerClient {
     }
 
     private constructor() {
-        Logger.Get.enableLogToFile();
-        Logger.Get.initLogFile('worker');
     }
 
     private _loadedMesh?: Mesh;

@@ -1,5 +1,4 @@
-import fs from 'fs';
-import { NBT, TagType } from 'prismarine-nbt';
+//import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
 import { StatusHandler, StatusID } from '../status';
@@ -17,9 +16,13 @@ export class Schematic extends IExporter {
         const metaData = Array<number>(bufferSize);
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
+        // TODO Unimplemented
+        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = {};
+        /*
         const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(
             fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './block_ids.json'), 'utf8'),
         );
+        */
 
         const blocks = blockMesh.getBlocks();
         const unsupportedBlocks = new Set<string>();
@@ -48,6 +51,8 @@ export class Schematic extends IExporter {
             LOG_WARN(unsupportedBlocks);
         }
 
+        // TODO Unimplemented
+        /*
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'Schematic',
@@ -64,6 +69,7 @@ export class Schematic extends IExporter {
         };
 
         return nbt;
+        */
     }
 
     _getBufferIndex(vec: Vector3, sizeVector: Vector3) {
@@ -90,7 +96,8 @@ export class Schematic extends IExporter {
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
-        saveNBT(nbt, filePath);
+        // TODO Unimplemented
+        //saveNBT(nbt, filePath);
 
         return false;
     }

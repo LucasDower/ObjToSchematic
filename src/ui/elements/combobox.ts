@@ -57,7 +57,7 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     */
 
     public override _generateInnerHTML() {
-        ASSERT(this._items.length > 0);
+        //ASSERT(this._items.length > 0);
 
         let itemsHTML = '';
         for (const item of this._items) {
@@ -85,7 +85,7 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
         const selectedIndex = this._items.findIndex((item) => item.payload === this.getValue());
         const element = this._getElement();
 
-        ASSERT(selectedIndex !== -1, 'Invalid selected index');
+        //ASSERT(selectedIndex !== -1, 'Invalid selected index');
         element.selectedIndex = selectedIndex;
     }
 }

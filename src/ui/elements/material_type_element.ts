@@ -1,4 +1,5 @@
 import { MaterialType } from '../../mesh';
+import { AppIcons } from '../icons';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
@@ -7,7 +8,7 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
 
     public constructor(material: MaterialType) {
         super(material);
-        this._switchElement = new ToolbarItemElement({ icon: 'switch' })
+        this._switchElement = new ToolbarItemElement({ iconSVG: AppIcons.SWITCH })
             .setSmall()
             .setLabel('Switch')
             .onClick(() => {

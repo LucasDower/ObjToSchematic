@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import { BlockMesh } from '../block_mesh';
@@ -7,7 +6,7 @@ import { ASSERT } from '../util/error_util';
 import { IExporter } from './base_exporter';
 
 export class ObjExporter extends IExporter {
-    public override getFormatFilter(): Electron.FileFilter {
+    public override getFormatFilter() {
         return {
             name: 'Wavefront Obj',
             extensions: ['obj'],
@@ -85,20 +84,22 @@ export class ObjExporter extends IExporter {
         buffers.forEach(({ buffer }) => {
             positionData.set(buffer.position.data, positionIndex);
             positionIndex += buffer.position.data.length;
-            
+
             normalData.set(buffer.normal.data, normalIndex);
             normalIndex += buffer.normal.data.length;
-            
+
             texcoordData.set(buffer.texcoord.data, texcoordIndex);
             texcoordIndex += buffer.texcoord.data.length;
-            
+
             blockTexcoordData.set(buffer.blockTexcoord.data, blockTexcoordIndex);
             blockTexcoordIndex += buffer.blockTexcoord.data.length;
-            
+
             indexData.set(buffer.indices.data, indicesIndex);
             indicesIndex += buffer.indices.data.length;
         });
 
+        // TODO Unimplemented
+        /*
         const file = fs.openSync(filepath, 'w');
         fs.writeSync(file, '# Created with ObjToSchematic\n');
         fs.writeSync(file, '# https://github.com/LucasDower/ObjToSchematic/\n\n');
@@ -136,9 +137,12 @@ export class ObjExporter extends IExporter {
         }
 
         fs.closeSync(file);
+        */
     }
 
     private _exportMTL(filepathMTL: string, filepathTexture: string, blockMesh: BlockMesh) {
+        // TODO Unimplemented
+        /*
         ASSERT(path.isAbsolute(filepathMTL));
         ASSERT(path.isAbsolute(filepathTexture));
 
@@ -157,5 +161,6 @@ export class ObjExporter extends IExporter {
         // Export texture
         const filepathAtlasTexture = blockMesh.getAtlas().getAtlasTexturePath();
         fs.copyFileSync(filepathAtlasTexture, filepathTexture);
+        */
     }
 }

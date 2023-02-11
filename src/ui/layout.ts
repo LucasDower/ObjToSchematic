@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
@@ -23,6 +21,7 @@ import { OutputElement } from './elements/output';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
 import { VectorSpinboxElement } from './elements/vector_spinbox';
+import { AppIcons } from './icons';
 
 export interface Group {
     label: string;
@@ -285,7 +284,7 @@ export class UI {
         groups: {
             'viewmode': {
                 elements: {
-                    'mesh': new ToolbarItemElement({ icon: 'mesh' })
+                    'mesh': new ToolbarItemElement({ iconSVG: AppIcons.MESH })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.TriangleMesh);
                         })
@@ -295,7 +294,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
                         }),
-                    'voxelMesh': new ToolbarItemElement({ icon: 'voxel' })
+                    'voxelMesh': new ToolbarItemElement({ iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
                         })
@@ -305,7 +304,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         }),
-                    'blockMesh': new ToolbarItemElement({ icon: 'block' })
+                    'blockMesh': new ToolbarItemElement({ iconSVG: AppIcons.BLOCK  })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
                         })
@@ -320,7 +319,7 @@ export class UI {
             },
             'debug': {
                 elements: {
-                    'grid': new ToolbarItemElement({ icon: 'grid' })
+                    'grid': new ToolbarItemElement({ iconSVG: AppIcons.GRID })
                         .onClick(() => {
                             Renderer.Get.toggleIsGridEnabled();
                         })
@@ -330,14 +329,14 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
                         }),
-                    'axes': new ToolbarItemElement({ icon: 'axes' })
+                    'axes': new ToolbarItemElement({ iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
                         })
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
-                    'night-vision': new ToolbarItemElement({ icon: 'bulb' })
+                    'night-vision': new ToolbarItemElement({ iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
                         })
@@ -359,15 +358,15 @@ export class UI {
         groups: {
             'zoom': {
                 elements: {
-                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
+                    'zoomOut': new ToolbarItemElement({ iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
                         }),
-                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
+                    'zoomIn': new ToolbarItemElement({ iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
                         }),
-                    'reset': new ToolbarItemElement({ icon: 'centre' })
+                    'reset': new ToolbarItemElement({ iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
                         }),
@@ -376,21 +375,21 @@ export class UI {
             },
             'camera': {
                 elements: {
-                    'perspective': new ToolbarItemElement({ icon: 'perspective' })
+                    'perspective': new ToolbarItemElement({ iconSVG: AppIcons.PERSPECTIVE })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('perspective');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
                         }),
-                    'orthographic': new ToolbarItemElement({ icon: 'orthographic' })
+                    'orthographic': new ToolbarItemElement({ iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isOrthographic();
                         }),
-                    'angleSnap': new ToolbarItemElement({ icon: 'magnet' })
+                    'angleSnap': new ToolbarItemElement({ iconSVG: AppIcons.MAGNET })
                         .onClick(() => {
                             ArcballCamera.Get.toggleAngleSnap();
                         })
@@ -651,6 +650,8 @@ export class UI {
     private _getTextureAtlases(): ComboBoxItem<string>[] {
         const textureAtlases: ComboBoxItem<string>[] = [];
 
+        // TODO Unimplemented
+        /*
         fs.readdirSync(AppPaths.Get.atlases).forEach((file) => {
             if (file.endsWith('.atlas')) {
                 const paletteID = file.split('.')[0];
@@ -659,6 +660,7 @@ export class UI {
                 textureAtlases.push({ payload: paletteID, displayText: paletteName });
             }
         });
+        */
 
         return textureAtlases;
     }

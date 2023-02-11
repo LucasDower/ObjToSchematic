@@ -1,4 +1,3 @@
-import { remote } from 'electron';
 import * as path from 'path';
 
 import { ConfigUIElement } from './config_element';
@@ -43,6 +42,8 @@ export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
         });
 
         this._getElement().addEventListener('click', () => {
+            // TODO Unimplemented
+            /*
             if (!this.getEnabled()) {
                 return;
             }
@@ -61,6 +62,7 @@ export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
                 this._loadedFilePath = filePath;
                 this._setValue(filePath);
             }
+            */
         });
 
         this._getElement().addEventListener('mousemove', () => {

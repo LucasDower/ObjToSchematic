@@ -1,7 +1,5 @@
-import fs from 'fs';
 import path from 'path';
 
-import { TAtlasVersion } from '../tools/build-atlas';
 import { RGBA } from './colour';
 import { AppTypes, AppUtil, TOptional, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -51,6 +49,9 @@ export class Atlas {
     }
 
     public static load(atlasName: string): TOptional<Atlas> {
+        // TODO Unimplemented
+        return undefined;
+        /*
         if (!Atlas._isValidAtlasName(atlasName)) {
             return;
         }
@@ -131,6 +132,7 @@ export class Atlas {
         }
 
         return atlas;
+        */
     }
 
     public getAtlasSize(): number {

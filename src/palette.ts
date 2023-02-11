@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import { Atlas } from './atlas';
@@ -12,6 +11,8 @@ export class PaletteManager {
     public static getPalettesInfo(): { paletteID: string, paletteDisplayName: string }[] {
         const palettes: { paletteID: string, paletteDisplayName: string }[] = [];
 
+        // TODO Unimplemented
+        /*
         fs.readdirSync(AppPaths.Get.palettes).forEach((file) => {
             const paletteFilePath = path.parse(file);
             if (paletteFilePath.ext === Palette.PALETTE_FILE_EXT) {
@@ -23,6 +24,7 @@ export class PaletteManager {
                 palettes.push({ paletteID: paletteID, paletteDisplayName: paletteDisplayName });
             }
         });
+        */
 
         return palettes;
     }
@@ -44,6 +46,9 @@ export class Palette {
     }
 
     public static load(paletteName: string): TOptional<Palette> {
+        // TODO Unimplemented
+        return undefined;
+        /*
         if (!Palette._isValidPaletteName(paletteName)) {
             return;
         }
@@ -74,9 +79,13 @@ export class Palette {
         }
 
         return palette;
+        */
     }
 
     public save(paletteName: string): boolean {
+        // TODO Unimplemented
+        return false;
+        /*
         if (!Palette._isValidPaletteName(paletteName)) {
             return false;
         }
@@ -93,6 +102,7 @@ export class Palette {
         } catch {
             return false;
         }
+        */
     }
 
     public add(blockName: AppTypes.TNamespacedBlockName): void {

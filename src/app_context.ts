@@ -1,4 +1,5 @@
-import { remote } from 'electron';
+import '../styles.css';
+
 import path from 'path';
 
 import { FallableBehaviour } from './block_mesh';
@@ -18,7 +19,6 @@ import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { FileUtil } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths } from './util/path_util';
 import { Vector3 } from './vector';
@@ -35,15 +35,14 @@ export class AppContext {
     public constructor() {
         this._materialManager = new MaterialMapManager(new Map());
 
-        Logger.Get.enableLogToFile();
-        Logger.Get.initLogFile('client');
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
 
-        FileUtil.rmdirIfExist(AppPaths.Get.gen);
+        // TODO Unimplemented
+        //FileUtil.rmdirIfExist(AppPaths.Get.gen);
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
@@ -505,6 +504,9 @@ export class AppContext {
         const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
+
+        // TODO Unimplemented
+        /*
         const filepath = remote.dialog.showSaveDialogSync({
             title: 'Save structure',
             buttonLabel: 'Save',
@@ -516,7 +518,10 @@ export class AppContext {
         }
 
         this._ui.getActionOutput(EAction.Export)
-            .setTaskInProgress('action', '[Exporter]: Saving...');
+        .setTaskInProgress('action', '[Exporter]: Saving...');
+        */
+
+        const filepath = '';
 
         const payload: TToWorkerMessage = {
             action: 'Export',

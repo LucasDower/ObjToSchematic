@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import { Bounds } from './bounds';
@@ -246,6 +245,8 @@ export class Mesh {
 
         // Check texture paths are absolute and exist
         this._materials.forEach((material, materialName) => {
+            // TODO Unimplemented
+            /*
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
@@ -263,6 +264,7 @@ export class Mesh {
                     }
                 }
             }
+            */
         });
 
         // Deduce default texture wrap mode for each material type

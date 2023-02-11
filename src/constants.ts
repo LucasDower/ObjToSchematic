@@ -1,6 +1,4 @@
 
-import fs from 'fs';
-
 import { AppTypes } from './util';
 import { AppPaths, PathUtil } from './util/path_util';
 
@@ -40,22 +38,89 @@ export class AppRuntimeConstants {
         return this._instance || (this._instance = new this());
     }
 
-    public readonly FALLABLE_BLOCKS: AppTypes.TNamespacedBlockName[];
-    public readonly TRANSPARENT_BLOCKS: AppTypes.TNamespacedBlockName[];
-    public readonly GRASS_LIKE_BLOCKS: AppTypes.TNamespacedBlockName[];
-    public readonly EMISSIVE_BLOCKS: AppTypes.TNamespacedBlockName[];
+    public readonly FALLABLE_BLOCKS = [
+        'minecraft:anvil',
+        'minecraft:lime_concrete_powder',
+        'minecraft:orange_concrete_powder',
+        'minecraft:black_concrete_powder',
+        'minecraft:brown_concrete_powder',
+        'minecraft:cyan_concrete_powder',
+        'minecraft:light_gray_concrete_powder',
+        'minecraft:purple_concrete_powder',
+        'minecraft:magenta_concrete_powder',
+        'minecraft:light_blue_concrete_powder',
+        'minecraft:yellow_concrete_powder',
+        'minecraft:white_concrete_powder',
+        'minecraft:blue_concrete_powder',
+        'minecraft:red_concrete_powder',
+        'minecraft:gray_concrete_powder',
+        'minecraft:pink_concrete_powder',
+        'minecraft:green_concrete_powder',
+        'minecraft:dragon_egg',
+        'minecraft:gravel',
+        'minecraft:pointed_dripstone',
+        'minecraft:red_sand',
+        'minecraft:sand',
+        'minecraft:scaffolding',
+    ];
+
+    public readonly TRANSPARENT_BLOCKS = [
+        'minecraft:frosted_ice',
+        'minecraft:glass',
+        'minecraft:white_stained_glass',
+        'minecraft:orange_stained_glass',
+        'minecraft:magenta_stained_glass',
+        'minecraft:light_blue_stained_glass',
+        'minecraft:yellow_stained_glass',
+        'minecraft:lime_stained_glass',
+        'minecraft:pink_stained_glass',
+        'minecraft:gray_stained_glass',
+        'minecraft:light_gray_stained_glass',
+        'minecraft:cyan_stained_glass',
+        'minecraft:purple_stained_glass',
+        'minecraft:blue_stained_glass',
+        'minecraft:brown_stained_glass',
+        'minecraft:green_stained_glass',
+        'minecraft:red_stained_glass',
+        'minecraft:black_stained_glass',
+        'minecraft:ice',
+        'minecraft:oak_leaves',
+        'minecraft:spruce_leaves',
+        'minecraft:birch_leaves',
+        'minecraft:jungle_leaves',
+        'minecraft:acacia_leaves',
+        'minecraft:dark_oak_leaves',
+        'minecraft:mangrove_leaves',
+        'minecraft:azalea_leaves',
+        'minecraft:flowering_azalea_leaves',
+        'minecraft:slime_block',
+        'minecraft:honey_block',
+    ];
+
+    public readonly GRASS_LIKE_BLOCKS = [
+        'minecraft:grass_block',
+        'minecraft:grass_path',
+        'minecraft:podzol',
+        'minecraft:crimson_nylium',
+        'minecraft:warped_nylium',
+        'minecraft:mycelium',
+        'minecraft:farmland',
+    ];
+
+    public readonly EMISSIVE_BLOCKS = [
+        'minecraft:respawn_anchor',
+        'minecraft:magma_block',
+        'minecraft:sculk_catalyst',
+        'minecraft:crying_obsidian',
+        'minecraft:shroomlight',
+        'minecraft:sea_lantern',
+        'minecraft:jack_o_lantern',
+        'minecraft:glowstone',
+        'minecraft:pearlescent_froglight',
+        'minecraft:verdant_froglight',
+        'minecraft:ochre_froglight',
+    ];
 
     private constructor() {
-        const fallableBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'fallable_blocks.json'), 'utf-8');
-        this.FALLABLE_BLOCKS = JSON.parse(fallableBlocksString).fallable_blocks;
-
-        const transparentBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'transparent_blocks.json'), 'utf-8');
-        this.TRANSPARENT_BLOCKS = JSON.parse(transparentBlocksString).transparent_blocks;
-
-        const emissiveBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'emissive_blocks.json'), 'utf-8');
-        this.EMISSIVE_BLOCKS = JSON.parse(emissiveBlocksString).emissive_blocks;
-
-        const grassLikeBlocksString = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'grass_like_blocks.json'), 'utf-8');
-        this.GRASS_LIKE_BLOCKS = JSON.parse(grassLikeBlocksString).grass_like_blocks;
     }
 }

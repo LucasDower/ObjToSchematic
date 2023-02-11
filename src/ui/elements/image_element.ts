@@ -1,9 +1,8 @@
-import { remote } from 'electron';
 import path from 'path';
 
 import { getRandomID } from '../../util';
-import { FileUtil } from '../../util/file_util';
 import { UIUtil } from '../../util/ui_util';
+import { AppIcons } from '../icons';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
@@ -15,10 +14,12 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
 
     public constructor(path: string) {
         super(path);
-        this._switchElement = new ToolbarItemElement({ icon: 'upload' })
+        this._switchElement = new ToolbarItemElement({ iconSVG: AppIcons.UPLOAD })
             .setSmall()
             .setLabel('Choose')
             .onClick(() => {
+                // TODO Unimplemented
+                /*
                 const files = remote.dialog.showOpenDialogSync({
                     title: 'Load',
                     buttonLabel: 'Load',
@@ -30,11 +31,13 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
                 if (files && files[0]) {
                     this._setValue(files[0]);
                 }
+                */
             });
-        this._openElement = new ToolbarItemElement({ icon: 'folder' })
+        this._openElement = new ToolbarItemElement({ iconSVG: AppIcons.FOLDER })
             .setSmall()
             .onClick(() => {
-                FileUtil.openDir(this.getValue());
+                // TODO Unimplemented
+                //FileUtil.openDir(this.getValue());
             });
 
         this._imageId = getRandomID();

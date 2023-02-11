@@ -12,15 +12,17 @@ export type TWorkerJob = {
 }
 
 export class WorkerController {
-    private _worker: Worker;
+    private _worker?: Worker;
     private _jobQueue: TWorkerJob[];
     private _jobPending: TWorkerJob | undefined;
     private _jobStartTime: number;
     private _timerOn: boolean;
 
     public constructor(scriptURL: string, options?: WorkerOptions) {
-        this._worker = new Worker(scriptURL, options);
-        this._worker.onmessage = this._onWorkerMessage.bind(this);
+        if (AppConfig.Get.USE_WORKER_THREAD) {
+            this._worker = new Worker(scriptURL, options);
+            this._worker.onmessage = this._onWorkerMessage.bind(this);
+        }
 
         this._jobQueue = [];
         this._jobStartTime = 0;
@@ -105,6 +107,7 @@ export class WorkerController {
         }
 
         if (AppConfig.Get.USE_WORKER_THREAD) {
+            ASSERT(this._worker !== undefined, 'No worker instance');
             this._worker.postMessage(this._jobPending.payload);
         } else {
             const result = doWork(this._jobPending.payload);

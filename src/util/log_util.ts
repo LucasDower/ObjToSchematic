@@ -1,8 +1,6 @@
-import fs from 'fs';
 import util from 'util';
 
 import { AppConfig } from '../config';
-import { FileUtil } from './file_util';
 import { AppPaths, PathUtil } from './path_util';
 
 /**
@@ -15,16 +13,9 @@ export const LOG = (...data: any[]) => {
         // eslint-disable-next-line no-console
         console.log(...data);
     }
-    if (Logger.Get.logToFile) {
-        Logger.Get.logToFile(...data);
-    }
 };
 
-export const LOGF = (...data: any[]) => {
-    if (Logger.Get.logToFile) {
-        Logger.Get.logToFile(...data);
-    }
-};
+export const LOGF = LOG;
 
 /**
  * Logs to console and file if logging `LOG_MAJOR` is enabled.
@@ -37,9 +28,6 @@ export const LOG_MAJOR = (...data: any[]) => {
         // eslint-disable-next-line no-console
         console.log(...data);
     }
-    if (Logger.Get.logToFile) {
-        Logger.Get.logToFile(...data);
-    }
 };
 
 /**
@@ -49,9 +37,6 @@ export const LOG_WARN = (...data: any[]) => {
     if (Logger.Get.isLOGWARNEnabled()) {
         // eslint-disable-next-line no-console
         console.warn(...data);
-    }
-    if (Logger.Get.logToFile) {
-        Logger.Get.logToFile(...data);
     }
 };
 
@@ -85,9 +70,6 @@ export const TIME_END = (label: string) => {
 export const LOG_ERROR = (...data: any[]) => {
     // eslint-disable-next-line no-console
     console.error(...data);
-    if (Logger.Get.logToFile) {
-        Logger.Get.logToFile(...data);
-    }
 };
 
 /**
@@ -107,34 +89,11 @@ export class Logger {
 
     private _enabledLogToFile?: boolean;
 
-    private _logStream?: fs.WriteStream;
-
     private constructor() {
         this._enabledLOG = false;
         this._enabledLOGMAJOR = false;
         this._enabledLOGWARN = false;
         this._enabledLOGTIME = false;
-    }
-
-    /**
-     * Setup the log file.
-     * @param suffix The suffix to append to the end of the log file name.
-     */
-    public initLogFile(suffix: string) {
-        if (this._logStream === undefined && this._enabledLogToFile === true) {
-            FileUtil.mkdirIfNotExist(AppPaths.Get.logs);
-            this._logStream = fs.createWriteStream(PathUtil.join(AppPaths.Get.logs, `./${Date.now()}-${suffix}.log`));
-        }
-    }
-
-    /**
-     * Logs to the log file if setup.
-     * @param data The data to print.
-     */
-    public logToFile(...data: any[]) {
-        if (this._logStream && this._enabledLogToFile) {
-            this._logStream.write(`[${(new Date()).toISOString()}] ${util.format(...data)}\n`);
-        }
     }
 
     /**
@@ -194,16 +153,6 @@ export class Logger {
     }
 
     /**
-     * Allow console log calls to logged to the log file if setup.
-     * Should be called before `initLogFile`
-     */
-    public enableLogToFile() {
-        if (AppConfig.Get.LOG_TO_FILE && this._enabledLogToFile === undefined) {
-            this._enabledLogToFile = true;
-        }
-    }
-
-    /**
      * Prevent console log calls to logged to the log file if setup.
      */
     public disableLogToFile() {
@@ -236,12 +185,5 @@ export class Logger {
      */
     public isLOGTIMEEnabled() {
         return this._enabledLOGTIME;
-    }
-
-    /**
-     * Whether or not console log calls should be logged to the log file if setup.
-     */
-    public isLogToFileEnabled() {
-        return this.logToFile;
     }
 }

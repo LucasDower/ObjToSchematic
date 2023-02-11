@@ -1,7 +1,5 @@
-import * as fs from 'fs';
 import * as jpeg from 'jpeg-js';
 import path from 'path';
-import { PNG } from 'pngjs';
 const TGA = require('tga');
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
@@ -9,7 +7,6 @@ import { AppConfig } from './config';
 import { clamp } from './math';
 import { UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { FileUtil } from './util/file_util';
 import { LOG, LOG_ERROR, LOGF } from './util/log_util';
 import { AppPaths } from './util/path_util';
 import { TTexelExtension, TTexelInterpolation } from './util/type_util';
@@ -68,40 +65,47 @@ export class Texture {
     }
 
     private _loadImageFile(filename: string): ImageData {
-        ASSERT(path.isAbsolute(filename));
-        const filePath = path.parse(filename);
-        try {
-            const data = fs.readFileSync(filename);
+        // TODO Unimplemented
+        return {
+            width: 0,
+            height: 0,
+            data: new Buffer(0),
+        };
+        // ASSERT(path.isAbsolute(filename));
+        // const filePath = path.parse(filename);
+        // try {
+        //     const data = fs.readFileSync(filename);
 
-            switch (filePath.ext.toLowerCase()) {
-                case '.png': {
-                    return PNG.sync.read(data);
-                }
-                case '.jpg':
-                case '.jpeg': {
-                    this._useAlphaChannelValue = false;
-                    return jpeg.decode(data, {
-                        maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
-                        formatAsRGBA: true,
-                    });
-                }
-                /*
-                case '.tga': {
-                    const tga = new TGA(data);
-                    return {
-                        width: tga.width,
-                        height: tga.height,
-                        data: tga.pixels,
-                    };
-                }
-                */
-                default:
-                    ASSERT(false, 'Unsupported image format');
-            }
-        } catch (err) {
-            LOG_ERROR(err);
-            throw new AppError(`Could not read ${filename}`);
-        }
+        //     switch (filePath.ext.toLowerCase()) {
+        //         case '.png': {
+        //             ASSERT(false); // TODO Unimplemented
+        //             //return PNG.sync.read(data);
+        //         }
+        //         case '.jpg':
+        //         case '.jpeg': {
+        //             this._useAlphaChannelValue = false;
+        //             return jpeg.decode(data, {
+        //                 maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
+        //                 formatAsRGBA: true,
+        //             });
+        //         }
+        //         /*
+        //         case '.tga': {
+        //             const tga = new TGA(data);
+        //             return {
+        //                 width: tga.width,
+        //                 height: tga.height,
+        //                 data: tga.pixels,
+        //             };
+        //         }
+        //         */
+        //         default:
+        //             ASSERT(false, 'Unsupported image format');
+        //     }
+        // } catch (err) {
+        //     LOG_ERROR(err);
+        //     throw new AppError(`Could not read ${filename}`);
+        // }
     }
 
     private _correctTexcoord(a: number) {
@@ -128,7 +132,7 @@ export class Texture {
         ASSERT(uv.u >= 0.0 && uv.u <= 1.0, 'Texcoord UV.u OOB');
         ASSERT(uv.v >= 0.0 && uv.v <= 1.0, 'Texcoord UV.v OOB');
         uv.v = 1.0 - uv.v;
-        
+
         const diffuse = (interpolation === 'nearest') ?
             this._getNearestRGBA(this._image, uv) :
             this._getLinearRGBA(this._image, uv);
@@ -235,6 +239,9 @@ export class Texture {
 
 export class TextureConverter {
     public static createPNGfromTGA(filepath: string): string {
+        // TODO Unimplemented;
+        return '';
+        /*
         ASSERT(fs.existsSync(filepath), '.tga does not exist');
         const parsed = path.parse(filepath);
         ASSERT(parsed.ext === '.tga');
@@ -251,5 +258,6 @@ export class TextureConverter {
         LOGF(`Creating new generated texture of '${filepath}' at '${newTexturePath}'`);
         fs.writeFileSync(newTexturePath, buffer);
         return newTexturePath;
+        */
     }
 }

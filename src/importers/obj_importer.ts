@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import { RGBA, RGBAColours } from '../colour';
@@ -311,6 +310,8 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseOBJ(path: string) {
+        // TODO Unimplemented
+        /*
         if (path === '') {
             throw new AppError(`No filepath given`);
         }
@@ -328,6 +329,7 @@ export class ObjImporter extends IImporter {
         for (const line of fileLines) {
             this.parseOBJLine(line);
         }
+        */
     }
 
     public parseOBJLine(line: string) {
@@ -357,6 +359,8 @@ export class ObjImporter extends IImporter {
     }
 
     private _parseMTL() {
+        //TODO Unimplemented
+        /*
         for (const mtlLib of this._mtlLibs) {
             if (!fs.existsSync(mtlLib)) {
                 StatusHandler.Get.add('warning', `Could not find ${mtlLib}`);
@@ -373,6 +377,7 @@ export class ObjImporter extends IImporter {
 
             this._addCurrentMaterial();
         }
+        */
     }
 
     private _parseMTLLine(line: string) {

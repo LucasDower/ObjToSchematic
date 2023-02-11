@@ -1,4 +1,4 @@
-import { NBT, TagType } from 'prismarine-nbt';
+//import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
@@ -134,11 +134,14 @@ export class Litematic extends IExporter {
 
     private _createBlockStatePalette(blockMapping: BlockMapping) {
         const blockStatePalette = Array(Object.keys(blockMapping).length);
+
+        /*
         for (const blockName of Object.keys(blockMapping)) {
             const index = blockMapping[blockName];
             blockStatePalette[index] = { Name: { type: TagType.String, value: blockName } };
         }
         blockStatePalette[0] = { Name: { type: TagType.String, value: 'minecraft:air' } };
+        */
 
         return blockStatePalette;
     }
@@ -151,6 +154,7 @@ export class Litematic extends IExporter {
         const blockStatePalette = this._createBlockStatePalette(blockMapping);
         const numBlocks = blockMesh.getBlocks().length;
 
+        /*
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'Litematic',
@@ -208,6 +212,7 @@ export class Litematic extends IExporter {
         };
 
         return nbt;
+        */
     }
 
     getFormatFilter() {
@@ -230,7 +235,8 @@ export class Litematic extends IExporter {
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
-        saveNBT(nbt, filePath);
+        // TODO Unimplemented
+        //saveNBT(nbt, filePath);
 
         return false;
     }
