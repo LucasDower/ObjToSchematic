@@ -807,3 +807,17 @@ svg {
   flex-direction: column;
   align-items: center;
 }
+
+.banner {
+  color: white;
+  font-weight: 300;
+  font-size: 75%;
+  padding: 6px;
+  text-align: center;
+  background-color: var(--prop-accent-disabled);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+a {
+  color: var(--prop-accent-hovered)
+}

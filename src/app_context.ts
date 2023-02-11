@@ -389,7 +389,8 @@ export class AppContext {
                     );
                     LOG_ERROR(payload.error);
 
-                    this._ui.enableTo(EAction.Assign);
+                    //this._ui.enableTo(EAction.Assign); TODO Unimplemented
+                    this._ui.enableTo(EAction.Voxelise);
                     break;
                 }
                 default: {
@@ -405,7 +406,8 @@ export class AppContext {
                             [],
                             'success',
                         );
-                        this._ui.enableTo(EAction.Assign);
+                        // this._ui.enableTo(EAction.Assign);  TODO Unimplemented
+                        this._ui.enableTo(EAction.Voxelise);
                     }
                 }
             }
