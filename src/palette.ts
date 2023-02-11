@@ -1,32 +1,19 @@
-import path from 'path';
-
 import { Atlas } from './atlas';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
-import { ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
+export type TPalettes = 'all' | 'colourful' | 'greyscale' | 'schematic-friendly';
+
 export class PaletteManager {
-    public static getPalettesInfo(): { paletteID: string, paletteDisplayName: string }[] {
-        const palettes: { paletteID: string, paletteDisplayName: string }[] = [];
-
-        // TODO Unimplemented
-        /*
-        fs.readdirSync(AppPaths.Get.palettes).forEach((file) => {
-            const paletteFilePath = path.parse(file);
-            if (paletteFilePath.ext === Palette.PALETTE_FILE_EXT) {
-                const paletteID = paletteFilePath.name;
-
-                let paletteDisplayName = paletteID.replace('-', ' ').toLowerCase();
-                paletteDisplayName = AppUtil.Text.capitaliseFirstLetter(paletteDisplayName);
-
-                palettes.push({ paletteID: paletteID, paletteDisplayName: paletteDisplayName });
-            }
-        });
-        */
-
-        return palettes;
+    public static getPalettesInfo(): { id: TPalettes, name: string }[] {
+        return [
+            { id: 'all', name: 'All' },
+            { id: 'colourful', name: 'Colourful' },
+            { id: 'greyscale', name: 'Greyscale' },
+            { id: 'schematic-friendly', name: 'Schematic-friendly' },
+        ];
     }
 }
 
@@ -105,10 +92,12 @@ export class Palette {
         */
     }
 
-    public add(blockName: AppTypes.TNamespacedBlockName): void {
-        if (!this._blocks.includes(blockName)) {
-            this._blocks.push(AppUtil.Text.namespaceBlock(blockName));
-        }
+    public add(blockNames: AppTypes.TNamespacedBlockName[]): void {
+        blockNames.forEach((blockName) => {
+            if (!this._blocks.includes(blockName)) {
+                this._blocks.push(AppUtil.Text.namespaceBlock(blockName));
+            }
+        });
     }
 
     public remove(blockName: string): boolean {

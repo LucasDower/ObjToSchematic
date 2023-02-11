@@ -4,6 +4,7 @@ import { BufferGenerator } from './buffer';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
+import { ImporterFactor } from './importers/importers';
 import { ObjImporter } from './importers/obj_importer';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
@@ -69,8 +70,9 @@ export class WorkerClient {
     }
 
     public import(params: ImportParams.Input): ImportParams.Output {
-        const importer = new ObjImporter();
-        importer.parseFile(params.filepath);
+        const importer = ImporterFactor.GetImporter(params.importer);
+        importer.parse(params.fileSource);
+
         this._loadedMesh = importer.toMesh();
         this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
 

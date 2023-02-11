@@ -45,7 +45,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
             .setSmall()
             .setDefaultValue(material.transparency.type);
 
-        this._imageElement = new ImageElement(material.path);
+        this._imageElement = new ImageElement(material.diffuse?.raw);
 
         this._typeElement = new MaterialTypeElement(MaterialType.textured);
 
@@ -60,7 +60,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
                     .setSmall();
                 break;
             case 'UseAlphaMap':
-                this._alphaMapElement = new ImageElement(material.transparency.path);
+                this._alphaMapElement = new ImageElement(material.transparency.alpha?.raw);
                 this._alphaChannelElement = new ComboBoxElement<EImageChannel>()
                     .addItem({ payload: EImageChannel.R, displayText: 'Red' })
                     .addItem({ payload: EImageChannel.G, displayText: 'Green' })
@@ -84,7 +84,13 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
 
         this._imageElement.addValueChangedListener((newPath) => {
             const material = this.getValue();
-            material.path = newPath;
+            // TODO Unimplemented, promise should be resolved where it is used
+            newPath.then((source) => {
+                material.diffuse = {
+                    filetype: 'png', // TODO Unimplemented other filetypes
+                    raw: source,
+                };
+            });
         });
 
         this._filteringElement.addValueChangedListener((newFiltering) => {
@@ -109,8 +115,14 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
 
         this._alphaMapElement?.addValueChangedListener((newPath) => {
             const material = this.getValue();
-            ASSERT(material.transparency.type === 'UseAlphaMap');
-            material.transparency.path = newPath;
+            // TODO Unimplemented, promise should be resolved where it is used
+            newPath.then((source) => {
+                ASSERT(material.transparency.type === 'UseAlphaMap');
+                material.transparency.alpha = {
+                    filetype: 'png', // TODO Unimplemented other filetypes
+                    raw: source,
+                };
+            });
         });
 
         this._alphaChannelElement?.addValueChangedListener((newChannel) => {

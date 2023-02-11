@@ -217,19 +217,37 @@ export class Renderer {
                 colourArray: RGBAUtil.toArray(material.colour),
             };
         } else {
-            const diffuseTexture = twgl.createTexture(this._gl, {
-                src: material.path,
-                min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+            const blankTexture = twgl.createTexture(this._gl, {
+                min: this._gl.NEAREST,
+                mag: this._gl.NEAREST,
+                src: [
+                    255, 0, 255, 255,
+                ],
             });
 
-            const alphaTexture = material.transparency.type === 'UseAlphaMap' ? twgl.createTexture(this._gl, {
-                src: material.transparency.path,
-                min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-            }) : diffuseTexture;
+            let diffuseTexture = blankTexture;
+            let alphaTexture = diffuseTexture;
+
+            if (material.diffuse !== undefined && material.diffuse.raw !== '') {
+                diffuseTexture = twgl.createTexture(this._gl, {
+                    src: material.diffuse?.raw, // TODO Unimplemented
+                    min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                    mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                    wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+                });
+            }
+
+            if (material.transparency.type === 'UseAlphaMap') {
+                alphaTexture = blankTexture;
+                if (material.transparency.alpha !== undefined && material.transparency.alpha.raw !== '') {
+                    alphaTexture = twgl.createTexture(this._gl, {
+                        src: material.transparency.alpha.raw, // TODO Unimplemented
+                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
+                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+                    });
+                }
+            }
 
             const alphaValue = material.transparency.type === 'UseAlphaValue' ?
                 material.transparency.alpha : 1.0;

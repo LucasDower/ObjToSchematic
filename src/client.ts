@@ -26,6 +26,8 @@ addDocumentEvent('mousemove', (e) => {
     mouseManager.onMouseMove(e);
 });
 
+window.addEventListener('contextmenu', (e) => e.preventDefault());
+
 
 // Begin draw loop
 const context = new AppContext();

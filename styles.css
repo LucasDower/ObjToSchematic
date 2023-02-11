@@ -34,6 +34,7 @@ body {
   font-family: 'Lexend', sans-serif;
   overflow: hidden;
   user-select: none;
+  font-size: 85%;
 }
 
 canvas {
@@ -94,7 +95,7 @@ canvas {
 .prop-key-container {
   align-self: center;
   padding: 0px 10px 0px 0px;
-  width: 125px;
+  width: 150px;
   overflow: auto;
 }
 
@@ -188,6 +189,7 @@ canvas {
 }
 
 input {
+  font-size: 100%;
   user-select: none;
   margin-right: 3px;
   border-radius: var(--border-radius);
@@ -215,6 +217,7 @@ input::-webkit-inner-spin-button {
 }
 
 select {
+  font-size: 100%;
   width: 100%;
   height: var(--property-height);
   padding-left: 5px;

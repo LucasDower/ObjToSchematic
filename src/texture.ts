@@ -1,14 +1,10 @@
-import * as jpeg from 'jpeg-js';
-import path from 'path';
-const TGA = require('tga');
+import { PNG } from 'pngjs';
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
-import { AppConfig } from './config';
 import { clamp } from './math';
-import { UV } from './util';
-import { AppError, ASSERT } from './util/error_util';
-import { LOG, LOG_ERROR, LOGF } from './util/log_util';
-import { AppPaths } from './util/path_util';
+import { TOptional, UV } from './util';
+import { ASSERT } from './util/error_util';
+import { LOG } from './util/log_util';
 import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 
 /* eslint-disable */
@@ -41,71 +37,40 @@ export enum EImageChannel {
 }
 /* eslint-enable */
 
+export type TImageFiletype = 'png';
+
+export type TImageRawWrap = {
+    raw: string,
+    filetype: TImageFiletype,
+}
+
 export type TTransparencyTypes = 'None' | 'UseDiffuseMapAlphaChannel' | 'UseAlphaValue' | 'UseAlphaMap';
 
 export type TTransparencyOptions =
     | { type: 'None' }
     | { type: 'UseDiffuseMapAlphaChannel' }
     | { type: 'UseAlphaValue', alpha: number }
-    | { type: 'UseAlphaMap', path: string, channel: EImageChannel };
+    | { type: 'UseAlphaMap', alpha?: TImageRawWrap, channel: EImageChannel };
 
 export class Texture {
-    private _image: ImageData;
-    private _alphaImage: ImageData;
-    private _transparency: TTransparencyOptions;
+    private _image?: ImageData;
+    private _alphaImage?: ImageData;
 
-    constructor(diffusePath: string, transparency: TTransparencyOptions) {
-        ASSERT(path.isAbsolute(diffusePath));
+    constructor(params: { diffuse?: TImageRawWrap, transparency: TTransparencyOptions }) {
+        this._image = this._readRawData(params.diffuse);
 
-        this._image = this._loadImageFile(diffusePath);
-        this._transparency = transparency;
-        this._alphaImage = transparency.type === 'UseAlphaMap' ?
-            this._loadImageFile(transparency.path) :
+        this._alphaImage = params.transparency.type === 'UseAlphaMap' ?
+            this._readRawData(params.transparency.alpha) :
             this._image;
     }
 
-    private _loadImageFile(filename: string): ImageData {
-        // TODO Unimplemented
-        return {
-            width: 0,
-            height: 0,
-            data: new Buffer(0),
-        };
-        // ASSERT(path.isAbsolute(filename));
-        // const filePath = path.parse(filename);
-        // try {
-        //     const data = fs.readFileSync(filename);
-
-        //     switch (filePath.ext.toLowerCase()) {
-        //         case '.png': {
-        //             ASSERT(false); // TODO Unimplemented
-        //             //return PNG.sync.read(data);
-        //         }
-        //         case '.jpg':
-        //         case '.jpeg': {
-        //             this._useAlphaChannelValue = false;
-        //             return jpeg.decode(data, {
-        //                 maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
-        //                 formatAsRGBA: true,
-        //             });
-        //         }
-        //         /*
-        //         case '.tga': {
-        //             const tga = new TGA(data);
-        //             return {
-        //                 width: tga.width,
-        //                 height: tga.height,
-        //                 data: tga.pixels,
-        //             };
-        //         }
-        //         */
-        //         default:
-        //             ASSERT(false, 'Unsupported image format');
-        //     }
-        // } catch (err) {
-        //     LOG_ERROR(err);
-        //     throw new AppError(`Could not read ${filename}`);
-        // }
+    private _readRawData(params?: TImageRawWrap): TOptional<ImageData> {
+        if (params?.filetype === 'png') {
+            const png = params.raw.split(',')[1];
+            if (png !== undefined) {
+                return PNG.sync.read(Buffer.from(png, 'base64'));
+            }
+        }
     }
 
     private _correctTexcoord(a: number) {
@@ -133,13 +98,13 @@ export class Texture {
         ASSERT(uv.v >= 0.0 && uv.v <= 1.0, 'Texcoord UV.v OOB');
         uv.v = 1.0 - uv.v;
 
-        const diffuse = (interpolation === 'nearest') ?
+        const diffuse = this._image === undefined ? RGBAColours.MAGENTA : ((interpolation === 'nearest') ?
             this._getNearestRGBA(this._image, uv) :
-            this._getLinearRGBA(this._image, uv);
+            this._getLinearRGBA(this._image, uv));
 
-        const alpha = (interpolation === 'nearest') ?
+        const alpha = this._alphaImage === undefined ? RGBAColours.MAGENTA : ((interpolation === 'nearest') ?
             this._getNearestRGBA(this._alphaImage, uv) :
-            this._getLinearRGBA(this._alphaImage, uv);
+            this._getLinearRGBA(this._alphaImage, uv));
 
         return {
             r: diffuse.r,
@@ -168,12 +133,12 @@ export class Texture {
             return RGBAColours.MAGENTA;
         }
 
-        const A = Texture._sampleImage(this._image, xLeft, yUp);
-        const B = Texture._sampleImage(this._image, xRight, yUp);
+        const A = Texture._sampleImage(xLeft, yUp, this._image);
+        const B = Texture._sampleImage(xRight, yUp, this._image);
         const AB = RGBAUtil.lerp(A, B, u);
 
-        const C = Texture._sampleImage(this._image, xLeft, yDown);
-        const D = Texture._sampleImage(this._image, xRight, yDown);
+        const C = Texture._sampleImage(xLeft, yDown, this._image);
+        const D = Texture._sampleImage(xRight, yDown, this._image);
         const CD = RGBAUtil.lerp(C, D, u);
 
         return RGBAUtil.lerp(AB, CD, v);
@@ -186,7 +151,7 @@ export class Texture {
         const diffuseX = Math.floor(uv.u * image.width);
         const diffuseY = Math.floor(uv.v * image.height);
 
-        return Texture._sampleImage(image, diffuseX, diffuseY);
+        return Texture._sampleImage(diffuseX, diffuseY, image);
     }
 
     private _sampleChannel(colour: RGBA, channel: EImageChannel) {
@@ -207,7 +172,7 @@ export class Texture {
 
         for (let i = 0; i < this._alphaImage.width; ++i) {
             for (let j = 0; j < this._alphaImage.height; ++j) {
-                const value = Texture._sampleImage(this._alphaImage, i, j);
+                const value = Texture._sampleImage(i, j, this._alphaImage);
                 if (value.a != 1.0) {
                     LOG(`Using alpha channel`);
                     this._useAlphaChannelValue = true;
@@ -221,7 +186,11 @@ export class Texture {
         return false;
     }
 
-    private static _sampleImage(image: ImageData, x: number, y: number) {
+    private static _sampleImage(x: number, y: number, image?: ImageData) {
+        if (image === undefined) {
+            return RGBAColours.MAGENTA;
+        }
+
         x = clamp(x, 0, image.width - 1);
         y = clamp(y, 0, image.height - 1);
 

@@ -17,6 +17,10 @@ module.exports = {
                 use: 'raw-loader',
             },
             {
+                test: /\.png$/,
+                use: 'file-loader',
+            },
+            {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules|main\.ts/,

@@ -2,6 +2,7 @@ import { FallableBehaviour } from './block_mesh';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
+import { TImporters } from './importers/importers';
 import { MaterialMap } from './mesh';
 import { StatusMessage } from './status';
 import { ColourSpace } from './util';
@@ -22,7 +23,8 @@ export namespace InitParams {
 
 export namespace ImportParams {
     export type Input = {
-        filepath: string,
+        importer: TImporters,
+        fileSource: string,
         rotation: Vector3,
     }
 

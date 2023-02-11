@@ -4,7 +4,7 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureConverter, TTransparencyOptions } from './texture';
+import { Texture, TextureConverter, TImageFiletype, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -39,7 +39,10 @@ export type SolidMaterial = BaseMaterial & {
 }
 export type TexturedMaterial = BaseMaterial & {
     type: MaterialType.textured,
-    path: string,
+    diffuse?: {
+        raw: string,
+        filetype: TImageFiletype
+    },
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
     transparency: TTransparencyOptions,
@@ -190,11 +193,6 @@ export class Mesh {
     }
 
     private _checkMaterials() {
-        if (this._materials.size === 0) {
-            throw new AppError('Loaded mesh has no materials');
-        }
-
-
         // Check used materials exist
         const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
@@ -327,7 +325,7 @@ export class Mesh {
         this._loadedTextures.clear();
         this._materials.forEach((material, materialName) => {
             if (material.type === MaterialType.textured && !this._loadedTextures.has(materialName)) {
-                this._loadedTextures.set(materialName, new Texture(material.path, material.transparency));
+                this._loadedTextures.set(materialName, new Texture({ diffuse: material.diffuse, transparency: material.transparency }));
             }
         });
     }

@@ -20,32 +20,9 @@ export class ObjImporter extends IImporter {
     private _normals: Vector3[] = [];
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
-
-    private _materials: Map<string, SolidMaterial | TexturedMaterial>;
-
-    public constructor() {
-        super();
-        this._materials = new Map();
-        this._materials.set('DEFAULT_UNASSIGNED', {
-            type: MaterialType.solid,
-            colour: RGBAColours.WHITE,
-            canBeTextured: false,
-            needsAttention: false,
-        });
-    }
-
-    private _mtlLibs: string[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
 
-    private _objPath?: path.ParsedPath;
     private _objParsers = [
-        {
-            // e.g. 'mtllib my_file.mtl'
-            regex: new RegExpBuilder().add(/^mtllib/).add(/ /).add(REGEX_NZ_ANY, 'path').toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                this._mtlLibs.push(match.path.trim());
-            },
-        },
         {
             // e.g. 'usemtl my_material'
             regex: new RegExpBuilder().add(/^usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
@@ -204,136 +181,29 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    private _currentColour: RGBA = RGBAColours.BLACK;
-    private _currentAlpha?: number;
-    private _currentTexture: string = '';
-    private _currentTransparencyTexture: string = '';
-    private _materialReady: boolean = false;
-    private _mtlParsers = [
-        {
-            // e.g. 'newmtl my_material'
-            regex: new RegExpBuilder().add(/^newmtl/).add(REGEX_NZ_ANY, 'name').toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                this._addCurrentMaterial();
-                this._currentMaterialName = match.name.trim();
-                this._currentTexture = '';
-                this._materialReady = false;
-            },
-        },
-        {
-            // e.g. 'Kd 0.123 0.456 0.789'
-            regex: new RegExpBuilder()
-                .add(/^Kd/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'r')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'g')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'b')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const r = parseFloat(match.r);
-                const g = parseFloat(match.g);
-                const b = parseFloat(match.b);
-                checkNaN(r, g, b);
-                checkFractional(r, g, b);
-                this._currentColour = { r: r, g: g, b: b, a: this._currentAlpha ?? 1.0 };
-                this._materialReady = true;
-            },
-        },
-        {
-            // e.g. 'map_Kd my/path/to/file.png'
-            regex: new RegExpBuilder().add(/^map_Kd/).add(REGEX_NZ_ANY, 'path').toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                let mtlPath = match.path.trim();
-                if (!path.isAbsolute(mtlPath)) {
-                    ASSERT(this._objPath, 'no obj path');
-                    mtlPath = path.join(this._objPath.dir, mtlPath);
-                }
-                this._currentTexture = mtlPath;
-                this._materialReady = true;
-            },
-        },
-        {
-            // Transparency map
-            // e.g. 'map_d my/path/to/file.png'
-            regex: new RegExpBuilder().add(/^map_d/).add(REGEX_NZ_ANY, 'path').toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                let texturePath = match.path.trim();
-                if (!path.isAbsolute(texturePath)) {
-                    ASSERT(this._objPath, 'no obj path');
-                    texturePath = path.join(this._objPath.dir, texturePath);
-                }
-                this._currentTransparencyTexture = texturePath;
-                this._materialReady = true;
-            },
-        },
-        {
-            // Transparency value
-            // e.g. 'd 0.7500'
-            regex: new RegExpBuilder()
-                .add(/^d/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'alpha')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const alpha = parseFloat(match.alpha);
-                checkNaN(alpha);
-                checkFractional(alpha);
-                this._currentAlpha = alpha;
-            },
-        },
-    ];
-
-    override parseFile(filePath: string) {
-        this._objPath = path.parse(filePath);
-
-        this._parseOBJ(filePath);
-
-        if (this._mtlLibs.length === 0) {
-            StatusHandler.Get.add('warning', 'Could not find associated .mtl file');
-        }
-        for (let i = 0; i < this._mtlLibs.length; ++i) {
-            const mtlLib = this._mtlLibs[i];
-            if (!path.isAbsolute(mtlLib)) {
-                this._mtlLibs[i] = path.join(this._objPath.dir, mtlLib);
-            }
-            ASSERT(path.isAbsolute(this._mtlLibs[i]), 'path not absolute');
-        }
-
-        this._parseMTL();
-        LOG('Materials', this._materials);
+    override parse(fileSource: string) {
+        this._parseOBJ(fileSource);
     }
 
     override toMesh(): Mesh {
-        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, this._materials);
+        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
     }
 
-    private _parseOBJ(path: string) {
-        // TODO Unimplemented
-        /*
-        if (path === '') {
-            throw new AppError(`No filepath given`);
-        }
-        if (!fs.existsSync(path)) {
-            throw new AppError(`Could not find '${path}'`);
-        }
-        const fileContents = fs.readFileSync(path, 'utf8');
-        if (fileContents.includes('�')) {
+    private _parseOBJ(fileSource: string) {
+        if (fileSource.includes('�')) {
             throw new AppError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
         }
 
-        fileContents.replace('\r', ''); // Convert Windows carriage return
-        const fileLines = fileContents.split('\n');
+        fileSource.replace('\r', ''); // Convert Windows carriage return
+        const fileLines = fileSource.split('\n');
 
         for (const line of fileLines) {
             this.parseOBJLine(line);
         }
-        */
     }
 
     public parseOBJLine(line: string) {
-        const essentialTokens = ['mtllib ', 'usemtl ', 'v ', 'vt ', 'f ', 'vn '];
+        const essentialTokens = ['usemtl ', 'v ', 'vt ', 'f ', 'vn '];
 
         for (const parser of this._objParsers) {
             const match = parser.regex.exec(line);
@@ -355,106 +225,6 @@ export class ObjImporter extends IImporter {
         });
         if (beginsWithEssentialToken) {
             throw new AppError(`Failed to parse essential token for <b>${line}</b>`);
-        }
-    }
-
-    private _parseMTL() {
-        //TODO Unimplemented
-        /*
-        for (const mtlLib of this._mtlLibs) {
-            if (!fs.existsSync(mtlLib)) {
-                StatusHandler.Get.add('warning', `Could not find ${mtlLib}`);
-                continue;
-            }
-            const fileContents = fs.readFileSync(mtlLib, 'utf8');
-
-            fileContents.replace('\r', ''); // Convert Windows carriage return
-            const fileLines = fileContents.split('\n');
-
-            for (const line of fileLines) {
-                this._parseMTLLine(line.trim());
-            }
-
-            this._addCurrentMaterial();
-        }
-        */
-    }
-
-    private _parseMTLLine(line: string) {
-        const essentialTokens = ['newmtl ', 'Kd ', 'map_Kd '];
-
-        for (const parser of this._mtlParsers) {
-            const match = parser.regex.exec(line);
-            if (match && match.groups) {
-                try {
-                    parser.delegate(match.groups);
-                } catch (error) {
-                    if (error instanceof AppError) {
-                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
-                    }
-                }
-                return;
-            }
-        }
-
-        const beginsWithEssentialToken = essentialTokens.some((token) => {
-            return line.startsWith(token);
-        });
-        if (beginsWithEssentialToken) {
-            throw new AppError(`Failed to parse essential token for ${line}`);
-        }
-    }
-
-    private _addCurrentMaterial() {
-        if (this._materialReady && this._currentMaterialName !== '') {
-            if (this._currentTexture !== '') {
-                let transparency: TTransparencyOptions;
-                if (this._currentTransparencyTexture === this._currentTexture) {
-                    transparency = {
-                        type: 'UseDiffuseMapAlphaChannel',
-                    };
-                } else if (this._currentTransparencyTexture === '') {
-                    if (this._currentAlpha === undefined) {
-                        transparency = {
-                            type: 'None',
-                        };
-                    } else {
-                        transparency = {
-                            type: 'UseAlphaValue',
-                            alpha: this._currentAlpha,
-                        };
-                    }
-                } else {
-                    transparency = {
-                        type: 'UseAlphaMap',
-                        path: this._currentTransparencyTexture,
-                        channel: EImageChannel.R,
-                    };
-                }
-
-                this._materials.set(this._currentMaterialName, {
-                    type: MaterialType.textured,
-                    path: this._currentTexture,
-                    transparency: transparency,
-                    extension: 'repeat',
-                    interpolation: 'linear',
-                    needsAttention: false,
-                });
-                this._currentTransparencyTexture = '';
-            } else {
-                this._materials.set(this._currentMaterialName, {
-                    type: MaterialType.solid,
-                    colour: {
-                        r: this._currentColour.r,
-                        g: this._currentColour.g,
-                        b: this._currentColour.b,
-                        a: this._currentAlpha ?? 1.0,
-                    },
-                    canBeTextured: false,
-                    needsAttention: false,
-                });
-            }
-            this._currentAlpha = 1.0;
         }
     }
 }

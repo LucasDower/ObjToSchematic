@@ -1,43 +1,24 @@
-import path from 'path';
-
 import { getRandomID } from '../../util';
+import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
-export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
+export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElement> {
     private _switchElement: ToolbarItemElement;
-    private _openElement: ToolbarItemElement;
 
     private _imageId: string;
 
-    public constructor(path: string) {
-        super(path);
+    public constructor(source?: string) {
+        super(Promise.resolve(source ?? ''));
+
         this._switchElement = new ToolbarItemElement({ iconSVG: AppIcons.UPLOAD })
             .setSmall()
             .setLabel('Choose')
             .onClick(() => {
-                // TODO Unimplemented
-                /*
-                const files = remote.dialog.showOpenDialogSync({
-                    title: 'Load',
-                    buttonLabel: 'Load',
-                    filters: [{
-                        name: 'Images',
-                        extensions: ['png', 'jpeg', 'jpg', 'tga'],
-                    }],
-                });
-                if (files && files[0]) {
-                    this._setValue(files[0]);
-                }
-                */
-            });
-        this._openElement = new ToolbarItemElement({ iconSVG: AppIcons.FOLDER })
-            .setSmall()
-            .onClick(() => {
-                // TODO Unimplemented
-                //FileUtil.openDir(this.getValue());
+                const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
+                inputElement.click();
             });
 
         this._imageId = getRandomID();
@@ -47,15 +28,13 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
         return `
             <div class="row-container">
                 <div class="row-item">
-                    <img id="${this._imageId}" class="texture-preview" src="${this.getValue()}" loading="lazy"></img>
+                    <img id="${this._imageId}" class="texture-preview" loading="lazy"></img>
                 </div>
                 <div class="row-item">
                 <div class="col-container">
                         <div class="col-item">
+                            <input type="file" accept="images/png" style="display: none;" id="${this._getId()}-input">
                             ${this._switchElement.generateHTML()}
-                        </div>
-                        <div class="col-item">
-                            ${this._openElement.generateHTML()}
                         </div>
                     </div>
                 </div>
@@ -65,21 +44,48 @@ export class ImageElement extends ConfigUIElement<string, HTMLDivElement> {
 
     public override registerEvents(): void {
         this._switchElement.registerEvents();
-        this._openElement.registerEvents();
+
+        const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
+        inputElement.addEventListener('change', () => {
+            const files = inputElement.files;
+            if (files?.length === 1) {
+                const file = files.item(0);
+                ASSERT(file !== null);
+
+                this._setValue(new Promise((res, rej) => {
+                    const fileReader = new FileReader();
+                    fileReader.onload = function () {
+                        if (typeof fileReader.result === 'string') {
+                            res(fileReader.result);
+                        } else {
+                            rej(Error());
+                        }
+                    };
+                    fileReader.readAsDataURL(file);
+                }));
+            }
+        });
     }
 
     protected override _onEnabledChanged(): void {
     }
 
     protected override _onValueChanged(): void {
-        const newPath = this.getValue();
-        const parsedPath = path.parse(newPath);
-
-        this._openElement.setEnabled(parsedPath.base !== 'debug.png' && parsedPath.base !== 'debug_alpha.png');
-        this._switchElement.setActive(parsedPath.base === 'debug.png' || parsedPath.base === 'debug_alpha.png');
-
-        const imageElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
-        imageElement.src = newPath;
+        const inputElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
+        this.getValue()
+            .then((source) => {
+                if (source === '') {
+                    throw Error();
+                }
+                this._switchElement.setActive(false);
+                inputElement.src = source;
+                inputElement.style.display = 'unset';
+            })
+            .catch((err) => {
+                this._switchElement.setActive(true);
+                inputElement.src = '';
+                inputElement.style.display = 'none';
+            });
     }
 
     public override finalise(): void {

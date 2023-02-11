@@ -1,14 +1,16 @@
 import * as path from 'path';
 
+import { ASSERT } from '../../util/error_util';
+import { UIUtil } from '../../util/ui_util';
 import { ConfigUIElement } from './config_element';
 
-export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
+export class FileInputElement extends ConfigUIElement<Promise<string>, HTMLDivElement> {
     private _fileExtensions: string[];
     private _loadedFilePath: string;
     private _hovering: boolean;
 
     public constructor() {
-        super('');
+        super(Promise.resolve(''));
         this._fileExtensions = [];
         this._loadedFilePath = '';
         this._hovering = false;
@@ -25,6 +27,7 @@ export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
     protected override _generateInnerHTML() {
         return `
             <div class="input-file" id="${this._getId()}">
+                <input type="file" accept=".obj" style="display: none;" id="${this._getId()}-input">
                 ${this._loadedFilePath}
             </div>
         `;
@@ -41,28 +44,24 @@ export class FileInputElement extends ConfigUIElement<string, HTMLDivElement> {
             this._updateStyle();
         });
 
+        const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
+
+        inputElement.addEventListener('change', () => {
+            const files = inputElement.files;
+            if (files?.length === 1) {
+                const file = files.item(0);
+                ASSERT(file !== null);
+                this._loadedFilePath = file.name;
+                this._setValue(file.text());
+            }
+        });
+
         this._getElement().addEventListener('click', () => {
-            // TODO Unimplemented
-            /*
             if (!this.getEnabled()) {
                 return;
             }
 
-            const files = remote.dialog.showOpenDialogSync({
-                title: 'Load file',
-                buttonLabel: 'Load',
-                filters: [{
-                    name: 'Model file',
-                    extensions: this._fileExtensions,
-                }],
-            });
-
-            if (files && files[0] !== undefined) {
-                const filePath = files[0];
-                this._loadedFilePath = filePath;
-                this._setValue(filePath);
-            }
-            */
+            inputElement.click();
         });
 
         this._getElement().addEventListener('mousemove', () => {

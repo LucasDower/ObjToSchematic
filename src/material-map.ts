@@ -2,7 +2,6 @@ import { RGBAColours } from './colour';
 import { MaterialMap, MaterialType } from './mesh';
 import { EImageChannel, TTransparencyTypes } from './texture';
 import { ASSERT } from './util/error_util';
-import { AppPaths, PathUtil } from './util/path_util';
 
 export class MaterialMapManager {
     public materials: MaterialMap;
@@ -23,7 +22,7 @@ export class MaterialMapManager {
             case 'UseAlphaMap':
                 currentMaterial.transparency = {
                     type: 'UseAlphaMap',
-                    path: PathUtil.join(AppPaths.Get.static, 'debug_alpha.png'),
+                    alpha: undefined,
                     channel: EImageChannel.R,
                 };
                 break;
@@ -75,7 +74,7 @@ export class MaterialMapManager {
                     extension: 'repeat',
                     interpolation: 'linear',
                     needsAttention: true,
-                    path: PathUtil.join(AppPaths.Get.static, 'debug.png'),
+                    diffuse: undefined,
                 });
                 break;
         }

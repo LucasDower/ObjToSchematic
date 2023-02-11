@@ -2,7 +2,7 @@ import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
 import { TExporters } from '../exporters/exporters';
-import { PaletteManager } from '../palette';
+import { PaletteManager, TPalettes } from '../palette';
 import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
@@ -665,14 +665,14 @@ export class UI {
         return textureAtlases;
     }
 
-    private _getBlockPalettes(): ComboBoxItem<string>[] {
-        const blockPalettes: ComboBoxItem<string>[] = [];
+    private _getBlockPalettes(): ComboBoxItem<TPalettes>[] {
+        const blockPalettes: ComboBoxItem<TPalettes>[] = [];
 
         const palettes = PaletteManager.getPalettesInfo();
         for (const palette of palettes) {
             blockPalettes.push({
-                payload: palette.paletteID,
-                displayText: palette.paletteDisplayName,
+                payload: palette.id,
+                displayText: palette.name,
             });
         }
 

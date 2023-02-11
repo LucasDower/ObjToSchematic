@@ -85,12 +85,12 @@ export class AppContext {
         });
     }
 
-    public do(action: EAction) {
+    public async do(action: EAction) {
         this._ui.cacheValues(action);
         this._ui.disable(action);
         this._ui.disableAll();
 
-        const workerJob = this._getWorkerJob(action);
+        const workerJob = await this._getWorkerJob(action);
         if (workerJob === undefined) {
             this._ui.enableTo(action);
             return;
@@ -161,24 +161,25 @@ export class AppContext {
         return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
     }
 
-    private _getWorkerJob(action: EAction): (TWorkerJob | undefined) {
+    private _getWorkerJob(action: EAction): (Promise<TWorkerJob | undefined>) {
         switch (action) {
             case EAction.Import:
                 return this._import();
             case EAction.Materials:
-                return this._materials();
+                return Promise.resolve(this._materials());
             case EAction.Voxelise:
-                return this._voxelise();
+                return Promise.resolve(this._voxelise());
             case EAction.Assign:
-                return this._assign();
+                return Promise.resolve(this._assign());
             case EAction.Export:
-                return this._export();
+                return Promise.resolve(this._export());
         }
         ASSERT(false);
     }
 
-    private _import(): TWorkerJob {
+    private async _import(): Promise<TWorkerJob> {
         const uiElements = this._ui.layout.import.elements;
+
 
         this._ui.getActionOutput(EAction.Import)
             .setTaskInProgress('action', '[Importer]: Loading...');
@@ -186,7 +187,8 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                filepath: uiElements.input.getValue(),
+                importer: 'obj',
+                fileSource: await uiElements.input.getValue(),
                 rotation: uiElements.rotation.getValue(),
             },
         };
