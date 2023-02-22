@@ -7,10 +7,11 @@
 <p align="center">
   A visual tool to convert 3D .obj models into Minecraft structures (.schematic, <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">.litematic</a>, <a href="https://github.com/SpongePowered/Schematic-Specification">.schem</a>, .nbt)
   <br>
+  <b><a href="https://objtoschematic.com">Online</a></b> •
+  <b><a href="https://github.com/LucasDower/ObjToSchematic/releases/latest">Desktop</a></b>
+</p>
+<p align="center">
   <a href="#usage">Usage</a> •
-  <a href="https://github.com/LucasDower/ObjToSchematic/releases/latest">Download</a> •
-  <a href="#progress">Progress</a> •
-  <a href="#disclaimer">Disclaimer</a> •
   <a href="https://discord.gg/McS2VrBZPD">Discord</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#gallery">Gallery</a> •
