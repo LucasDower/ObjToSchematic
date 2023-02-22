@@ -148,9 +148,13 @@ export class UI {
             elements: {
                 'textureAtlas': new ComboBoxElement<string>()
                     .addItems(this._getTextureAtlases())
-                    .setLabel('Texture atlas'),
-                'blockPalette': new ComboBoxElement<string>()
-                    .addItems(this._getBlockPalettes())
+                    .setLabel('Texture atlas')
+                    .setShouldObeyGroupEnables(false),
+                'blockPalette': new ComboBoxElement<TPalettes>()
+                    .addItem({ payload: 'all', displayText: 'All' })
+                    .addItem({ payload: 'colourful', displayText: 'Colourful' })
+                    .addItem({ payload: 'greyscale', displayText: 'Greyscale' })
+                    .addItem({ payload: 'schematic-friendly', displayText: 'Schematic-friendly' })
                     .setLabel('Block palette'),
                 'dithering': new ComboBoxElement<TDithering>()
                     .addItems([{
@@ -661,6 +665,7 @@ export class UI {
             }
         });
         */
+        textureAtlases.push({ payload: 'vanilla', displayText: 'Vanilla '});
 
         return textureAtlases;
     }

@@ -8,17 +8,28 @@ module.exports = {
     ],
     module: {
         rules: [
+            /*
+            {
+                test: /\.json$/i,
+                use: ['json-loader'],
+                exclude: /node_modules/,
+            },
+            */
             {
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],
+                exclude: /node_modules/,
             },
             {
-                test: /\.vs|fs$/,
+                test: /\.vs|fs|atlas$/,
                 use: 'raw-loader',
+                exclude: /\.js$/,
+                exclude: /node_modules/,
             },
             {
                 test: /\.png$/,
                 use: 'file-loader',
+                exclude: /node_modules/,
             },
             {
                 test: /\.tsx?$/,

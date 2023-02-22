@@ -1,5 +1,6 @@
 import * as twgl from 'twgl.js';
 
+import VANILLA_TEXTURE from '../res/atlases/vanilla.png';
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
@@ -375,7 +376,7 @@ export class Renderer {
 
         if (params.isFirstChunk) {
             this._atlasTexture = twgl.createTexture(this._gl, {
-                src: params.atlasTexturePath,
+                src: VANILLA_TEXTURE,
                 mag: this._gl.NEAREST,
             });
 

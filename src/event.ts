@@ -31,7 +31,10 @@ export class EventManager {
     }
 
     public broadcast(event: EAppEvent, ...payload: any) {
-        LOG('[BROADCAST]', EAppEvent[event], payload);
+        if (event !== EAppEvent.onTaskProgress) {
+            LOG('[BROADCAST]', EAppEvent[event], payload);
+        }
+
         const listeners = this._eventsToListeners.get(event);
         if (listeners) {
             for (const listener of listeners) {

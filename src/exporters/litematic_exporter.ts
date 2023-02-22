@@ -1,9 +1,10 @@
-//import { NBT, TagType } from 'prismarine-nbt';
+import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { ceilToNearest } from '../math';
 import { ASSERT } from '../util/error_util';
+import { download } from '../util/file_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
@@ -154,7 +155,6 @@ export class Litematic extends IExporter {
         const blockStatePalette = this._createBlockStatePalette(blockMapping);
         const numBlocks = blockMesh.getBlocks().length;
 
-        /*
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'Litematic',
@@ -212,7 +212,6 @@ export class Litematic extends IExporter {
         };
 
         return nbt;
-        */
     }
 
     getFormatFilter() {
@@ -235,8 +234,8 @@ export class Litematic extends IExporter {
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
-        // TODO Unimplemented
-        //saveNBT(nbt, filePath);
+        const buffer = saveNBT(nbt, filePath);
+        download(buffer, 'result.litematic');
 
         return false;
     }

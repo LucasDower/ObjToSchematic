@@ -34,7 +34,6 @@ body {
   font-family: 'Lexend', sans-serif;
   overflow: hidden;
   user-select: none;
-  font-size: 85%;
 }
 
 canvas {

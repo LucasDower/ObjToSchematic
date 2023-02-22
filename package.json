@@ -5,7 +5,7 @@
   "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
   "main": "./dist/src/main.js",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.8.0"
   },
   "scripts": {
     "lint": "eslint --fix src tools tests --ext .ts",
@@ -56,6 +56,7 @@
     "file-loader": "^6.2.0",
     "images": "^3.2.3",
     "jest": "^27.5.1",
+    "json-loader": "^0.5.7",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "prompt": "^1.2.1",
     "raw-loader": "^4.0.2",

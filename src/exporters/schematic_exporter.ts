@@ -1,7 +1,11 @@
 //import { NBT, TagType } from 'prismarine-nbt';
 
+import { NBT, TagType } from 'prismarine-nbt';
+
+import { BLOCK_IDS } from '../../res/block_ids';
 import { BlockMesh } from '../block_mesh';
 import { StatusHandler, StatusID } from '../status';
+import { download } from '../util/file_util';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { AppPaths, PathUtil } from '../util/path_util';
@@ -17,12 +21,7 @@ export class Schematic extends IExporter {
         const bounds = blockMesh.getVoxelMesh().getBounds();
 
         // TODO Unimplemented
-        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = {};
-        /*
-        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = JSON.parse(
-            fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './block_ids.json'), 'utf8'),
-        );
-        */
+        const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = BLOCK_IDS;
 
         const blocks = blockMesh.getBlocks();
         const unsupportedBlocks = new Set<string>();
@@ -52,7 +51,6 @@ export class Schematic extends IExporter {
         }
 
         // TODO Unimplemented
-        /*
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'Schematic',
@@ -69,7 +67,6 @@ export class Schematic extends IExporter {
         };
 
         return nbt;
-        */
     }
 
     _getBufferIndex(vec: Vector3, sizeVector: Vector3) {
@@ -96,8 +93,8 @@ export class Schematic extends IExporter {
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
-        // TODO Unimplemented
-        //saveNBT(nbt, filePath);
+        const buffer = saveNBT(nbt, filePath);
+        download(buffer, 'result.schematic');
 
         return false;
     }

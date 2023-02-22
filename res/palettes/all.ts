@@ -1,7 +1,4 @@
-import { Palette } from '../../src/palette';
-
-export const PALETTE_ALL_RELEASE = Palette.create();
-PALETTE_ALL_RELEASE.add([
+export const PALETTE_ALL_RELEASE = [
     'minecraft:acacia_log',
     'minecraft:acacia_planks',
     'minecraft:acacia_wood',
@@ -315,4 +312,4 @@ PALETTE_ALL_RELEASE.add([
     'minecraft:yellow_stained_glass',
     'minecraft:yellow_terracotta',
     'minecraft:yellow_wool',
-]);
+];

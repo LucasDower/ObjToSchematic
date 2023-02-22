@@ -4,6 +4,7 @@ import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
 import { TImporters } from './importers/importers';
 import { MaterialMap } from './mesh';
+import { TPalettes } from './palette';
 import { StatusMessage } from './status';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
@@ -108,7 +109,7 @@ export type TPaletteId = string;
 export namespace AssignParams {
     export type Input = {
         textureAtlas: TAtlasId,
-        blockPalette: TPaletteId,
+        blockPalette: TPalettes,
         dithering: TDithering,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,

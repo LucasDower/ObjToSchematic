@@ -1,5 +1,6 @@
 import path from 'path';
 
+import ATLAS_VANILLA from '../res/atlases/vanilla.atlas';
 import { RGBA } from './colour';
 import { AppTypes, AppUtil, TOptional, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -49,29 +50,17 @@ export class Atlas {
     }
 
     public static load(atlasName: string): TOptional<Atlas> {
-        // TODO Unimplemented
-        return undefined;
-        /*
-        if (!Atlas._isValidAtlasName(atlasName)) {
-            return;
-        }
-
-        const atlasPath = Atlas._getAtlasPath(atlasName);
-        LOG(atlasPath);
-        if (!fs.existsSync(atlasPath)) {
-            return;
-        }
+        ASSERT(atlasName === 'vanilla');
 
         const atlas = new Atlas(atlasName);
 
-        const atlasFile = fs.readFileSync(atlasPath, 'utf8');
-        const atlasJSON = JSON.parse(atlasFile);
+        const atlasJSON = JSON.parse(ATLAS_VANILLA);
 
         if (atlasJSON.formatVersion !== 3) {
             throw new AppError(`The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
         }
 
-        const atlasData = atlasJSON as TAtlasVersion;
+        const atlasData = atlasJSON;
         atlas._atlasSize = atlasData.atlasSize;
 
         const getTextureUV = (name: string) => {
@@ -132,7 +121,6 @@ export class Atlas {
         }
 
         return atlas;
-        */
     }
 
     public getAtlasSize(): number {

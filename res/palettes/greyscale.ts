@@ -1,7 +1,4 @@
-import { Palette } from '../../src/palette';
-
-export const PALETTE_COLOURFUL = Palette.create();
-PALETTE_COLOURFUL.add([
+export const PALETTE_GREYSCALE = [
     'minecraft:andesite',
     'minecraft:basalt',
     'minecraft:bedrock',
@@ -51,4 +48,4 @@ PALETTE_COLOURFUL.add([
     'minecraft:white_concrete',
     'minecraft:white_concrete_powder',
     'minecraft:white_wool',
-]);
+];

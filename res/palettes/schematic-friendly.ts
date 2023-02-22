@@ -1,7 +1,4 @@
-import { Palette } from '../../src/palette';
-
-export const PALETTE_COLOURFUL = Palette.create();
-PALETTE_COLOURFUL.add([
+export const PALETTE_SCHEMATIC_FRIENDLY = [
     'minecraft:air',
     'minecraft:stone',
     'minecraft:granite',
@@ -276,4 +273,4 @@ PALETTE_COLOURFUL.add([
     'minecraft:green_concrete_powder',
     'minecraft:red_concrete_powder',
     'minecraft:black_concrete_powder',
-]);
+];

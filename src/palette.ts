@@ -1,3 +1,7 @@
+import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
+import { PALETTE_COLOURFUL } from '../res/palettes/colourful';
+import { PALETTE_GREYSCALE } from '../res/palettes/greyscale';
+import { PALETTE_SCHEMATIC_FRIENDLY } from '../res/palettes/schematic-friendly';
 import { Atlas } from './atlas';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
@@ -32,8 +36,26 @@ export class Palette {
         return new Palette();
     }
 
-    public static load(paletteName: string): TOptional<Palette> {
-        // TODO Unimplemented
+    public static load(palette: TPalettes): TOptional<Palette> {
+        const outPalette = Palette.create();
+
+        switch (palette) {
+            case 'all':
+                outPalette.add(PALETTE_ALL_RELEASE);
+                break;
+            case 'colourful':
+                outPalette.add(PALETTE_COLOURFUL);
+                break;
+            case 'greyscale':
+                outPalette.add(PALETTE_GREYSCALE);
+                break;
+            case 'schematic-friendly':
+                outPalette.add(PALETTE_SCHEMATIC_FRIENDLY);
+                break;
+        }
+
+        return outPalette;
+        
         return undefined;
         /*
         if (!Palette._isValidPaletteName(paletteName)) {
@@ -122,7 +144,10 @@ export class Palette {
     }
 
     public static getAllPalette(): TOptional<Palette> {
-        return Palette.load('all-release');
+        const palette = Palette.create();
+        palette.add(PALETTE_ALL_RELEASE);
+        return palette;
+        //return Palette.load('all-release');
     }
 
     /**
