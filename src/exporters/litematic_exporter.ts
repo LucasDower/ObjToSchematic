@@ -136,13 +136,11 @@ export class Litematic extends IExporter {
     private _createBlockStatePalette(blockMapping: BlockMapping) {
         const blockStatePalette = Array(Object.keys(blockMapping).length);
 
-        /*
         for (const blockName of Object.keys(blockMapping)) {
             const index = blockMapping[blockName];
             blockStatePalette[index] = { Name: { type: TagType.String, value: blockName } };
         }
         blockStatePalette[0] = { Name: { type: TagType.String, value: 'minecraft:air' } };
-        */
 
         return blockStatePalette;
     }
