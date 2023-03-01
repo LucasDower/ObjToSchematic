@@ -13,13 +13,13 @@ module.exports = {
     ],
     module: {
         rules: [
-            /*
             {
-                test: /\.json$/i,
-                use: ['json-loader'],
-                exclude: /node_modules/,
+                test: /\.worker.ts$/,
+                use: [
+                    'worker-loader',
+                    'ts-loader',
+                ],
             },
-            */
             {
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],

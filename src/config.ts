@@ -11,13 +11,13 @@ export class AppConfig {
     public readonly RELEASE_MODE = true;
     public readonly MAJOR_VERSION = 0;
     public readonly MINOR_VERSION = 7;
-    public readonly HOTFIX_VERSION = 8;
+    public readonly HOTFIX_VERSION = 9;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
     public readonly MINECRAFT_VERSION = '1.19.3';
 
     public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
-    public readonly USE_WORKER_THREAD = false;
+    public readonly USE_WORKER_THREAD = true;
     public readonly MULTISAMPLE_COUNT = 16;
     public readonly ALPHA_BIAS = 1.0;
     public readonly ANGLE_SNAP_RADIUS_DEGREES = 10.0;

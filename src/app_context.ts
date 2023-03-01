@@ -54,7 +54,7 @@ export class AppContext {
         this._ui.registerEvents();
         this._ui.disable(EAction.Materials);
 
-        this._workerController = new WorkerController(path.resolve(__dirname, 'worker_interface.js'));
+        this._workerController = new WorkerController();
         this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
 
         Renderer.Get.toggleIsAxesEnabled();

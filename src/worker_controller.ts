@@ -3,6 +3,8 @@ import { EAppEvent, EventManager } from './event';
 import { ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { doWork } from './worker';
+// @ts-ignore
+import AppWorker from './worker_interface.worker.ts';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export type TWorkerJob = {
@@ -18,10 +20,12 @@ export class WorkerController {
     private _jobStartTime: number;
     private _timerOn: boolean;
 
-    public constructor(scriptURL: string, options?: WorkerOptions) {
+    public constructor() {
         if (AppConfig.Get.USE_WORKER_THREAD) {
-            this._worker = new Worker(scriptURL, options);
-            this._worker.onmessage = this._onWorkerMessage.bind(this);
+            this._worker = new AppWorker();
+            if (this._worker) {
+                this._worker.onmessage = this._onWorkerMessage.bind(this);
+            }
         }
 
         this._jobQueue = [];
