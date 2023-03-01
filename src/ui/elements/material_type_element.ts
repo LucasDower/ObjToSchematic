@@ -8,7 +8,7 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
 
     public constructor(material: MaterialType) {
         super(material);
-        this._switchElement = new ToolbarItemElement({ iconSVG: AppIcons.SWITCH })
+        this._switchElement = new ToolbarItemElement({ id: 'sw2', iconSVG: AppIcons.SWITCH })
             .setSmall()
             .setLabel('Switch')
             .onClick(() => {

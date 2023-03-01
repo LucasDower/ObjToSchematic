@@ -1,9 +1,14 @@
-import { FileUtil } from '../src/util/file_util';
+import fs from 'fs';
+
 import { Logger } from '../src/util/log_util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 
 export const TEST_PREAMBLE = () => {
     Logger.Get.disableLogToFile();
     AppPaths.Get.setBaseDir(PathUtil.join(__dirname, '..'));
-    FileUtil.mkdirIfNotExist(PathUtil.join(AppPaths.Get.tests, './out/'));
+    
+    const outPath = PathUtil.join(AppPaths.Get.tests, './out/');
+    if (!fs.existsSync(outPath)) {
+        fs.mkdirSync(outPath);
+    }
 };

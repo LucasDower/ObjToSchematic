@@ -17,6 +17,7 @@ import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { ConfigUIElement } from './elements/config_element';
 import { FileInputElement } from './elements/file_input';
+import { HeaderUIElement } from './elements/header_element';
 import { OutputElement } from './elements/output';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -259,10 +260,12 @@ export class UI {
                             displayText: 'Schematic (.schematic)',
                             payload: 'schematic',
                         },
+                        /*
                         {
                             displayText: 'Wavefront OBJ (.obj)',
                             payload: 'obj',
                         },
+                        */
                         {
                             displayText: 'Sponge Schematic (.schem)',
                             payload: 'schem',
@@ -288,7 +291,7 @@ export class UI {
         groups: {
             'viewmode': {
                 elements: {
-                    'mesh': new ToolbarItemElement({ iconSVG: AppIcons.MESH })
+                    'mesh': new ToolbarItemElement({ id: 'mesh', iconSVG: AppIcons.MESH })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.TriangleMesh);
                         })
@@ -298,7 +301,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
                         }),
-                    'voxelMesh': new ToolbarItemElement({ iconSVG: AppIcons.VOXEL })
+                    'voxelMesh': new ToolbarItemElement({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
                         })
@@ -308,7 +311,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         }),
-                    'blockMesh': new ToolbarItemElement({ iconSVG: AppIcons.BLOCK  })
+                    'blockMesh': new ToolbarItemElement({ id: 'blockMesh', iconSVG: AppIcons.BLOCK  })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
                         })
@@ -323,7 +326,7 @@ export class UI {
             },
             'debug': {
                 elements: {
-                    'grid': new ToolbarItemElement({ iconSVG: AppIcons.GRID })
+                    'grid': new ToolbarItemElement({ id: 'grid', iconSVG: AppIcons.GRID })
                         .onClick(() => {
                             Renderer.Get.toggleIsGridEnabled();
                         })
@@ -333,14 +336,14 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
                         }),
-                    'axes': new ToolbarItemElement({ iconSVG: AppIcons.AXES })
+                    'axes': new ToolbarItemElement({ id: 'axes', iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
                         })
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
-                    'night-vision': new ToolbarItemElement({ iconSVG: AppIcons.BULB })
+                    'night-vision': new ToolbarItemElement({ id: 'night', iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
                         })
@@ -362,15 +365,15 @@ export class UI {
         groups: {
             'zoom': {
                 elements: {
-                    'zoomOut': new ToolbarItemElement({ iconSVG: AppIcons.MINUS })
+                    'zoomOut': new ToolbarItemElement({ id: 'zout', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
                         }),
-                    'zoomIn': new ToolbarItemElement({ iconSVG: AppIcons.PLUS })
+                    'zoomIn': new ToolbarItemElement({ id: 'zin', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
                         }),
-                    'reset': new ToolbarItemElement({ iconSVG: AppIcons.CENTRE })
+                    'reset': new ToolbarItemElement({ id: 'reset', iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
                         }),
@@ -379,33 +382,22 @@ export class UI {
             },
             'camera': {
                 elements: {
-                    'perspective': new ToolbarItemElement({ iconSVG: AppIcons.PERSPECTIVE })
+                    'perspective': new ToolbarItemElement({ id: 'pers', iconSVG: AppIcons.PERSPECTIVE })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('perspective');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
                         }),
-                    'orthographic': new ToolbarItemElement({ iconSVG: AppIcons.ORTHOGRAPHIC })
+                    'orthographic': new ToolbarItemElement({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isOrthographic();
                         }),
-                    'angleSnap': new ToolbarItemElement({ iconSVG: AppIcons.MAGNET })
-                        .onClick(() => {
-                            ArcballCamera.Get.toggleAngleSnap();
-                        })
-                        .isActive(() => {
-                            return ArcballCamera.Get.isAngleSnapEnabled();
-                        })
-                        .isEnabled(() => {
-                            return ArcballCamera.Get.isOrthographic();
-                        }),
-
                 },
-                elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
+                elementsOrder: ['perspective', 'orthographic'],
             },
         },
         groupsOrder: ['camera', 'zoom'],
@@ -471,7 +463,7 @@ export class UI {
         }
 
         document.getElementById('properties')!.innerHTML = `<div class="container">
-        ` + itemHTML + `</div>`;
+        ` + HeaderUIElement.Get.generateHTML() + itemHTML + `</div>`;
 
         // Build toolbar
         let toolbarHTML = '';
@@ -570,6 +562,9 @@ export class UI {
     }
 
     public registerEvents() {
+        HeaderUIElement.Get.registerEvents();
+        HeaderUIElement.Get.finalise();
+
         for (const groupName in this._ui) {
             const group = this._uiDull[groupName];
             for (const elementName in group.elements) {

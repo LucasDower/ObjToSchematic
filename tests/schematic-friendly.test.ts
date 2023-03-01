@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import { StatusHandler, StatusID } from '../src/status';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { WorkerClient } from '../src/worker_client';
@@ -9,7 +11,8 @@ test('Schematic-friendly Palette', () => {
 
     const config = headlessConfig;
 
-    config.import.filepath = PathUtil.join(AppPaths.Get.resources, './samples/skull.obj');
+    config.import.fileSource = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './samples/skull.obj'), 'utf-8');
+
     config.assign.blockPalette = 'schematic-friendly';
     config.export.exporter = 'schematic';
     config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/friendly.schematic');

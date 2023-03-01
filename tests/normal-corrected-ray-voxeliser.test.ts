@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 
 import { RGBAColours } from '../src/colour';
@@ -10,8 +11,10 @@ import { TEST_PREAMBLE } from './preamble';
 test('Voxelise solid 2x2 cube', () => {
     TEST_PREAMBLE();
 
+    const obj = fs.readFileSync(path.join(__dirname, './data/cube.obj'), 'utf-8');
+
     const importer = new ObjImporter();
-    importer.parseFile(path.join(__dirname, './data/cube.obj'));
+    importer.parse(obj);
     const mesh = importer.toMesh();
     mesh.processMesh(0, 0, 0);
 

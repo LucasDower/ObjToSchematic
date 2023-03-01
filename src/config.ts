@@ -1,6 +1,5 @@
 import { RGBA } from './colour';
 import { LOG } from './util/log_util';
-import { AppPaths, PathUtil } from './util/path_util';
 
 export class AppConfig {
     /* Singleton */
@@ -9,11 +8,13 @@ export class AppConfig {
         return this._instance || (this._instance = new this());
     }
 
-    public readonly RELEASE_MODE = false;
-    public readonly RELEASE_VERSION = '0.7.2d';
-    public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
+    public readonly RELEASE_MODE = true;
+    public readonly MAJOR_VERSION = 0;
+    public readonly MINOR_VERSION = 7;
+    public readonly HOTFIX_VERSION = 7;
+    public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
 
-    // Loaded from .json
+    public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
     public readonly USE_WORKER_THREAD = false;
     public readonly MULTISAMPLE_COUNT = 16;
@@ -30,7 +31,7 @@ export class AppConfig {
     public readonly CONSTRAINT_MAXIMUM_HEIGHT = 380;
     public readonly DITHER_MAGNITUDE = 32;
     public readonly SMOOTHNESS_MAX = 3.0;
-    public readonly CAMERA_SMOOTHING = 0.1;
+    public readonly CAMERA_SMOOTHING = 1.0;
     public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA = {
         r: 0.125,
         g: 0.125,

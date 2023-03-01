@@ -13,7 +13,7 @@ export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElem
     public constructor(source?: string) {
         super(Promise.resolve(source ?? ''));
 
-        this._switchElement = new ToolbarItemElement({ iconSVG: AppIcons.UPLOAD })
+        this._switchElement = new ToolbarItemElement({ id: 'sw', iconSVG: AppIcons.UPLOAD })
             .setSmall()
             .setLabel('Choose')
             .onClick(() => {
@@ -28,7 +28,7 @@ export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElem
         return `
             <div class="row-container">
                 <div class="row-item">
-                    <img id="${this._imageId}" class="texture-preview" loading="lazy"></img>
+                    <img id="${this._imageId}" alt="Texture Preview" class="texture-preview" loading="lazy"></img>
                 </div>
                 <div class="row-item">
                 <div class="col-container">

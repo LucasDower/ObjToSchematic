@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 import { ColourSpace } from '../src/util';
 import { AppPaths, PathUtil } from '../src/util/path_util';
 import { Vector3 } from '../src/vector';
@@ -6,7 +9,8 @@ import { TEST_PREAMBLE } from './preamble';
 
 const baseConfig: THeadlessConfig = {
     import: {
-        filepath: '', // Must be an absolute path
+        importer: 'obj',
+        fileSource: '', // Must be an absolute path
         rotation: new Vector3(0, 0, 0),
     },
     voxelise: {
@@ -19,7 +23,7 @@ const baseConfig: THeadlessConfig = {
     },
     assign: {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
-        blockPalette: 'all-snapshot', // Must be a palette name that exists in /resources/palettes
+        blockPalette: 'all', // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
@@ -45,7 +49,7 @@ test('FULL Obj->Obj', () => {
 
     const config: THeadlessConfig = baseConfig;
 
-    config.import.filepath = PathUtil.join(AppPaths.Get.resources, './samples/skull.obj');
+    config.import.fileSource = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, './samples/skull.obj'), 'utf-8');
     config.export.exporter = 'litematic';
     config.export.filepath = PathUtil.join(AppPaths.Get.testData, '../out/out.litematic');
 

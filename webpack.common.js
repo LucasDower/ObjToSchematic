@@ -1,10 +1,15 @@
 const path = require('path');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: './src/client.ts',
     plugins: [
         new NodePolyfillPlugin(),
+        new HtmlWebpackPlugin({
+            template: './template.html',
+            favicon: './res/static/icon.ico',
+        }),
     ],
     module: {
         rules: [

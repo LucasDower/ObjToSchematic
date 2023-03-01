@@ -7,6 +7,7 @@ import { UIUtil } from '../../util/ui_util';
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 
 export type TToolbarItemParams = {
+    id: string,
     iconSVG: string;
 }
 
@@ -21,7 +22,7 @@ export class ToolbarItemElement {
     private _onClick?: () => void;
 
     public constructor(params: TToolbarItemParams) {
-        this._id = getRandomID();
+        this._id = params.id + getRandomID();
 
         {
             const parser = new DOMParser();
@@ -124,37 +125,37 @@ export class ToolbarItemElement {
     private _updateElements() {
         const element = document.getElementById(this._id) as HTMLDivElement;
         const svgElement = this._getSVGElement();
-        ASSERT(element !== null && svgElement !== null);
+        if (element !== null && svgElement !== null) {
+            element.classList.remove('toolbar-item-active-hover');
+            element.classList.remove('toolbar-item-disabled');
+            element.classList.remove('toolbar-item-active');
+            element.classList.remove('toolbar-item-hover');
 
-        element.classList.remove('toolbar-item-active-hover');
-        element.classList.remove('toolbar-item-disabled');
-        element.classList.remove('toolbar-item-active');
-        element.classList.remove('toolbar-item-hover');
-
-        if (this._isEnabled) {
-            if (this._isActive) {
-                if (this._isHovering) {
-                    element.classList.add('toolbar-item-active-hover');
+            if (this._isEnabled) {
+                if (this._isActive) {
+                    if (this._isHovering) {
+                        element.classList.add('toolbar-item-active-hover');
+                    } else {
+                        element.classList.add('toolbar-item-active');
+                    }
                 } else {
-                    element.classList.add('toolbar-item-active');
+                    if (this._isHovering) {
+                        element.classList.add('toolbar-item-hover');
+                    }
                 }
             } else {
-                if (this._isHovering) {
-                    element.classList.add('toolbar-item-hover');
-                }
+                element.classList.add('toolbar-item-disabled');
             }
-        } else {
-            element.classList.add('toolbar-item-disabled');
-        }
 
-        svgElement.classList.remove('icon-disabled');
-        svgElement.classList.remove('icon-active');
-        if (this._isEnabled) {
-            if (this._isActive) {
-                svgElement.classList.add('icon-active');
+            svgElement.classList.remove('icon-disabled');
+            svgElement.classList.remove('icon-active');
+            if (this._isEnabled) {
+                if (this._isActive) {
+                    svgElement.classList.add('icon-active');
+                }
+            } else {
+                svgElement.classList.add('icon-disabled');
             }
-        } else {
-            svgElement.classList.add('icon-disabled');
         }
     }
 
