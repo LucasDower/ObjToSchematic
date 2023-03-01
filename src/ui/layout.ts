@@ -102,9 +102,9 @@ export class UI {
                     .setStep(1)
                     .setLabel('Size'),
                 'voxeliser': new ComboBoxElement<TVoxelisers>()
+                    .addItem({ payload: 'ray-based', displayText: 'Ray-based' })
                     .addItem({ payload: 'bvh-ray', displayText: 'BVH Ray-based' })
                     .addItem({ payload: 'ncrb', displayText: 'NCRB' })
-                    .addItem({ payload: 'ray-based', displayText: 'Ray-based (legacy)' })
                     .setLabel('Algorithm'),
                 'ambientOcclusion': new CheckboxElement()
                     .setCheckedText('On (recommended)')
