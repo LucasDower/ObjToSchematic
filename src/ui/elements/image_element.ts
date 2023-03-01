@@ -1,3 +1,4 @@
+import { TImageFiletype, TImageRawWrap } from '../../texture';
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
@@ -5,13 +6,13 @@ import { AppIcons } from '../icons';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
-export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElement> {
+export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLImageElement> {
     private _switchElement: ToolbarItemElement;
 
     private _imageId: string;
 
-    public constructor(source?: string) {
-        super(Promise.resolve(source ?? ''));
+    public constructor(param?: TImageRawWrap) {
+        super(Promise.resolve(param ?? { raw: '', filetype: 'png' }));
 
         this._switchElement = new ToolbarItemElement({ id: 'sw', iconSVG: AppIcons.UPLOAD })
             .setSmall()
@@ -51,12 +52,13 @@ export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElem
             if (files?.length === 1) {
                 const file = files.item(0);
                 ASSERT(file !== null);
+                ASSERT(file.type === 'image/jpeg' || file.type === 'image/png', 'Unexpected image type');
 
                 this._setValue(new Promise((res, rej) => {
                     const fileReader = new FileReader();
                     fileReader.onload = function () {
                         if (typeof fileReader.result === 'string') {
-                            res(fileReader.result);
+                            res({ filetype: file.type === 'image/jpeg' ? 'jpg' : 'png', raw: fileReader.result });
                         } else {
                             rej(Error());
                         }
@@ -73,12 +75,12 @@ export class ImageElement extends ConfigUIElement<Promise<string>, HTMLImageElem
     protected override _onValueChanged(): void {
         const inputElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
         this.getValue()
-            .then((source) => {
-                if (source === '') {
+            .then((res) => {
+                if (res.raw === '') {
                     throw Error();
                 }
                 this._switchElement.setActive(false);
-                inputElement.src = source;
+                inputElement.src = res.raw;
                 inputElement.style.display = 'unset';
             })
             .catch((err) => {

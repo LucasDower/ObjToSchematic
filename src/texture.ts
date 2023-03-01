@@ -1,6 +1,8 @@
+import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
 
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { AppConfig } from './config';
 import { clamp } from './math';
 import { TOptional, UV } from './util';
 import { ASSERT } from './util/error_util';
@@ -37,7 +39,7 @@ export enum EImageChannel {
 }
 /* eslint-enable */
 
-export type TImageFiletype = 'png';
+export type TImageFiletype = 'png' | 'jpg';
 
 export type TImageRawWrap = {
     raw: string,
@@ -69,6 +71,15 @@ export class Texture {
             const png = params.raw.split(',')[1];
             if (png !== undefined) {
                 return PNG.sync.read(Buffer.from(png, 'base64'));
+            }
+        }
+        if (params?.filetype === 'jpg') {
+            const jpg = params.raw.split(',')[1];
+            if (jpg !== undefined) {
+                return jpeg.decode(Buffer.from(jpg, 'base64'), {
+                    maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
+                    formatAsRGBA: true,
+                });
             }
         }
     }

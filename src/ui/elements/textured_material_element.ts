@@ -1,3 +1,5 @@
+import path from 'path';
+
 import { MaterialType, TexturedMaterial } from '../../mesh';
 import { EImageChannel, TTransparencyTypes } from '../../texture';
 import { getRandomID } from '../../util';
@@ -45,7 +47,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
             .setSmall()
             .setDefaultValue(material.transparency.type);
 
-        this._imageElement = new ImageElement(material.diffuse?.raw);
+        this._imageElement = new ImageElement(material.diffuse);
 
         this._typeElement = new MaterialTypeElement(MaterialType.textured);
 
@@ -60,7 +62,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
                     .setSmall();
                 break;
             case 'UseAlphaMap':
-                this._alphaMapElement = new ImageElement(material.transparency.alpha?.raw);
+                this._alphaMapElement = new ImageElement(material.transparency.alpha);
                 this._alphaChannelElement = new ComboBoxElement<EImageChannel>()
                     .addItem({ payload: EImageChannel.R, displayText: 'Red' })
                     .addItem({ payload: EImageChannel.G, displayText: 'Green' })
@@ -85,10 +87,10 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._imageElement.addValueChangedListener((newPath) => {
             const material = this.getValue();
             // TODO Unimplemented, promise should be resolved where it is used
-            newPath.then((source) => {
+            newPath.then((res) => {
                 material.diffuse = {
-                    filetype: 'png', // TODO Unimplemented other filetypes
-                    raw: source,
+                    filetype: res.filetype, // TODO Unimplemented other filetypes
+                    raw: res.raw,
                 };
             });
         });
@@ -116,11 +118,11 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
         this._alphaMapElement?.addValueChangedListener((newPath) => {
             const material = this.getValue();
             // TODO Unimplemented, promise should be resolved where it is used
-            newPath.then((source) => {
+            newPath.then((res) => {
                 ASSERT(material.transparency.type === 'UseAlphaMap');
                 material.transparency.alpha = {
-                    filetype: 'png', // TODO Unimplemented other filetypes
-                    raw: source,
+                    filetype: res.filetype, // TODO Unimplemented other filetypes
+                    raw: res.raw,
                 };
             });
         });

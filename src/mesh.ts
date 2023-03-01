@@ -4,7 +4,7 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureConverter, TImageFiletype, TTransparencyOptions } from './texture';
+import { Texture, TextureConverter, TImageFiletype, TImageRawWrap, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -39,10 +39,7 @@ export type SolidMaterial = BaseMaterial & {
 }
 export type TexturedMaterial = BaseMaterial & {
     type: MaterialType.textured,
-    diffuse?: {
-        raw: string,
-        filetype: TImageFiletype
-    },
+    diffuse?: TImageRawWrap,
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
     transparency: TTransparencyOptions,
