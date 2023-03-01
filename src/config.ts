@@ -11,8 +11,9 @@ export class AppConfig {
     public readonly RELEASE_MODE = true;
     public readonly MAJOR_VERSION = 0;
     public readonly MINOR_VERSION = 7;
-    public readonly HOTFIX_VERSION = 7;
+    public readonly HOTFIX_VERSION = 8;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
+    public readonly MINECRAFT_VERSION = '1.19.3';
 
     public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
