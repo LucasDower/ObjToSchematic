@@ -1,6 +1,6 @@
 import { ASSERT } from '../../util/error_util';
+import { UIUtil } from '../../util/ui_util';
 import { BaseUIElement } from './base_element';
-import { LabelElement } from './label';
 
 /**
  * A `ConfigUIElement` is a UI element that has a value the user can change.
@@ -8,9 +8,6 @@ import { LabelElement } from './label';
  */
 export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     private _label: string;
-    private _description?: string;
-    private _labelElement: LabelElement;
-    private _hasLabel: boolean;
     private _value?: T;
     private _cachedValue?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
@@ -19,9 +16,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     public constructor(defaultValue?: T) {
         super();
         this._value = defaultValue;
-        this._label = 'unknown';
-        this._hasLabel = false;
-        this._labelElement = new LabelElement(this._label, this._description);
+        this._label = '';
         this._onValueChangedListeners = [];
         this._onEnabledChangedListeners = [];
     }
@@ -32,14 +27,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     }
 
     public setLabel(label: string) {
-        this._hasLabel = true;
         this._label = label;
-        this._labelElement = new LabelElement(this._label, this._description);
-        return this;
-    }
-
-    public setDescription(text: string) {
-        this._labelElement = new LabelElement(this._label, text);
         return this;
     }
 
@@ -93,7 +81,9 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     public override generateHTML() {
         return `
             <div class="property">
-                ${this._labelElement.generateHTML()}
+                <div class="prop-key-container" id="${this._getLabelId()}">
+                    ${this._label}
+                </div>
                 <div class="prop-value-container">
                     ${this._generateInnerHTML()}
                 </div>
@@ -107,8 +97,12 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     protected abstract _generateInnerHTML(): string;
 
     protected override _onEnabledChanged() {
-        if (this._hasLabel) {
-            this._labelElement.setEnabled(this.getEnabled());
+        const label = UIUtil.getElementById(this._getLabelId()) as HTMLDivElement;
+
+        if (this.getEnabled()) {
+            label.classList.remove('text-disabled');
+        } else {
+            label.classList.add('text-disabled');
         }
 
         this._onEnabledChangedListeners.forEach((listener) => {
@@ -132,4 +126,8 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
      * A delegate that is called when the value of this element changes.
      */
     protected abstract _onValueChanged(): void;
+
+    private _getLabelId() {
+        return this._getId() + '_label';
+    }
 }

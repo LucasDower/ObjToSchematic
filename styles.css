@@ -100,7 +100,7 @@ canvas {
   overflow: auto;
 }
 
-.prop-key-container-disabled {
+.text-disabled {
   color: var(--text-disabled) !important;
 }
 

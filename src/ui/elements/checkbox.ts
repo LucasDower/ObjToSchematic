@@ -54,14 +54,14 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
                     <path d="M5 12l5 5l10 -10" />
                 </svg>
             </div>
-            <div class="checkbox-text" id="${this._getLabelId()}">${this.getValue() ? this._labelChecked : this._labelUnchecked}</div>
+            <div class="checkbox-text" id="${this._getTextId()}">${this.getValue() ? this._labelChecked : this._labelUnchecked}</div>
         `;
     }
 
     protected override _onValueChanged(): void {
         const checkboxElement = this._getElement();
         const checkboxPipElement = UIUtil.getElementById(this._getPipId());
-        const checkboxTextElement = UIUtil.getElementById(this._getLabelId());
+        const checkboxTextElement = UIUtil.getElementById(this._getTextId());
 
         checkboxTextElement.innerHTML = this.getValue() ? this._labelChecked : this._labelUnchecked;
         checkboxPipElement.style.visibility = this.getValue() ? 'visible' : 'hidden';
@@ -78,7 +78,7 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
 
         const checkboxElement = this._getElement();
         const checkboxPipElement = UIUtil.getElementById(this._getPipId());
-        const checkboxTextElement = UIUtil.getElementById(this._getLabelId());
+        const checkboxTextElement = UIUtil.getElementById(this._getTextId());
 
         if (this.getEnabled()) {
             checkboxElement.classList.remove('checkbox-disabled');
@@ -95,7 +95,7 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
         return this._getId() + '-pip';
     }
 
-    private _getLabelId() {
+    private _getTextId() {
         return this._getId() + '-label';
     }
 }
