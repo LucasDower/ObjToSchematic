@@ -1,3 +1,5 @@
+import Split from 'split.js';
+
 import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
@@ -7,7 +9,6 @@ import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
-import { AppPaths } from '../util/path_util';
 import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
@@ -312,7 +313,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         }),
-                    'blockMesh': new ToolbarItemElement({ id: 'blockMesh', iconSVG: AppIcons.BLOCK  })
+                    'blockMesh': new ToolbarItemElement({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
                         })
@@ -487,6 +488,16 @@ export class UI {
 
             toolbarHTML.placeInto('toolbar');
         }
+
+        Split(['.column-properties', '.column-canvas'], {
+            sizes: [20, 80],
+            minSize: [400, 500],
+        });
+
+        const item = document.getElementsByClassName('gutter').item(0);
+        if (item !== null) {
+            item.innerHTML = `<div class='gutter-line'></div>`;
+        }
     }
 
     public cacheValues(action: EAction) {
@@ -657,7 +668,7 @@ export class UI {
             }
         });
         */
-        textureAtlases.push({ payload: 'vanilla', displayText: 'Vanilla '});
+        textureAtlases.push({ payload: 'vanilla', displayText: 'Vanilla ' });
 
         return textureAtlases;
     }

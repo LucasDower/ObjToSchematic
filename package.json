@@ -9,6 +9,7 @@
   },
   "scripts": {
     "lint": "eslint --fix src tools tests --ext .ts",
+    "lint-src": "eslint --fix src --ext .ts",
     "test": "jest --config jestconfig.json",
     "start": "webpack serve --config ./webpack.dev.js",
     "dist": "webpack --config ./webpack.prod.js",
@@ -72,5 +73,8 @@
     "webpack-merge": "^5.8.0",
     "webpack-strip-block": "^0.3.0",
     "worker-loader": "^3.0.8"
+  },
+  "dependencies": {
+    "split.js": "^1.6.5"
   }
 }
