@@ -1,3 +1,4 @@
+import { ASSERT } from '../util/error_util';
 import { OutputStyle } from './elements/output';
 
 type TMessage = {
@@ -7,6 +8,29 @@ type TMessage = {
 
 interface IUIOutputElement {
     buildHTML(): string;
+}
+
+export class HTMLBuilder {
+    private _html: string;
+
+    public constructor() {
+        this._html = '';
+    }
+
+    public add(html: string) {
+        this._html += html;
+        return this;
+    }
+
+    public toString() {
+        return this._html;
+    }
+
+    public placeInto(elementId: string) {
+        const element = document.getElementById(elementId);
+        ASSERT(element !== null, `Could not place HTML into element with id '${elementId}'`);
+        element.innerHTML = this._html;
+    }
 }
 
 export class UITreeBuilder implements IUIOutputElement {

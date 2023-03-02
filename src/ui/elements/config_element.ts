@@ -92,9 +92,11 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
 
     public override generateHTML() {
         return `
-            ${this._labelElement.generateHTML()}
-            <div class="prop-value-container">
-                ${this._generateInnerHTML()}
+            <div class="property">
+                ${this._labelElement.generateHTML()}
+                <div class="prop-value-container">
+                    ${this._generateInnerHTML()}
+                </div>
             </div>
         `;
     }

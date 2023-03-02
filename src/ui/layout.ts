@@ -23,6 +23,7 @@ import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
 import { VectorSpinboxElement } from './elements/vector_spinbox';
 import { AppIcons } from './icons';
+import { HTMLBuilder } from './misc';
 
 export interface Group {
     label: string;
@@ -436,63 +437,56 @@ export class UI {
     }
 
     public build() {
-        const groupHTML: { [key: string]: string } = {};
-        for (const groupName in this._ui) {
-            const group = this._uiDull[groupName];
-            groupHTML[groupName] = `
-            <div class="property">
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-                <div class="group-heading">
-                    ${group.label.toUpperCase()}
-                </div>
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-            </div>
-            `;
-            groupHTML[groupName] += this._getGroupHTML(group);
-        }
+        // Build properties
+        {
+            const sidebarHTML = new HTMLBuilder();
 
-        let itemHTML = '';
-        for (const groupName of this.uiOrder) {
-            itemHTML += groupHTML[groupName];
-        }
+            sidebarHTML.add(`<div class="container">`);
+            {
+                sidebarHTML.add(HeaderUIElement.Get.generateHTML());
 
-        document.getElementById('properties')!.innerHTML = `<div class="container">
-        ` + HeaderUIElement.Get.generateHTML() + itemHTML + `</div>`;
+                for (const groupName of this.uiOrder) {
+                    const group = this._uiDull[groupName];
+                    sidebarHTML.add(this._getGroupHTML(group));
+                }
+            }
+            sidebarHTML.add(`</div>`);
+
+            sidebarHTML.placeInto('properties');
+        }
 
         // Build toolbar
-        let toolbarHTML = '';
-        // Left
-        toolbarHTML += '<div class="toolbar-column">';
-        for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
-            toolbarHTML += '<div class="toolbar-group">';
-            const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const groupElement = toolbarGroup.elements[groupElementName];
-                toolbarHTML += groupElement.generateHTML();
-            }
-            toolbarHTML += '</div>';
-        }
-        toolbarHTML += '</div>';
-        // Right
-        toolbarHTML += '<div class="toolbar-column">';
-        for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
-            toolbarHTML += '<div class="toolbar-group">';
-            const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const groupElement = toolbarGroup.elements[groupElementName];
-                toolbarHTML += groupElement.generateHTML();
-            }
-            toolbarHTML += '</div>';
-        }
-        toolbarHTML += '</div>';
+        {
+            const toolbarHTML = new HTMLBuilder();
 
-        document.getElementById('toolbar')!.innerHTML = toolbarHTML;
+            // Left
+            toolbarHTML.add('<div class="toolbar-column">');
+            for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
+                toolbarHTML.add('<div class="toolbar-group">');
+                const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
+                for (const groupElementName of toolbarGroup.elementsOrder) {
+                    const groupElement = toolbarGroup.elements[groupElementName];
+                    toolbarHTML.add(groupElement.generateHTML());
+                }
+                toolbarHTML.add('</div>');
+            }
+            toolbarHTML.add('</div>');
+
+            // Right
+            toolbarHTML.add('<div class="toolbar-column">');
+            for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
+                toolbarHTML.add('<div class="toolbar-group">');
+                const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
+                for (const groupElementName of toolbarGroup.elementsOrder) {
+                    const groupElement = toolbarGroup.elements[groupElementName];
+                    toolbarHTML.add(groupElement.generateHTML());
+                }
+                toolbarHTML.add('</div>');
+            }
+            toolbarHTML.add('</div>');
+
+            toolbarHTML.placeInto('toolbar');
+        }
     }
 
     public cacheValues(action: EAction) {
@@ -522,31 +516,34 @@ export class UI {
         for (const elementName of group.elementsOrder) {
             const element = group.elements[elementName];
             ASSERT(element !== undefined, `No element for: ${elementName}`);
-            groupHTML += this._buildSubcomponent(element, group.label === 'Materials');
+            groupHTML += element.generateHTML();
         }
         return groupHTML;
     }
 
     private _getGroupHTML(group: Group) {
         return `
+            <div class="property">
+                <div style="flex-grow: 1">
+                    <div class="h-div">
+                    </div>
+                </div>
+                <div class="group-heading">
+                    ${group.label.toUpperCase()}
+                </div>
+                <div style="flex-grow: 1">
+                    <div class="h-div">
+                    </div>
+                </div>
+            </div>
             <div id="subcomponents_${group.label}">
                 ${this._getGroupSubcomponentsHTML(group)}
             </div>
             <div class="property">
-                <div class="prop-value-container">
-                    ${group.submitButton.generateHTML()}
-                </div>
+                ${group.submitButton.generateHTML()}
             </div>
             <div class="property">
                 ${group.output.generateHTML()}
-            </div>
-        `;
-    }
-
-    private _buildSubcomponent(element: ConfigUIElement<any, any>, bigPadding: boolean) {
-        return `
-            <div class="property ${bigPadding ? 'big-padding' : ''}">
-                ${element.generateHTML()}
             </div>
         `;
     }
