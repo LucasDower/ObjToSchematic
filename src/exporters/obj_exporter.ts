@@ -32,7 +32,7 @@ export class ObjExporter extends IExporter {
         this._exportOBJ(filepathOBJ, blockMesh, parsedPath.name + '.mtl');
         this._exportMTL(filepathMTL, filepathTexture, blockMesh);
 
-        return true;
+        return new Buffer(0);
     }
 
     private _exportOBJ(filepath: string, blockMesh: BlockMesh, mtlRelativePath: string) {

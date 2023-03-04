@@ -12,7 +12,7 @@ export abstract class IExporter {
      */
     public abstract getFileExtension(): string;
 
-    public abstract export(blockMesh: BlockMesh, filePath: string): boolean;
+    public abstract export(blockMesh: BlockMesh, filePath: string): Buffer;
 
     public getFormatFilter() {
         return {

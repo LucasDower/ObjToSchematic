@@ -24,6 +24,7 @@ import { AppPaths } from './util/path_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { download } from './util/file_util';
 
 export class AppContext {
     private _ui: UI;
@@ -506,22 +507,8 @@ export class AppContext {
         const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
         const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
 
-
-        // TODO Unimplemented
-        /*
-        const filepath = remote.dialog.showSaveDialogSync({
-            title: 'Save structure',
-            buttonLabel: 'Save',
-            filters: [exporter.getFormatFilter()],
-        });
-
-        if (filepath === undefined) {
-            return undefined;
-        }
-
         this._ui.getActionOutput(EAction.Export)
-        .setTaskInProgress('action', '[Exporter]: Saving...');
-        */
+            .setTaskInProgress('action', '[Exporter]: Saving...');
 
         const filepath = '';
 
@@ -536,6 +523,10 @@ export class AppContext {
         const callback = (payload: TFromWorkerMessage) => {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
+            ASSERT(payload.action === 'Export');
+
+            download(payload.result.buffer, 'result.' + payload.result.extension);
+
             this._ui.enableTo(EAction.Export);
         };
 

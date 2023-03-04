@@ -28,7 +28,7 @@ export class SchemExporter extends IExporter {
 
     private static SCHEMA_VERSION = 2;
 
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh, filePath: string) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -86,10 +86,7 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        const buffer = saveNBT(nbt, filePath);
-        download(buffer, 'result.schem');
-
-        return false;
+        return saveNBT(nbt, filePath);
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {

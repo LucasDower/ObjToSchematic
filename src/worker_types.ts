@@ -162,7 +162,8 @@ export namespace ExportParams {
     }
 
     export type Output = {
-
+        buffer: Buffer,
+        extension: string,
     }
 }
 

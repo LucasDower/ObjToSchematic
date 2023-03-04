@@ -27,7 +27,7 @@ export class NBTExporter extends IExporter {
         return 'nbt';
     }
 
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh, filePath: string) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -52,7 +52,7 @@ export class NBTExporter extends IExporter {
         for (const block of blockMesh.getBlocks()) {
             const pos = block.voxel.position;
             const blockIndex = blockNameToIndex.get(block.blockInfo.name);
-            if (blockIndex) {
+            if (blockIndex !== undefined) {
                 if (pos.x > -24 && pos.x <= 24 && pos.y > -24 && pos.y <= 24 && pos.z > -24 && pos.z <= 24) {
                     blocks.push({
                         pos: {
@@ -103,10 +103,7 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        const buffer = saveNBT(nbt, filePath);
-        download(buffer, 'result.nbt');
-
-        return false;
+        return saveNBT(nbt, filePath);
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {

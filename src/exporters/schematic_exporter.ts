@@ -88,14 +88,11 @@ export class Schematic extends IExporter {
         return 'schematic';
     }
 
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh, filePath: string) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const nbt = this._convertToNBT(blockMesh);
-        const buffer = saveNBT(nbt, filePath);
-        download(buffer, 'result.schematic');
-
-        return false;
+        return saveNBT(nbt, filePath);
     }
 }

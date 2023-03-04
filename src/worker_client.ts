@@ -220,9 +220,11 @@ export class WorkerClient {
         if (!params.filepath.endsWith(fileExtension)) {
             params.filepath += fileExtension;
         }
-        exporter.export(this._loadedBlockMesh, params.filepath);
+        const buffer = exporter.export(this._loadedBlockMesh, params.filepath);
 
         return {
+            buffer: buffer,
+            extension: exporter.getFileExtension(),
         };
     }
 }
