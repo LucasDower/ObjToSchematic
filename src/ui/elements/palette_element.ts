@@ -86,7 +86,6 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
 
     private _onCountSelectedChanged() {
         const countSelected = this.getValue().count();
-        console.log('countsleected', countSelected, PALETTE_ALL_RELEASE.length);
 
         this._deselectAll.setEnabled(this.enabled && countSelected > 0);
         this._selectAll.setEnabled(this.enabled && countSelected < PALETTE_ALL_RELEASE.length);
@@ -204,6 +203,7 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
                 } else {
                     this._palette.remove(checkbox.block);
                 }
+                this._onCountSelectedChanged();
             });
         });
 
