@@ -13,10 +13,10 @@ export abstract class IVoxeliser {
     public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = this._voxelise(mesh, voxeliseParams);
 
-        StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
+        StatusHandler.info(`Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
 
         const dim = voxelMesh.getBounds().getDimensions().add(1);
-        StatusHandler.Get.add('info', `Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
+        StatusHandler.info(`Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
 
         return voxelMesh;
     }

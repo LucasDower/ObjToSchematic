@@ -17,71 +17,71 @@ export function doWork(message: TToWorkerMessage): TFromWorkerMessage {
                 return {
                     action: 'Init',
                     result: WorkerClient.Get.init(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'Import':
                 return {
                     action: 'Import',
                     result: WorkerClient.Get.import(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'SetMaterials':
                 return {
                     action: 'SetMaterials',
                     result: WorkerClient.Get.setMaterials(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'RenderMesh':
                 return {
                     action: 'RenderMesh',
                     result: WorkerClient.Get.renderMesh(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'Voxelise':
                 return {
                     action: 'Voxelise',
                     result: WorkerClient.Get.voxelise(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             /*
             case 'RenderVoxelMesh':
                 return {
                     action: 'RenderVoxelMesh',
                     result: WorkerClient.Get.renderVoxelMesh(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             */
             case 'RenderNextVoxelMeshChunk':
                 return {
                     action: 'RenderNextVoxelMeshChunk',
                     result: WorkerClient.Get.renderChunkedVoxelMesh(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'Assign':
                 return {
                     action: 'Assign',
                     result: WorkerClient.Get.assign(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             /*
             case 'RenderBlockMesh':
                 return {
                     action: 'RenderBlockMesh',
                     result: WorkerClient.Get.renderBlockMesh(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
                 */
             case 'RenderNextBlockMeshChunk':
                 return {
                     action: 'RenderNextBlockMeshChunk',
                     result: WorkerClient.Get.renderChunkedBlockMesh(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
             case 'Export':
                 return {
                     action: 'Export',
                     result: WorkerClient.Get.export(message.params),
-                    statusMessages: StatusHandler.Get.getAllStatusMessages(),
+                    messages: StatusHandler.getAll(),
                 };
         }
     } catch (e: any) {

@@ -161,7 +161,7 @@ export class Palette {
         }
 
         if (missingBlocks.length > 0) {
-            StatusHandler.Get.add('warning', `${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
+            StatusHandler.warning(`${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
             LOG_WARN('Blocks missing atlas textures', missingBlocks);
         }
     }

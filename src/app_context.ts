@@ -1,27 +1,21 @@
 import '../styles.css';
 
-import path from 'path';
-
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
-import { IExporter } from './exporters/base_exporter';
-import { ExporterFactory, TExporters } from './exporters/exporters';
+import { TExporters } from './exporters/exporters';
 import { MaterialMapManager } from './material-map';
 import { MaterialType } from './mesh';
 import { MeshType, Renderer } from './renderer';
-import { StatusHandler, StatusMessage } from './status';
-import { OutputStyle } from './ui/elements/output';
+import { AppConsole, TMessage } from './ui/console';
 import { SolidMaterialElement } from './ui/elements/solid_material_element';
 import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
-import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
-import { ASSERT, AppError } from './util/error_util';
+import { ASSERT } from './util/error_util';
 import { download } from './util/file_util';
-import { LOG_ERROR, Logger } from './util/log_util';
-import { AppPaths } from './util/path_util';
+import { Logger } from './util/log_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
@@ -97,21 +91,11 @@ export class AppContext {
             return;
         }
 
-        const uiOutput = this._ui.getActionOutput(action);
-
         const jobCallback = (payload: TFromWorkerMessage) => {
-            //this._ui.enableTo(action);
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
-                    uiOutput.setTaskComplete(
-                        'action',
-                        StatusHandler.Get.getDefaultFailureMessage(action),
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
-                        'error',
-                    );
-                    LOG_ERROR(payload.error);
-
+                    AppConsole.error(payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong');
                     this._ui.getActionButton(action)
                         .stopLoading()
                         .setProgress(0.0);
@@ -120,11 +104,8 @@ export class AppContext {
                     break;
                 }
                 default: {
-                    //this._ui.enableTo(action + 1);
-
                     ASSERT(payload.action !== 'Progress');
-                    const { builder, style } = this._getActionMessageBuilder(action, payload.statusMessages);
-                    uiOutput.setMessage(builder, style as OutputStyle);
+                    this._addWorkerMessagesToConsole(payload.messages);
 
                     if (workerJob.callback) {
                         workerJob.callback(payload);
@@ -142,24 +123,10 @@ export class AppContext {
         });
     }
 
-    private _getActionMessageBuilder(action: EAction, statusMessages: StatusMessage[]) {
-        const infoStatuses = statusMessages
-            .filter((x) => x.status === 'info')
-            .map((x) => x.message);
-        const hasInfos = infoStatuses.length > 0;
-
-        const warningStatuses = statusMessages
-            .filter((x) => x.status === 'warning')
-            .map((x) => x.message);
-        const hasWarnings = warningStatuses.length > 0;
-
-        const builder = new UIMessageBuilder();
-        builder.addBold('action', [StatusHandler.Get.getDefaultSuccessMessage(action) + (hasInfos ? ':' : '')], 'success');
-
-        builder.addItem('action', infoStatuses, 'none');
-        builder.addItem('action', warningStatuses, 'warning');
-
-        return { builder: builder, style: hasWarnings ? 'warning' : 'success' };
+    private _addWorkerMessagesToConsole(messages: TMessage[]) {
+        messages.forEach((message) => {
+            AppConsole.add(message);
+        });
     }
 
     private _getWorkerJob(action: EAction): (Promise<TWorkerJob | undefined>) {
@@ -180,10 +147,7 @@ export class AppContext {
 
     private async _import(): Promise<TWorkerJob> {
         const uiElements = this._ui.layout.import.elements;
-
-
-        this._ui.getActionOutput(EAction.Import)
-            .setTaskInProgress('action', '[Importer]: Loading...');
+        AppConsole.info('Importing mesh...');
 
         const payload: TToWorkerMessage = {
             action: 'Import',
@@ -198,7 +162,7 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Import');
-            const outputElement = this._ui.getActionOutput(EAction.Import);
+            AppConsole.success('Imported mesh');
 
             const dimensions = new Vector3(
                 payload.result.dimensions.x,
@@ -210,11 +174,9 @@ export class AppContext {
             this._materialManager = new MaterialMapManager(payload.result.materials);
 
             if (payload.result.triangleCount < AppConfig.Get.RENDER_TRIANGLE_THRESHOLD) {
-                outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
                 this._workerController.addJob(this._renderMesh());
             } else {
-                const message = `Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`;
-                outputElement.setTaskComplete('render', '[Renderer]: Stopped', [message], 'warning');
+                AppConsole.warning(`Will not render mesh as its over ${AppConfig.Get.RENDER_TRIANGLE_THRESHOLD.toLocaleString()} triangles.`);
             }
 
             this._updateMaterialsAction();
@@ -225,8 +187,7 @@ export class AppContext {
     }
 
     private _materials(): TWorkerJob {
-        this._ui.getActionOutput(EAction.Materials)
-            .setTaskInProgress('action', '[Materials]: Loading...');
+        AppConsole.info('Updating materials...');
 
         const payload: TToWorkerMessage = {
             action: 'SetMaterials',
@@ -239,8 +200,7 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'SetMaterials');
-            const outputElement = this._ui.getActionOutput(EAction.Materials);
-            outputElement.setTaskComplete('action', '[Materials]: Updated', [], 'success');
+            AppConsole.success('Updated materials');
 
             // The material map shouldn't need updating because the materials
             // returned from the worker **should** be the same as the materials
@@ -294,6 +254,8 @@ export class AppContext {
     }
 
     private _renderMesh(): TWorkerJob {
+        AppConsole.info('Rendering mesh...');
+
         const payload: TToWorkerMessage = {
             action: 'RenderMesh',
             params: {},
@@ -307,25 +269,15 @@ export class AppContext {
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
-                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
-                        'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
-                        'error',
-                    );
-                    LOG_ERROR(payload.error);
+                    AppConsole.error(payload.action === 'KnownError' ? payload.error.message : 'Could not render mesh');
                     break;
                 }
                 default: {
                     ASSERT(payload.action === 'RenderMesh');
-                    Renderer.Get.useMesh(payload.result);
+                    this._addWorkerMessagesToConsole(payload.messages);
+                    AppConsole.success('Rendered mesh');
 
-                    this._ui.getActionOutput(EAction.Import).setTaskComplete(
-                        'render',
-                        '[Renderer]: Succeeded',
-                        [],
-                        'success',
-                    );
+                    Renderer.Get.useMesh(payload.result);
                 }
             }
         };
@@ -334,10 +286,9 @@ export class AppContext {
     }
 
     private _voxelise(): TWorkerJob {
-        const uiElements = this._ui.layout.voxelise.elements;
+        AppConsole.info('Loading voxel mesh...');
 
-        this._ui.getActionOutput(EAction.Voxelise)
-            .setTaskInProgress('action', '[Voxel Mesh]: Loading...');
+        const uiElements = this._ui.layout.voxelise.elements;
 
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
@@ -355,16 +306,19 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Voxelise');
-            const outputElement = this._ui.getActionOutput(EAction.Voxelise);
+            AppConsole.success('Loaded voxel mesh');
 
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
-            this._workerController.addJob(this._renderVoxelMesh());
+            this._workerController.addJob(this._renderVoxelMesh(true));
         };
 
         return { id: 'Voxelise', payload: payload, callback: callback };
     }
 
-    private _renderVoxelMesh(): TWorkerJob {
+    private _renderVoxelMesh(firstChunk: boolean): TWorkerJob {
+        if (firstChunk) {
+            AppConsole.info('Rendering voxel mesh...');
+        }
+
         const uiElements = this._ui.layout.voxelise.elements;
 
         const payload: TToWorkerMessage = {
@@ -382,30 +336,20 @@ export class AppContext {
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
-                    this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
-                        'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
-                        'error',
-                    );
-                    LOG_ERROR(payload.error);
-
+                    AppConsole.error(payload.action === 'KnownError' ? payload.error.message : 'Could not render voxel mesh');
                     this._ui.enableTo(EAction.Assign);
                     break;
                 }
                 default: {
                     ASSERT(payload.action === 'RenderNextVoxelMeshChunk');
+                    this._addWorkerMessagesToConsole(payload.messages);
+
                     Renderer.Get.useVoxelMeshChunk(payload.result);
 
                     if (payload.result.moreVoxelsToBuffer) {
-                        this._workerController.addJob(this._renderVoxelMesh());
+                        this._workerController.addJob(this._renderVoxelMesh(false));
                     } else {
-                        this._ui.getActionOutput(EAction.Voxelise).setTaskComplete(
-                            'render',
-                            '[Renderer]: Succeeded',
-                            [],
-                            'success',
-                        );
+                        AppConsole.success('Rendered voxel mesh');
                         this._ui.enableTo(EAction.Assign);
                     }
                 }
@@ -419,13 +363,10 @@ export class AppContext {
         const uiElements = this._ui.layout.assign.elements;
 
         if (uiElements.blockPalette.getValue().count() <= 0) {
-            const outputElement = this._ui.getActionOutput(EAction.Assign);
-            outputElement.setTaskComplete('action', '[Block Mesh]: Failed', ['No blocks selected'], 'error');
+            AppConsole.error('No blocks selected');
             return;
         }
-
-        this._ui.getActionOutput(EAction.Assign)
-            .setTaskInProgress('action', '[Block Mesh]: Loading...');
+        AppConsole.info('Loading block mesh...');
 
         Renderer.Get.setLightingAvailable(uiElements.calculateLighting.getValue());
 
@@ -449,17 +390,19 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Assign');
+            AppConsole.success('Loaded block mesh');
 
-            const outputElement = this._ui.getActionOutput(EAction.Assign);
-
-            outputElement.setTaskInProgress('render', '[Renderer]: Processing...');
-            this._workerController.addJob(this._renderBlockMesh());
+            this._workerController.addJob(this._renderBlockMesh(true));
         };
 
         return { id: 'Assign', payload: payload, callback: callback };
     }
 
-    private _renderBlockMesh(): TWorkerJob {
+    private _renderBlockMesh(firstChunk: boolean): TWorkerJob {
+        if (firstChunk) {
+            AppConsole.info('Rendering block mesh...');
+        }
+
         const uiElements = this._ui.layout.assign.elements;
 
         const payload: TToWorkerMessage = {
@@ -476,30 +419,20 @@ export class AppContext {
             switch (payload.action) {
                 case 'KnownError':
                 case 'UnknownError': {
-                    this._ui.getActionOutput(EAction.Assign).setTaskComplete(
-                        'render',
-                        '[Renderer]: Failed',
-                        [payload.action === 'KnownError' ? payload.error.message : 'Something unexpectedly went wrong'],
-                        'error',
-                    );
-                    LOG_ERROR(payload.error);
-
+                    AppConsole.error(payload.action === 'KnownError' ? payload.error.message : 'Could not draw block mesh');
                     this._ui.enableTo(EAction.Export);
                     break;
                 }
                 default: {
                     ASSERT(payload.action === 'RenderNextBlockMeshChunk');
+                    this._addWorkerMessagesToConsole(payload.messages);
+
                     Renderer.Get.useBlockMeshChunk(payload.result);
 
                     if (payload.result.moreBlocksToBuffer) {
-                        this._workerController.addJob(this._renderBlockMesh());
+                        this._workerController.addJob(this._renderBlockMesh(false));
                     } else {
-                        this._ui.getActionOutput(EAction.Assign).setTaskComplete(
-                            'render',
-                            '[Renderer]: Succeeded',
-                            [],
-                            'success',
-                        );
+                        AppConsole.success('Rendered block mesh');
                         this._ui.enableTo(EAction.Export);
                     }
                 }
@@ -510,12 +443,9 @@ export class AppContext {
     }
 
     private _export(): (TWorkerJob | undefined) {
+        AppConsole.info('Exporting structure...');
+
         const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
-        const exporter: IExporter = ExporterFactory.GetExporter(exporterID);
-
-        this._ui.getActionOutput(EAction.Export)
-            .setTaskInProgress('action', '[Exporter]: Saving...');
-
         const filepath = '';
 
         const payload: TToWorkerMessage = {
@@ -530,6 +460,7 @@ export class AppContext {
             // This callback is managed through `AppContext::do`, therefore
             // this callback is only called if the job is successful.
             ASSERT(payload.action === 'Export');
+            AppConsole.success('Exported structure');
 
             download(payload.result.buffer, 'result.' + payload.result.extension);
 

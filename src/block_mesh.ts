@@ -177,7 +177,7 @@ export class BlockMesh {
         ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
-            StatusHandler.Get.add('warning', `${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
+            StatusHandler.warning(`${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
         }
     }
 

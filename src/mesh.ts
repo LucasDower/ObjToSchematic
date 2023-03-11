@@ -152,16 +152,10 @@ export class Mesh {
         }
 
         if (this._tris.length >= 100_000) {
-            StatusHandler.Get.add(
-                'warning',
-                `The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`,
-            );
+            StatusHandler.warning(`The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`);
         }
 
-        StatusHandler.Get.add(
-            'info',
-            `${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`,
-        );
+        StatusHandler.info(`${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`);
 
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
@@ -182,10 +176,7 @@ export class Mesh {
             }
         }
         if (giveNormalsWarning) {
-            StatusHandler.Get.add(
-                'warning',
-                'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
-            );
+            StatusHandler.warning('Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly');
         };
     }
 

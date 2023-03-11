@@ -13,13 +13,13 @@ import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
+import { AppConsole } from './console';
 import { ButtonElement } from './elements/button';
 import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { ConfigUIElement } from './elements/config_element';
 import { FileInputElement } from './elements/file_input';
 import { HeaderUIElement } from './elements/header_element';
-import { OutputElement } from './elements/output';
 import { PaletteElement } from './elements/palette_element';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
@@ -32,7 +32,6 @@ export interface Group {
     elements: { [key: string]: ConfigUIElement<any, any> };
     elementsOrder: string[];
     submitButton: ButtonElement;
-    output: OutputElement;
 }
 
 export interface ToolbarGroup {
@@ -60,7 +59,6 @@ export class UI {
                     this._appContext.do(EAction.Import);
                 })
                 .setLabel('Load mesh'),
-            output: new OutputElement(),
         },
         'materials': {
             label: 'Materials',
@@ -72,7 +70,6 @@ export class UI {
                     this._appContext.do(EAction.Materials);
                 })
                 .setLabel('Update materials'),
-            output: new OutputElement(),
         },
         'voxelise': {
             label: 'Voxelise',
@@ -145,7 +142,6 @@ export class UI {
                     this._appContext.do(EAction.Voxelise);
                 })
                 .setLabel('Voxelise mesh'),
-            output: new OutputElement(),
         },
         'assign': {
             label: 'Assign',
@@ -244,7 +240,6 @@ export class UI {
                     this._appContext.do(EAction.Assign);
                 })
                 .setLabel('Assign blocks'),
-            output: new OutputElement(),
         },
         'export': {
             label: 'Export',
@@ -282,7 +277,6 @@ export class UI {
                 .setOnClick(() => {
                     this._appContext.do(EAction.Export);
                 }),
-            output: new OutputElement(),
         },
     };
 
@@ -486,15 +480,28 @@ export class UI {
             toolbarHTML.placeInto('toolbar');
         }
 
-        Split(['.column-properties', '.column-canvas'], {
+        // Build console
+        AppConsole.Get.build();
+
+        Split(['.column-sidebar', '.column-canvas'], {
             sizes: [20, 80],
             minSize: [400, 500],
             snapOffset: 0,
         });
 
-        const item = document.getElementsByClassName('gutter').item(0);
-        if (item !== null) {
-            item.innerHTML = `<div class='gutter-line'></div>`;
+        Split(['.column-properties', '.column-console'], {
+            sizes: [90, 10],
+            direction: 'vertical',
+        });
+
+        const itemA = document.getElementsByClassName('gutter').item(1);
+        if (itemA !== null) {
+            itemA.innerHTML = `<div class='gutter-line'></div>`;
+        }
+
+        const itemB = document.getElementsByClassName('gutter').item(0);
+        if (itemB !== null) {
+            itemB.innerHTML = `<div class='gutter-line-horizontal'></div>`;
         }
     }
 
@@ -532,7 +539,7 @@ export class UI {
 
     private _getGroupHTML(group: Group) {
         return `
-            <div class="property">
+            <div class="property" style="padding-top: 20px;">
                 <div style="flex-grow: 1">
                     <div class="h-div">
                     </div>
@@ -551,15 +558,7 @@ export class UI {
             <div class="property">
                 ${group.submitButton.generateHTML()}
             </div>
-            <div class="property">
-                ${group.output.generateHTML()}
-            </div>
         `;
-    }
-
-    public getActionOutput(action: EAction) {
-        const group = this._getEActionGroup(action);
-        return group.output;
     }
 
     public getActionButton(action: EAction) {
@@ -625,10 +624,10 @@ export class UI {
     }
 
     public disableAll() {
-        this.disable(EAction.Import, false);
+        this.disable(EAction.Import);
     }
 
-    public disable(action: EAction, clearOutput: boolean = true) {
+    public disable(action: EAction) {
         if (action < 0) {
             return;
         }
@@ -640,10 +639,6 @@ export class UI {
                 group.elements[compName].setEnabled(false);
             }
             group.submitButton.setEnabled(false);
-            if (clearOutput) {
-                group.output.getMessage().clearAll();
-                group.output.updateMessage();
-            }
         }
     }
 

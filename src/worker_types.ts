@@ -4,8 +4,7 @@ import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
 import { TImporters } from './importers/importers';
 import { MaterialMap } from './mesh';
-import { TPalettes } from './palette';
-import { StatusMessage } from './status';
+import { TMessage } from './ui/console';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
 import { TAxis } from './util/type_util';
@@ -167,10 +166,6 @@ export namespace ExportParams {
     }
 }
 
-export type TStatus = {
-    statusMessages: StatusMessage[],
-}
-
 export type TaskParams =
     | { type: 'Started', taskId: string }
     | { type: 'Progress', taskId: string, percentage: number }
@@ -193,7 +188,7 @@ export type TFromWorkerMessage =
     | { action: 'KnownError', error: AppError }
     | { action: 'UnknownError', error: Error }
     | { action: 'Progress', payload: TaskParams }
-    | (TStatus & (
+    | ({ messages: TMessage[] } & (
         | { action: 'Init', result: InitParams.Output }
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'SetMaterials', result: SetMaterialsParams.Output }
