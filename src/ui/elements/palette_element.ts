@@ -1,7 +1,10 @@
 import { PALETTE_ALL_RELEASE } from '../../../res/palettes/all';
 import { Palette } from '../../palette';
 import { AppUtil } from '../../util';
+import { ASSERT } from '../../util/error_util';
+import { download } from '../../util/file_util';
 import { UIUtil } from '../../util/ui_util';
+import { AppConsole } from '../console';
 import { ButtonElement } from './button';
 import { CheckboxElement } from './checkbox';
 import { FullConfigUIElement } from './full_config_element';
@@ -11,6 +14,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
     private _palette: Palette;
     private _selectAll: ButtonElement;
     private _deselectAll: ButtonElement;
+    private _importFrom: ButtonElement;
+    private _exportTo: ButtonElement;
 
     public constructor() {
         super();
@@ -46,6 +51,69 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
                     checkbox.element.uncheck();
                 });
             });
+
+        this._importFrom = new ButtonElement()
+            .setLabel('Import From')
+            .setOnClick(() => {
+                const a = document.createElement('input');
+                a.setAttribute('type', 'file');
+                a.setAttribute('accept', '.txt');
+
+                a.addEventListener('change', () => {
+                    const files = a.files;
+                    if (files?.length === 1) {
+                        const file = files.item(0);
+                        ASSERT(file !== null);
+                        AppConsole.info(`Reading ${file.name}...`);
+                        file.text().then((text) => {
+                            this._onReadPaletteFile(text);
+                        });
+                    }
+                });
+
+                a.click();
+            });
+
+        this._exportTo = new ButtonElement()
+            .setLabel('Export To')
+            .setOnClick(() => {
+                const textPalette = this._checkboxes.filter((x) => x.element.getValue())
+                    .map((x) => x.block)
+                    .join('\n');
+                download(textPalette, 'block-palette.txt');
+            });
+    }
+
+    private _onReadPaletteFile(text: string) {
+        const blockNames = text.split('\n');
+
+        let countDeselected = 0;
+        this._checkboxes.forEach((checkbox) => {
+            if (checkbox.element.getValue()) {
+                checkbox.element.uncheck();
+                ++countDeselected;
+            }
+        });
+        AppConsole.info(`Deselected ${countDeselected} blocks`);
+
+        AppConsole.info(`Found ${blockNames.length} blocks`);
+
+        let countChecked = 0;
+        blockNames.forEach((blockName) => {
+            if (!AppUtil.Text.isNamespacedBlock(blockName)) {
+                AppConsole.error(`'${blockName}' is not namespaced correctly, do you mean 'minecraft:${blockName}'?`);
+            } else {
+                const checkboxIndex = this._checkboxes.findIndex((x) => x.block === blockName);
+                if (checkboxIndex === -1) {
+                    AppConsole.error(`Could not use '${blockName}' as it is unsupported`);
+                } else {
+                    this._checkboxes[checkboxIndex].element.check();
+                    ++countChecked;
+                }
+            }
+        });
+
+        AppConsole.success(`Selected ${countChecked} blocks`);
     }
 
     protected override _generateInnerHTML(): string {
@@ -63,10 +131,13 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         */
 
         return `
-            <div class="row-container" style="width: 100%; gap:">
-
+            <div class="row-container" style="width: 100%; gap: 5px;">
                 <input type="text" style="width: 100%;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
-                <div class="col-container" style="padding: 5px 0px;">
+                <div class="col-container">
+                    ${this._importFrom.generateHTML()}
+                    ${this._exportTo.generateHTML()}
+                </div>
+                <div class="col-container">
                     ${this._selectAll.generateHTML()}
                     ${this._deselectAll.generateHTML()}
                 </div>
@@ -92,6 +163,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
 
         this._selectAll.setEnabled(this.enabled);
         this._deselectAll.setEnabled(this.enabled);
+        this._importFrom.setEnabled(this.enabled);
+        this._exportTo.setEnabled(this.enabled);
     }
 
     public override registerEvents(): void {
@@ -116,6 +189,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
 
         this._selectAll.registerEvents();
         this._deselectAll.registerEvents();
+        this._importFrom.registerEvents();
+        this._exportTo.registerEvents();
     }
 
     public override finalise(): void {
@@ -125,6 +200,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
 
         this._selectAll.finalise();
         this._deselectAll.finalise();
+        this._importFrom.finalise();
+        this._exportTo.finalise();
     }
 
     private _onSearchBoxChanged(search: string) {

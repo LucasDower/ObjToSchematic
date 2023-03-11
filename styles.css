@@ -73,6 +73,9 @@ canvas {
   justify-content: center;
   align-items: center;
 }
+.gutter.gutter-vertical {
+  cursor: row-resize;
+}
 
 .gutter-line {
   background-color: hsl(0, 0%, 20%);
