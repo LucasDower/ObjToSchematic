@@ -486,11 +486,11 @@ export class UI {
         Split(['.column-sidebar', '.column-canvas'], {
             sizes: [20, 80],
             minSize: [400, 500],
-            snapOffset: 0,
         });
 
         Split(['.column-properties', '.column-console'], {
             sizes: [90, 10],
+            minSize: [0, 0],
             direction: 'vertical',
         });
 

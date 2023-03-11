@@ -17,7 +17,7 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
         this._materialName = materialName;
         this._colourId = getRandomID();
 
-        this._typeElement = new MaterialTypeElement(MaterialType.solid);
+        this._typeElement = new MaterialTypeElement(material);
 
         this._alphaElement = new SliderElement()
             .setMin(0.0)
@@ -45,6 +45,10 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
             const material = this.getValue();
             material.colour = RGBAUtil.fromHexString(swatchElement.value);
         });
+    }
+
+    public override finalise(): void {
+        this._typeElement.finalise();
     }
 
     protected override _generateInnerHTML(): string {

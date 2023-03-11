@@ -49,7 +49,7 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
 
         this._imageElement = new ImageElement(material.diffuse);
 
-        this._typeElement = new MaterialTypeElement(MaterialType.textured);
+        this._typeElement = new MaterialTypeElement(material);
 
         switch (material.transparency.type) {
             case 'UseAlphaValue':

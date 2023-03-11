@@ -1,13 +1,15 @@
-import { MaterialType } from '../../mesh';
+import { MaterialType, SolidMaterial, TexturedMaterial } from '../../mesh';
 import { AppIcons } from '../icons';
 import { ConfigUIElement } from './config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
 export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivElement> {
     private _switchElement: ToolbarItemElement;
+    private _material: SolidMaterial | TexturedMaterial;
 
-    public constructor(material: MaterialType) {
-        super(material);
+    public constructor(material: SolidMaterial | TexturedMaterial) {
+        super(material.type);
+        this._material = material;
         this._switchElement = new ToolbarItemElement({ id: 'sw2', iconSVG: AppIcons.SWITCH })
             .setSmall()
             .setLabel('Switch')
@@ -33,6 +35,10 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
                 </div>
             </div>
         `;
+    }
+
+    public override finalise(): void {
+        this._switchElement.setActive(this._material.type === MaterialType.solid && this._material.canBeTextured);
     }
 
     public override registerEvents(): void {
