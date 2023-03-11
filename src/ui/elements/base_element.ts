@@ -18,8 +18,16 @@ export abstract class BaseUIElement<T> {
 
     /**
      * Get whether or not this UI element is interactable.
+     * @deprecated Use the enabled() getter.
      */
     public getEnabled() {
+        return this._isEnabled;
+    }
+
+    /**
+     * Alias of `getEnabled`
+     */
+    public get enabled() {
         return this._isEnabled;
     }
 

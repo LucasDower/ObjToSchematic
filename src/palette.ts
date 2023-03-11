@@ -26,10 +26,10 @@ export class Palette {
     public static PALETTE_FILE_EXT: string = '.palette';
     private static _FILE_VERSION: number = 1;
 
-    private _blocks: AppTypes.TNamespacedBlockName[];
+    private _blocks: Set<AppTypes.TNamespacedBlockName>;
 
     private constructor() {
-        this._blocks = [];
+        this._blocks = new Set();
     }
 
     public static create(): Palette {
@@ -55,7 +55,7 @@ export class Palette {
         }
 
         return outPalette;
-        
+
         return undefined;
         /*
         if (!Palette._isValidPaletteName(paletteName)) {
@@ -116,31 +116,26 @@ export class Palette {
 
     public add(blockNames: AppTypes.TNamespacedBlockName[]): void {
         blockNames.forEach((blockName) => {
-            if (!this._blocks.includes(blockName)) {
-                this._blocks.push(AppUtil.Text.namespaceBlock(blockName));
+            if (!this._blocks.has(blockName)) {
+                this._blocks.add(AppUtil.Text.namespaceBlock(blockName));
             }
         });
     }
 
     public remove(blockName: string): boolean {
-        const index = this._blocks.indexOf(AppUtil.Text.namespaceBlock(blockName));
-        if (index !== -1) {
-            this._blocks.splice(index, 1);
-            return true;
-        }
-        return false;
+        return this._blocks.delete(blockName);
     }
 
     public has(blockName: string): boolean {
-        return this._blocks.includes(AppUtil.Text.namespaceBlock(blockName));
+        return this._blocks.has(AppUtil.Text.namespaceBlock(blockName));
     }
 
     public count() {
-        return this._blocks.length;
+        return this._blocks.size;
     }
 
     public getBlocks() {
-        return this._blocks;
+        return Array.from(this._blocks);
     }
 
     public static getAllPalette(): TOptional<Palette> {
@@ -156,8 +151,9 @@ export class Palette {
      */
     public removeMissingAtlasBlocks(atlas: Atlas) {
         const missingBlocks: AppTypes.TNamespacedBlockName[] = [];
-        for (let blockIndex = this._blocks.length - 1; blockIndex >= 0; --blockIndex) {
-            const blockName = this._blocks[blockIndex];
+
+        const blocksCopy = Array.from(this._blocks);
+        for (const blockName of blocksCopy) {
             if (!atlas.hasBlock(blockName)) {
                 missingBlocks.push(blockName);
                 this.remove(blockName);

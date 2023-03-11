@@ -100,7 +100,8 @@ export class BlockMesh {
         ASSERT(atlas !== undefined, 'Could not load atlas');
         this._atlas = atlas;
 
-        const palette = Palette.load(blockMeshParams.blockPalette);
+        const palette = Palette.create();
+        palette.add(blockMeshParams.blockPalette);
         ASSERT(palette !== undefined, 'Could not load palette');
 
         const atlasPalette = new AtlasPalette(atlas, palette);

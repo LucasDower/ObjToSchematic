@@ -18,13 +18,13 @@ import { TexturedMaterialElement } from './ui/elements/textured_material_element
 import { UI } from './ui/layout';
 import { UIMessageBuilder } from './ui/misc';
 import { ColourSpace, EAction } from './util';
-import { ASSERT } from './util/error_util';
+import { ASSERT, AppError } from './util/error_util';
+import { download } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { AppPaths } from './util/path_util';
 import { Vector3 } from './vector';
 import { TWorkerJob, WorkerController } from './worker_controller';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
-import { download } from './util/file_util';
 
 export class AppContext {
     private _ui: UI;
@@ -415,8 +415,14 @@ export class AppContext {
         return { id: 'RenderNextVoxelMeshChunk', payload: payload, callback: callback };
     }
 
-    private _assign(): TWorkerJob {
+    private _assign(): (TWorkerJob | undefined) {
         const uiElements = this._ui.layout.assign.elements;
+
+        if (uiElements.blockPalette.getValue().count() <= 0) {
+            const outputElement = this._ui.getActionOutput(EAction.Assign);
+            outputElement.setTaskComplete('action', '[Block Mesh]: Failed', ['No blocks selected'], 'error');
+            return;
+        }
 
         this._ui.getActionOutput(EAction.Assign)
             .setTaskInProgress('action', '[Block Mesh]: Loading...');
@@ -427,7 +433,7 @@ export class AppContext {
             action: 'Assign',
             params: {
                 textureAtlas: uiElements.textureAtlas.getValue(),
-                blockPalette: uiElements.blockPalette.getValue(),
+                blockPalette: uiElements.blockPalette.getValue().getBlocks(),
                 dithering: uiElements.dithering.getValue(),
                 colourSpace: ColourSpace.RGB,
                 fallable: uiElements.fallable.getValue() as FallableBehaviour,

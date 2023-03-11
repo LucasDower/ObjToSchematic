@@ -109,7 +109,7 @@ export type TPaletteId = string;
 export namespace AssignParams {
     export type Input = {
         textureAtlas: TAtlasId,
-        blockPalette: TPalettes,
+        blockPalette: string[],
         dithering: TDithering,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,

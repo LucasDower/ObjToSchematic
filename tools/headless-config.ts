@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
 import { ColourSpace } from '../src/util';
 import { Vector3 } from '../src/vector';
 import { THeadlessConfig } from './headless';
@@ -20,7 +21,7 @@ export const headlessConfig: THeadlessConfig = {
     },
     assign: {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
-        blockPalette: 'all', // Must be a palette name that exists in /resources/palettes
+        blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',

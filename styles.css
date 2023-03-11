@@ -16,9 +16,10 @@
   --prop-disabled: hsl(0, 0%, 14%);
   --prop-sunken: hsl(0, 0%, 8%);
 
+  --text-light: hsl(0, 0%, 85%);
   --text-standard: hsl(0, 0%, 66%);
-  --text-muted: hsl(0, 0%, 45%);
-  --text-disabled: hsl(0, 0%, 33%);
+  --text-dim: hsl(0, 0%, 45%);
+  --text-dark: hsl(0, 0%, 33%);
 
   --vertical-divider: hsl(0, 0%, 14%);
 
@@ -28,6 +29,11 @@
   --subprop-value-width: 125px;
 }
 
+* {
+  -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+  -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+  box-sizing: border-box;
+}
 
 body {
   margin: 0px;
@@ -96,8 +102,14 @@ canvas {
   align-items: center;
   color: var(--text-standard);
   font-size: 85%;
-  margin: 0px 0px;
   padding: 5px 10px;
+}
+
+.full-width-property {
+
+}
+
+.full-width-property-container {
 }
 
 .big-padding {
@@ -109,7 +121,7 @@ canvas {
 
 .group-heading {
   padding: 10px 10px;
-  color: #303030;
+  color: var(--text-dark);
   font-weight: 400;
   font-size: 85%;
   letter-spacing: 4px;
@@ -117,14 +129,16 @@ canvas {
 
 
 .prop-key-container {
-  align-self: center;
+  display: flex;
+  align-items: center;
   padding: 0px 10px 0px 0px;
   width: 150px;
+  height: var(--property-height);
   overflow: auto;
 }
 
 .text-disabled {
-  color: var(--text-disabled) !important;
+  color: var(--text-dark) !important;
 }
 
 .prop-value-container {
@@ -191,7 +205,7 @@ canvas {
   background: var(--prop-sunken);
   box-shadow: rgba(0, 0, 0, 0.2) 0px 3px 10px 0px inset;
   border-radius: var(--border-radius);
-  color: #8C8C8C80;
+  color: var(--text-dark);
   font-weight: 300;
   font-size: 90%;
   padding: 12px 18px;
@@ -204,7 +218,7 @@ canvas {
 }
 
 .slider-height-normal {
-  height: calc(var(--property-height) - 4px);
+  height: var(--property-height);
 }
 
 .slider-height-small {
@@ -213,8 +227,9 @@ canvas {
 }
 
 input {
+  padding: 0px;
+  margin: 0px;
   -moz-appearance: none;
-  width: 20%;
   font-size: 100%;
   user-select: none;
   margin-right: 3px;
@@ -223,9 +238,12 @@ input {
   background: var(--prop-standard);
   font-family: 'Lexend', sans-serif;
   font-weight: 300;
-  color: var(--text-standard);
+
   outline-color: var(--prop-accent-hovered);
   border: 1px solid rgb(255, 255, 255, 0.0);
+}
+input:enabled {
+  color: var(--text-standard);
 }
 input:hover:enabled {
   color: #C6C6C6;
@@ -234,7 +252,7 @@ input:hover:enabled {
 }
 input:disabled {
   background: var(--prop-disabled);
-  color: var(--text-disabled) !important;
+  color: var(--text-dark);
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -243,6 +261,20 @@ input::-webkit-inner-spin-button {
 }
 input[type=number] {
   -moz-appearance:textfield;
+}
+input[type=text] {
+  -moz-appearance:textfield;
+  height: var(--property-height);
+  text-align: start;
+  padding-left: 10px;
+}
+
+::placeholder {
+  color: var(--text-dark);
+  font-style: italic;
+}
+::placeholder:hover {
+  color: var(--text-standard) !important;
 }
 
 select {
@@ -270,11 +302,11 @@ select:hover:enabled {
 }
 select:disabled {
   background: var(--prop-disabled) !important;
-  color: var(--text-disabled);
+  color: var(--text-dark);
 }
 
 .slider-bar-height-normal {
-  height: calc(var(--property-height) - 2px);
+  height: var(--property-height);
 }
 
 .slider-bar-height-small {
@@ -287,7 +319,7 @@ select:disabled {
   font-weight: 300;
   background: var(--prop-standard);
   cursor: ew-resize;
-  border: 1px solid var(--prop-bg);
+  border: 0px solid var(--prop-bg);
   overflow: hidden;
   flex-grow: 1;
 }
@@ -302,7 +334,7 @@ select:disabled {
 
 .new-slider-bar {
   border-radius: var(--border-radius);
-  height: calc(100% - 2px);
+  height: 100%;
   background: var(--prop-accent-standard);
   border: 1px solid rgb(255, 255, 255, 0.0);
 }
@@ -377,7 +409,7 @@ select:disabled {
 }
 .input-file-disabled {
   background: var(--prop-disabled) !important;
-  color: var(--text-disabled) !important;
+  color: var(--text-dark) !important;
 }
 
 .h-div {
@@ -470,7 +502,7 @@ select:disabled {
 }
 
 .spinbox-value-disabled {
-  color: var(--text-disabled);
+  color: var(--text-dark);
   background: var(--prop-disabled) !important;
 }
 
@@ -585,7 +617,7 @@ svg {
 }
 
 .icon-disabled {
-  stroke: var(--text-disabled) !important;
+  stroke: var(--text-dark) !important;
 }
 
 .icon-disabled-active {
@@ -783,10 +815,10 @@ svg {
 .checkbox-text {
   padding-left: 10px;
   font-weight: 300;
-  color: var(--text-standard)
+  color: var(--text-dim)
 }
-.checkbox-text-disabled {
-  color: var(--text-disabled);
+.checkbox-text-hover {
+  cursor: pointer;
 }
 
 .checkbox-pip {
@@ -798,7 +830,7 @@ svg {
   stroke: white;
 }
 .checkbox-pip-disabled {
-  stroke: var(--text-disabled);
+  stroke: var(--text-dark);
 }
 
 .spinbox-main-container {
@@ -869,7 +901,7 @@ svg {
 .subtitle {
   font-size: 90%;
   font-weight: 300;
-  color: var(--text-muted);
+  color: var(--text-dim);
 }
 
 .header-cols {
@@ -899,4 +931,16 @@ svg {
 a {
   font-weight: 400;
   color: var(--prop-accent-hovered)
+}
+
+.text-dark {
+  color: var(--text-dark);
+}
+
+.text-standard {
+  color: var(--text-standard);
+}
+
+.text-light {
+  color: var(--text-light);
 }

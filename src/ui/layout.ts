@@ -20,6 +20,7 @@ import { ConfigUIElement } from './elements/config_element';
 import { FileInputElement } from './elements/file_input';
 import { HeaderUIElement } from './elements/header_element';
 import { OutputElement } from './elements/output';
+import { PaletteElement } from './elements/palette_element';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
 import { VectorSpinboxElement } from './elements/vector_spinbox';
@@ -153,11 +154,7 @@ export class UI {
                     .addItems(this._getTextureAtlases())
                     .setLabel('Texture atlas')
                     .setShouldObeyGroupEnables(false),
-                'blockPalette': new ComboBoxElement<TPalettes>()
-                    .addItem({ payload: 'all', displayText: 'All' })
-                    .addItem({ payload: 'colourful', displayText: 'Colourful' })
-                    .addItem({ payload: 'greyscale', displayText: 'Greyscale' })
-                    .addItem({ payload: 'schematic-friendly', displayText: 'Schematic-friendly' })
+                'blockPalette': new PaletteElement()
                     .setLabel('Block palette'),
                 'dithering': new ComboBoxElement<TDithering>()
                     .addItems([{
@@ -492,6 +489,7 @@ export class UI {
         Split(['.column-properties', '.column-canvas'], {
             sizes: [20, 80],
             minSize: [400, 500],
+            snapOffset: 0,
         });
 
         const item = document.getElementsByClassName('gutter').item(0);

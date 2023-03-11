@@ -7,7 +7,7 @@ import { BaseUIElement } from './base_element';
  * For example, sliders, comboboxes and checkboxes are `ConfigUIElement`.
  */
 export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
-    private _label: string;
+    protected _label: string;
     private _value?: T;
     private _cachedValue?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
@@ -97,12 +97,12 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     protected abstract _generateInnerHTML(): string;
 
     protected override _onEnabledChanged() {
-        const label = UIUtil.getElementById(this._getLabelId()) as HTMLDivElement;
+        const label = document.getElementById(this._getLabelId()) as (HTMLDivElement | null);
 
         if (this.getEnabled()) {
-            label.classList.remove('text-disabled');
+            label?.classList.remove('text-disabled');
         } else {
-            label.classList.add('text-disabled');
+            label?.classList.add('text-disabled');
         }
 
         this._onEnabledChangedListeners.forEach((listener) => {
@@ -127,7 +127,7 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
      */
     protected abstract _onValueChanged(): void;
 
-    private _getLabelId() {
+    protected _getLabelId() {
         return this._getId() + '_label';
     }
 }
