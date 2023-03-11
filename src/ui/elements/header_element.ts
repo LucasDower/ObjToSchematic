@@ -73,6 +73,9 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
                     </div>
                 </div>
             </div>
+            <div class="property changelog">
+                ${AppConfig.Get.CHANGELOG.join('<br>')}
+            </div>
         `;
     }
 

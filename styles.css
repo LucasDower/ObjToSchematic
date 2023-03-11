@@ -568,14 +568,13 @@ select:disabled {
   height: 32px;
   padding: 0px 8px 0px 8px;
   text-align: center;
-  color: var(--text-standard);
+  color: var(--text-dim);
   font-size: 85%;
   font-weight: 300;
   background-color: var(--prop-standard);
   border: 1px solid var(--prop-standard);
   pointer-events: all;
   gap: 2px;
-  letter-spacing: 1px;
 }
 
 .toolbar-item:only-of-type {
@@ -984,4 +983,9 @@ a {
 
 ::-webkit-scrollbar-corner {
   background: rgb(20, 20, 20);
+}
+
+.changelog {
+  font-family: monospace;
+  color: var(--text-dim);
 }

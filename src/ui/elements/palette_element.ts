@@ -5,17 +5,19 @@ import { ASSERT } from '../../util/error_util';
 import { download } from '../../util/file_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppConsole } from '../console';
+import { AppIcons } from '../icons';
 import { ButtonElement } from './button';
 import { CheckboxElement } from './checkbox';
 import { FullConfigUIElement } from './full_config_element';
+import { ToolbarItemElement } from './toolbar_item';
 
 export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement> {
     private _checkboxes: { block: string, element: CheckboxElement }[];
     private _palette: Palette;
-    private _selectAll: ButtonElement;
-    private _deselectAll: ButtonElement;
-    private _importFrom: ButtonElement;
-    private _exportTo: ButtonElement;
+    private _selectAll: ToolbarItemElement;
+    private _deselectAll: ToolbarItemElement;
+    private _importFrom: ToolbarItemElement;
+    private _exportTo: ToolbarItemElement;
 
     public constructor() {
         super();
@@ -35,26 +37,25 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
             });
         });
 
-        this._selectAll = new ButtonElement()
-            .setLabel('Select All')
-            .setOnClick(() => {
+        this._selectAll = new ToolbarItemElement({ iconSVG: AppIcons.SELECT_ALL, id: 'select-all' })
+            .onClick(() => {
                 this._checkboxes.forEach((checkbox) => {
                     checkbox.element.check();
                 });
+                this._onCountSelectedChanged();
             });
 
 
-        this._deselectAll = new ButtonElement()
-            .setLabel('Deselect All')
-            .setOnClick(() => {
+        this._deselectAll = new ToolbarItemElement({ iconSVG: AppIcons.DESELECT_ALL, id: 'deselect-all' })
+            .onClick(() => {
                 this._checkboxes.forEach((checkbox) => {
                     checkbox.element.uncheck();
                 });
+                this._onCountSelectedChanged();
             });
 
-        this._importFrom = new ButtonElement()
-            .setLabel('Import From')
-            .setOnClick(() => {
+        this._importFrom = new ToolbarItemElement({ iconSVG: AppIcons.IMPORT, id: 'import' })
+            .onClick(() => {
                 const a = document.createElement('input');
                 a.setAttribute('type', 'file');
                 a.setAttribute('accept', '.txt');
@@ -74,14 +75,21 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
                 a.click();
             });
 
-        this._exportTo = new ButtonElement()
-            .setLabel('Export To')
-            .setOnClick(() => {
+        this._exportTo = new ToolbarItemElement({ iconSVG: AppIcons.EXPORT, id: 'export' })
+            .onClick(() => {
                 const textPalette = this._checkboxes.filter((x) => x.element.getValue())
                     .map((x) => x.block)
                     .join('\n');
                 download(textPalette, 'block-palette.txt');
             });
+    }
+
+    private _onCountSelectedChanged() {
+        const countSelected = this.getValue().count();
+        console.log('countsleected', countSelected, PALETTE_ALL_RELEASE.length);
+
+        this._deselectAll.setEnabled(this.enabled && countSelected > 0);
+        this._selectAll.setEnabled(this.enabled && countSelected < PALETTE_ALL_RELEASE.length);
     }
 
     private _onReadPaletteFile(text: string) {
@@ -114,6 +122,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         });
 
         AppConsole.success(`Selected ${countChecked} blocks`);
+
+        this._onCountSelectedChanged();
     }
 
     protected override _generateInnerHTML(): string {
@@ -133,15 +143,25 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         return `
             <div class="row-container" style="width: 100%; gap: 5px;">
                 <input type="text" style="width: 100%;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
-                <div class="col-container">
-                    ${this._importFrom.generateHTML()}
-                    ${this._exportTo.generateHTML()}
+                <div class="col-container header-cols" style="padding-top: 0px;">
+                    <div class="col-container">
+                        <div class="col-item">
+                            ${this._importFrom.generateHTML()}
+                        </div>
+                        <div class="col-item">
+                            ${this._exportTo.generateHTML()}
+                        </div>
+                    </div>
+                    <div class="col-container">
+                        <div class="col-item">
+                            ${this._selectAll.generateHTML()}
+                        </div>
+                        <div class="col-item">
+                            ${this._deselectAll.generateHTML()}
+                        </div>
+                    </div>
                 </div>
-                <div class="col-container">
-                    ${this._selectAll.generateHTML()}
-                    ${this._deselectAll.generateHTML()}
-                </div>
-                <div class="row-container" style="border-radius: 5px; width: 100%; height: 200px; overflow-y: auto; overflow-x: hidden;" id="${this._getId() + '-list'}">
+                <div class="row-container" style="gap: 5px; border-radius: 5px; width: 100%; height: 200px; overflow-y: auto; overflow-x: hidden;" id="${this._getId() + '-list'}">
                     ${checkboxesHTML}
                 </div>
             </div>
@@ -165,6 +185,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         this._deselectAll.setEnabled(this.enabled);
         this._importFrom.setEnabled(this.enabled);
         this._exportTo.setEnabled(this.enabled);
+
+        this._onCountSelectedChanged();
     }
 
     public override registerEvents(): void {
@@ -179,10 +201,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
                 const isTicked = checkbox.element.getValue();
                 if (isTicked) {
                     this._palette.add([checkbox.block]);
-                    console.log(this._palette.count());
                 } else {
                     this._palette.remove(checkbox.block);
-                    console.log(this._palette.count());
                 }
             });
         });
@@ -198,10 +218,11 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
             checkbox.element.finalise();
         });
 
-        this._selectAll.finalise();
-        this._deselectAll.finalise();
-        this._importFrom.finalise();
-        this._exportTo.finalise();
+        this._onCountSelectedChanged();
+        //this._selectAll.finalise();
+        //this._deselectAll.finalise();
+        //this._importFrom.finalise();
+        //this._exportTo.finalise();
     }
 
     private _onSearchBoxChanged(search: string) {
