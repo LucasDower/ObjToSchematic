@@ -78,6 +78,8 @@ export class AppContext {
                     .setProgress(0.0);
             }
         });
+
+        AppConsole.info('Ready');
     }
 
     public async do(action: EAction) {
