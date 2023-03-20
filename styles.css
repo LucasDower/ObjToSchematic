@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
 
 :root {
@@ -11,7 +11,7 @@
   --gray-500: hsl(0, 0%, 18%); /* standard property */
   --gray-600: hsl(0, 0%, 22%); /* standard border  */
   --gray-700: hsl(0, 0%, 25%); /* hovered border */
-  /*--gray-800: hsl(0, 0%, 38%);*/
+  --gray-800: hsl(0, 0%, 38%);
 
   --blue-400: hsl(190, 100%, 15%);
   --blue-450: hsl(190, 90%, 18%);
@@ -44,7 +44,6 @@ body {
   font-family: 'Rubik', sans-serif;
   overflow: hidden;
   user-select: none;
-  font-weight: 300;
 }
 
 canvas {
@@ -80,25 +79,11 @@ canvas {
 }
 .gutter:hover {
   background: var(--gray-600);
-  color: white;
+  color: var(--gray-800);
 }
 
 .gutter.gutter-vertical {
   cursor: row-resize;
-}
-
-.gutter-line {
-  width: 3px;
-  height: 20%;
-  background-color: currentColor;
-  border-radius: 2px;
-}
-
-.gutter-line-horizontal {
-  width: 20%;
-  height: 3px;
-  background-color: var(--gray-700);
-  border-radius: 2px;
 }
 
 .column-properties {
@@ -108,7 +93,7 @@ canvas {
 }
 
 .column-canvas {
-  cursor: crosshair;
+  cursor: grab;
 }
 
 .column-console {
@@ -132,7 +117,6 @@ canvas {
   padding: 5px 10px;
   border: 1px solid var(--gray-400);
   border-radius: 10px;
-  border-top-left-radius: 0px;
 }
 
 .container-checkbox {
@@ -140,14 +124,6 @@ canvas {
   height: var(--property-height);
 }
 
-.container-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  color: var(--text-standard);
-  font-size: 85%;
-  padding: 5px;
-}
 
 .property {
   display: flex;
@@ -171,15 +147,6 @@ canvas {
 }
 */
 
-.container-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  color: var(--text-standard);
-  font-size: 85%;
-  padding: 5px 0px;
-}
-
 .container-button {
   display: flex;
   flex-direction: row;
@@ -194,21 +161,14 @@ canvas {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  padding-top: 30px;
+  padding-top: 20px;
 }
 
 .group-heading {
   color: var(--gray-600);
   letter-spacing: 4px;
-  font-weight: 400;
   font-size: 85%;
-  padding: 12px 14px;
-  padding-bottom: 8px;
-  background: var(--gray-350);
-  border: 1px solid var(--gray-400);
-  border-bottom-width: 0px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  padding: 12px 0px;
 }
 
 .prop-key-container {
@@ -263,15 +223,12 @@ canvas {
   min-height: var(--subproperty-height);
   width: var(--subprop-value-width);
   overflow: auto;
-  font-weight: 300;
-  /*border-left: 1px solid var(--vertical-divider);*/
   padding-left: 5px;
 }
 
 input {
   font-family: 'Rubik', sans-serif;
   text-align: center;
-  font-weight: 300;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -305,7 +262,6 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 400;
 }
 
 .button-progress {
@@ -400,7 +356,6 @@ select {
 .spinbox-key {
   color: #ffffffb9;
   font-size: 85%;
-  font-weight: 300;
   padding-right: 5px;
 }
 
@@ -570,7 +525,6 @@ svg {
 
 .checkbox-text {
   padding-left: 10px;
-  font-weight: 300;
   color: var(--text-dim)
 }
 .checkbox-text-hover {
@@ -629,20 +583,21 @@ svg {
 }
 
 .title {
-  font-weight: 400;
   font-size: 110%;
 }
 
 .subtitle {
   font-size: 90%;
-  font-weight: 300;
   color: var(--text-dim);
 }
 
 .header-cols {
+  align-items: start;
   justify-content: space-between;
   width: 100%;
-  padding-top: 7px;
+  color: var(--text-standard);
+  font-size: 85%;
+  padding-top: 5px;
 }
 
 .struct-prop.container-icon-button {
@@ -676,7 +631,6 @@ svg {
 }
 
 a {
-  font-weight: 400;
   color: var(--blue-600)
 }
 
@@ -711,4 +665,3 @@ a {
 ::-webkit-scrollbar-corner {
   background: rgb(20, 20, 20);
 }
-

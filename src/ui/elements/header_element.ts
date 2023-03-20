@@ -43,28 +43,26 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
 
     public override generateHTML(): string {
         return `
-            <div class="container-header">
-                <div class="col-container header-cols">
-                    <div class="col-container">
-                        <div class="col-item">
-                            <img class="logo" alt="Logo" src="${IMAGE_LOGO}">
-                        </div>
-                        <div class="col-item">
-                            <div class="row-container">
-                                <div class="row-item title">
-                                    ObjToSchematic
-                                </div>
-                                <div class="row-item subtitle">
-                                    v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
-                                </div>
+            <div class="col-container header-cols">
+                <div class="col-container">
+                    <div class="col-item">
+                        <img class="logo" alt="Logo" src="${IMAGE_LOGO}">
+                    </div>
+                    <div class="col-item">
+                        <div class="row-container">
+                            <div class="row-item title">
+                                ObjToSchematic
+                            </div>
+                            <div class="row-item subtitle">
+                                v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
                             </div>
                         </div>
                     </div>
-                    <div class="col-container toolbar-group" style="gap: 0px;">
-                        ${this._githubButton.generateHTML()}
-                        ${this._bugButton.generateHTML()}
-                        ${this._discordButton.generateHTML()}
-                    </div>
+                </div>
+                <div class="toolbar-group" style="margin-right: 0px;">
+                    ${this._githubButton.generateHTML()}
+                    ${this._bugButton.generateHTML()}
+                    ${this._discordButton.generateHTML()}
                 </div>
             </div>
         `;

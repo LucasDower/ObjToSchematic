@@ -9,6 +9,9 @@ import { MaterialMapManager } from './material-map';
 import { MaterialType } from './mesh';
 import { MeshType, Renderer } from './renderer';
 import { AppConsole, TMessage } from './ui/console';
+import { ButtonElement } from './ui/elements/button';
+import { CheckboxElement } from './ui/elements/checkbox';
+import { PlaceholderElement } from './ui/elements/placeholder_element';
 import { SolidMaterialElement } from './ui/elements/solid_material_element';
 import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
@@ -48,6 +51,7 @@ export class AppContext {
         this._ui.build();
         this._ui.registerEvents();
         this._ui.disable(EAction.Materials);
+        this._updateMaterialsAction();
 
         this._workerController = new WorkerController();
         this._workerController.addJob({ id: 'init', payload: { action: 'Init', params: {} } });
@@ -229,29 +233,35 @@ export class AppContext {
         this._ui.layoutDull['materials'].elements = {};
         this._ui.layoutDull['materials'].elementsOrder = [];
 
-        this._materialManager.materials.forEach((material, materialName) => {
-            if (material.type === MaterialType.solid) {
-                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
-                    .setLabel(materialName)
-                    .onChangeTypeDelegate(() => {
-                        this._materialManager.changeMaterialType(materialName, MaterialType.textured);
-                        this._updateMaterialsAction();
-                    });
-            } else {
-                this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
-                    .setLabel(materialName)
-                    .onChangeTypeDelegate(() => {
-                        this._materialManager.changeMaterialType(materialName, MaterialType.solid);
-                        this._updateMaterialsAction();
-                    })
-                    .onChangeTransparencyTypeDelegate((newTransparency) => {
-                        this._materialManager.changeTransparencyType(materialName, newTransparency);
-                        this._updateMaterialsAction();
-                    });
-            }
+        if (this._materialManager.materials.size == 0) {
+            this._ui.layoutDull['materials'].elements[`placeholder_element`] = new PlaceholderElement('No materials loaded');
+            this._ui.layoutDull['materials'].elementsOrder.push(`placeholder_element`);
+        } else {
+            this._materialManager.materials.forEach((material, materialName) => {
+                if (material.type === MaterialType.solid) {
+                    this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
+                        .setLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            this._materialManager.changeMaterialType(materialName, MaterialType.textured);
+                            this._updateMaterialsAction();
+                        });
+                } else {
+                    this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
+                        .setLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            this._materialManager.changeMaterialType(materialName, MaterialType.solid);
+                            this._updateMaterialsAction();
+                        })
+                        .onChangeTransparencyTypeDelegate((newTransparency) => {
+                            this._materialManager.changeTransparencyType(materialName, newTransparency);
+                            this._updateMaterialsAction();
+                        });
+                }
 
-            this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
-        });
+                this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
+            });
+        }
+
         this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
     }
 

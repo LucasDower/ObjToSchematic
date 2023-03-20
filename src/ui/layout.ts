@@ -11,6 +11,7 @@ import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
+import { UIUtil } from '../util/ui_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { AppConsole } from './console';
@@ -412,6 +413,13 @@ export class UI {
             document.body.style.cursor = 'default';
         }
 
+        const canvasColumn = UIUtil.getElementById('col-canvas');
+        if (ArcballCamera.Get.isUserRotating || ArcballCamera.Get.isUserTranslating) {
+            canvasColumn.style.cursor = 'grabbing';
+        } else {
+            canvasColumn.style.cursor = 'grab';
+        }
+
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
             for (const toolbarItem of toolbarGroup.elementsOrder) {
@@ -485,23 +493,15 @@ export class UI {
         Split(['.column-sidebar', '.column-canvas'], {
             sizes: [20, 80],
             minSize: [450, 500],
+            gutterSize: 5,
         });
 
         Split(['.column-properties', '.column-console'], {
             sizes: [85, 15],
             minSize: [0, 0],
             direction: 'vertical',
+            gutterSize: 5,
         });
-
-        const itemA = document.getElementsByClassName('gutter').item(1);
-        if (itemA !== null) {
-            itemA.innerHTML = `<div class='gutter-line'></div>`;
-        }
-
-        const itemB = document.getElementsByClassName('gutter').item(0);
-        if (itemB !== null) {
-            itemB.innerHTML = `<div class='gutter-line-horizontal'></div>`;
-        }
     }
 
     public cacheValues(action: EAction) {
