@@ -1,3 +1,4 @@
+// https://tablericons.com/
 export namespace AppIcons {
 
     export const MESH = `
@@ -61,10 +62,11 @@ export namespace AppIcons {
     `;
 
     export const BULB = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sun" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#00abfb" fill="none" stroke-linecap="round" stroke-linejoin="round" id="bulb-svg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-bulb" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <circle cx="12" cy="12" r="4" />
-            <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+            <path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7" />
+            <path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3" />
+            <line x1="9.7" y1="17" x2="14.3" y2="17" />
         </svg>
     `;
 
@@ -209,4 +211,41 @@ export namespace AppIcons {
         </svg>
     `;
 
+    export const ARROW_DOWN = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <polyline points="6 9 12 15 18 9" />
+        </svg>
+    `;
+
+    export const COLOUR_SWATCH = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-color-swatch" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M19 3h-4a2 2 0 0 0 -2 2v12a4 4 0 0 0 8 0v-12a2 2 0 0 0 -2 -2" />
+            <path d="M13 7.35l-2 -2a2 2 0 0 0 -2.828 0l-2.828 2.828a2 2 0 0 0 0 2.828l9 9" />
+            <path d="M7.3 13h-2.3a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h12" />
+            <line x1="17" y1="17" x2="17" y2="17.01" />
+        </svg>
+    `;
+
+    export const IMAGE = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <line x1="15" y1="8" x2="15.01" y2="8" />
+            <rect x="4" y="4" width="16" height="16" rx="3" />
+            <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5" />
+            <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2" />
+        </svg>
+    `;
+
+    export const IMAGE_MISSING = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo-off" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <line x1="3" y1="3" x2="21" y2="21" />
+            <line x1="15" y1="8" x2="15.01" y2="8" />
+            <path d="M19.121 19.122a3 3 0 0 1 -2.121 .878h-10a3 3 0 0 1 -3 -3v-10c0 -.833 .34 -1.587 .888 -2.131m3.112 -.869h9a3 3 0 0 1 3 3v9" />
+            <path d="M4 15l4 -4c.928 -.893 2.072 -.893 3 0l5 5" />
+            <path d="M16.32 12.34c.577 -.059 1.162 .162 1.68 .66l2 2" />
+        </svg>
+    `;
 }

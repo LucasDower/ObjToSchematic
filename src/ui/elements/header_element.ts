@@ -43,38 +43,27 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
 
     public override generateHTML(): string {
         return `
-            <div class="property">
-                <div class="col-container header-cols">
-                    <div class="col-container">
-                        <div class="col-item">
-                            <img class="logo" alt="Logo" src="${IMAGE_LOGO}">
-                        </div>
-                        <div class="col-item">
-                            <div class="row-container">
-                                <div class="row-item title">
-                                    ObjToSchematic
-                                </div>
-                                <div class="row-item subtitle">
-                                    v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
-                                </div>
+            <div class="col-container header-cols">
+                <div class="col-container">
+                    <div class="col-item">
+                        <img class="logo" alt="Logo" src="${IMAGE_LOGO}">
+                    </div>
+                    <div class="col-item">
+                        <div class="row-container">
+                            <div class="row-item title">
+                                ObjToSchematic
+                            </div>
+                            <div class="row-item subtitle">
+                                v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
                             </div>
                         </div>
                     </div>
-                    <div class="col-container">
-                        <div class="col-item">
-                            ${this._githubButton.generateHTML()}
-                        </div>
-                        <div class="col-item">
-                            ${this._bugButton.generateHTML()}
-                        </div>
-                        <div class="col-item">
-                            ${this._discordButton.generateHTML()}
-                        </div>
-                    </div>
                 </div>
-            </div>
-            <div class="property changelog">
-                ${AppConfig.Get.CHANGELOG.join('<br>')}
+                <div class="toolbar-group">
+                    ${this._githubButton.generateHTML()}
+                    ${this._bugButton.generateHTML()}
+                    ${this._discordButton.generateHTML()}
+                </div>
             </div>
         `;
     }
@@ -86,6 +75,9 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
     }
 
     public override finalise(): void {
+        this._githubButton.finalise();
+        this._bugButton.finalise();
+        this._discordButton.finalise();
         // const updateElement = UIUtil.getElementById('update-checker') as HTMLDivElement;
         // updateElement.style.animation = 'pulse-opacity 1.5s infinite';
         // updateElement.innerHTML = '<i style="animation: pulse-opacity 1.5s infinite;">Checking for updates...</i>';

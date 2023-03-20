@@ -72,10 +72,12 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     public override finalise(): void {
         super.finalise();
 
+        /*
         this._onValueChanged();
         this._onValueChangedListeners.forEach((listener) => {
             listener(this._value!);
         });
+        */
     }
 
     public override generateHTML() {
@@ -99,10 +101,12 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     protected override _onEnabledChanged() {
         const label = document.getElementById(this._getLabelId()) as (HTMLDivElement | null);
 
-        if (this.getEnabled()) {
-            label?.classList.remove('text-disabled');
+        if (this.enabled) {
+            label?.classList.remove('text-dark');
+            label?.classList.add('text-standard');
         } else {
-            label?.classList.add('text-disabled');
+            label?.classList.add('text-dark');
+            label?.classList.remove('text-standard');
         }
 
         this._onEnabledChangedListeners.forEach((listener) => {
@@ -125,7 +129,8 @@ export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
     /**
      * A delegate that is called when the value of this element changes.
      */
-    protected abstract _onValueChanged(): void;
+    protected _onValueChanged(): void {
+    }
 
     protected _getLabelId() {
         return this._getId() + '_label';

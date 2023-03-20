@@ -11,6 +11,7 @@ import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
+import { UIUtil } from '../util/ui_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { AppConsole } from './console';
@@ -18,14 +19,14 @@ import { ButtonElement } from './elements/button';
 import { CheckboxElement } from './elements/checkbox';
 import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
 import { ConfigUIElement } from './elements/config_element';
-import { FileInputElement } from './elements/file_input';
+import { ObjFileInputElement } from './elements/file_input';
 import { HeaderUIElement } from './elements/header_element';
 import { PaletteElement } from './elements/palette_element';
 import { SliderElement } from './elements/slider';
 import { ToolbarItemElement } from './elements/toolbar_item';
 import { VectorSpinboxElement } from './elements/vector_spinbox';
 import { AppIcons } from './icons';
-import { HTMLBuilder } from './misc';
+import { HTMLBuilder, MiscComponents } from './misc';
 
 export interface Group {
     label: string;
@@ -43,10 +44,9 @@ export class UI {
     public uiOrder = ['import', 'materials', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
-            label: 'Import',
+            label: '1. Import',
             elements: {
-                'input': new FileInputElement()
-                    .setFileExtensions(['obj'])
+                'input': new ObjFileInputElement()
                     .setLabel('Wavefront .obj file'),
                 'rotation': new VectorSpinboxElement()
                     .setLabel('Rotation')
@@ -61,7 +61,7 @@ export class UI {
                 .setLabel('Load mesh'),
         },
         'materials': {
-            label: 'Materials',
+            label: '2. Materials',
             elements: {
             },
             elementsOrder: [],
@@ -72,7 +72,7 @@ export class UI {
                 .setLabel('Update materials'),
         },
         'voxelise': {
-            label: 'Voxelise',
+            label: '3. Voxelise',
             elements: {
                 'constraintAxis': new ComboBoxElement<TAxis>()
                     .addItem({ payload: 'y', displayText: 'Y (height) (green)' })
@@ -144,7 +144,7 @@ export class UI {
                 .setLabel('Voxelise mesh'),
         },
         'assign': {
-            label: 'Assign',
+            label: '4. Assign',
             elements: {
                 'textureAtlas': new ComboBoxElement<string>()
                     .addItems(this._getTextureAtlases())
@@ -242,7 +242,7 @@ export class UI {
                 .setLabel('Assign blocks'),
         },
         'export': {
-            label: 'Export',
+            label: '5. Export',
             elements: {
                 'export': new ComboBoxElement<TExporters>()
                     .addItems([
@@ -413,6 +413,13 @@ export class UI {
             document.body.style.cursor = 'default';
         }
 
+        const canvasColumn = UIUtil.getElementById('col-canvas');
+        if (ArcballCamera.Get.isUserRotating || ArcballCamera.Get.isUserTranslating) {
+            canvasColumn.style.cursor = 'grabbing';
+        } else {
+            canvasColumn.style.cursor = 'grab';
+        }
+
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
             for (const toolbarItem of toolbarGroup.elementsOrder) {
@@ -433,7 +440,7 @@ export class UI {
         {
             const sidebarHTML = new HTMLBuilder();
 
-            sidebarHTML.add(`<div class="container">`);
+            sidebarHTML.add(`<div class="container-properties">`);
             {
                 sidebarHTML.add(HeaderUIElement.Get.generateHTML());
 
@@ -485,24 +492,16 @@ export class UI {
 
         Split(['.column-sidebar', '.column-canvas'], {
             sizes: [20, 80],
-            minSize: [400, 500],
+            minSize: [600, 500],
+            gutterSize: 5,
         });
 
         Split(['.column-properties', '.column-console'], {
-            sizes: [90, 10],
+            sizes: [85, 15],
             minSize: [0, 0],
             direction: 'vertical',
+            gutterSize: 5,
         });
-
-        const itemA = document.getElementsByClassName('gutter').item(1);
-        if (itemA !== null) {
-            itemA.innerHTML = `<div class='gutter-line'></div>`;
-        }
-
-        const itemB = document.getElementsByClassName('gutter').item(0);
-        if (itemB !== null) {
-            itemB.innerHTML = `<div class='gutter-line-horizontal'></div>`;
-        }
     }
 
     public cacheValues(action: EAction) {
@@ -539,25 +538,11 @@ export class UI {
 
     private _getGroupHTML(group: Group) {
         return `
-            <div class="property" style="padding-top: 20px;">
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-                <div class="group-heading">
-                    ${group.label.toUpperCase()}
-                </div>
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-            </div>
-            <div id="subcomponents_${group.label}">
+            ${MiscComponents.createGroupHeader(group.label.toUpperCase())}
+            <div class="component-group" id="subcomponents_${group.label}">
                 ${this._getGroupSubcomponentsHTML(group)}
             </div>
-            <div class="property">
-                ${group.submitButton.generateHTML()}
-            </div>
+            ${group.submitButton.generateHTML()}
         `;
     }
 
@@ -578,20 +563,25 @@ export class UI {
                 element.finalise();
             }
             group.submitButton.registerEvents();
+            group.submitButton.finalise();
         }
 
         // Register toolbar left
         for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
             const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
             for (const groupElementName of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[groupElementName].registerEvents();
+                const element = toolbarGroup.elements[groupElementName];
+                element.registerEvents();
+                element.finalise();
             }
         }
         // Register toolbar right
         for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
             const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
             for (const groupElementName of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[groupElementName].registerEvents();
+                const element = toolbarGroup.elements[groupElementName];
+                element.registerEvents();
+                element.finalise();
             }
         }
     }

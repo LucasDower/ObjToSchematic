@@ -1,18 +1,26 @@
 import { getRandomID } from '../../util';
 import { UIUtil } from '../../util/ui_util';
 
+export interface IInterfaceItem {
+    generateHTML: () => string;
+    registerEvents: () => void;
+    finalise: () => void;
+}
+
 /**
  * The base UI class from which user interactable DOM elements are built from.
  * Each `BaseUIElement` can be enabled/disabled.
  */
-export abstract class BaseUIElement<T> {
+export abstract class BaseUIElement<T> implements IInterfaceItem {
     private _id: string;
     private _isEnabled: boolean;
+    private _isHovered: boolean;
     private _obeyGroupEnables: boolean;
 
     public constructor() {
         this._id = getRandomID();
         this._isEnabled = true;
+        this._isHovered = false;
         this._obeyGroupEnables = true;
     }
 
@@ -31,6 +39,10 @@ export abstract class BaseUIElement<T> {
         return this._isEnabled;
     }
 
+    public get disabled() {
+        return !this._isEnabled;
+    }
+
     /**
      * Set whether or not this UI element is interactable.
      */
@@ -40,6 +52,14 @@ export abstract class BaseUIElement<T> {
         }
         this._isEnabled = isEnabled;
         this._onEnabledChanged();
+    }
+
+    protected _setHovered(isHovered: boolean) {
+        this._isHovered = isHovered;
+    }
+
+    public get hovered() {
+        return this._isHovered;
     }
 
     /**
@@ -69,6 +89,7 @@ export abstract class BaseUIElement<T> {
 
     public finalise(): void {
         this._onEnabledChanged();
+        this._updateStyles();
     }
 
     /**
@@ -91,4 +112,10 @@ export abstract class BaseUIElement<T> {
      * A delegate that is called when the enabled status is changed.
      */
     protected abstract _onEnabledChanged(): void;
+
+    /**
+     * Called after _onEnabledChanged() and _onValueChanged()
+     */
+    protected _updateStyles(): void {
+    }
 }

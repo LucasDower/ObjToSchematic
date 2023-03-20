@@ -10,17 +10,10 @@ export class AppConfig {
 
     public readonly RELEASE_MODE = true;
     public readonly MAJOR_VERSION = 0;
-    public readonly MINOR_VERSION = 7;
-    public readonly HOTFIX_VERSION = 12;
+    public readonly MINOR_VERSION = 8;
+    public readonly HOTFIX_VERSION = 0;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
     public readonly MINECRAFT_VERSION = '1.19.3';
-    public readonly CHANGELOG = [
-        '+ Added customisable block palettes.',
-        '* Added a console log panel for persistent message logging.',
-        '+ Added support for importing/exporting block palettes.',
-        '* Improved UI for checkbox and material-type components.',
-        '- Removed the output component from action groups.',
-    ];
 
     public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
