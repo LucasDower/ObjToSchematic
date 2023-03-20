@@ -201,6 +201,9 @@ input::-webkit-inner-spin-button {
 input[type=number]:not(:disabled) {
   cursor: text;
 }
+input[type=text]:not(:disabled) {
+  cursor: text;
+}
 
 ::placeholder {
   color: var(--text-dark);
@@ -341,6 +344,9 @@ select {
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+}
+.spinbox-value.style-inactive-hover {
+  cursor: e-resize;
 }
 
 .toolbar {
