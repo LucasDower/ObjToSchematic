@@ -4,6 +4,8 @@ import { MaterialType, TexturedMaterial } from '../../mesh';
 import { EImageChannel, TTransparencyTypes } from '../../texture';
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
+import { TTexelInterpolation } from '../../util/type_util';
+import { HTMLBuilder } from '../misc';
 import { ComboBoxElement } from './combobox';
 import { ConfigUIElement } from './config_element';
 import { ImageElement } from './image_element';
@@ -11,64 +13,64 @@ import { MaterialTypeElement } from './material_type_element';
 import { SliderElement } from './slider';
 
 export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, HTMLDivElement> {
-    private _materialName: string;
-    private _colourId: string;
+    private _typeElement: MaterialTypeElement;
     private _filteringElement: ComboBoxElement<'nearest' | 'linear'>;
     private _wrapElement: ComboBoxElement<'clamp' | 'repeat'>;
     private _transparencyElement: ComboBoxElement<TTransparencyTypes>;
     private _imageElement: ImageElement;
-    private _typeElement: MaterialTypeElement;
     private _alphaValueElement?: SliderElement;
     private _alphaMapElement?: ImageElement;
     private _alphaChannelElement?: ComboBoxElement<EImageChannel>;
 
     public constructor(materialName: string, material: TexturedMaterial) {
         super(material);
-        this._materialName = materialName;
-        this._colourId = getRandomID();
 
-        this._filteringElement = new ComboBoxElement<'linear' | 'nearest'>()
+        this._typeElement = new MaterialTypeElement(material)
+            .setLabel('Type');
+
+        this._filteringElement = new ComboBoxElement<TTexelInterpolation>()
+            .setLabel('Filtering')
             .addItem({ payload: 'linear', displayText: 'Linear' })
             .addItem({ payload: 'nearest', displayText: 'Nearest' })
-            .setSmall()
             .setDefaultValue(material.interpolation);
 
         this._wrapElement = new ComboBoxElement<'clamp' | 'repeat'>()
+            .setLabel('Wrap')
             .addItem({ payload: 'clamp', displayText: 'Clamp' })
             .addItem({ payload: 'repeat', displayText: 'Repeat' })
-            .setSmall()
             .setDefaultValue(material.extension);
 
         this._transparencyElement = new ComboBoxElement<TTransparencyTypes>()
+            .setLabel('Transparency')
             .addItem({ payload: 'None', displayText: 'None' })
             .addItem({ payload: 'UseAlphaMap', displayText: 'Alpha map' })
             .addItem({ payload: 'UseAlphaValue', displayText: 'Alpha constant' })
             .addItem({ payload: 'UseDiffuseMapAlphaChannel', displayText: 'Diffuse map alpha channel' })
-            .setSmall()
             .setDefaultValue(material.transparency.type);
 
-        this._imageElement = new ImageElement(material.diffuse);
-
-        this._typeElement = new MaterialTypeElement(material);
+        this._imageElement = new ImageElement(material.diffuse)
+            .setLabel('Diffuse map');
 
         switch (material.transparency.type) {
             case 'UseAlphaValue':
                 this._alphaValueElement = new SliderElement()
+                    .setLabel('Alpha')
                     .setMin(0.0)
                     .setMax(1.0)
                     .setDefaultValue(material.transparency.alpha)
                     .setDecimals(2)
-                    .setStep(0.01)
-                    .setSmall();
+                    .setStep(0.01);
                 break;
             case 'UseAlphaMap':
-                this._alphaMapElement = new ImageElement(material.transparency.alpha);
+                this._alphaMapElement = new ImageElement(material.transparency.alpha)
+                    .setLabel('Alpha map');
+
                 this._alphaChannelElement = new ComboBoxElement<EImageChannel>()
+                    .setLabel('Alpha channel')
                     .addItem({ payload: EImageChannel.R, displayText: 'Red' })
                     .addItem({ payload: EImageChannel.G, displayText: 'Green' })
                     .addItem({ payload: EImageChannel.B, displayText: 'Blue' })
                     .addItem({ payload: EImageChannel.A, displayText: 'Alpha' })
-                    .setSmall()
                     .setDefaultValue(material.transparency.channel);
                 break;
         }
@@ -139,39 +141,27 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
     }
 
     protected override _generateInnerHTML(): string {
-        const subproperties: string[] = [];
-        const addSubproperty = (key: string, value: string) => {
-            subproperties.push(`
-                <div class="subproperty">
-                    <div class="subprop-key-container">
-                        ${key}
-                    </div>
-                    <div class="subprop-value-container">
-                        ${value}
-                    </div>
-                </div>
-            `);
-        };
+        const builder = new HTMLBuilder();
 
-        addSubproperty('Type', this._typeElement._generateInnerHTML());
-        addSubproperty('Diffuse map', this._imageElement._generateInnerHTML());
-        addSubproperty('Filtering', this._filteringElement._generateInnerHTML());
-        addSubproperty('Wrap', this._wrapElement._generateInnerHTML());
-        addSubproperty('Transparency', this._transparencyElement._generateInnerHTML());
-        if (this._alphaMapElement !== undefined) {
-            ASSERT(this._alphaChannelElement !== undefined);
-            addSubproperty('Alpha map', this._alphaMapElement._generateInnerHTML());
-            addSubproperty('Channel', this._alphaChannelElement._generateInnerHTML());
+        builder.add('<div class="component-group">');
+        {
+            builder.add(this._typeElement.generateHTML());
+            builder.add(this._imageElement.generateHTML());
+            builder.add(this._filteringElement.generateHTML());
+            builder.add(this._wrapElement.generateHTML());
+            builder.add(this._transparencyElement.generateHTML());
+            if (this._alphaMapElement !== undefined) {
+                ASSERT(this._alphaChannelElement !== undefined);
+                builder.add(this._alphaMapElement.generateHTML());
+                builder.add(this._alphaChannelElement.generateHTML());
+            }
+            if (this._alphaValueElement !== undefined) {
+                builder.add(this._alphaValueElement.generateHTML());
+            }
         }
-        if (this._alphaValueElement) {
-            addSubproperty('Alpha', this._alphaValueElement._generateInnerHTML());
-        }
+        builder.add('</div>');
 
-        return `
-            <div class="subproperty-container">
-                ${subproperties.join('')}
-            </div>
-        `;
+        return builder.toString();
     }
 
     protected override _onValueChanged(): void {
@@ -179,6 +169,15 @@ export class TexturedMaterialElement extends ConfigUIElement<TexturedMaterial, H
 
     protected override _onEnabledChanged(): void {
         super._onEnabledChanged();
+
+        this._imageElement.setEnabled(this.enabled);
+        this._typeElement.setEnabled(this.enabled);
+        this._filteringElement.setEnabled(this.enabled);
+        this._wrapElement.setEnabled(this.enabled);
+        this._transparencyElement.setEnabled(this.enabled);
+        this._alphaValueElement?.setEnabled(this.enabled);
+        this._alphaMapElement?.setEnabled(this.enabled);
+        this._alphaChannelElement?.setEnabled(this.enabled);
     }
 
     public override finalise(): void {

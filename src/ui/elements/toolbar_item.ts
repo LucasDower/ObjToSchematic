@@ -14,7 +14,6 @@ export type TToolbarItemParams = {
 
 export class ToolbarItemElement extends BaseUIElement<HTMLDivElement>  {
     private _iconSVG: SVGSVGElement;
-    private _small: boolean;
     private _label: string;
     private _onClick?: () => void;
     private _isActive: boolean;
@@ -34,19 +33,13 @@ export class ToolbarItemElement extends BaseUIElement<HTMLDivElement>  {
             this._iconSVG.id = this._getId() + '-svg';
         }
 
-        this._small = false;
         this._label = '';
     }
 
 
     public setActive(isActive: boolean) {
         this._isActive = isActive;
-    }
-
-
-    public setSmall() {
-        this._small = true;
-        return this;
+        this._updateStyles();
     }
 
     public setLabel(label: string) {

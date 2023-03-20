@@ -249,10 +249,12 @@ export class AppContext {
                     this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
                         .setLabel(materialName)
                         .onChangeTypeDelegate(() => {
+                            console.log('on change type');
                             this._materialManager.changeMaterialType(materialName, MaterialType.solid);
                             this._updateMaterialsAction();
                         })
                         .onChangeTransparencyTypeDelegate((newTransparency) => {
+                            console.log('on change trans');
                             this._materialManager.changeTransparencyType(materialName, newTransparency);
                             this._updateMaterialsAction();
                         });

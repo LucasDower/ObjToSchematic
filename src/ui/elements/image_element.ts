@@ -15,7 +15,6 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
         super(Promise.resolve(param ?? { raw: '', filetype: 'png' }));
 
         this._switchElement = new ToolbarItemElement({ id: 'sw', iconSVG: AppIcons.UPLOAD })
-            .setSmall()
             .setLabel('Choose')
             .onClick(() => {
                 const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
@@ -30,14 +29,16 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
             <div class="row-container">
                 <div class="row-item">
                     <img id="${this._imageId}" alt="Texture Preview" class="texture-preview" loading="lazy"></img>
-                </div>
-                <div class="row-item">
-                <div class="col-container">
-                        <div class="col-item">
-                            <input type="file" accept="images/png" style="display: none;" id="${this._getId()}-input">
-                            ${this._switchElement.generateHTML()}
+                    <div id="${this._imageId}-placeholder" class="texture-preview-placeholder">
+                        <div class="row-container" style="align-items: center;">
+                            <div class="row-item">${AppIcons.IMAGE_MISSING}</div>
+                            <div class="row-item">No image loaded</div>
                         </div>
                     </div>
+                </div>
+                <div class="row-item">
+                    <input type="file" accept="images/png" style="display: none;" id="${this._getId()}-input">
+                    ${this._switchElement.generateHTML()}
                 </div>
             </div>
         `;
@@ -70,10 +71,15 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
     }
 
     protected override _onEnabledChanged(): void {
+        super._onEnabledChanged();
+
+        this._switchElement.setEnabled(this.enabled);
     }
 
     protected override _onValueChanged(): void {
         const inputElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
+        const placeholderElement = UIUtil.getElementById(this._imageId + '-placeholder');
+
         this.getValue()
             .then((res) => {
                 if (res.raw === '') {
@@ -82,11 +88,13 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
                 this._switchElement.setActive(false);
                 inputElement.src = res.raw;
                 inputElement.style.display = 'unset';
+                placeholderElement.style.display = 'none';
             })
             .catch((err) => {
                 this._switchElement.setActive(true);
                 inputElement.src = '';
                 inputElement.style.display = 'none';
+                placeholderElement.style.display = 'flex';
             });
     }
 
@@ -94,5 +102,6 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
         super.finalise();
 
         this._onValueChanged();
+        this._onEnabledChanged();
     }
 }

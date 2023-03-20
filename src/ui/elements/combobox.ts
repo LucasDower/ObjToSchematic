@@ -11,12 +11,10 @@ export type ComboBoxItem<T> = {
 
 export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     private _items: ComboBoxItem<T>[];
-    private _small: boolean;
 
     public constructor() {
         super();
         this._items = [];
-        this._small = false;
     }
 
     public addItems(items: ComboBoxItem<T>[]) {
@@ -29,11 +27,6 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     public addItem(item: ComboBoxItem<T>) {
         this._items.push(item);
         this._setValue(this._items[0].payload);
-        return this;
-    }
-
-    public setSmall() {
-        this._small = true;
         return this;
     }
 
@@ -54,20 +47,6 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
         });
     }
 
-    /*
-    public override setDefaultValue(value: T): this {
-        super.setDefaultValue(value);
-
-        const element = this._getElement();
-
-        const newSelectedIndex = this._items.findIndex((item) => item.payload === value);
-        ASSERT(newSelectedIndex !== -1, 'Invalid selected index');
-        element.selectedIndex = newSelectedIndex;
-
-        return this;
-    }
-    */
-
     public override _generateInnerHTML() {
         const builder = new HTMLBuilder();
 
@@ -77,13 +56,19 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
             builder.add(`<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`);
         }
         builder.add('</select>');
-        
+
         builder.add(`<div id="${this._getId()}-arrow" class="checkbox-arrow">`);
         builder.add(AppIcons.ARROW_DOWN);
         builder.add(`</div>`);
         builder.add('</div>');
-        
+
         return builder.toString();
+    }
+
+    protected _onValueChanged(): void {
+        super._onValueChanged();
+
+        console.log('combo changed');
     }
 
     protected _onEnabledChanged(): void {

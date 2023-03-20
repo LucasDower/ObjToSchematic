@@ -1,11 +1,17 @@
 import { getRandomID } from '../../util';
 import { UIUtil } from '../../util/ui_util';
 
+export interface IInterfaceItem {
+    generateHTML: () => string;
+    registerEvents: () => void;
+    finalise: () => void;
+}
+
 /**
  * The base UI class from which user interactable DOM elements are built from.
  * Each `BaseUIElement` can be enabled/disabled.
  */
-export abstract class BaseUIElement<T> {
+export abstract class BaseUIElement<T> implements IInterfaceItem {
     private _id: string;
     private _isEnabled: boolean;
     private _isHovered: boolean;

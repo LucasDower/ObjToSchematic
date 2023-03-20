@@ -8,10 +8,11 @@ import { AppConsole } from '../console';
 import { AppIcons } from '../icons';
 import { ButtonElement } from './button';
 import { CheckboxElement } from './checkbox';
+import { ConfigUIElement } from './config_element';
 import { FullConfigUIElement } from './full_config_element';
 import { ToolbarItemElement } from './toolbar_item';
 
-export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement> {
+export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
     private _checkboxes: { block: string, element: CheckboxElement }[];
     private _palette: Palette;
     private _selectAll: ToolbarItemElement;
@@ -135,7 +136,7 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
 
         return `
             <div class="row-container" style="width: 100%; gap: 5px;">
-                <input class="struct-prop" type="text" style="width: 100%;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
+                <input class="struct-prop" type="text" style="width: 100%; text-align: start;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
                 <div class="col-container header-cols" style="padding-top: 0px;">
                     <div class="col-container">
                         <div class="col-item">
@@ -180,6 +181,7 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         this._exportTo.setEnabled(this.enabled);
 
         this._onCountSelectedChanged();
+        this._updateStyles();
     }
 
     public override registerEvents(): void {
@@ -226,6 +228,8 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         this._exportTo.finalise();
 
         this._onCountSelectedChanged();
+
+        this._updateStyles();
         //this._selectAll.finalise();
         //this._deselectAll.finalise();
         //this._importFrom.finalise();

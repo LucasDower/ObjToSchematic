@@ -59,7 +59,7 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
                         </div>
                     </div>
                 </div>
-                <div class="toolbar-group" style="margin-right: 0px;">
+                <div class="toolbar-group">
                     ${this._githubButton.generateHTML()}
                     ${this._bugButton.generateHTML()}
                     ${this._discordButton.generateHTML()}

@@ -18,7 +18,7 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
     private _step: number;
     private _dragging: boolean;
     private _internalValue: number;
-    private _small: boolean;
+    private _valueHovered: boolean;
 
     public constructor() {
         super();
@@ -28,17 +28,12 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         this._step = 0.1;
         this._internalValue = 0.5;
         this._dragging = false;
-        this._small = false;
+        this._valueHovered = false;
     }
 
     public override setDefaultValue(value: number) {
         super.setDefaultValue(value);
         this._internalValue = value;
-        return this;
-    }
-
-    public setSmall() {
-        this._small = true;
         return this;
     }
 
@@ -116,15 +111,25 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         elementValue.addEventListener('change', () => {
             this._onTypedValue();
         });
+
+        elementValue.addEventListener('mouseenter', () => {
+            this._valueHovered = true;
+            this._updateStyles();
+        });
+
+        elementValue.addEventListener('mouseleave', () => {
+            this._valueHovered = false;
+            this._updateStyles();
+        });
     }
 
     public override _generateInnerHTML() {
         const norm = (this._internalValue - this._min) / (this._max - this._min);
 
         return `
-            <input class="struct-prop" style="padding: 0px; width: 20%; margin-right: 5px;" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
-            <div class="struct-prop" id="${this._getId()}" style="flex-grow: 1; padding: 0px;">
-                <div class="struct-prop" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
+            <input class="struct-prop comp-slider-value" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <div class="struct-prop comp-slider comp-slider-outer" id="${this._getId()}">
+                <div class="struct-prop comp-slider comp-slider-inner" id="${this._getSliderBarId()}" style="width: ${norm * 100}%">
                 </div>
             </div>
         `;
@@ -132,6 +137,20 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
 
     protected override _onEnabledChanged() {
         super._onEnabledChanged();
+
+        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
+        elementValue.disabled = this.disabled;
+
+        const elementBar = UIUtil.getElementById(this._getSliderBarId());
+        const elementSlider = UIUtil.getElementById(this._getId());
+        if (this.enabled) {
+            elementBar.classList.add('enabled');
+            elementSlider.classList.add('enabled');
+        } else {
+            elementBar.classList.remove('enabled');
+            elementSlider.classList.remove('enabled');
+        }
+
         this._updateStyles();
     }
 
@@ -201,7 +220,7 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
     protected override _updateStyles(): void {
         const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
         UIUtil.updateStyles(elementValue, {
-            isHovered: false,
+            isHovered: this._valueHovered,
             isActive: false,
             isEnabled: this.enabled,
         });

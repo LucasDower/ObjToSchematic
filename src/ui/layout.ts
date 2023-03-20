@@ -492,7 +492,7 @@ export class UI {
 
         Split(['.column-sidebar', '.column-canvas'], {
             sizes: [20, 80],
-            minSize: [450, 500],
+            minSize: [600, 500],
             gutterSize: 5,
         });
 
