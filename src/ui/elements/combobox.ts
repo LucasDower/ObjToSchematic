@@ -1,4 +1,6 @@
-import { ASSERT } from '../../util/error_util';
+import { UIUtil } from '../../util/ui_util';
+import { AppIcons } from '../icons';
+import { HTMLBuilder } from '../misc';
 import { ConfigUIElement } from './config_element';
 
 export type ComboBoxItem<T> = {
@@ -36,6 +38,16 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     }
 
     public override registerEvents(): void {
+        this._getElement().addEventListener('mouseenter', () => {
+            this._setHovered(true);
+            this._updateStyles();
+        });
+
+        this._getElement().addEventListener('mouseleave', () => {
+            this._setHovered(false);
+            this._updateStyles();
+        });
+
         this._getElement().addEventListener('change', (e: Event) => {
             const selectedValue = this._items[this._getElement().selectedIndex].payload;
             this._setValue(selectedValue);
@@ -57,35 +69,59 @@ export class ComboBoxElement<T> extends ConfigUIElement<T, HTMLSelectElement> {
     */
 
     public override _generateInnerHTML() {
-        //ASSERT(this._items.length > 0);
+        const builder = new HTMLBuilder();
 
-        let itemsHTML = '';
+        builder.add('<div style="position: relative; width: 100%;">');
+        builder.add(`<select class="struct-prop" name="${this._getId()}" id="${this._getId()}">`);
         for (const item of this._items) {
-            itemsHTML += `<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`;
+            builder.add(`<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`);
         }
-
-        return `
-            <select class="${this._small ? 'height-small' : 'height-normal'}" name="${this._getId()}" id="${this._getId()}">
-                ${itemsHTML}
-            </select>
-        `;
+        builder.add('</select>');
+        
+        builder.add(`<div id="${this._getId()}-arrow" class="checkbox-arrow">`);
+        builder.add(AppIcons.ARROW_DOWN);
+        builder.add(`</div>`);
+        builder.add('</div>');
+        
+        return builder.toString();
     }
 
-    protected override _onEnabledChanged() {
+    protected _onEnabledChanged(): void {
         super._onEnabledChanged();
-        this._getElement().disabled = !this.getEnabled();
+        this._getElement().disabled = this.disabled;
+        this._updateStyles();
     }
 
-    // TODO: Subproperty combo boxes are not updating values when changed!!!
+    protected override _updateStyles(): void {
+        UIUtil.updateStyles(this._getElement(), {
+            isHovered: this.hovered,
+            isEnabled: this.enabled,
+            isActive: false,
+        });
 
-    protected override _onValueChanged(): void {
+        const arrowElement = UIUtil.getElementById(this._getId() + '-arrow');
+        arrowElement.classList.remove('text-dark');
+        arrowElement.classList.remove('text-standard');
+        arrowElement.classList.remove('text-light');
+        if (this.enabled) {
+            if (this.hovered) {
+                arrowElement.classList.add('text-light');
+            } else {
+                arrowElement.classList.add('text-standard');
+            }
+        } else {
+            arrowElement.classList.add('text-dark');
+        }
     }
 
     public override finalise(): void {
+        super.finalise();
+
         const selectedIndex = this._items.findIndex((item) => item.payload === this.getValue());
         const element = this._getElement();
 
-        //ASSERT(selectedIndex !== -1, 'Invalid selected index');
         element.selectedIndex = selectedIndex;
+
+        this._updateStyles();
     }
 }

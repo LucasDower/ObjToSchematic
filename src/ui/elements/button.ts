@@ -71,27 +71,39 @@ export class ButtonElement extends BaseUIElement<HTMLDivElement> {
 
     public override generateHTML() {
         return `
-            <div class="button" id="${this._getId()}">
-                <div class="button-label">${this._label}</div>
-                <div class="button-progress" id="${this._getProgressBarId()}"></div>
+            <div class="container-button">
+                <div class="struct-prop button" id="${this._getId()}">
+                    <div class="button-label">${this._label}</div>
+                    <div class="button-progress" id="${this._getProgressBarId()}"></div>
+                </div>
             </div>
         `;
     }
 
     public override registerEvents(): void {
         this._getElement().addEventListener('click', () => {
-            if (this.getEnabled()) {
+            if (this.enabled) {
                 this._onClick?.();
             }
+        });
+
+        this._getElement().addEventListener('mouseenter', () => {
+            this._setHovered(true);
+            this._updateStyles();
+        });
+
+        this._getElement().addEventListener('mouseleave', () => {
+            this._setHovered(false);
+            this._updateStyles();
         });
     }
 
     protected override _onEnabledChanged() {
-        if (this.getEnabled()) {
-            this._getElement().classList.remove('button-disabled');
-        } else {
-            this._getElement().classList.add('button-disabled');
-        }
+        this._updateStyles();
+    }
+
+    public override finalise(): void {
+        this._updateStyles();
     }
 
     /**
@@ -99,5 +111,13 @@ export class ButtonElement extends BaseUIElement<HTMLDivElement> {
      */
     private _getProgressBarId() {
         return this._getId() + '-progress';
+    }
+
+    protected _updateStyles(): void {
+        UIUtil.updateStyles(this._getElement(), {
+            isActive: true,
+            isEnabled: this.enabled,
+            isHovered: this.hovered,
+        });
     }
 }

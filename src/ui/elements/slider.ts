@@ -17,7 +17,6 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
     private _decimals: number;
     private _step: number;
     private _dragging: boolean;
-    private _hovering: boolean;
     private _internalValue: number;
     private _small: boolean;
 
@@ -29,7 +28,6 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         this._step = 0.1;
         this._internalValue = 0.5;
         this._dragging = false;
-        this._hovering = false;
         this._small = false;
     }
 
@@ -82,19 +80,13 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
 
         element.onmouseenter = () => {
-            this._hovering = true;
-            if (this.getEnabled()) {
-                element.classList.add('new-slider-hover');
-                elementBar.classList.add('new-slider-bar-hover');
-            }
+            this._setHovered(true);
+            this._updateStyles();
         };
 
         element.onmouseleave = () => {
-            this._hovering = false;
-            if (!this._dragging) {
-                element.classList.remove('new-slider-hover');
-                elementBar.classList.remove('new-slider-bar-hover');
-            }
+            this._setHovered(false);
+            this._updateStyles();
         };
 
         element.onmousedown = () => {
@@ -110,10 +102,6 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         document.addEventListener('mouseup', (e: MouseEvent) => {
             if (this._dragging) {
                 this._onDragSlider(e);
-            }
-            if (!this._hovering) {
-                element.classList.remove('new-slider-hover');
-                elementBar.classList.remove('new-slider-bar-hover');
             }
             this._dragging = false;
         });
@@ -134,9 +122,9 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
         const norm = (this._internalValue - this._min) / (this._max - this._min);
 
         return `
-            <input class="${this._small ? 'slider-height-small' : 'slider-height-normal'}" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
-            <div class="new-slider ${this._small ? 'slider-bar-height-small' : 'slider-bar-height-normal'} " id="${this._getId()}" style="flex-grow: 1;">
-                <div class="new-slider-bar" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
+            <input class="struct-prop" style="padding: 0px; width: 20%; margin-right: 5px;" type="number" id="${this._getSliderValueId()}" min="${this._min}" max="${this._max}" step="${this._step}" value="${this.getValue().toFixed(this._decimals)}">
+            <div class="struct-prop" id="${this._getId()}" style="flex-grow: 1; padding: 0px;">
+                <div class="struct-prop" id="${this._getSliderBarId()}" style="width: ${norm * 100}%;">
                 </div>
             </div>
         `;
@@ -144,20 +132,7 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
 
     protected override _onEnabledChanged() {
         super._onEnabledChanged();
-
-        const element = this._getElement();
-        const elementBar = UIUtil.getElementById(this._getSliderBarId());
-        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
-
-        if (this.getEnabled()) {
-            element.classList.remove('new-slider-disabled');
-            elementBar.classList.remove('new-slider-bar-disabled');
-            elementValue.disabled = false;
-        } else {
-            element.classList.add('new-slider-disabled');
-            elementBar.classList.add('new-slider-bar-disabled');
-            elementValue.disabled = true;
-        }
+        this._updateStyles();
     }
 
     protected override _onValueChanged(): void {
@@ -221,5 +196,28 @@ export class SliderElement extends ConfigUIElement<number, HTMLDivElement> {
      */
     private _getSliderBarId() {
         return this._getId() + '-bar';
+    }
+
+    protected override _updateStyles(): void {
+        const elementValue = UIUtil.getElementById(this._getSliderValueId()) as HTMLInputElement;
+        UIUtil.updateStyles(elementValue, {
+            isHovered: false,
+            isActive: false,
+            isEnabled: this.enabled,
+        });
+
+        const elementBar = UIUtil.getElementById(this._getSliderBarId()) as HTMLInputElement;
+        UIUtil.updateStyles(elementBar, {
+            isHovered: this.hovered,
+            isActive: true,
+            isEnabled: this.enabled,
+        });
+
+        const elementSlider = UIUtil.getElementById(this._getId()) as HTMLInputElement;
+        UIUtil.updateStyles(elementSlider, {
+            isHovered: this.hovered,
+            isActive: false,
+            isEnabled: this.enabled,
+        });
     }
 }

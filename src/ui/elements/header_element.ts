@@ -43,7 +43,7 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
 
     public override generateHTML(): string {
         return `
-            <div class="property">
+            <div class="container-header">
                 <div class="col-container header-cols">
                     <div class="col-container">
                         <div class="col-item">
@@ -60,21 +60,12 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
                             </div>
                         </div>
                     </div>
-                    <div class="col-container">
-                        <div class="col-item">
-                            ${this._githubButton.generateHTML()}
-                        </div>
-                        <div class="col-item">
-                            ${this._bugButton.generateHTML()}
-                        </div>
-                        <div class="col-item">
-                            ${this._discordButton.generateHTML()}
-                        </div>
+                    <div class="col-container toolbar-group" style="gap: 0px;">
+                        ${this._githubButton.generateHTML()}
+                        ${this._bugButton.generateHTML()}
+                        ${this._discordButton.generateHTML()}
                     </div>
                 </div>
-            </div>
-            <div class="property changelog">
-                ${AppConfig.Get.CHANGELOG.join('<br>')}
             </div>
         `;
     }
@@ -86,6 +77,9 @@ export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
     }
 
     public override finalise(): void {
+        this._githubButton.finalise();
+        this._bugButton.finalise();
+        this._discordButton.finalise();
         // const updateElement = UIUtil.getElementById('update-checker') as HTMLDivElement;
         // updateElement.style.animation = 'pulse-opacity 1.5s infinite';
         // updateElement.innerHTML = '<i style="animation: pulse-opacity 1.5s infinite;">Checking for updates...</i>';

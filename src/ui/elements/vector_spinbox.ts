@@ -46,7 +46,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         html += `
             <div class="spinbox-element-container">
                 <div class="spinbox-key" id="${this._getKeyId('x')}">X</div>
-                <div class="spinbox-value" id="${this._getValueId('x')}">
+                <div class="spinbox-value struct-prop" id="${this._getValueId('x')}">
                     ${this.getValue().x}
                 </div>
             </div>
@@ -55,7 +55,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
             html += `
                 <div class="spinbox-element-container">
                     <div class="spinbox-key" id="${this._getKeyId('y')}">Y</div>
-                    <div class="spinbox-value" id="${this._getValueId('y')}">
+                    <div class="spinbox-value struct-prop" id="${this._getValueId('y')}">
                         ${this.getValue().y}
                     </div>
                 </div>
@@ -64,7 +64,7 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         html += `
             <div class="spinbox-element-container">
                 <div class="spinbox-key" id="${this._getKeyId('z')}">Z</div>
-                <div class="spinbox-value" id="${this._getValueId('z')}">
+                <div class="spinbox-value struct-prop" id="${this._getValueId('z')}">
                     ${this.getValue().z}
                 </div>
             </div>
@@ -86,16 +86,12 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
 
         elementValue.onmouseenter = () => {
             this._mouseover = axis;
-            if (this.getEnabled()) {
-                elementValue.classList.add('spinbox-value-hover');
-            }
+            this._updateStyles();
         };
 
         elementValue.onmouseleave = () => {
             this._mouseover = null;
-            if (this._dragging !== axis) {
-                elementValue.classList.remove('spinbox-value-hover');
-            }
+            this._updateStyles();
         };
     }
 
@@ -107,30 +103,26 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         this._registerAxis('z');
 
         document.addEventListener('mousedown', (e: any) => {
-            if (this.getEnabled() && this._mouseover !== null) {
+            if (this.enabled && this._mouseover !== null) {
                 this._dragging = this._mouseover;
                 this._lastClientX = e.clientX;
             }
         });
 
         document.addEventListener('mousemove', (e: any) => {
-            if (this.getEnabled() && this._dragging !== null) {
+            if (this.enabled && this._dragging !== null) {
                 this._updateValue(e);
             }
         });
 
         document.addEventListener('mouseup', () => {
-            if (this._dragging !== null) {
-                const elementValue = UIUtil.getElementById(this._getValueId(this._dragging));
-                elementValue.classList.remove('spinbox-value-hover');
-            }
-
             this._dragging = null;
+            this._updateStyles();
         });
     }
 
     private _updateValue(e: MouseEvent) {
-        ASSERT(this.getEnabled(), 'Not enabled');
+        ASSERT(this.enabled, 'Not enabled');
         ASSERT(this._dragging !== null, 'Dragging nothing');
 
         const deltaX = e.clientX - this._lastClientX;
@@ -152,48 +144,50 @@ export class VectorSpinboxElement extends ConfigUIElement<Vector3, HTMLDivElemen
         this._setValue(current);
     }
 
-    protected override _onEnabledChanged() {
-        super._onEnabledChanged();
-
-        const keyElements = [
-            UIUtil.getElementById(this._getKeyId('x')),
-            UIUtil.getElementById(this._getKeyId('y')),
-            UIUtil.getElementById(this._getKeyId('z')),
-        ];
-        const valueElements = [
-            UIUtil.getElementById(this._getValueId('x')),
-            UIUtil.getElementById(this._getValueId('y')),
-            UIUtil.getElementById(this._getValueId('z')),
-        ];
-
-        if (this.getEnabled()) {
-            for (const keyElement of keyElements) {
-                keyElement?.classList.remove('spinbox-key-disabled');
-            }
-            for (const valueElement of valueElements) {
-                valueElement?.classList.remove('spinbox-value-disabled');
-            }
-        } else {
-            for (const keyElement of keyElements) {
-                keyElement?.classList.add('spinbox-key-disabled');
-            }
-            for (const valueElement of valueElements) {
-                valueElement?.classList.add('spinbox-value-disabled');
-            }
-        }
-    }
-
-    protected override _onValueChanged(): void {
+    protected override _updateStyles(): void {
         const elementXV = UIUtil.getElementById(this._getValueId('x'));
         const elementYV = UIUtil.getElementById(this._getValueId('y'));
         const elementZV = UIUtil.getElementById(this._getValueId('z'));
 
-        const current = this.getValue().copy();
+        // Update text
+        {
+            const current = this.getValue().copy();
 
-        elementXV.innerHTML = current.x.toString() + this._units;
-        if (elementYV) {
-            elementYV.innerHTML = current.y.toString() + this._units;
+            elementXV.innerHTML = current.x.toString() + this._units;
+            if (elementYV) {
+                elementYV.innerHTML = current.y.toString() + this._units;
+            }
+            elementZV.innerHTML = current.z.toString() + this._units;
         }
-        elementZV.innerHTML = current.z.toString() + this._units;
+
+        // Update styles
+        {
+            UIUtil.updateStyles(elementXV, {
+                isActive: false,
+                isEnabled: this.enabled,
+                isHovered: this._dragging === 'x' || (this._mouseover === 'x' && this._dragging === null),
+            });
+
+            UIUtil.updateStyles(elementYV, {
+                isActive: false,
+                isEnabled: this.enabled,
+                isHovered: this._dragging === 'y' || (this._mouseover === 'y' && this._dragging === null),
+            });
+
+            UIUtil.updateStyles(elementZV, {
+                isActive: false,
+                isEnabled: this.enabled,
+                isHovered: this._dragging === 'z' || (this._mouseover === 'z' && this._dragging === null),
+            });
+        }
+    }
+
+    protected override _onEnabledChanged() {
+        super._onEnabledChanged();
+        this._updateStyles();
+    }
+
+    protected override _onValueChanged(): void {
+        this._updateStyles();
     }
 }

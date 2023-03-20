@@ -133,15 +133,9 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
             checkboxesHTML += '</div>';
         });
 
-        /*
-        <select>
-            <option value="All">All</option>
-        </select>
-        */
-
         return `
             <div class="row-container" style="width: 100%; gap: 5px;">
-                <input type="text" style="width: 100%;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
+                <input class="struct-prop" type="text" style="width: 100%;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
                 <div class="col-container header-cols" style="padding-top: 0px;">
                     <div class="col-container">
                         <div class="col-item">
@@ -193,6 +187,14 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
         searchElement.addEventListener('keyup', () => {
             this._onSearchBoxChanged(searchElement.value);
         });
+        searchElement.addEventListener('mouseenter', () => {
+            this._setHovered(true);
+            this._updateStyles();
+        });
+        searchElement.addEventListener('mouseleave', () => {
+            this._setHovered(false);
+            this._updateStyles();
+        });
 
         this._checkboxes.forEach((checkbox) => {
             checkbox.element.registerEvents();
@@ -218,6 +220,11 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
             checkbox.element.finalise();
         });
 
+        this._selectAll.finalise();
+        this._deselectAll.finalise();
+        this._importFrom.finalise();
+        this._exportTo.finalise();
+
         this._onCountSelectedChanged();
         //this._selectAll.finalise();
         //this._deselectAll.finalise();
@@ -233,6 +240,14 @@ export class PaletteElement extends FullConfigUIElement<Palette, HTMLDivElement>
             } else {
                 row.style.display = 'none';
             }
+        });
+    }
+
+    protected override _updateStyles(): void {
+        UIUtil.updateStyles(UIUtil.getElementById(this._getId() + '-search'), {
+            isActive: false,
+            isEnabled: this.enabled,
+            isHovered: this.hovered,
         });
     }
 }

@@ -22,3 +22,15 @@ export class HTMLBuilder {
         element.innerHTML = this._html;
     }
 }
+
+export namespace MiscComponents {
+    export function createGroupHeader(label: string) {
+        return `
+            <div class="container-group-heading">
+                <div class="group-heading">
+                    ${label}
+                </div>
+            </div>
+        `;
+    }
+}
