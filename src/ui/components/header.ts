@@ -1,36 +1,33 @@
 import IMAGE_LOGO from '../../../res/static/icon.png';
 import { AppConfig } from '../../config';
-import { LOG, LOG_ERROR } from '../../util/log_util';
-import { AppPaths, PathUtil } from '../../util/path_util';
-import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
-import { BaseUIElement } from './base_element';
-import { ToolbarItemElement } from './toolbar_item';
+import { BaseComponent } from './base';
+import { ToolbarItemComponent } from './toolbar_item';
 
-export class HeaderUIElement extends BaseUIElement<HTMLDivElement> {
-    private static _instance: HeaderUIElement;
+export class HeaderComponent extends BaseComponent<HTMLDivElement> {
+    private static _instance: HeaderComponent;
     public static get Get() {
         return this._instance || (this._instance = new this());
     }
 
-    private _githubButton: ToolbarItemElement;
-    private _bugButton: ToolbarItemElement;
-    private _discordButton: ToolbarItemElement;
+    private _githubButton: ToolbarItemComponent;
+    private _bugButton: ToolbarItemComponent;
+    private _discordButton: ToolbarItemComponent;
 
     private constructor() {
         super();
 
-        this._githubButton = new ToolbarItemElement({ id: 'gh', iconSVG: AppIcons.GITHUB })
+        this._githubButton = new ToolbarItemComponent({ id: 'gh', iconSVG: AppIcons.GITHUB })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic');
             });
 
-        this._bugButton = new ToolbarItemElement({ id: 'bug', iconSVG: AppIcons.BUG })
+        this._bugButton = new ToolbarItemComponent({ id: 'bug', iconSVG: AppIcons.BUG })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic/issues');
             });
 
-        this._discordButton = new ToolbarItemElement({ id: 'disc', iconSVG: AppIcons.DISCORD })
+        this._discordButton = new ToolbarItemComponent({ id: 'disc', iconSVG: AppIcons.DISCORD })
             .onClick(() => {
                 window.open('https://discord.gg/McS2VrBZPD');
             });

@@ -1,10 +1,10 @@
-import { ConfigUIElement } from './config_element';
+import { ConfigComponent } from './config';
 
 /**
- * A `FullConfigUIElement` is a UI element that has a value the user can change.
- * For example, sliders, comboboxes and checkboxes are `ConfigUIElement`.
+ * A `FullConfigComponent` is a UI element that has a value the user can change.
+ * For example, sliders, comboboxes and checkboxes are `ConfigComponent`.
  */
-export abstract class FullConfigUIElement<T, F> extends ConfigUIElement<T, F> {
+export abstract class FullConfigComponent<T, F> extends ConfigComponent<T, F> {
     public override generateHTML() {
         return `
             <div class="property" style="flex-direction: column; align-items: start;">

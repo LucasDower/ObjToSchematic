@@ -1,18 +1,18 @@
 import { MaterialType, SolidMaterial, TexturedMaterial } from '../../mesh';
 import { AppIcons } from '../icons';
-import { ConfigUIElement } from './config_element';
-import { ToolbarItemElement } from './toolbar_item';
+import { ConfigComponent } from './config';
+import { ToolbarItemComponent } from './toolbar_item';
 
-export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivElement> {
-    private _solidButton: ToolbarItemElement;
-    private _texturedButton: ToolbarItemElement;
+export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDivElement> {
+    private _solidButton: ToolbarItemComponent;
+    private _texturedButton: ToolbarItemComponent;
     private _material: SolidMaterial | TexturedMaterial;
 
     public constructor(material: SolidMaterial | TexturedMaterial) {
         super(material.type);
         this._material = material;
 
-        this._solidButton = new ToolbarItemElement({ id: 'sw1', iconSVG: AppIcons.COLOUR_SWATCH })
+        this._solidButton = new ToolbarItemComponent({ id: 'sw1', iconSVG: AppIcons.COLOUR_SWATCH })
             .setLabel('Solid')
             .onClick(() => {
                 if (this._material.type === MaterialType.textured) {
@@ -20,7 +20,7 @@ export class MaterialTypeElement extends ConfigUIElement<MaterialType, HTMLDivEl
                 }
             });
 
-        this._texturedButton = new ToolbarItemElement({ id: 'sw2', iconSVG: AppIcons.IMAGE })
+        this._texturedButton = new ToolbarItemComponent({ id: 'sw2', iconSVG: AppIcons.IMAGE })
             .setLabel('Textured')
             .onClick(() => {
                 if (this._material.type === MaterialType.solid) {

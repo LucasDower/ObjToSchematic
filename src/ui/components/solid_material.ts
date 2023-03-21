@@ -1,24 +1,24 @@
 import { SolidMaterial } from '../../mesh';
-import { ColourElement } from './colour_element';
-import { ConfigUIElement } from './config_element';
-import { MaterialTypeElement } from './material_type_element';
-import { SliderElement } from './slider';
+import { ColourComponent } from './colour';
+import { ConfigComponent } from './config';
+import { MaterialTypeComponent } from './material_type';
+import { SliderComponent } from './slider';
 
-export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDivElement> {
-    private _typeElement: MaterialTypeElement;
-    private _colourElement: ColourElement;
-    private _alphaElement: SliderElement;
+export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLDivElement> {
+    private _typeElement: MaterialTypeComponent;
+    private _ColourComponent: ColourComponent;
+    private _alphaElement: SliderComponent;
 
     public constructor(materialName: string, material: SolidMaterial) {
         super(material);
 
-        this._typeElement = new MaterialTypeElement(material)
+        this._typeElement = new MaterialTypeComponent(material)
             .setLabel('Type');
 
-        this._colourElement = new ColourElement(material.colour)
+        this._ColourComponent = new ColourComponent(material.colour)
             .setLabel('Colour');
 
-        this._alphaElement = new SliderElement()
+        this._alphaElement = new SliderComponent()
             .setLabel('Alpha')
             .setMin(0.0)
             .setMax(1.0)
@@ -29,14 +29,14 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
 
     public override registerEvents(): void {
         this._typeElement.registerEvents();
-        this._colourElement.registerEvents();
+        this._ColourComponent.registerEvents();
         this._alphaElement.registerEvents();
 
         this._typeElement.onClickChangeTypeDelegate(() => {
             this._onChangeTypeDelegate?.();
         });
 
-        this._colourElement.addValueChangedListener((newColour) => {
+        this._ColourComponent.addValueChangedListener((newColour) => {
             this.getValue().colour.r = newColour.r;
             this.getValue().colour.g = newColour.g;
             this.getValue().colour.b = newColour.b;
@@ -49,7 +49,7 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
 
     public override finalise(): void {
         this._typeElement.finalise();
-        this._colourElement.finalise();
+        this._ColourComponent.finalise();
         this._alphaElement.finalise();
     }
 
@@ -57,7 +57,7 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
         return `
             <div class="component-group">
                 ${this._typeElement.generateHTML()}
-                ${this._colourElement.generateHTML()}
+                ${this._ColourComponent.generateHTML()}
                 ${this._alphaElement.generateHTML()}
             </div>
         `;
@@ -70,7 +70,7 @@ export class SolidMaterialElement extends ConfigUIElement<SolidMaterial, HTMLDiv
         super._onEnabledChanged();
 
         this._typeElement.setEnabled(this.enabled);
-        this._colourElement.setEnabled(this.enabled);
+        this._ColourComponent.setEnabled(this.enabled);
         this._alphaElement.setEnabled(this.enabled);
     }
 

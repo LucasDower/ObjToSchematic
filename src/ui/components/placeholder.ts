@@ -1,6 +1,6 @@
-import { ConfigUIElement } from './config_element';
+import { ConfigComponent } from './config';
 
-export class PlaceholderElement extends ConfigUIElement<undefined, HTMLDivElement> {
+export class PlaceholderComponent extends ConfigComponent<undefined, HTMLDivElement> {
     private _placeholderText: string;
 
     public constructor(placeholderText: string) {

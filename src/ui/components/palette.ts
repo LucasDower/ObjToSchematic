@@ -6,19 +6,17 @@ import { download } from '../../util/file_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppConsole } from '../console';
 import { AppIcons } from '../icons';
-import { ButtonElement } from './button';
-import { CheckboxElement } from './checkbox';
-import { ConfigUIElement } from './config_element';
-import { FullConfigUIElement } from './full_config_element';
-import { ToolbarItemElement } from './toolbar_item';
+import { CheckboxComponent } from './checkbox';
+import { ConfigComponent } from './config';
+import { ToolbarItemComponent } from './toolbar_item';
 
-export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
-    private _checkboxes: { block: string, element: CheckboxElement }[];
+export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
+    private _checkboxes: { block: string, element: CheckboxComponent }[];
     private _palette: Palette;
-    private _selectAll: ToolbarItemElement;
-    private _deselectAll: ToolbarItemElement;
-    private _importFrom: ToolbarItemElement;
-    private _exportTo: ToolbarItemElement;
+    private _selectAll: ToolbarItemComponent;
+    private _deselectAll: ToolbarItemComponent;
+    private _importFrom: ToolbarItemComponent;
+    private _exportTo: ToolbarItemComponent;
 
     public constructor() {
         super();
@@ -31,14 +29,14 @@ export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
         PALETTE_ALL_RELEASE.forEach((block) => {
             this._checkboxes.push({
                 block: block,
-                element: new CheckboxElement()
+                element: new CheckboxComponent()
                     .setDefaultValue(true)
                     .setCheckedText(block)
                     .setUncheckedText(block),
             });
         });
 
-        this._selectAll = new ToolbarItemElement({ iconSVG: AppIcons.SELECT_ALL, id: 'select-all' })
+        this._selectAll = new ToolbarItemComponent({ iconSVG: AppIcons.SELECT_ALL, id: 'select-all' })
             .onClick(() => {
                 this._checkboxes.forEach((checkbox) => {
                     checkbox.element.check();
@@ -47,7 +45,7 @@ export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
             });
 
 
-        this._deselectAll = new ToolbarItemElement({ iconSVG: AppIcons.DESELECT_ALL, id: 'deselect-all' })
+        this._deselectAll = new ToolbarItemComponent({ iconSVG: AppIcons.DESELECT_ALL, id: 'deselect-all' })
             .onClick(() => {
                 this._checkboxes.forEach((checkbox) => {
                     checkbox.element.uncheck();
@@ -55,7 +53,7 @@ export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
                 this._onCountSelectedChanged();
             });
 
-        this._importFrom = new ToolbarItemElement({ iconSVG: AppIcons.IMPORT, id: 'import' })
+        this._importFrom = new ToolbarItemComponent({ iconSVG: AppIcons.IMPORT, id: 'import' })
             .onClick(() => {
                 const a = document.createElement('input');
                 a.setAttribute('type', 'file');
@@ -76,7 +74,7 @@ export class PaletteElement extends ConfigUIElement<Palette, HTMLDivElement> {
                 a.click();
             });
 
-        this._exportTo = new ToolbarItemElement({ iconSVG: AppIcons.EXPORT, id: 'export' })
+        this._exportTo = new ToolbarItemComponent({ iconSVG: AppIcons.EXPORT, id: 'export' })
             .onClick(() => {
                 const textPalette = this._checkboxes.filter((x) => x.element.getValue())
                     .map((x) => x.block)

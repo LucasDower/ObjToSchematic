@@ -14,30 +14,30 @@ import { TDithering } from '../util/type_util';
 import { UIUtil } from '../util/ui_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
+import { ButtonComponent } from './components/button';
+import { CheckboxComponent } from './components/checkbox';
+import { ComboboxComponent, ComboBoxItem } from './components/combobox';
+import { ConfigComponent } from './components/config';
+import { ObjFileComponent } from './components/file_input';
+import { HeaderComponent } from './components/header';
+import { PaletteComponent } from './components/palette';
+import { SliderComponent } from './components/slider';
+import { ToolbarItemComponent } from './components/toolbar_item';
+import { VectorSpinboxComponent } from './components/vector_spinbox';
 import { AppConsole } from './console';
-import { ButtonElement } from './elements/button';
-import { CheckboxElement } from './elements/checkbox';
-import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
-import { ConfigUIElement } from './elements/config_element';
-import { ObjFileInputElement } from './elements/file_input';
-import { HeaderUIElement } from './elements/header_element';
-import { PaletteElement } from './elements/palette_element';
-import { SliderElement } from './elements/slider';
-import { ToolbarItemElement } from './elements/toolbar_item';
-import { VectorSpinboxElement } from './elements/vector_spinbox';
 import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 
-export interface Group {
+export type Group = {
     label: string;
-    elements: { [key: string]: ConfigUIElement<any, any> };
-    elementsOrder: string[];
-    submitButton: ButtonElement;
+    components: { [key: string]: ConfigComponent<any, any> };
+    componentOrder: string[];
+    execButton: ButtonComponent;
 }
 
 export interface ToolbarGroup {
-    elements: { [key: string]: ToolbarItemElement };
-    elementsOrder: string[];
+    components: { [key: string]: ToolbarItemComponent };
+    componentOrder: string[];
 }
 
 export class UI {
@@ -45,16 +45,16 @@ export class UI {
     private _ui = {
         'import': {
             label: '1. Import',
-            elements: {
-                'input': new ObjFileInputElement()
+            components: {
+                'input': new ObjFileComponent()
                     .setLabel('Wavefront .obj file'),
-                'rotation': new VectorSpinboxElement()
+                'rotation': new VectorSpinboxComponent()
                     .setLabel('Rotation')
                     .setWrap(360)
                     .setUnits('°'),
             },
-            elementsOrder: ['input', 'rotation'],
-            submitButton: new ButtonElement()
+            componentOrder: ['input', 'rotation'],
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
                     this._appContext.do(EAction.Import);
                 })
@@ -62,10 +62,10 @@ export class UI {
         },
         'materials': {
             label: '2. Materials',
-            elements: {
+            components: {
             },
-            elementsOrder: [],
-            submitButton: new ButtonElement()
+            componentOrder: [],
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
                     this._appContext.do(EAction.Materials);
                 })
@@ -73,8 +73,8 @@ export class UI {
         },
         'voxelise': {
             label: '3. Voxelise',
-            elements: {
-                'constraintAxis': new ComboBoxElement<TAxis>()
+            components: {
+                'constraintAxis': new ComboboxComponent<TAxis>()
                     .addItem({ payload: 'y', displayText: 'Y (height) (green)' })
                     .addItem({ payload: 'x', displayText: 'X (width) (red)' })
                     .addItem({ payload: 'z', displayText: 'Z (depth) (blue)' })
@@ -83,40 +83,40 @@ export class UI {
                         /*
                         switch (value) {
                             case 'x':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.x ?? 400);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.x ?? 400);
                                 break;
                             case 'y':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
                                 break;
                             case 'z':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.z ?? 400);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.z ?? 400);
                                 break;
                         }
                         */
                     }),
-                'size': new SliderElement()
+                'size': new SliderComponent()
                     .setMin(3)
                     .setMax(380)
                     .setDefaultValue(80)
                     .setDecimals(0)
                     .setStep(1)
                     .setLabel('Size'),
-                'voxeliser': new ComboBoxElement<TVoxelisers>()
+                'voxeliser': new ComboboxComponent<TVoxelisers>()
                     .addItem({ payload: 'ray-based', displayText: 'Ray-based' })
                     .addItem({ payload: 'bvh-ray', displayText: 'BVH Ray-based' })
                     .addItem({ payload: 'ncrb', displayText: 'NCRB' })
                     .setLabel('Algorithm'),
-                'ambientOcclusion': new CheckboxElement()
+                'ambientOcclusion': new CheckboxComponent()
                     .setCheckedText('On (recommended)')
                     .setUncheckedText('Off (faster)')
                     .setDefaultValue(true)
                     .setLabel('Ambient occlusion'),
-                'multisampleColouring': new CheckboxElement()
+                'multisampleColouring': new CheckboxComponent()
                     .setCheckedText('On (recommended)')
                     .setUncheckedText('Off (faster)')
                     .setDefaultValue(true)
                     .setLabel('Multisampling'),
-                'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>()
+                'voxelOverlapRule': new ComboboxComponent<TVoxelOverlapRule>()
                     .addItem({
                         displayText: 'Average (recommended)',
                         payload: 'average',
@@ -129,7 +129,7 @@ export class UI {
                     })
                     .setLabel('Voxel overlap'),
             },
-            elementsOrder: [
+            componentOrder: [
                 'constraintAxis',
                 'size',
                 'voxeliser',
@@ -137,7 +137,7 @@ export class UI {
                 'multisampleColouring',
                 'voxelOverlapRule',
             ],
-            submitButton: new ButtonElement()
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
                     this._appContext.do(EAction.Voxelise);
                 })
@@ -145,14 +145,14 @@ export class UI {
         },
         'assign': {
             label: '4. Assign',
-            elements: {
-                'textureAtlas': new ComboBoxElement<string>()
-                    .addItems(this._getTextureAtlases())
+            components: {
+                'textureAtlas': new ComboboxComponent<string>()
+                    .addItem({ displayText: 'Vanilla', payload: 'vanilla' })
                     .setLabel('Texture atlas')
                     .setShouldObeyGroupEnables(false),
-                'blockPalette': new PaletteElement()
+                'blockPalette': new PaletteComponent()
                     .setLabel('Block palette'),
-                'dithering': new ComboBoxElement<TDithering>()
+                'dithering': new ComboboxComponent<TDithering>()
                     .addItems([{
                         displayText: 'Ordered',
                         payload: 'ordered',
@@ -166,7 +166,7 @@ export class UI {
                         payload: 'off',
                     }])
                     .setLabel('Dithering'),
-                'fallable': new ComboBoxElement<FallableBehaviour>()
+                'fallable': new ComboboxComponent<FallableBehaviour>()
                     .addItems([{
                         displayText: 'Replace falling with solid',
                         payload: 'replace-falling',
@@ -183,39 +183,39 @@ export class UI {
                         tooltip: 'Let the block fall',
                     }])
                     .setLabel('Fallable blocks'),
-                'colourAccuracy': new SliderElement()
+                'colourAccuracy': new SliderComponent()
                     .setMin(1)
                     .setMax(8)
                     .setDefaultValue(5)
                     .setDecimals(1)
                     .setStep(0.1)
                     .setLabel('Colour accuracy'),
-                'contextualAveraging': new CheckboxElement()
+                'contextualAveraging': new CheckboxComponent()
                     .setCheckedText('On (recommended)')
                     .setUncheckedText('Off (faster)')
                     .setDefaultValue(true)
                     .setLabel('Smart averaging'),
-                'errorWeight': new SliderElement()
+                'errorWeight': new SliderComponent()
                     .setMin(0.0)
                     .setMax(2.0)
                     .setDefaultValue(0.2)
                     .setDecimals(2)
                     .setStep(0.01)
                     .setLabel('Smoothness'),
-                'calculateLighting': new CheckboxElement()
+                'calculateLighting': new CheckboxComponent()
                     .setCheckedText('On')
                     .setUncheckedText('Off')
                     .setDefaultValue(false)
                     .setLabel('Calculate lighting')
                     .addValueChangedListener((newValue: boolean) => {
-                        const isEnabled = this._ui.assign.elements.calculateLighting.getEnabled();
-                        this._ui.assign.elements.lightThreshold.setEnabled(newValue && isEnabled, false);
+                        const isEnabled = this._ui.assign.components.calculateLighting.getEnabled();
+                        this._ui.assign.components.lightThreshold.setEnabled(newValue && isEnabled, false);
                     })
                     .addEnabledChangedListener((isEnabled: boolean) => {
-                        const value = this._ui.assign.elements.calculateLighting.getValue();
-                        this._ui.assign.elements.lightThreshold.setEnabled(value && isEnabled, false);
+                        const value = this._ui.assign.components.calculateLighting.getValue();
+                        this._ui.assign.components.lightThreshold.setEnabled(value && isEnabled, false);
                     }),
-                'lightThreshold': new SliderElement()
+                'lightThreshold': new SliderComponent()
                     .setMin(0)
                     .setMax(14)
                     .setDefaultValue(1)
@@ -224,7 +224,7 @@ export class UI {
                     .setLabel('Light threshold')
                     .setShouldObeyGroupEnables(false),
             },
-            elementsOrder: [
+            componentOrder: [
                 'textureAtlas',
                 'blockPalette',
                 'dithering',
@@ -235,7 +235,7 @@ export class UI {
                 'calculateLighting',
                 'lightThreshold',
             ],
-            submitButton: new ButtonElement()
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
                     this._appContext.do(EAction.Assign);
                 })
@@ -243,8 +243,8 @@ export class UI {
         },
         'export': {
             label: '5. Export',
-            elements: {
-                'export': new ComboBoxElement<TExporters>()
+            components: {
+                'export': new ComboboxComponent<TExporters>()
                     .addItems([
                         {
                             displayText: 'Litematic (.litematic)',
@@ -271,8 +271,8 @@ export class UI {
                     ])
                     .setLabel('Exporter'),
             },
-            elementsOrder: ['export'],
-            submitButton: new ButtonElement()
+            componentOrder: ['export'],
+            execButton: new ButtonComponent()
                 .setLabel('Export structure')
                 .setOnClick(() => {
                     this._appContext.do(EAction.Export);
@@ -283,8 +283,8 @@ export class UI {
     private _toolbarLeft = {
         groups: {
             'viewmode': {
-                elements: {
-                    'mesh': new ToolbarItemElement({ id: 'mesh', iconSVG: AppIcons.MESH })
+                components: {
+                    'mesh': new ToolbarItemComponent({ id: 'mesh', iconSVG: AppIcons.MESH })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.TriangleMesh);
                         })
@@ -294,7 +294,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
                         }),
-                    'voxelMesh': new ToolbarItemElement({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
+                    'voxelMesh': new ToolbarItemComponent({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
                         })
@@ -304,7 +304,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         }),
-                    'blockMesh': new ToolbarItemElement({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
+                    'blockMesh': new ToolbarItemComponent({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
                         })
@@ -315,11 +315,11 @@ export class UI {
                             return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
                         }),
                 },
-                elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
+                componentOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
             'debug': {
-                elements: {
-                    'grid': new ToolbarItemElement({ id: 'grid', iconSVG: AppIcons.GRID })
+                components: {
+                    'grid': new ToolbarItemComponent({ id: 'grid', iconSVG: AppIcons.GRID })
                         .onClick(() => {
                             Renderer.Get.toggleIsGridEnabled();
                         })
@@ -329,14 +329,14 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
                         }),
-                    'axes': new ToolbarItemElement({ id: 'axes', iconSVG: AppIcons.AXES })
+                    'axes': new ToolbarItemComponent({ id: 'axes', iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
                         })
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
-                    'night-vision': new ToolbarItemElement({ id: 'night', iconSVG: AppIcons.BULB })
+                    'night-vision': new ToolbarItemComponent({ id: 'night', iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
                         })
@@ -347,7 +347,7 @@ export class UI {
                             return Renderer.Get.canToggleNightVision();
                         }),
                 },
-                elementsOrder: ['grid', 'axes', 'night-vision'],
+                componentOrder: ['grid', 'axes', 'night-vision'],
             },
 
         },
@@ -357,32 +357,32 @@ export class UI {
     private _toolbarRight = {
         groups: {
             'zoom': {
-                elements: {
-                    'zoomOut': new ToolbarItemElement({ id: 'zout', iconSVG: AppIcons.MINUS })
+                components: {
+                    'zoomOut': new ToolbarItemComponent({ id: 'zout', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
                         }),
-                    'zoomIn': new ToolbarItemElement({ id: 'zin', iconSVG: AppIcons.PLUS })
+                    'zoomIn': new ToolbarItemComponent({ id: 'zin', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
                         }),
-                    'reset': new ToolbarItemElement({ id: 'reset', iconSVG: AppIcons.CENTRE })
+                    'reset': new ToolbarItemComponent({ id: 'reset', iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
                         }),
                 },
-                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
+                componentOrder: ['zoomOut', 'zoomIn', 'reset'],
             },
             'camera': {
-                elements: {
-                    'perspective': new ToolbarItemElement({ id: 'pers', iconSVG: AppIcons.PERSPECTIVE })
+                components: {
+                    'perspective': new ToolbarItemComponent({ id: 'pers', iconSVG: AppIcons.PERSPECTIVE })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('perspective');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
                         }),
-                    'orthographic': new ToolbarItemElement({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
+                    'orthographic': new ToolbarItemComponent({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
                         })
@@ -390,7 +390,7 @@ export class UI {
                             return ArcballCamera.Get.isOrthographic();
                         }),
                 },
-                elementsOrder: ['perspective', 'orthographic'],
+                componentOrder: ['perspective', 'orthographic'],
             },
         },
         groupsOrder: ['camera', 'zoom'],
@@ -422,15 +422,15 @@ export class UI {
 
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
-            for (const toolbarItem of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[toolbarItem].tick();
+            for (const toolbarItem of toolbarGroup.componentOrder) {
+                toolbarGroup.components[toolbarItem].tick();
             }
         }
 
         for (const groupName in this._toolbarRightDull) {
             const toolbarGroup = this._toolbarRightDull[groupName];
-            for (const toolbarItem of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[toolbarItem].tick();
+            for (const toolbarItem of toolbarGroup.componentOrder) {
+                toolbarGroup.components[toolbarItem].tick();
             }
         }
     }
@@ -442,7 +442,7 @@ export class UI {
 
             sidebarHTML.add(`<div class="container-properties">`);
             {
-                sidebarHTML.add(HeaderUIElement.Get.generateHTML());
+                sidebarHTML.add(HeaderComponent.Get.generateHTML());
 
                 for (const groupName of this.uiOrder) {
                     const group = this._uiDull[groupName];
@@ -463,8 +463,8 @@ export class UI {
             for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
                 toolbarHTML.add('<div class="toolbar-group">');
                 const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
-                for (const groupElementName of toolbarGroup.elementsOrder) {
-                    const groupElement = toolbarGroup.elements[groupElementName];
+                for (const groupElementName of toolbarGroup.componentOrder) {
+                    const groupElement = toolbarGroup.components[groupElementName];
                     toolbarHTML.add(groupElement.generateHTML());
                 }
                 toolbarHTML.add('</div>');
@@ -476,8 +476,8 @@ export class UI {
             for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
                 toolbarHTML.add('<div class="toolbar-group">');
                 const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
-                for (const groupElementName of toolbarGroup.elementsOrder) {
-                    const groupElement = toolbarGroup.elements[groupElementName];
+                for (const groupElementName of toolbarGroup.componentOrder) {
+                    const groupElement = toolbarGroup.components[groupElementName];
                     toolbarHTML.add(groupElement.generateHTML());
                 }
                 toolbarHTML.add('</div>');
@@ -504,32 +504,44 @@ export class UI {
         });
     }
 
-    public cacheValues(action: EAction) {
-        const group = this._getEActionGroup(action);
-        for (const elementName of group.elementsOrder) {
-            LOG(`[UI]: Caching ${elementName}`);
-            const element = group.elements[elementName];
-            element.cacheValue();
+    private _forEachComponent(action: EAction, functor: (component: ConfigComponent<unknown, unknown>) => void) {
+        const group = this._getGroup(action);
+        for (const elementName of group.componentOrder) {
+            const element = group.components[elementName];
+            functor(element);
         }
     }
 
-    public refreshSubcomponents(group: Group) {
+    /**
+     * Caches the current value of each component in an action group.
+     */
+    public cacheValues(action: EAction) {
+        this._forEachComponent(action, (component) => {
+            component.cacheValue();
+        });
+    }
+
+    /**
+     * Rebuilds the HTML for all components in an action group.
+     */
+    public refreshComponents(action: EAction) {
+        const group = this._getGroup(action);
+
         const element = document.getElementById(`subcomponents_${group.label}`);
         ASSERT(element !== null);
 
-        element.innerHTML = this._getGroupSubcomponentsHTML(group);
+        element.innerHTML = this._getComponentsHTML(group);
 
-        for (const elementName in group.elements) {
-            const element = group.elements[elementName];
-            element.registerEvents();
-            element.finalise();
-        }
+        this._forEachComponent(action, (component) => {
+            component.registerEvents();
+            component.finalise();
+        });
     }
 
-    private _getGroupSubcomponentsHTML(group: Group) {
+    private _getComponentsHTML(group: Group) {
         let groupHTML = '';
-        for (const elementName of group.elementsOrder) {
-            const element = group.elements[elementName];
+        for (const elementName of group.componentOrder) {
+            const element = group.components[elementName];
             ASSERT(element !== undefined, `No element for: ${elementName}`);
             groupHTML += element.generateHTML();
         }
@@ -540,37 +552,37 @@ export class UI {
         return `
             ${MiscComponents.createGroupHeader(group.label.toUpperCase())}
             <div class="component-group" id="subcomponents_${group.label}">
-                ${this._getGroupSubcomponentsHTML(group)}
+                ${this._getComponentsHTML(group)}
             </div>
-            ${group.submitButton.generateHTML()}
+            ${group.execButton.generateHTML()}
         `;
     }
 
     public getActionButton(action: EAction) {
-        const group = this._getEActionGroup(action);
-        return group.submitButton;
+        const group = this._getGroup(action);
+        return group.execButton;
     }
 
     public registerEvents() {
-        HeaderUIElement.Get.registerEvents();
-        HeaderUIElement.Get.finalise();
+        HeaderComponent.Get.registerEvents();
+        HeaderComponent.Get.finalise();
 
-        for (const groupName in this._ui) {
-            const group = this._uiDull[groupName];
-            for (const elementName in group.elements) {
-                const element = group.elements[elementName];
-                element.registerEvents();
-                element.finalise();
-            }
-            group.submitButton.registerEvents();
-            group.submitButton.finalise();
+        for (let action = 0; action < EAction.MAX; ++action) {
+            this._forEachComponent(action, (component) => {
+                component.registerEvents();
+                component.finalise();
+            });
+
+            const group = this._getGroup(action);
+            group.execButton.registerEvents();
+            group.execButton.finalise();
         }
 
         // Register toolbar left
         for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
             const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const element = toolbarGroup.elements[groupElementName];
+            for (const groupElementName of toolbarGroup.componentOrder) {
+                const element = toolbarGroup.components[groupElementName];
                 element.registerEvents();
                 element.finalise();
             }
@@ -578,8 +590,8 @@ export class UI {
         // Register toolbar right
         for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
             const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const element = toolbarGroup.elements[groupElementName];
+            for (const groupElementName of toolbarGroup.componentOrder) {
+                const element = toolbarGroup.components[groupElementName];
                 element.registerEvents();
                 element.finalise();
             }
@@ -594,79 +606,50 @@ export class UI {
         return this._uiDull;
     }
 
+    /**
+     * Enable a specific action.
+     */
+    public enable(action: EAction) {
+        this._forEachComponent(action, (component) => {
+            component.setEnabled(true);
+        });
+        this._getGroup(action).execButton.setEnabled(true);
+    }
+
+    /**
+     * Enable all actions up to and including a specific action.
+     */
     public enableTo(action: EAction) {
         for (let i = 0; i <= action; ++i) {
             this.enable(i);
         }
     }
 
-    public enable(action: EAction) {
-        if (action >= EAction.MAX) {
-            return;
-        }
+    /**
+     * Disable a specific action and its dependent actions.
+     */
+    public disable(action: EAction) {
+        for (let i = action; i < EAction.MAX; ++i) {
+            this._forEachComponent(action, (component) => {
+                component.setEnabled(false);
+            });
 
-        LOG('[UI]: Enabling', action);
-        const group = this._getEActionGroup(action);
-        for (const compName in group.elements) {
-            group.elements[compName].setEnabled(true);
+            this._getGroup(action).execButton.setEnabled(false);
         }
-        group.submitButton.setEnabled(true);
     }
 
+    /**
+     * Disables all the actions.
+     */
     public disableAll() {
         this.disable(EAction.Import);
     }
 
-    public disable(action: EAction) {
-        if (action < 0) {
-            return;
-        }
-
-        for (let i = action; i < EAction.MAX; ++i) {
-            const group = this._getEActionGroup(i);
-            //LOG('[UI]: Disabling', group.label);
-            for (const compName in group.elements) {
-                group.elements[compName].setEnabled(false);
-            }
-            group.submitButton.setEnabled(false);
-        }
-    }
-
-    private _getEActionGroup(action: EAction): Group {
+    /**
+     * Util function to get the `Group` associated with an `EAction`.
+     */
+    private _getGroup(action: EAction): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
-    }
-
-    private _getTextureAtlases(): ComboBoxItem<string>[] {
-        const textureAtlases: ComboBoxItem<string>[] = [];
-
-        // TODO Unimplemented
-        /*
-        fs.readdirSync(AppPaths.Get.atlases).forEach((file) => {
-            if (file.endsWith('.atlas')) {
-                const paletteID = file.split('.')[0];
-                let paletteName = paletteID.replace('-', ' ').toLowerCase();
-                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                textureAtlases.push({ payload: paletteID, displayText: paletteName });
-            }
-        });
-        */
-        textureAtlases.push({ payload: 'vanilla', displayText: 'Vanilla ' });
-
-        return textureAtlases;
-    }
-
-    private _getBlockPalettes(): ComboBoxItem<TPalettes>[] {
-        const blockPalettes: ComboBoxItem<TPalettes>[] = [];
-
-        const palettes = PaletteManager.getPalettesInfo();
-        for (const palette of palettes) {
-            blockPalettes.push({
-                payload: palette.id,
-                displayText: palette.name,
-            });
-        }
-
-        return blockPalettes;
     }
 }

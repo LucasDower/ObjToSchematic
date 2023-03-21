@@ -1,7 +1,7 @@
 import { RGBA, RGBAUtil } from '../../colour';
-import { ConfigUIElement } from './config_element';
+import { ConfigComponent } from './config';
 
-export class ColourElement extends ConfigUIElement<RGBA, HTMLInputElement> {
+export class ColourComponent extends ConfigComponent<RGBA, HTMLInputElement> {
     public constructor(colour: RGBA) {
         super(colour);
     }

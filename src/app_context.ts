@@ -8,12 +8,10 @@ import { TExporters } from './exporters/exporters';
 import { MaterialMapManager } from './material-map';
 import { MaterialType } from './mesh';
 import { MeshType, Renderer } from './renderer';
+import { PlaceholderComponent } from './ui/components/placeholder';
+import { SolidMaterialComponent } from './ui/components/solid_material';
+import { TexturedMaterialComponent } from './ui/components/textured_material';
 import { AppConsole, TMessage } from './ui/console';
-import { ButtonElement } from './ui/elements/button';
-import { CheckboxElement } from './ui/elements/checkbox';
-import { PlaceholderElement } from './ui/elements/placeholder_element';
-import { SolidMaterialElement } from './ui/elements/solid_material_element';
-import { TexturedMaterialElement } from './ui/elements/textured_material_element';
 import { UI } from './ui/layout';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
@@ -152,7 +150,7 @@ export class AppContext {
     }
 
     private async _import(): Promise<TWorkerJob> {
-        const uiElements = this._ui.layout.import.elements;
+        const uiElements = this._ui.layout.import.components;
         AppConsole.info('Importing mesh...');
 
         const payload: TToWorkerMessage = {
@@ -230,41 +228,39 @@ export class AppContext {
     }
 
     private _updateMaterialsAction() {
-        this._ui.layoutDull['materials'].elements = {};
-        this._ui.layoutDull['materials'].elementsOrder = [];
+        this._ui.layoutDull['materials'].components = {};
+        this._ui.layoutDull['materials'].componentOrder = [];
 
         if (this._materialManager.materials.size == 0) {
-            this._ui.layoutDull['materials'].elements[`placeholder_element`] = new PlaceholderElement('No materials loaded');
-            this._ui.layoutDull['materials'].elementsOrder.push(`placeholder_element`);
+            this._ui.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent('No materials loaded');
+            this._ui.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
             this._materialManager.materials.forEach((material, materialName) => {
                 if (material.type === MaterialType.solid) {
-                    this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new SolidMaterialElement(materialName, material)
+                    this._ui.layoutDull['materials'].components[`mat_${materialName}`] = new SolidMaterialComponent(materialName, material)
                         .setLabel(materialName)
                         .onChangeTypeDelegate(() => {
                             this._materialManager.changeMaterialType(materialName, MaterialType.textured);
                             this._updateMaterialsAction();
                         });
                 } else {
-                    this._ui.layoutDull['materials'].elements[`mat_${materialName}`] = new TexturedMaterialElement(materialName, material)
+                    this._ui.layoutDull['materials'].components[`mat_${materialName}`] = new TexturedMaterialComponent(materialName, material)
                         .setLabel(materialName)
                         .onChangeTypeDelegate(() => {
-                            console.log('on change type');
                             this._materialManager.changeMaterialType(materialName, MaterialType.solid);
                             this._updateMaterialsAction();
                         })
                         .onChangeTransparencyTypeDelegate((newTransparency) => {
-                            console.log('on change trans');
                             this._materialManager.changeTransparencyType(materialName, newTransparency);
                             this._updateMaterialsAction();
                         });
                 }
 
-                this._ui.layoutDull['materials'].elementsOrder.push(`mat_${materialName}`);
+                this._ui.layoutDull['materials'].componentOrder.push(`mat_${materialName}`);
             });
         }
 
-        this._ui.refreshSubcomponents(this._ui.layoutDull['materials']);
+        this._ui.refreshComponents(EAction.Materials);
     }
 
     private _renderMesh(): TWorkerJob {
@@ -302,7 +298,7 @@ export class AppContext {
     private _voxelise(): TWorkerJob {
         AppConsole.info('Loading voxel mesh...');
 
-        const uiElements = this._ui.layout.voxelise.elements;
+        const uiElements = this._ui.layout.voxelise.components;
 
         const payload: TToWorkerMessage = {
             action: 'Voxelise',
@@ -333,7 +329,7 @@ export class AppContext {
             AppConsole.info('Rendering voxel mesh...');
         }
 
-        const uiElements = this._ui.layout.voxelise.elements;
+        const uiElements = this._ui.layout.voxelise.components;
 
         const payload: TToWorkerMessage = {
             action: 'RenderNextVoxelMeshChunk',
@@ -374,7 +370,7 @@ export class AppContext {
     }
 
     private _assign(): (TWorkerJob | undefined) {
-        const uiElements = this._ui.layout.assign.elements;
+        const uiElements = this._ui.layout.assign.components;
 
         if (uiElements.blockPalette.getValue().count() <= 0) {
             AppConsole.error('No blocks selected');
@@ -417,7 +413,7 @@ export class AppContext {
             AppConsole.info('Rendering block mesh...');
         }
 
-        const uiElements = this._ui.layout.assign.elements;
+        const uiElements = this._ui.layout.assign.components;
 
         const payload: TToWorkerMessage = {
             action: 'RenderNextBlockMeshChunk',
@@ -459,7 +455,7 @@ export class AppContext {
     private _export(): (TWorkerJob | undefined) {
         AppConsole.info('Exporting structure...');
 
-        const exporterID: TExporters = this._ui.layout.export.elements.export.getValue();
+        const exporterID: TExporters = this._ui.layout.export.components.export.getValue();
         const filepath = '';
 
         const payload: TToWorkerMessage = {

@@ -9,9 +9,9 @@ export interface IInterfaceItem {
 
 /**
  * The base UI class from which user interactable DOM elements are built from.
- * Each `BaseUIElement` can be enabled/disabled.
+ * Each `BaseComponent` can be enabled/disabled.
  */
-export abstract class BaseUIElement<T> implements IInterfaceItem {
+export abstract class BaseComponent<T> implements IInterfaceItem {
     private _id: string;
     private _isEnabled: boolean;
     private _isHovered: boolean;
@@ -76,7 +76,7 @@ export abstract class BaseUIElement<T> implements IInterfaceItem {
 
     /**
      * The actual HTML that represents this UI element. It is recommended to
-     * give the outermost element that ID generated for this BaseUIElement so
+     * give the outermost element that ID generated for this BaseComponent so
      * that `getElement()` returns all elements created here.
      */
     public abstract generateHTML(): string;
@@ -93,7 +93,7 @@ export abstract class BaseUIElement<T> implements IInterfaceItem {
     }
 
     /**
-     * Returns the actual DOM element that this BaseUIElement refers to.
+     * Returns the actual DOM element that this BaseComponent refers to.
      * Calling this before the element is created (i.e. before `generateHTML`)
      * is called will throw an error.
      */
@@ -102,7 +102,7 @@ export abstract class BaseUIElement<T> implements IInterfaceItem {
     }
 
     /**
-     * Each BaseUIElement is assignd an ID that can be used a DOM element with.
+     * Each BaseComponent is assignd an ID that can be used a DOM element with.
      */
     protected _getId() {
         return this._id;

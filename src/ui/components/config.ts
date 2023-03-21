@@ -1,12 +1,11 @@
 import { ASSERT } from '../../util/error_util';
-import { UIUtil } from '../../util/ui_util';
-import { BaseUIElement } from './base_element';
+import { BaseComponent } from './base';
 
 /**
- * A `ConfigUIElement` is a UI element that has a value the user can change.
- * For example, sliders, comboboxes and checkboxes are `ConfigUIElement`.
+ * A `ConfigComponent` is a UI element that has a value the user can change.
+ * For example, sliders, comboboxes and checkboxes are `ConfigComponent`.
  */
-export abstract class ConfigUIElement<T, F> extends BaseUIElement<F> {
+export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     protected _label: string;
     private _value?: T;
     private _cachedValue?: T;

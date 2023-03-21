@@ -1,7 +1,7 @@
 import { UIUtil } from '../../util/ui_util';
-import { ConfigUIElement } from './config_element';
+import { ConfigComponent } from './config';
 
-export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement> {
+export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElement> {
     private _labelChecked: string;
     private _labelUnchecked: string;
 
@@ -22,14 +22,14 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
     }
 
     public override registerEvents(): void {
-        const checkboxElement = this._getElement();
+        const CheckboxComponent = this._getElement();
         const textElement = UIUtil.getElementById(this._getTextId());
 
-        checkboxElement.addEventListener('mouseenter', () => {
+        CheckboxComponent.addEventListener('mouseenter', () => {
             this._onMouseEnterLeave(true);
         });
 
-        checkboxElement.addEventListener('mouseleave', () => {
+        CheckboxComponent.addEventListener('mouseleave', () => {
             this._onMouseEnterLeave(false);
         });
 
@@ -41,7 +41,7 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
             this._onMouseEnterLeave(false);
         });
 
-        checkboxElement.addEventListener('click', () => {
+        CheckboxComponent.addEventListener('click', () => {
             this._onClick();
         });
 
@@ -104,11 +104,11 @@ export class CheckboxElement extends ConfigUIElement<boolean, HTMLSelectElement>
 
     protected _updateStyles() {
         {
-            const checkboxElement = UIUtil.getElementById(this._getId());
-            UIUtil.updateStyles(checkboxElement, {
+            const CheckboxComponent = UIUtil.getElementById(this._getId());
+            UIUtil.updateStyles(CheckboxComponent, {
                 isEnabled: this.enabled,
                 isHovered: this.hovered,
-                isActive: false,
+                isActive: this.getValue(),
             });
         }
         const checkboxPipElement = UIUtil.getElementById(this._getPipId());

@@ -512,7 +512,7 @@ svg {
   padding-left: 10px;
   color: var(--text-dim)
 }
-.checkbox-text-hover {
+.checkbox-text.text-light {
   cursor: pointer;
 }
 

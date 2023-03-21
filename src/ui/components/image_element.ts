@@ -1,20 +1,20 @@
-import { TImageFiletype, TImageRawWrap } from '../../texture';
+import { TImageRawWrap } from '../../texture';
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
-import { ConfigUIElement } from './config_element';
-import { ToolbarItemElement } from './toolbar_item';
+import { ConfigComponent } from './config';
+import { ToolbarItemComponent } from './toolbar_item';
 
-export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLImageElement> {
-    private _switchElement: ToolbarItemElement;
+export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTMLImageElement> {
+    private _switchElement: ToolbarItemComponent;
 
     private _imageId: string;
 
     public constructor(param?: TImageRawWrap) {
         super(Promise.resolve(param ?? { raw: '', filetype: 'png' }));
 
-        this._switchElement = new ToolbarItemElement({ id: 'sw', iconSVG: AppIcons.UPLOAD })
+        this._switchElement = new ToolbarItemComponent({ id: 'sw', iconSVG: AppIcons.UPLOAD })
             .setLabel('Choose')
             .onClick(() => {
                 const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
@@ -78,7 +78,7 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
 
     protected override _onValueChanged(): void {
         const inputElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
-        const placeholderElement = UIUtil.getElementById(this._imageId + '-placeholder');
+        const PlaceholderComponent = UIUtil.getElementById(this._imageId + '-placeholder');
 
         this.getValue()
             .then((res) => {
@@ -88,13 +88,13 @@ export class ImageElement extends ConfigUIElement<Promise<TImageRawWrap>, HTMLIm
                 this._switchElement.setActive(false);
                 inputElement.src = res.raw;
                 inputElement.style.display = 'unset';
-                placeholderElement.style.display = 'none';
+                PlaceholderComponent.style.display = 'none';
             })
             .catch((err) => {
                 this._switchElement.setActive(true);
                 inputElement.src = '';
                 inputElement.style.display = 'none';
-                placeholderElement.style.display = 'flex';
+                PlaceholderComponent.style.display = 'flex';
             });
     }
 
