@@ -156,8 +156,7 @@ export class AppContext {
         const payload: TToWorkerMessage = {
             action: 'Import',
             params: {
-                importer: 'obj',
-                fileSource: await uiElements.input.getValue(),
+                file: uiElements.input.getValue(),
                 rotation: uiElements.rotation.getValue(),
             },
         };

@@ -114,10 +114,13 @@ export class WorkerController {
             ASSERT(this._worker !== undefined, 'No worker instance');
             this._worker.postMessage(this._jobPending.payload);
         } else {
-            const result = doWork(this._jobPending.payload);
-            if (this._jobPending.callback) {
-                this._jobPending.callback(result);
-            }
+            const pendingJob = this._jobPending;
+
+            doWork(this._jobPending.payload).then((result) => {
+                if (pendingJob.callback) {
+                    pendingJob.callback(result);
+                }
+            });
         }
     }
 }

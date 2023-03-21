@@ -55,7 +55,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
         super._onEnabledChanged();
 
         this._solidButton.setEnabled(this.enabled);
-        this._texturedButton.setEnabled(this.enabled);
+        this._texturedButton.setEnabled(this.enabled && (this._material.type === MaterialType.textured || this._material.canBeTextured));
     }
 
     protected override _onValueChanged(): void {

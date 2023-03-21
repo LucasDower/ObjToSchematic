@@ -1,3 +1,5 @@
+import path from 'path';
+
 import { Atlas } from './atlas';
 import { BlockMesh } from './block_mesh';
 import { BufferGenerator } from './buffer';
@@ -69,11 +71,12 @@ export class WorkerClient {
         return {};
     }
 
-    public import(params: ImportParams.Input): ImportParams.Output {
-        const importer = ImporterFactor.GetImporter(params.importer);
-        importer.parse(params.fileSource);
+    public async import(params: ImportParams.Input): Promise<ImportParams.Output> {
+        const parsed = path.parse(params.file.name);
 
-        this._loadedMesh = importer.toMesh();
+        const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
+        this._loadedMesh = await importer.import(params.file);
+
         this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
 
         return {

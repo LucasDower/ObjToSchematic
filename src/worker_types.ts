@@ -23,8 +23,7 @@ export namespace InitParams {
 
 export namespace ImportParams {
     export type Input = {
-        importer: TImporters,
-        fileSource: string,
+        file: File,
         rotation: Vector3,
     }
 

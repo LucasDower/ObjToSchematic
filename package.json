@@ -75,6 +75,8 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
+    "@loaders.gl/core": "^3.3.1",
+    "@loaders.gl/gltf": "^3.3.1",
     "split.js": "^1.6.5"
   }
 }

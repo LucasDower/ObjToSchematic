@@ -4,18 +4,18 @@ import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 
-export class ObjFileComponent extends ConfigComponent<Promise<string>, HTMLDivElement> {
+export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
     private _loadedFilePath: string;
 
     public constructor() {
-        super(Promise.resolve(''));
+        super();
         this._loadedFilePath = '';
     }
 
     protected override _generateInnerHTML() {
         return `
             <div class="input-file struct-prop" id="${this._getId()}">
-                <input type="file" accept=".obj" style="display: none;" id="${this._getId()}-input">
+                <input type="file" accept=".obj,.gltf,.glb" style="display: none;" id="${this._getId()}-input">
                 ${this._loadedFilePath}
             </div>
         `;
@@ -40,7 +40,7 @@ export class ObjFileComponent extends ConfigComponent<Promise<string>, HTMLDivEl
                 const file = files.item(0);
                 ASSERT(file !== null);
                 this._loadedFilePath = file.name;
-                this._setValue(file.text());
+                this._setValue(file);
             }
         });
 

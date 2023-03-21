@@ -7,8 +7,7 @@ import { THeadlessConfig } from './headless';
 
 export const headlessConfig: THeadlessConfig = {
     import: {
-        importer: 'obj',
-        fileSource: fs.readFileSync('/Users/lucasdower/ObjToSchematic/res/samples/skull.obj', 'utf8'),
+        file: new File([], '/Users/lucasdower/ObjToSchematic/res/samples/skull.obj'),
         rotation: new Vector3(0, 0, 0),
     },
     voxelise: {

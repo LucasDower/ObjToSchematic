@@ -18,7 +18,7 @@ import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from './components/checkbox';
 import { ComboboxComponent, ComboBoxItem } from './components/combobox';
 import { ConfigComponent } from './components/config';
-import { ObjFileComponent } from './components/file_input';
+import { FileComponent } from './components/file_input';
 import { HeaderComponent } from './components/header';
 import { PaletteComponent } from './components/palette';
 import { SliderComponent } from './components/slider';
@@ -46,8 +46,8 @@ export class UI {
         'import': {
             label: '1. Import',
             components: {
-                'input': new ObjFileComponent()
-                    .setLabel('Wavefront .obj file'),
+                'input': new FileComponent()
+                    .setLabel('3D Model (.obj, .gltf/.glb)'),
                 'rotation': new VectorSpinboxComponent()
                     .setLabel('Rotation')
                     .setWrap(360)

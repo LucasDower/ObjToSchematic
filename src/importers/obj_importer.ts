@@ -1,14 +1,7 @@
-import path from 'path';
-
-import { RGBA, RGBAColours } from '../colour';
-import { checkFractional, checkNaN } from '../math';
-import { MaterialType, Mesh, SolidMaterial, TexturedMaterial, Tri } from '../mesh';
-import { StatusHandler } from '../status';
-import { EImageChannel, TTransparencyOptions } from '../texture';
+import { checkNaN } from '../math';
+import { Mesh, Tri } from '../mesh';
 import { UV } from '../util';
 import { AppError, ASSERT } from '../util/error_util';
-import { LOG } from '../util/log_util';
-import { LOG_ERROR } from '../util/log_util';
 import { RegExpBuilder } from '../util/regex_util';
 import { REGEX_NZ_ANY } from '../util/regex_util';
 import { REGEX_NUMBER } from '../util/regex_util';
@@ -181,27 +174,24 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    override parse(fileSource: string) {
-        this._parseOBJ(fileSource);
+    public override import(file: File): Promise<Mesh> {
+        return new Promise((res, rej) => {
+            file.text().then((fileSource) => {
+                if (fileSource.includes('�')) {
+                    rej(new AppError(`Unrecognised character found, please encode using UTF-8`));
+                }
+
+                fileSource.replace('\r', ''); // Convert Windows carriage return
+                const fileLines = fileSource.split('\n');
+
+                for (const line of fileLines) {
+                    this.parseOBJLine(line);
+                }
+
+                res(new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map()));
+            });
+        });
     }
-
-    override toMesh(): Mesh {
-        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
-    }
-
-    private _parseOBJ(fileSource: string) {
-        if (fileSource.includes('�')) {
-            throw new AppError(`Unrecognised character found, please encode <b>${path}</b> using UTF-8`);
-        }
-
-        fileSource.replace('\r', ''); // Convert Windows carriage return
-        const fileLines = fileSource.split('\n');
-
-        for (const line of fileLines) {
-            this.parseOBJLine(line);
-        }
-    }
-
     public parseOBJLine(line: string) {
         const essentialTokens = ['usemtl ', 'v ', 'vt ', 'f ', 'vn '];
 
@@ -211,7 +201,6 @@ export class ObjImporter extends IImporter {
                 try {
                     parser.delegate(match.groups);
                 } catch (error) {
-                    LOG_ERROR('Caught', error);
                     if (error instanceof AppError) {
                         throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
                     }
