@@ -44,6 +44,15 @@ export interface ToolbarGroup {
 }
 
 export class UI {
+    /* Singleton */
+    private static _instance: UI;
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    public constructor() {
+    }
+
     public uiOrder = ['import', 'materials', 'voxelise', 'assign', 'export'];
     private _ui = {
         'import': {
@@ -59,7 +68,7 @@ export class UI {
             componentOrder: ['input', 'rotation'],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Import);
+                    this._appContext?.do(EAction.Import);
                 })
                 .setLabel('Load mesh'),
         },
@@ -70,7 +79,7 @@ export class UI {
             componentOrder: [],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Materials);
+                    this._appContext?.do(EAction.Materials);
                 })
                 .setLabel('Update materials'),
         },
@@ -142,7 +151,7 @@ export class UI {
             ],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Voxelise);
+                    this._appContext?.do(EAction.Voxelise);
                 })
                 .setLabel('Voxelise mesh'),
         },
@@ -240,7 +249,7 @@ export class UI {
             ],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Assign);
+                    this._appContext?.do(EAction.Assign);
                 })
                 .setLabel('Assign blocks'),
         },
@@ -278,7 +287,7 @@ export class UI {
             execButton: new ButtonComponent()
                 .setLabel('Export structure')
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Export);
+                    this._appContext?.do(EAction.Export);
                 }),
         },
     };
@@ -403,10 +412,10 @@ export class UI {
     private _toolbarLeftDull: { [key: string]: ToolbarGroup } = this._toolbarLeft.groups;
     private _toolbarRightDull: { [key: string]: ToolbarGroup } = this._toolbarRight.groups;
 
-    private _appContext: AppContext;
+    private _appContext?: AppContext;
 
-    public constructor(appContext: AppContext) {
-        this._appContext = appContext;
+    public bindToContext(context: AppContext) {
+        this._appContext = context;
     }
 
     public tick(isBusy: boolean) {

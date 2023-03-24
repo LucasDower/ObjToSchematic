@@ -17,7 +17,6 @@ import { WorkerController } from './worker_controller';
 import { TFromWorkerMessage } from './worker_types';
 
 export class AppContext {
-    private _ui: UI;
     private _workerController: WorkerController;
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
@@ -37,16 +36,15 @@ export class AppContext {
             throw Error('Could not load WebGL context');
         }
 
-        this._ui = new UI(this);
-        this._ui.build();
-        this._ui.registerEvents();
-        //this._ui.disable(EAction.Materials);
-        this._ui.updateMaterialsAction(this._materialManager);
-        this._ui.disableAll();
+        UI.Get.bindToContext(this);
+        UI.Get.build();
+        UI.Get.registerEvents();
+        UI.Get.updateMaterialsAction(this._materialManager);
+        UI.Get.disableAll();
 
         this._workerController = new WorkerController();
         this._workerController.execute({ action: 'Init', params: {}}).then(() => {
-            this._ui.enable(EAction.Import);
+            UI.Get.enable(EAction.Import);
         });
 
         Renderer.Get.toggleIsAxesEnabled();
@@ -55,7 +53,7 @@ export class AppContext {
 
         EventManager.Get.add(EAppEvent.onTaskStart, (...data) => {
             if (this._lastAction) {
-                this._ui.getActionButton(this._lastAction)
+                UI.Get.getActionButton(this._lastAction)
                     .startLoading()
                     .setProgress(0.0);
             }
@@ -63,14 +61,14 @@ export class AppContext {
 
         EventManager.Get.add(EAppEvent.onTaskProgress, (...data) => {
             if (this._lastAction) {
-                this._ui.getActionButton(this._lastAction)
+                UI.Get.getActionButton(this._lastAction)
                     .setProgress(data[0][1]);
             }
         });
 
         EventManager.Get.add(EAppEvent.onTaskEnd, (...data) => {
             if (this._lastAction) {
-                this._ui.getActionButton(this._lastAction)
+                UI.Get.getActionButton(this._lastAction)
                     .stopLoading()
                     .setProgress(0.0);
             }
@@ -81,7 +79,7 @@ export class AppContext {
 
     private async _import(): Promise<boolean> {
         // Gather data from the UI to send to the worker
-        const components = this._ui.layout.import.components;
+        const components = UI.Get.layout.import.components;
 
         AppConsole.info('Importing mesh...');
         {
@@ -94,7 +92,7 @@ export class AppContext {
                 },
             });
 
-            this._ui.getActionButton(EAction.Import).resetLoading();
+            UI.Get.getActionButton(EAction.Import).resetLoading();
             if (this._handleErrors(resultImport)) {
                 return false;
             }
@@ -106,7 +104,7 @@ export class AppContext {
             this.maxConstraint = Vector3.copy(resultImport.result.dimensions)
                 .mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this._materialManager = new MaterialMapManager(resultImport.result.materials);
-            this._ui.updateMaterialsAction(this._materialManager);
+            UI.Get.updateMaterialsAction(this._materialManager);
         }
 
         AppConsole.info('Rendering mesh...');
@@ -117,7 +115,7 @@ export class AppContext {
                 params: {},
             });
 
-            this._ui.getActionButton(EAction.Import).resetLoading();
+            UI.Get.getActionButton(EAction.Import).resetLoading();
             if (this._handleErrors(resultRender)) {
                 return false;
             }
@@ -143,7 +141,7 @@ export class AppContext {
                 },
             });
 
-            this._ui.getActionButton(EAction.Materials).resetLoading();
+            UI.Get.getActionButton(EAction.Materials).resetLoading();
             if (this._handleErrors(resultMaterials)) {
                 return false;
             }
@@ -165,7 +163,7 @@ export class AppContext {
 
     private async _voxelise(): Promise<boolean> {
         // Gather data from the UI to send to the worker
-        const components = this._ui.layout.voxelise.components;
+        const components = UI.Get.layout.voxelise.components;
 
         AppConsole.info('Loading voxel mesh...');
         {
@@ -182,7 +180,7 @@ export class AppContext {
                 },
             });
 
-            this._ui.getActionButton(EAction.Voxelise).resetLoading();
+            UI.Get.getActionButton(EAction.Voxelise).resetLoading();
             if (this._handleErrors(resultVoxelise)) {
                 return false;
             }
@@ -205,7 +203,7 @@ export class AppContext {
                     },
                 });
 
-                this._ui.getActionButton(EAction.Voxelise).resetLoading();
+                UI.Get.getActionButton(EAction.Voxelise).resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -224,7 +222,7 @@ export class AppContext {
 
     private async _assign(): Promise<boolean> {
         // Gather data from the UI to send to the worker
-        const components = this._ui.layout.assign.components;
+        const components = UI.Get.layout.assign.components;
 
         AppConsole.info('Loading block mesh...');
         {
@@ -245,7 +243,7 @@ export class AppContext {
                 },
             });
 
-            this._ui.getActionButton(EAction.Assign).resetLoading();
+            UI.Get.getActionButton(EAction.Assign).resetLoading();
             if (this._handleErrors(resultAssign)) {
                 return false;
             }
@@ -267,7 +265,7 @@ export class AppContext {
                     },
                 });
 
-                this._ui.getActionButton(EAction.Assign).resetLoading();
+                UI.Get.getActionButton(EAction.Assign).resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -286,7 +284,7 @@ export class AppContext {
 
     private async _export(): Promise<boolean> {
         // Gather data from the UI to send to the worker
-        const components = this._ui.layout.export.components;
+        const components = UI.Get.layout.export.components;
 
         AppConsole.info('Exporting structure...');
         {
@@ -299,7 +297,7 @@ export class AppContext {
                 },
             });
 
-            this._ui.getActionButton(EAction.Export).resetLoading();
+            UI.Get.getActionButton(EAction.Export).resetLoading();
             if (this._handleErrors(resultExport)) {
                 return false;
             }
@@ -331,15 +329,15 @@ export class AppContext {
 
     public async do(action: EAction) {
         // Disable the UI while the worker is working
-        this._ui.disableAll();
+        UI.Get.disableAll();
 
         this._lastAction = action;
         
         const success = await this._executeAction(action);
         if (success) {
-            this._ui.enableTo(action + 1);
+            UI.Get.enableTo(action + 1);
         } else {
-            this._ui.enableTo(action);
+            UI.Get.enableTo(action);
         }
     }
 
@@ -367,7 +365,7 @@ export class AppContext {
 
     public draw() {
         Renderer.Get.update();
-        this._ui.tick(this._workerController.isBusy());
+        UI.Get.tick(this._workerController.isBusy());
         Renderer.Get.draw();
     }
 }
