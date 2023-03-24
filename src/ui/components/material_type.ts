@@ -14,6 +14,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
 
         this._solidButton = new ToolbarItemComponent({ id: 'sw1', iconSVG: AppIcons.COLOUR_SWATCH })
             .setLabel('Solid')
+            .setGrow()
             .onClick(() => {
                 if (this._material.type === MaterialType.textured) {
                     this._onClickChangeTypeDelegate?.();
@@ -22,6 +23,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
 
         this._texturedButton = new ToolbarItemComponent({ id: 'sw2', iconSVG: AppIcons.IMAGE })
             .setLabel('Textured')
+            .setGrow()
             .onClick(() => {
                 if (this._material.type === MaterialType.solid) {
                     this._onClickChangeTypeDelegate?.();

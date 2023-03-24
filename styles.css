@@ -29,6 +29,10 @@
 
   --border-radius: 5px;
   --property-height: 32px;
+
+  --font-size-big: 14.96px;
+  --font-size-standard: 13.6px;
+  --font-size-small: 12.24px
 }
 
 * {
@@ -96,7 +100,7 @@ canvas {
 
 .column-console {
   background: hsl(0, 0%, 5%);
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   color: var(--text-dim);
   font-family: 'Courier Prime';
 }
@@ -129,7 +133,7 @@ canvas {
   flex-direction: row;
   align-items: center;
   color: var(--text-standard);
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   padding: 5px 0px;
   border-bottom: 2px solid var(--gray-350);
 }
@@ -151,7 +155,7 @@ canvas {
   flex-direction: row;
   align-items: center;
   color: var(--text-standard);
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   padding: 5px 0px;
   margin: 0px;
 }
@@ -166,7 +170,7 @@ canvas {
 .group-heading {
   color: var(--gray-700);
   letter-spacing: 4px;
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   padding: 12px 0px;
 }
 
@@ -190,7 +194,7 @@ canvas {
 input {
   font-family: 'Rubik', sans-serif;
   text-align: center;
-  font-size: inherit;
+  font-size: var(--font-size-standard);
   outline: none;
 }
 input::-webkit-outer-spin-button,
@@ -264,7 +268,7 @@ select {
   border-color: var(--gray-500);
   color: var(--text-dark);
   background: var(--gray-400);
-  cursor: default;
+  cursor: inherit;
 }
 .style-inactive-enabled {
   border-color: var(--gray-600);
@@ -282,7 +286,7 @@ select {
   border-color: var(--blue-450);
   color: var(--text-dim);
   background: var(--blue-400);
-  cursor: default;
+  cursor: inherit;
 }
 .style-active-enabled {
   border-color: var(--blue-600);
@@ -325,7 +329,7 @@ select {
 
 .spinbox-key {
   color: #ffffffb9;
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   padding-right: 5px;
 }
 
@@ -383,9 +387,9 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0px 8px 0px 8px;
+  padding: 0px;
   text-align: center;
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   pointer-events: all;
   gap: 2px;
 }
@@ -569,11 +573,11 @@ svg {
 }
 
 .title {
-  font-size: 110%;
+  font-size: var(--font-size-big);
 }
 
 .subtitle {
-  font-size: 90%;
+  font-size: var(--font-size-small);
   color: var(--text-dim);
 }
 
@@ -582,7 +586,7 @@ svg {
   justify-content: space-between;
   width: 100%;
   color: var(--text-standard);
-  font-size: 85%;
+  font-size: var(--font-size-standard);
   padding-top: 5px;
 }
 

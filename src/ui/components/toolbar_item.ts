@@ -14,11 +14,13 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
     private _label: string;
     private _onClick?: () => void;
     private _isActive: boolean;
+    private _grow: boolean;
 
     public constructor(params: TToolbarItemParams) {
         super();
 
         this._isActive = false;
+        this._grow = false;
 
         {
             const parser = new DOMParser();
@@ -33,6 +35,10 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
         this._label = '';
     }
 
+    public setGrow() {
+        this._grow = true;
+        return this;
+    }
 
     public setActive(isActive: boolean) {
         this._isActive = isActive;
@@ -85,11 +91,19 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
     }
 
     public generateHTML() {
-        return `
-            <div class="struct-prop container-icon-button" id="${this._getId()}">
-                ${this._iconSVG.outerHTML} ${this._label}
-            </div>
-        `;
+        if (this._grow) {
+            return `
+                <div class="struct-prop container-icon-button" style="width: unset; flex-grow: 1;" id="${this._getId()}">
+                    ${this._iconSVG.outerHTML} ${this._label}
+                </div>
+            `;
+        } else {
+            return `
+                <div class="struct-prop container-icon-button" style="aspect-ratio: 1;" id="${this._getId()}">
+                    ${this._iconSVG.outerHTML} ${this._label}
+                </div>
+            `;
+        }
     }
 
     public registerEvents(): void {

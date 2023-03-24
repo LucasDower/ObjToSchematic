@@ -27,6 +27,7 @@ export class ArcballCamera {
     private _azimuthRelief = 0.0;
     private _elevationRelief = 0.0;
     private _isAngleSnapped = false;
+    private _angleSnap = true;
 
     private _gl: WebGLRenderingContext;
 
@@ -80,7 +81,6 @@ export class ArcballCamera {
         this._isPerspective = mode === 'perspective';
     }
 
-    private _angleSnap = false;
     public toggleAngleSnap() {
         this._angleSnap = !this._angleSnap;
 

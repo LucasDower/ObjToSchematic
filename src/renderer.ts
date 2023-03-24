@@ -114,7 +114,7 @@ export class Renderer {
         this._debugBuffers[MeshType.BlockMesh] = {};
 
         this._isGridComponentEnabled = {};
-        this._axesEnabled = false;
+        this._axesEnabled = true;
         this._nightVisionEnabled = true;
 
         this._axisBuffer = new RenderBuffer([

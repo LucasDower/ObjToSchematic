@@ -23,6 +23,7 @@ export class AppContext {
     private _materialManager: MaterialMapManager;
 
     public constructor() {
+        AppConsole.info('Initialising...');
         this._materialManager = new MaterialMapManager(new Map());
 
         Logger.Get.enableLOG();
@@ -30,12 +31,13 @@ export class AppContext {
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
+        EventManager.Get.bindToContext(this);
 
         const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
         if (!gl) {
             throw Error('Could not load WebGL context');
         }
-
+        
         UI.Get.bindToContext(this);
         UI.Get.build();
         UI.Get.registerEvents();
@@ -45,36 +47,14 @@ export class AppContext {
         this._workerController = new WorkerController();
         this._workerController.execute({ action: 'Init', params: {}}).then(() => {
             UI.Get.enable(EAction.Import);
+            AppConsole.success('Ready');
         });
 
-        Renderer.Get.toggleIsAxesEnabled();
-        ArcballCamera.Get.setCameraMode('perspective');
         ArcballCamera.Get.toggleAngleSnap();
+    }
 
-        EventManager.Get.add(EAppEvent.onTaskStart, (...data) => {
-            if (this._lastAction) {
-                UI.Get.getActionButton(this._lastAction)
-                    .startLoading()
-                    .setProgress(0.0);
-            }
-        });
-
-        EventManager.Get.add(EAppEvent.onTaskProgress, (...data) => {
-            if (this._lastAction) {
-                UI.Get.getActionButton(this._lastAction)
-                    .setProgress(data[0][1]);
-            }
-        });
-
-        EventManager.Get.add(EAppEvent.onTaskEnd, (...data) => {
-            if (this._lastAction) {
-                UI.Get.getActionButton(this._lastAction)
-                    .stopLoading()
-                    .setProgress(0.0);
-            }
-        });
-
-        AppConsole.info('Ready');
+    public getLastAction() {
+        return this._lastAction;
     }
 
     private async _import(): Promise<boolean> {
