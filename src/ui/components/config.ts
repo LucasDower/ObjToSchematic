@@ -8,7 +8,6 @@ import { BaseComponent } from './base';
 export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     protected _label: string;
     private _value?: T;
-    private _cachedValue?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
     private _onEnabledChangedListeners: Array<(isEnabled: boolean) => void>;
 
@@ -28,20 +27,6 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     public setLabel(label: string) {
         this._label = label;
         return this;
-    }
-
-    /**
-     * Caches the current value.
-     */
-    public cacheValue() {
-        this._cachedValue = this._value;
-    }
-
-    /**
-     * Returns whether the value stored is different from the cached value.
-     */
-    public hasChanged() {
-        return this._cachedValue !== this._value;
     }
 
     /**

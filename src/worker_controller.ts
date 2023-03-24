@@ -1,6 +1,6 @@
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
-import { ASSERT } from './util/error_util';
+import { AppError, ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { doWork } from './worker';
 // @ts-ignore
@@ -31,6 +31,19 @@ export class WorkerController {
         this._jobQueue = [];
         this._jobStartTime = 0;
         this._timerOn = false;
+    }
+
+    public async execute(payload: TToWorkerMessage): Promise<TFromWorkerMessage> {
+        return new Promise((res, rej) => {
+            const success = this.addJob({
+                id: 'ExecuteJob',
+                payload: payload,
+                callback: res,
+            });
+            if (!success) {
+                rej(new AppError('Already performing a job'));
+            }
+        });
     }
 
     public addJob(newJob: TWorkerJob): boolean {

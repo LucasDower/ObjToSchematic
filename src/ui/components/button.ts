@@ -69,6 +69,11 @@ export class ButtonComponent extends BaseComponent<HTMLDivElement> {
         return this;
     }
 
+    public resetLoading() {
+        this.stopLoading();
+        this.setProgress(0.0);
+    }
+
     public override generateHTML() {
         return `
             <div class="container-button">

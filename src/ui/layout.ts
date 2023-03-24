@@ -4,11 +4,11 @@ import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
 import { TExporters } from '../exporters/exporters';
-import { PaletteManager, TPalettes } from '../palette';
+import { MaterialMapManager } from '../material-map';
+import { MaterialType } from '../mesh';
 import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
-import { LOG } from '../util/log_util';
 import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
 import { UIUtil } from '../util/ui_util';
@@ -16,12 +16,15 @@ import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
 import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from './components/checkbox';
-import { ComboboxComponent, ComboBoxItem } from './components/combobox';
+import { ComboboxComponent } from './components/combobox';
 import { ConfigComponent } from './components/config';
 import { FileComponent } from './components/file_input';
 import { HeaderComponent } from './components/header';
 import { PaletteComponent } from './components/palette';
+import { PlaceholderComponent } from './components/placeholder';
 import { SliderComponent } from './components/slider';
+import { SolidMaterialComponent } from './components/solid_material';
+import { TexturedMaterialComponent } from './components/textured_material';
 import { ToolbarItemComponent } from './components/toolbar_item';
 import { VectorSpinboxComponent } from './components/vector_spinbox';
 import { AppConsole } from './console';
@@ -513,15 +516,6 @@ export class UI {
     }
 
     /**
-     * Caches the current value of each component in an action group.
-     */
-    public cacheValues(action: EAction) {
-        this._forEachComponent(action, (component) => {
-            component.cacheValue();
-        });
-    }
-
-    /**
      * Rebuilds the HTML for all components in an action group.
      */
     public refreshComponents(action: EAction) {
@@ -630,11 +624,11 @@ export class UI {
      */
     public disable(action: EAction) {
         for (let i = action; i < EAction.MAX; ++i) {
-            this._forEachComponent(action, (component) => {
+            this._forEachComponent(i, (component) => {
                 component.setEnabled(false);
             });
 
-            this._getGroup(action).execButton.setEnabled(false);
+            this._getGroup(i).execButton.setEnabled(false);
         }
     }
 
@@ -651,5 +645,41 @@ export class UI {
     private _getGroup(action: EAction): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
+    }
+
+    public updateMaterialsAction(materialManager: MaterialMapManager) {
+        this.layout.materials.components = {};
+        this.layout.materials.componentOrder = [];
+
+        if (materialManager.materials.size == 0) {
+            this.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent('No materials loaded');
+            this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
+        } else {
+            materialManager.materials.forEach((material, materialName) => {
+                if (material.type === MaterialType.solid) {
+                    this.layoutDull['materials'].components[`mat_${materialName}`] = new SolidMaterialComponent(materialName, material)
+                        .setLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            materialManager.changeMaterialType(materialName, MaterialType.textured);
+                            this.updateMaterialsAction(materialManager);
+                        });
+                } else {
+                    this.layoutDull['materials'].components[`mat_${materialName}`] = new TexturedMaterialComponent(materialName, material)
+                        .setLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            materialManager.changeMaterialType(materialName, MaterialType.solid);
+                            this.updateMaterialsAction(materialManager);
+                        })
+                        .onChangeTransparencyTypeDelegate((newTransparency) => {
+                            materialManager.changeTransparencyType(materialName, newTransparency);
+                            this.updateMaterialsAction(materialManager);
+                        });
+                }
+
+                this.layoutDull['materials'].componentOrder.push(`mat_${materialName}`);
+            });
+        }
+
+        this.refreshComponents(EAction.Materials);
     }
 }
