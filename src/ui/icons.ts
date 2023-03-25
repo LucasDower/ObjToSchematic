@@ -248,4 +248,11 @@ export namespace AppIcons {
             <path d="M16.32 12.34c.577 -.059 1.162 .162 1.68 .66l2 2" />
         </svg>
     `;
+
+    export const SLICE = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-slice" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M3 19l15 -15l3 3l-6 6l2 2a14 14 0 0 1 -14 4" />
+        </svg>
+    `;
 }

@@ -7,11 +7,9 @@ import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
 import { ImporterFactor } from './importers/importers';
-import { ObjImporter } from './importers/obj_importer';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
 import { ASSERT } from './util/error_util';
-import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
@@ -191,7 +189,7 @@ export class WorkerClient {
 
         return {
             buffer: buffer,
-            dimensions: this._loadedBlockMesh.getVoxelMesh().getBounds().getDimensions(),
+            bounds: this._loadedBlockMesh.getVoxelMesh().getBounds(),
             atlasTexturePath: atlas.getAtlasTexturePath(),
             atlasSize: atlas.getAtlasSize(),
             moreBlocksToBuffer: buffer.moreBlocksToBuffer,
@@ -219,15 +217,11 @@ export class WorkerClient {
         ASSERT(this._loadedBlockMesh !== undefined);
 
         const exporter: IExporter = ExporterFactory.GetExporter(params.exporter);
-        const fileExtension = '.' + exporter.getFileExtension();
-        if (!params.filepath.endsWith(fileExtension)) {
-            params.filepath += fileExtension;
-        }
-        const buffer = exporter.export(this._loadedBlockMesh, params.filepath);
+        const buffer = exporter.export(this._loadedBlockMesh);
 
         return {
             buffer: buffer,
-            extension: exporter.getFileExtension(),
+            extension: exporter.getFormatFilter().extension,
         };
     }
 }

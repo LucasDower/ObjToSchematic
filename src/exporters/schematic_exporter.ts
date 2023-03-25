@@ -11,12 +11,25 @@ import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
 export class Schematic extends IExporter {
-    private _convertToNBT(blockMesh: BlockMesh) {
-        const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
+    public override getFormatFilter() {
+        return {
+            name: 'Schematic',
+            extension: 'schematic',
+        };
+    }
 
+    public override export(blockMesh: BlockMesh) {
+        const nbt = this._convertToNBT(blockMesh);
+        return saveNBT(nbt);
+    }
+
+    private _convertToNBT(blockMesh: BlockMesh): NBT {
+        const bounds = blockMesh.getVoxelMesh().getBounds();
+        const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
+
+        const bufferSize = sizeVector.x * sizeVector.y * sizeVector.z;
         const blocksData = Array<number>(bufferSize);
         const metaData = Array<number>(bufferSize);
-        const bounds = blockMesh.getVoxelMesh().getBounds();
 
         // TODO Unimplemented
         const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = BLOCK_IDS;
@@ -26,7 +39,7 @@ export class Schematic extends IExporter {
         let numBlocksUnsupported = 0;
         for (const block of blocks) {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
-            const index = this._getBufferIndex(indexVector, this._sizeVector);
+            const index = this._getBufferIndex(indexVector, sizeVector);
             if (block.blockInfo.name in schematicBlocks) {
                 const schematicBlock = schematicBlocks[block.blockInfo.name];
                 blocksData[index] = new Int8Array([schematicBlock.id])[0];
@@ -51,9 +64,9 @@ export class Schematic extends IExporter {
             type: TagType.Compound,
             name: 'Schematic',
             value: {
-                Width: { type: TagType.Short, value: this._sizeVector.x },
-                Height: { type: TagType.Short, value: this._sizeVector.y },
-                Length: { type: TagType.Short, value: this._sizeVector.z },
+                Width: { type: TagType.Short, value: sizeVector.x },
+                Height: { type: TagType.Short, value: sizeVector.y },
+                Length: { type: TagType.Short, value: sizeVector.z },
                 Materials: { type: TagType.String, value: 'Alpha' },
                 Blocks: { type: TagType.ByteArray, value: blocksData },
                 Data: { type: TagType.ByteArray, value: metaData },
@@ -65,30 +78,7 @@ export class Schematic extends IExporter {
         return nbt;
     }
 
-    _getBufferIndex(vec: Vector3, sizeVector: Vector3) {
+    private _getBufferIndex(vec: Vector3, sizeVector: Vector3) {
         return (sizeVector.z * sizeVector.x * vec.y) + (sizeVector.x * vec.z) + vec.x;
-    }
-
-    getFormatFilter() {
-        return {
-            name: this.getFormatName(),
-            extensions: ['schematic'],
-        };
-    }
-
-    getFormatName() {
-        return 'Schematic';
-    }
-
-    getFileExtension(): string {
-        return 'schematic';
-    }
-
-    public override export(blockMesh: BlockMesh, filePath: string) {
-        const bounds = blockMesh.getVoxelMesh().getBounds();
-        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
-
-        const nbt = this._convertToNBT(blockMesh);
-        return saveNBT(nbt, filePath);
     }
 }

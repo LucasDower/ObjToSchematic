@@ -1,6 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import VANILLA_TEXTURE from '../res/atlases/vanilla.png';
+import { Bounds } from './bounds';
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from './colour';
 import { AppConfig } from './config';
@@ -8,7 +9,7 @@ import { DebugGeometryTemplates } from './geometry';
 import { MaterialType, SolidMaterial, TexturedMaterial } from './mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { EImageChannel, Texture } from './texture';
+import { EImageChannel } from './texture';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
@@ -63,6 +64,7 @@ export class Renderer {
     private _meshToUse: MeshType = MeshType.None;
     private _voxelSize: number = 1.0;
     private _gridOffset: Vector3 = new Vector3(0, 0, 0);
+    private _sliceHeight: number = 0.0;
 
     private _modelsAvailable: number;
 
@@ -74,12 +76,14 @@ export class Renderer {
     }>;
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
+    private _blockBounds: Bounds;
     private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
     private _nightVisionEnabled: boolean;
+    private _sliceViewEnabled: boolean;
 
     private _gridBuffers: {
         x: { [meshType: string]: RenderBuffer };
@@ -116,6 +120,9 @@ export class Renderer {
         this._isGridComponentEnabled = {};
         this._axesEnabled = true;
         this._nightVisionEnabled = true;
+        this._sliceViewEnabled = false;
+
+        this._blockBounds = new Bounds(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
 
         this._axisBuffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
@@ -149,6 +156,34 @@ export class Renderer {
     }
 
     // /////////////////////////////////////////////////////////////////////////
+
+    public isSliceViewerEnabled() {
+        return this._sliceViewEnabled && this._meshToUse === MeshType.BlockMesh;
+    }
+
+    public toggleSliceViewerEnabled() {
+        this._sliceViewEnabled = !this._sliceViewEnabled;
+    }
+
+    public canIncrementSliceHeight() {
+        return this._blockBounds.max.y > this._sliceHeight;
+    }
+
+    public canDecrementSliceHeight() {
+        return this._blockBounds.min.y < this._sliceHeight;
+    }
+
+    public incrementSliceHeight() {
+        if (this.canIncrementSliceHeight()) {
+            ++this._sliceHeight;
+        }
+    }
+
+    public decrementSliceHeight() {
+        if (this.canDecrementSliceHeight()) {
+            --this._sliceHeight;
+        }
+    }
 
     private _lightingAvailable: boolean = false;
     public setLightingAvailable(isAvailable: boolean) {
@@ -370,6 +405,15 @@ export class Renderer {
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._blockBuffer = [];
+
+            // re-create objects, due to serialization.
+            const min = new Vector3(0, 0, 0);
+            const max = new Vector3(0, 0, 0);
+            min.setFrom(params.bounds['_min']);
+            max.setFrom(params.bounds['_max']);
+
+            this._blockBounds = new Bounds(min, max);
+            this._sliceHeight = this._blockBounds.min.y;
         }
 
         this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
@@ -434,6 +478,7 @@ export class Renderer {
                 if (gridBuffer !== undefined) {
                     this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                        u_worldOffset: [0, this._sliceViewEnabled ? this._sliceHeight * this._voxelSize: 0, 0],
                     });
                 }
             }
@@ -504,6 +549,7 @@ export class Renderer {
             u_atlasSize: this._atlasSize,
             u_gridOffset: this._gridOffset.toArray(),
             u_nightVision: this.isNightVisionEnabled(),
+            u_sliceHeight: this._sliceViewEnabled ? this._sliceHeight : Infinity,
         };
         this._blockBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);

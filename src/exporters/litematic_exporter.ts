@@ -3,48 +3,60 @@ import { NBT, TagType } from 'prismarine-nbt';
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { ceilToNearest } from '../math';
+import { AppTypes } from '../util';
 import { ASSERT } from '../util/error_util';
-import { download } from '../util/file_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
 type BlockID = number;
 type long = [number, number];
-
-interface BlockMapping {
-    [name: string]: BlockID
-}
+type BlockMapping = Map<AppTypes.TNamespacedBlockName, BlockID>;
 
 export class Litematic extends IExporter {
-    // XZY
-    private _getBufferIndex(vec: Vector3) {
-        return (this._sizeVector.z * this._sizeVector.x * vec.y) + (this._sizeVector.x * vec.z) + vec.x;
+    public override getFormatFilter() {
+        return {
+            name: 'Litematic',
+            extension: 'litematic',
+        };
+    }
+
+    public override export(blockMesh: BlockMesh) {
+        const nbt = this._convertToNBT(blockMesh);
+        return saveNBT(nbt);
     }
 
     /**
-     * Create a mapping from block names to their respecitve index in the block state palette
+     * Create a mapping from block names to their respecitve index in the block state palette.
      */
     private _createBlockMapping(blockMesh: BlockMesh): BlockMapping {
-        const blockMapping: BlockMapping = { 'minecraft:air': 0 };
+        const blockMapping: BlockMapping = new Map();
+        blockMapping.set('minecraft:air', 0);
 
         blockMesh.getBlockPalette().forEach((blockName, index) => {
-            blockMapping[blockName] = index + 1;
+            blockMapping.set(blockName, index + 1);
         });
 
         return blockMapping;
     }
 
+    /**
+     * Pack the blocks into a buffer that's the dimensions of the block mesh.
+     */
     private _createBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping): Uint32Array {
-        const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
-        const bounds = blockMesh.getVoxelMesh().getBounds();
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
-        const buffer = new Uint32Array(bufferSize);
+        const buffer = new Uint32Array(sizeVector.x * sizeVector.y * sizeVector.z);
 
         blockMesh.getBlocks().forEach((block) => {
             const indexVector = Vector3.sub(block.voxel.position, bounds.min);
-            const bufferIndex = this._getBufferIndex(indexVector);
-            buffer[bufferIndex] = blockMapping[block.blockInfo.name || 'minecraft:air'];
+            const bufferIndex = (sizeVector.z * sizeVector.x * indexVector.y) + (sizeVector.x * indexVector.z) + indexVector.x; // XZY ordering
+
+            const mappingIndex = blockMapping.get(block.blockInfo.name);
+            ASSERT(mappingIndex !== undefined, 'Invalid mapping index');
+
+            buffer[bufferIndex] = mappingIndex;
         });
 
         return buffer;
@@ -87,9 +99,9 @@ export class Litematic extends IExporter {
     private _encodeBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping) {
         const blockBuffer = this._createBlockBuffer(blockMesh, blockMapping);
 
-        const paletteSize = Object.keys(blockMapping).length;
+        const paletteSize = blockMapping.size;
         const stride = Math.ceil(Math.log2(paletteSize - 1));
-        ASSERT(stride >= 1, 'Stride too small');
+        ASSERT(stride >= 1, `Stride too small: ${stride}`);
 
         const expectedLengthBits = blockBuffer.length * stride;
         const requiredLengthBits = ceilToNearest(expectedLengthBits, 64);
@@ -136,17 +148,19 @@ export class Litematic extends IExporter {
     private _createBlockStatePalette(blockMapping: BlockMapping) {
         const blockStatePalette = Array(Object.keys(blockMapping).length);
 
-        for (const blockName of Object.keys(blockMapping)) {
-            const index = blockMapping[blockName];
+        blockMapping.forEach((index, blockName) => {
             blockStatePalette[index] = { Name: { type: TagType.String, value: blockName } };
-        }
+        });
         blockStatePalette[0] = { Name: { type: TagType.String, value: 'minecraft:air' } };
 
         return blockStatePalette;
     }
 
     private _convertToNBT(blockMesh: BlockMesh) {
-        const bufferSize = this._sizeVector.x * this._sizeVector.y * this._sizeVector.z;
+        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+        const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
+
+        const bufferSize = sizeVector.x * sizeVector.y * sizeVector.z;
         const blockMapping = this._createBlockMapping(blockMesh);
 
         const blockStates = this._createBlockStates(blockMesh, blockMapping);
@@ -163,9 +177,9 @@ export class Litematic extends IExporter {
                         Description: { type: TagType.String, value: '' },
                         Size: {
                             type: TagType.Compound, value: {
-                                x: { type: TagType.Int, value: this._sizeVector.x },
-                                y: { type: TagType.Int, value: this._sizeVector.y },
-                                z: { type: TagType.Int, value: this._sizeVector.z },
+                                x: { type: TagType.Int, value: sizeVector.x },
+                                y: { type: TagType.Int, value: sizeVector.y },
+                                z: { type: TagType.Int, value: sizeVector.z },
                             },
                         },
                         Name: { type: TagType.String, value: '' },
@@ -192,9 +206,9 @@ export class Litematic extends IExporter {
                                 BlockStatePalette: { type: TagType.List, value: { type: TagType.Compound, value: blockStatePalette } },
                                 Size: {
                                     type: TagType.Compound, value: {
-                                        x: { type: TagType.Int, value: this._sizeVector.x },
-                                        y: { type: TagType.Int, value: this._sizeVector.y },
-                                        z: { type: TagType.Int, value: this._sizeVector.z },
+                                        x: { type: TagType.Int, value: sizeVector.x },
+                                        y: { type: TagType.Int, value: sizeVector.y },
+                                        z: { type: TagType.Int, value: sizeVector.z },
                                     },
                                 },
                                 PendingFluidTicks: { type: TagType.List, value: { type: TagType.Int, value: [] } },
@@ -210,28 +224,5 @@ export class Litematic extends IExporter {
         };
 
         return nbt;
-    }
-
-    getFormatFilter() {
-        return {
-            name: this.getFormatName(),
-            extensions: ['litematic'],
-        };
-    }
-
-    getFormatName() {
-        return 'Litematic';
-    }
-
-    getFileExtension(): string {
-        return 'litematic';
-    }
-
-    public override export(blockMesh: BlockMesh, filePath: string) {
-        const bounds = blockMesh.getVoxelMesh()?.getBounds();
-        this._sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
-
-        const nbt = this._convertToNBT(blockMesh);
-        return saveNBT(nbt, filePath);
     }
 }

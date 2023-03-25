@@ -1,8 +1,8 @@
 import { FallableBehaviour } from './block_mesh';
+import { Bounds } from './bounds';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
-import { TImporters } from './importers/importers';
 import { MaterialMap } from './mesh';
 import { TMessage } from './ui/console';
 import { ColourSpace } from './util';
@@ -130,7 +130,7 @@ export namespace RenderNextBlockMeshChunkParams {
 
     export type Output = {
         buffer: TBlockMeshBufferDescription,
-        dimensions: Vector3,
+        bounds: Bounds,
         atlasTexturePath: string,
         atlasSize: number,
         moreBlocksToBuffer: boolean,
@@ -155,7 +155,6 @@ export namespace RenderBlockMeshParams {
 
 export namespace ExportParams {
     export type Input = {
-        filepath: string,
         exporter: TExporters,
     }
 

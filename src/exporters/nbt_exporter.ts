@@ -11,20 +11,12 @@ import { IExporter } from './base_exporter';
 export class NBTExporter extends IExporter {
     public override getFormatFilter() {
         return {
-            name: this.getFormatName(),
-            extensions: ['nbt'],
+            name: 'Structure Blocks',
+            extension: 'nbt',
         };
     }
 
-    public override getFormatName() {
-        return 'Structure Blocks';
-    }
-
-    public override getFileExtension(): string {
-        return 'nbt';
-    }
-
-    public override export(blockMesh: BlockMesh, filePath: string) {
+    public override export(blockMesh: BlockMesh) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -100,10 +92,6 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        return saveNBT(nbt, filePath);
-    }
-
-    private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {
-        return vec.x + (vec.z * dimensions.x) + (vec.y * dimensions.x * dimensions.z);
+        return saveNBT(nbt);
     }
 }

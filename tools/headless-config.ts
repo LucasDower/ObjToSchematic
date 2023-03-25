@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
 import { ColourSpace } from '../src/util';
 import { Vector3 } from '../src/vector';
@@ -31,8 +29,7 @@ export const headlessConfig: THeadlessConfig = {
         errorWeight: 0.0,
     },
     export: {
-        filepath: '/Users/lucasdower/Documents/out.obj', // Must be an absolute path to the file (can be anywhere)
-        exporter: 'obj', // 'schematic' / 'litematic',
+        exporter: 'litematic', // 'schematic' / 'litematic',
     },
     debug: {
         showLogs: true,

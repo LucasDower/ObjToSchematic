@@ -272,7 +272,6 @@ export class AppContext {
             const resultExport = await this._workerController.execute({
                 action: 'Export',
                 params: {
-                    filepath: '',
                     exporter: components.export.getValue(),
                 },
             });
@@ -315,7 +314,11 @@ export class AppContext {
         
         const success = await this._executeAction(action);
         if (success) {
-            UI.Get.enableTo(action + 1);
+            if (action === EAction.Import) {
+                UI.Get.enableTo(EAction.Voxelise);
+            } else {
+                UI.Get.enableTo(action + 1);
+            }
         } else {
             UI.Get.enableTo(action);
         }

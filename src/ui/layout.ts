@@ -361,9 +361,39 @@ export class UI {
                 },
                 componentOrder: ['grid', 'axes', 'night-vision'],
             },
-
+            'sliceHeight': {
+                components: {
+                    'slice': new ToolbarItemComponent({ id: 'slice', iconSVG: AppIcons.SLICE })
+                        .onClick(() => {
+                            Renderer.Get.toggleSliceViewerEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.BlockMesh;
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isSliceViewerEnabled();
+                        }),
+                    'plus': new ToolbarItemComponent({ id: 'plus', iconSVG: AppIcons.PLUS })
+                        .onClick(() => {
+                            Renderer.Get.incrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canIncrementSliceHeight();
+                        }),
+                    'minus': new ToolbarItemComponent({ id: 'minus', iconSVG: AppIcons.MINUS })
+                        .onClick(() => {
+                            Renderer.Get.decrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canDecrementSliceHeight();
+                        }),
+                },
+                componentOrder: ['slice', 'plus', 'minus'],
+            },
         },
-        groupsOrder: ['viewmode', 'debug'],
+        groupsOrder: ['viewmode', 'debug', 'sliceHeight'],
     };
 
     private _toolbarRight = {

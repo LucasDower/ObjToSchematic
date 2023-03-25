@@ -3,7 +3,6 @@ import { NBT, TagType } from 'prismarine-nbt';
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { AppUtil } from '../util';
-import { download } from '../util/file_util';
 import { LOG } from '../util/log_util';
 import { MathUtil } from '../util/math_util';
 import { saveNBT } from '../util/nbt_util';
@@ -11,24 +10,16 @@ import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
 export class SchemExporter extends IExporter {
+    private static SCHEMA_VERSION = 2;
+
     public override getFormatFilter() {
         return {
-            name: this.getFormatName(),
-            extensions: ['schem'],
+            name: 'Sponge Schematic',
+            extension: 'schem',
         };
     }
 
-    public override getFormatName() {
-        return 'Sponge Schematic';
-    }
-
-    public override getFileExtension(): string {
-        return 'schem';
-    }
-
-    private static SCHEMA_VERSION = 2;
-
-    public override export(blockMesh: BlockMesh, filePath: string) {
+    public override export(blockMesh: BlockMesh) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -86,7 +77,7 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        return saveNBT(nbt, filePath);
+        return saveNBT(nbt);
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {
