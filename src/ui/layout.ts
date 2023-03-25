@@ -280,6 +280,10 @@ export class UI {
                             displayText: 'Structure blocks (.nbt)',
                             payload: 'nbt',
                         },
+                        {
+                            displayText: 'Uncompressed JSON (.json)',
+                            payload: 'uncompressed_json',
+                        },
                     ])
                     .setLabel('Exporter'),
             },
