@@ -67,8 +67,6 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
 
     protected _onValueChanged(): void {
         super._onValueChanged();
-
-        console.log('combo changed');
     }
 
     protected _onEnabledChanged(): void {

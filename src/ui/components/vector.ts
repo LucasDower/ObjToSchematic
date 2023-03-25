@@ -1,25 +1,16 @@
-import { ASSERT } from '../../util/error_util';
 import { TAxis } from '../../util/type_util';
 import { UIUtil } from '../../util/ui_util';
 import { Vector3 } from '../../vector';
 import { ConfigComponent } from './config';
 
-export class VectorSpinboxComponent extends ConfigComponent<Vector3, HTMLDivElement> {
+export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
     private _mouseover: TAxis | null;
-    private _dragging: TAxis | null;
-    private _lastClientX: number;
     private _showY: boolean;
-    private _wrap: number;
-    private _units: string | null;
 
     public constructor() {
         super(new Vector3(0, 0, 0));
         this._mouseover = null;
-        this._dragging = null;
-        this._lastClientX = 0.0;
         this._showY = true;
-        this._wrap = Infinity;
-        this._units = null;
     }
 
     /**
@@ -30,43 +21,27 @@ export class VectorSpinboxComponent extends ConfigComponent<Vector3, HTMLDivElem
         return this;
     }
 
-    public setWrap(wrap: number) {
-        this._wrap = wrap;
-        return this;
-    }
-
-    public setUnits(units: string) {
-        this._units = units;
-        return this;
-    }
-
     protected override _generateInnerHTML() {
         let html = '';
         html += '<div class="spinbox-main-container">';
         html += `
             <div class="spinbox-element-container">
                 <div class="spinbox-key" id="${this._getKeyId('x')}">X</div>
-                <div class="spinbox-value struct-prop" id="${this._getValueId('x')}">
-                    ${this.getValue().x}
-                </div>
+                <input type="number" class="spinbox-value struct-prop" min="-360" max="360" value="${this.getValue().x}" id="${this._getValueId('x')}"></input>
             </div>
         `;
         if (this._showY) {
             html += `
                 <div class="spinbox-element-container">
                     <div class="spinbox-key" id="${this._getKeyId('y')}">Y</div>
-                    <div class="spinbox-value struct-prop" id="${this._getValueId('y')}">
-                        ${this.getValue().y}
-                    </div>
+                    <input type="number" class="spinbox-value struct-prop" min="-360" max="360" value="${this.getValue().y}" id="${this._getValueId('y')}"></input>
                 </div>
             `;
         }
         html += `
             <div class="spinbox-element-container">
                 <div class="spinbox-key" id="${this._getKeyId('z')}">Z</div>
-                <div class="spinbox-value struct-prop" id="${this._getValueId('z')}">
-                    ${this.getValue().z}
-                </div>
+                <input type="number" class="spinbox-value struct-prop" min="-360" max="360" value="${this.getValue().z}" id="${this._getValueId('z')}"></input>
             </div>
         `;
         html += '</div>';
@@ -101,27 +76,10 @@ export class VectorSpinboxComponent extends ConfigComponent<Vector3, HTMLDivElem
             this._registerAxis('y');
         }
         this._registerAxis('z');
-
-        document.addEventListener('mousedown', (e: any) => {
-            if (this.enabled && this._mouseover !== null) {
-                this._dragging = this._mouseover;
-                this._lastClientX = e.clientX;
-            }
-        });
-
-        document.addEventListener('mousemove', (e: any) => {
-            if (this.enabled && this._dragging !== null) {
-                this._updateValue(e);
-            }
-        });
-
-        document.addEventListener('mouseup', () => {
-            this._dragging = null;
-            this._updateStyles();
-        });
     }
 
     private _updateValue(e: MouseEvent) {
+        /*
         ASSERT(this.enabled, 'Not enabled');
         ASSERT(this._dragging !== null, 'Dragging nothing');
 
@@ -142,42 +100,47 @@ export class VectorSpinboxComponent extends ConfigComponent<Vector3, HTMLDivElem
                 break;
         }
         this._setValue(current);
+        */
     }
 
     protected override _updateStyles(): void {
+        // Update keys
+        {
+            const elementXK = UIUtil.getElementById(this._getKeyId('x'));
+            elementXK.classList.remove('text-standard');
+            elementXK.classList.add(this.enabled ? 'text-standard' : 'text-dark');
+
+            const elementYK = UIUtil.getElementById(this._getKeyId('y'));
+            elementYK.classList.remove('text-standard');
+            elementYK.classList.add(this.enabled ? 'text-standard' : 'text-dark');
+
+            const elementZK = UIUtil.getElementById(this._getKeyId('z'));
+            elementZK.classList.remove('text-standard');
+            elementZK.classList.add(this.enabled ? 'text-standard' : 'text-dark');
+        }
+
         const elementXV = UIUtil.getElementById(this._getValueId('x'));
         const elementYV = UIUtil.getElementById(this._getValueId('y'));
         const elementZV = UIUtil.getElementById(this._getValueId('z'));
-
-        // Update text
-        {
-            const current = this.getValue().copy();
-
-            elementXV.innerHTML = current.x.toString() + this._units;
-            if (elementYV) {
-                elementYV.innerHTML = current.y.toString() + this._units;
-            }
-            elementZV.innerHTML = current.z.toString() + this._units;
-        }
 
         // Update styles
         {
             UIUtil.updateStyles(elementXV, {
                 isActive: false,
                 isEnabled: this.enabled,
-                isHovered: this._dragging === 'x' || (this._mouseover === 'x' && this._dragging === null),
+                isHovered: this._mouseover === 'x',
             });
 
             UIUtil.updateStyles(elementYV, {
                 isActive: false,
                 isEnabled: this.enabled,
-                isHovered: this._dragging === 'y' || (this._mouseover === 'y' && this._dragging === null),
+                isHovered: this._mouseover === 'y',
             });
 
             UIUtil.updateStyles(elementZV, {
                 isActive: false,
                 isEnabled: this.enabled,
-                isHovered: this._dragging === 'z' || (this._mouseover === 'z' && this._dragging === null),
+                isHovered: this._mouseover === 'z',
             });
         }
     }

@@ -328,7 +328,6 @@ select {
 }
 
 .spinbox-key {
-  color: #ffffffb9;
   font-size: var(--font-size-standard);
   padding-right: 5px;
 }

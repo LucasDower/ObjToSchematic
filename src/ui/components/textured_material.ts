@@ -5,7 +5,7 @@ import { TTexelInterpolation } from '../../util/type_util';
 import { HTMLBuilder } from '../misc';
 import { ComboboxComponent } from './combobox';
 import { ConfigComponent } from './config';
-import { ImageComponent } from './image_element';
+import { ImageComponent } from './image';
 import { MaterialTypeComponent } from './material_type';
 import { SliderComponent } from './slider';
 

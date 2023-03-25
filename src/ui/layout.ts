@@ -26,7 +26,7 @@ import { SliderComponent } from './components/slider';
 import { SolidMaterialComponent } from './components/solid_material';
 import { TexturedMaterialComponent } from './components/textured_material';
 import { ToolbarItemComponent } from './components/toolbar_item';
-import { VectorSpinboxComponent } from './components/vector_spinbox';
+import { VectorComponent } from './components/vector';
 import { AppConsole } from './console';
 import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
@@ -60,10 +60,8 @@ export class UI {
             components: {
                 'input': new FileComponent()
                     .setLabel('3D Model (.obj, .gltf/.glb)'),
-                'rotation': new VectorSpinboxComponent()
-                    .setLabel('Rotation')
-                    .setWrap(360)
-                    .setUnits('°'),
+                'rotation': new VectorComponent()
+                    .setLabel('Rotation'),
             },
             componentOrder: ['input', 'rotation'],
             execButton: new ButtonComponent()
@@ -552,6 +550,8 @@ export class UI {
 
     private _forEachComponent(action: EAction, functor: (component: ConfigComponent<unknown, unknown>) => void) {
         const group = this._getGroup(action);
+        console.log(group);
+
         for (const elementName of group.componentOrder) {
             const element = group.components[elementName];
             functor(element);

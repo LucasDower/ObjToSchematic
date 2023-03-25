@@ -55,6 +55,12 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
         this._updateStyles();
     }
 
+    protected _onEnabledChanged(): void {
+        super._onEnabledChanged();
+
+        this._updateStyles();
+    }
+
     protected override _updateStyles() {
         const parsedPath = path.parse(this._loadedFilePath);
         this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
