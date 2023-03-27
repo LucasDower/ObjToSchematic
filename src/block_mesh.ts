@@ -83,11 +83,11 @@ export class BlockMesh {
                 break;
             }
             case 'random': {
-                Ditherer.ditherRandom(ditheredColour);
+                Ditherer.ditherRandom(ditheredColour, blockMeshParams.ditheringMagnitude);
                 break;
             }
             case 'ordered': {
-                Ditherer.ditherOrdered(ditheredColour, voxel.position);
+                Ditherer.ditherOrdered(ditheredColour, voxel.position, blockMeshParams.ditheringMagnitude);
                 break;
             }
         }

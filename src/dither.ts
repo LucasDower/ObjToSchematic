@@ -4,22 +4,22 @@ import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
 export class Ditherer {
-    public static ditherRandom(colour: RGBA_255) {
-        const offset = (Math.random() - 0.5) * AppConfig.Get.DITHER_MAGNITUDE;
+    public static ditherRandom(colour: RGBA_255, magnitude: number) {
+        const offset = (Math.random() - 0.5) * magnitude;
 
         colour.r += offset;
         colour.g += offset;
         colour.b += offset;
     }
 
-    public static ditherOrdered(colour: RGBA_255, position: Vector3) {
+    public static ditherOrdered(colour: RGBA_255, position: Vector3, magnitude: number) {
         const map = this._getThresholdValue(
             Math.abs(position.x % 4),
             Math.abs(position.y % 4),
             Math.abs(position.z % 4),
         );
 
-        const offset = map * AppConfig.Get.DITHER_MAGNITUDE;
+        const offset = map * magnitude;
 
         colour.r += offset;
         colour.g += offset;

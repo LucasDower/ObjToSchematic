@@ -109,6 +109,7 @@ export namespace AssignParams {
         textureAtlas: TAtlasId,
         blockPalette: string[],
         dithering: TDithering,
+        ditheringMagnitude: number,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,

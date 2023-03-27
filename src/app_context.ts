@@ -223,6 +223,7 @@ export class AppContext {
                     textureAtlas: components.textureAtlas.getValue(),
                     blockPalette: components.blockPalette.getValue().getBlocks(),
                     dithering: components.dithering.getValue(),
+                    ditheringMagnitude: components.ditheringMagnitude.getValue(),
                     colourSpace: ColourSpace.RGB,
                     fallable: components.fallable.getValue() as FallableBehaviour,
                     resolution: Math.pow(2, components.colourAccuracy.getValue()),

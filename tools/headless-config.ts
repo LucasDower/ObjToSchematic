@@ -20,6 +20,7 @@ export const headlessConfig: THeadlessConfig = {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
         blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
+        ditheringMagnitude: 32,
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,

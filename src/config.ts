@@ -30,7 +30,6 @@ export class AppConfig {
     public readonly CAMERA_SENSITIVITY_ROTATION = 0.005;
     public readonly CAMERA_SENSITIVITY_ZOOM = 0.005;
     public readonly CONSTRAINT_MAXIMUM_HEIGHT = 380;
-    public readonly DITHER_MAGNITUDE = 32;
     public readonly SMOOTHNESS_MAX = 3.0;
     public readonly CAMERA_SMOOTHING = 1.0;
     public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA = {

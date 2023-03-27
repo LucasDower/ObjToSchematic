@@ -175,7 +175,21 @@ export class UI {
                         displayText: 'Off',
                         payload: 'off',
                     }])
-                    .setLabel('Dithering'),
+                    .setLabel('Dithering')
+                    .addEnabledChangedListener((isEnabled) => {
+                        this._ui.assign.components.ditheringMagnitude.setEnabled(isEnabled && this._ui.assign.components.dithering.getValue() !== 'off', false);
+                    })
+                    .addValueChangedListener((newValue: TDithering) => {
+                        this._ui.assign.components.ditheringMagnitude.setEnabled(newValue !== 'off', false);
+                    }),
+                'ditheringMagnitude': new SliderComponent()
+                    .setMin(1)
+                    .setMax(64)
+                    .setDefaultValue(32)
+                    .setDecimals(0)
+                    .setStep(1)
+                    .setLabel('Dithering magnitude')
+                    .setShouldObeyGroupEnables(false),
                 'fallable': new ComboboxComponent<FallableBehaviour>()
                     .addItems([{
                         displayText: 'Replace falling with solid',
@@ -238,6 +252,7 @@ export class UI {
                 'textureAtlas',
                 'blockPalette',
                 'dithering',
+                'ditheringMagnitude',
                 'fallable',
                 'colourAccuracy',
                 'contextualAveraging',
