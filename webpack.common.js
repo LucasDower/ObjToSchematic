@@ -3,7 +3,7 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    entry: './src/client.ts',
+    entry: './src/main.ts',
     plugins: [
         new NodePolyfillPlugin(),
         new HtmlWebpackPlugin({
@@ -39,7 +39,7 @@ module.exports = {
             {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
-                exclude: /node_modules|main\.ts/,
+                exclude: /node_modules/,
             },
         ],
     },

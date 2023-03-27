@@ -3,8 +3,9 @@ import '../styles.css';
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
-import { EAppEvent, EventManager } from './event';
+import { EventManager } from './event';
 import { MaterialMapManager } from './material-map';
+import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer';
 import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
@@ -17,35 +18,44 @@ import { WorkerController } from './worker_controller';
 import { TFromWorkerMessage } from './worker_types';
 
 export class AppContext {
+    /* Singleton */
+    private static _instance: AppContext;
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
     private _workerController: WorkerController;
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
     private _materialManager: MaterialMapManager;
 
-    public constructor() {
-        AppConsole.info('Initialising...');
+    private constructor() {
+        this._workerController = new WorkerController();
         this._materialManager = new MaterialMapManager(new Map());
+    }
+
+    public static init() {
+        AppConsole.info('Initialising...');
 
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
-        EventManager.Get.bindToContext(this);
+        EventManager.Get.bindToContext(this.Get);
 
-        const gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl');
-        if (!gl) {
-            throw Error('Could not load WebGL context');
-        }
-        
-        UI.Get.bindToContext(this);
+        UI.Get.bindToContext(this.Get);
         UI.Get.build();
         UI.Get.registerEvents();
-        UI.Get.updateMaterialsAction(this._materialManager);
+        UI.Get.updateMaterialsAction(this.Get._materialManager);
         UI.Get.disableAll();
 
-        this._workerController = new WorkerController();
-        this._workerController.execute({ action: 'Init', params: {}}).then(() => {
+        ArcballCamera.Get.init();
+        MouseManager.Get.init();
+
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        this.Get._workerController.execute({ action: 'Init', params: {}}).then(() => {
             UI.Get.enable(EAction.Import);
             AppConsole.success('Ready');
         });
@@ -80,7 +90,7 @@ export class AppContext {
 
             AppConsole.success('Imported mesh');
             this._addWorkerMessagesToConsole(resultImport.messages);
-            
+
             this.maxConstraint = Vector3.copy(resultImport.result.dimensions)
                 .mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this._materialManager = new MaterialMapManager(resultImport.result.materials);
@@ -100,7 +110,7 @@ export class AppContext {
                 return false;
             }
             ASSERT(resultRender.action === 'RenderMesh');
-            
+
             this._addWorkerMessagesToConsole(resultRender.messages);
             Renderer.Get.useMesh(resultRender.result);
         }
@@ -109,7 +119,7 @@ export class AppContext {
         return true;
     }
 
-    
+
     private async _materials(): Promise<boolean> {
         AppConsole.info('Updating materials...');
         {
@@ -133,7 +143,7 @@ export class AppContext {
                 Renderer.Get.recreateMaterialBuffer(materialName, material);
                 Renderer.Get.setModelToUse(MeshType.TriangleMesh);
             });
-            
+
             this._addWorkerMessagesToConsole(resultMaterials.messages);
         }
         AppConsole.success('Updated materials');
@@ -165,7 +175,7 @@ export class AppContext {
                 return false;
             }
             ASSERT(resultVoxelise.action === 'Voxelise');
-            
+
             this._addWorkerMessagesToConsole(resultVoxelise.messages);
         }
         AppConsole.success('Loaded voxel mesh');
@@ -228,7 +238,7 @@ export class AppContext {
                 return false;
             }
             ASSERT(resultAssign.action === 'Assign');
-            
+
             this._addWorkerMessagesToConsole(resultAssign.messages);
         }
         AppConsole.success('Loaded block mesh');
@@ -281,7 +291,7 @@ export class AppContext {
                 return false;
             }
             ASSERT(resultExport.action === 'Export');
-            
+
             this._addWorkerMessagesToConsole(resultExport.messages);
             download(resultExport.result.buffer, 'result.' + resultExport.result.extension);
         }
@@ -311,7 +321,7 @@ export class AppContext {
         UI.Get.disableAll();
 
         this._lastAction = action;
-        
+
         const success = await this._executeAction(action);
         if (success) {
             if (action === EAction.Import) {
@@ -346,9 +356,9 @@ export class AppContext {
         ASSERT(false);
     }
 
-    public draw() {
+    public static draw() {
         Renderer.Get.update();
-        UI.Get.tick(this._workerController.isBusy());
+        UI.Get.tick(this.Get._workerController.isBusy());
         Renderer.Get.draw();
     }
 }
