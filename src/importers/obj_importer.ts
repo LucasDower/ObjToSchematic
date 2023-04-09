@@ -1,3 +1,4 @@
+import { LOC } from '../localiser';
 import { checkNaN } from '../math';
 import { Mesh, Tri } from '../mesh';
 import { UV } from '../util';
@@ -136,7 +137,7 @@ export class ObjImporter extends IImporter {
                             break;
                         }
                         default:
-                            throw new AppError(`Face data has unexpected number of vertex data: ${vertexData.length}`);
+                            throw new AppError(LOC('import.invalid_face_data', { count: vertexData.length}));
                     }
                 }
 
@@ -178,7 +179,7 @@ export class ObjImporter extends IImporter {
         return new Promise((res, rej) => {
             file.text().then((fileSource) => {
                 if (fileSource.includes('�')) {
-                    rej(new AppError(`Unrecognised character found, please encode using UTF-8`));
+                    rej(new AppError(LOC('import.invalid_encoding')));
                 }
 
                 fileSource.replace('\r', ''); // Convert Windows carriage return
@@ -202,7 +203,7 @@ export class ObjImporter extends IImporter {
                     parser.delegate(match.groups);
                 } catch (error) {
                     if (error instanceof AppError) {
-                        throw new AppError(`Failed attempt to parse '${line}', because '${error.message}'`);
+                        throw new AppError(LOC('import.failed_to_parse_line', { line: line, error: error.message }));
                     }
                 }
                 return;
@@ -213,7 +214,7 @@ export class ObjImporter extends IImporter {
             return line.startsWith(token);
         });
         if (beginsWithEssentialToken) {
-            throw new AppError(`Failed to parse essential token for <b>${line}</b>`);
+            ASSERT(false, `Failed to parse essential token for <b>${line}</b>`);
         }
     }
 }

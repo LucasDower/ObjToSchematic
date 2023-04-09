@@ -1,3 +1,4 @@
+import { TLocalisedString } from './localiser';
 import { TMessage } from './ui/console';
 import { LOG, LOG_ERROR, LOG_WARN } from './util/log_util';
 
@@ -24,19 +25,19 @@ export class StatusHandler {
         this._messages = [];
     }
 
-    public static success(message: string) {
+    public static success(message: TLocalisedString) {
         this.Get._messages.push({ text: message, type: 'success' });
     }
 
-    public static info(message: string) {
+    public static info(message: TLocalisedString) {
         this.Get._messages.push({ text: message, type: 'info' });
     }
 
-    public static warning(message: string) {
+    public static warning(message: TLocalisedString) {
         this.Get._messages.push({ text: message, type: 'warning' });
     }
 
-    public static error(message: string) {
+    public static error(message: TLocalisedString) {
         this.Get._messages.push({ text: message, type: 'error' });
     }
 

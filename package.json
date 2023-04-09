@@ -49,6 +49,7 @@
     "eslint-plugin-simple-import-sort": "^8.0.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.0",
+    "i18next": "^22.4.14",
     "images": "^3.2.3",
     "jest": "^27.5.1",
     "jpeg-js": "^0.4.4",

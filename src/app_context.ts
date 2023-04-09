@@ -4,6 +4,7 @@ import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
 import { EventManager } from './event';
+import { LOC, Localiser, TLocalisedString } from './localiser';
 import { MaterialMapManager } from './material-map';
 import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer';
@@ -34,14 +35,17 @@ export class AppContext {
         this._materialManager = new MaterialMapManager(new Map());
     }
 
-    public static init() {
-        AppConsole.info('Initialising...');
+    public static async init() {
+        await Localiser.Get.init();
+        AppConsole.info(LOC('init.initialising'));
 
         Logger.Get.enableLOG();
         Logger.Get.enableLOGMAJOR();
         Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
+
+
         EventManager.Get.bindToContext(this.Get);
 
         UI.Get.bindToContext(this.Get);
@@ -57,7 +61,7 @@ export class AppContext {
 
         this.Get._workerController.execute({ action: 'Init', params: {}}).then(() => {
             UI.Get.enable(EAction.Import);
-            AppConsole.success('Ready');
+            AppConsole.success(LOC('init.ready'));
         });
 
         ArcballCamera.Get.toggleAngleSnap();
@@ -71,7 +75,7 @@ export class AppContext {
         // Gather data from the UI to send to the worker
         const components = UI.Get.layout.import.components;
 
-        AppConsole.info('Importing mesh...');
+        AppConsole.info(LOC('import.importing_mesh'));
         {
             // Instruct the worker to perform the job and await the result
             const resultImport = await this._workerController.execute({
@@ -88,7 +92,7 @@ export class AppContext {
             }
             ASSERT(resultImport.action === 'Import');
 
-            AppConsole.success('Imported mesh');
+            AppConsole.success(LOC('import.imported_mesh'));
             this._addWorkerMessagesToConsole(resultImport.messages);
 
             this.maxConstraint = Vector3.copy(resultImport.result.dimensions)
@@ -97,7 +101,7 @@ export class AppContext {
             UI.Get.updateMaterialsAction(this._materialManager);
         }
 
-        AppConsole.info('Rendering mesh...');
+        AppConsole.info(LOC('import.rendering_mesh'));
         {
             // Instruct the worker to perform the job and await the result
             const resultRender = await this._workerController.execute({
@@ -114,14 +118,14 @@ export class AppContext {
             this._addWorkerMessagesToConsole(resultRender.messages);
             Renderer.Get.useMesh(resultRender.result);
         }
-        AppConsole.success('Rendered mesh');
+        AppConsole.success(LOC('import.rendered_mesh'));
 
         return true;
     }
 
 
     private async _materials(): Promise<boolean> {
-        AppConsole.info('Updating materials...');
+        AppConsole.info(LOC('materials.updating_materials'));
         {
             // Instruct the worker to perform the job and await the result
             const resultMaterials = await this._workerController.execute({
@@ -146,7 +150,7 @@ export class AppContext {
 
             this._addWorkerMessagesToConsole(resultMaterials.messages);
         }
-        AppConsole.success('Updated materials');
+        AppConsole.success(LOC('materials.updated_materials'));
 
         return true;
     }
@@ -155,7 +159,7 @@ export class AppContext {
         // Gather data from the UI to send to the worker
         const components = UI.Get.layout.voxelise.components;
 
-        AppConsole.info('Loading voxel mesh...');
+        AppConsole.info(LOC('voxelise.loading_voxel_mesh'));
         {
             // Instruct the worker to perform the job and await the result
             const resultVoxelise = await this._workerController.execute({
@@ -178,9 +182,9 @@ export class AppContext {
 
             this._addWorkerMessagesToConsole(resultVoxelise.messages);
         }
-        AppConsole.success('Loaded voxel mesh');
+        AppConsole.success(LOC('voxelise.loaded_voxel_mesh'));
 
-        AppConsole.info('Rendering voxel mesh...');
+        AppConsole.info(LOC('voxelise.rendering_voxel_mesh'));
         {
             let moreVoxelsToBuffer = false;
             do {
@@ -205,7 +209,7 @@ export class AppContext {
                 Renderer.Get.useVoxelMeshChunk(resultRender.result);
             } while (moreVoxelsToBuffer);
         }
-        AppConsole.success('Rendered voxel mesh');
+        AppConsole.success(LOC('voxelise.rendered_voxel_mesh'));
 
         return true;
     }
@@ -214,7 +218,7 @@ export class AppContext {
         // Gather data from the UI to send to the worker
         const components = UI.Get.layout.assign.components;
 
-        AppConsole.info('Loading block mesh...');
+        AppConsole.info(LOC('assign.loading_block_mesh'));
         {
             // Instruct the worker to perform the job and await the result
             const resultAssign = await this._workerController.execute({
@@ -242,9 +246,9 @@ export class AppContext {
 
             this._addWorkerMessagesToConsole(resultAssign.messages);
         }
-        AppConsole.success('Loaded block mesh');
+        AppConsole.success(LOC('assign.loaded_block_mesh'));
 
-        AppConsole.info('Rendering block mesh...');
+        AppConsole.info(LOC('assign.rendering_block_mesh'));
         {
             let moreBlocksToBuffer = false;
             do {
@@ -268,7 +272,7 @@ export class AppContext {
                 Renderer.Get.useBlockMeshChunk(resultRender.result);
             } while (moreBlocksToBuffer);
         }
-        AppConsole.success('Rendered voxel mesh');
+        AppConsole.success(LOC('assign.rendered_block_mesh'));
 
         return true;
     }
@@ -277,7 +281,7 @@ export class AppContext {
         // Gather data from the UI to send to the worker
         const components = UI.Get.layout.export.components;
 
-        AppConsole.info('Exporting structure...');
+        AppConsole.info(LOC('export.exporting_structure'));
         {
             // Instruct the worker to perform the job and await the result
             const resultExport = await this._workerController.execute({
@@ -296,7 +300,7 @@ export class AppContext {
             this._addWorkerMessagesToConsole(resultExport.messages);
             download(resultExport.result.buffer, 'result.' + resultExport.result.extension);
         }
-        AppConsole.success('Exported structure');
+        AppConsole.success(LOC('export.exported_structure'));
 
         return true;
     }
@@ -307,10 +311,10 @@ export class AppContext {
      */
     private _handleErrors(result: TFromWorkerMessage) {
         if (result.action === 'KnownError') {
-            AppConsole.error(result.error.message);
+            AppConsole.error(result.error.message as TLocalisedString);
             return true;
         } else if (result.action === 'UnknownError') {
-            AppConsole.error('Something unexpectedly went wrong');
+            AppConsole.error(LOC('something_went_wrong'));
             LOG_ERROR(result.error);
             return true;
         }

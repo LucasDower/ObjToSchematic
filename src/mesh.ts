@@ -2,6 +2,7 @@ import path from 'path';
 
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { LOC } from './localiser';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
 import { Texture, TextureConverter, TImageFiletype, TImageRawWrap, TTransparencyOptions } from './texture';
@@ -144,18 +145,18 @@ export class Mesh {
         // TODO: Check indices exist
 
         if (this._vertices.length === 0) {
-            throw new AppError('No vertices were loaded');
+            throw new AppError(LOC('import.no_vertices_loaded'));
         }
 
         if (this._tris.length === 0) {
-            throw new AppError('No triangles were loaded');
+            throw new AppError(LOC('import.no_triangles_loaded'));
         }
 
         if (this._tris.length >= 100_000) {
-            StatusHandler.warning(`The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`);
+            StatusHandler.warning(LOC('import.too_many_triangles', { count: this._tris.length }));
         }
 
-        StatusHandler.info(`${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`);
+        StatusHandler.info(LOC('import.vertex_triangle_count', { vertex_count: this._vertices.length, triangle_count: this._tris.length }));
 
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
@@ -176,7 +177,7 @@ export class Mesh {
             }
         }
         if (giveNormalsWarning) {
-            StatusHandler.warning('Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly');
+            StatusHandler.warning(LOC('import.missing_normals'));
         };
     }
 
@@ -288,10 +289,7 @@ export class Mesh {
 
     private _centreMesh() {
         const centre = this.getBounds().getCentre();
-
-        if (!centre.isNumber()) {
-            throw new AppError('Could not find centre of mesh');
-        }
+        ASSERT(centre.isNumber(), 'Could not find centre of mesh');
 
         // Translate each triangle
         this.translateMesh(centre.negate());
@@ -303,7 +301,7 @@ export class Mesh {
         const scaleFactor = Mesh.desiredHeight / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
-            throw new AppError('Could not scale mesh correctly - mesh is likely 2D, rotate it so that it has a non-zero height');
+            throw new AppError(LOC('import.could_not_scale_mesh'));
         } else {
             this.scaleMesh(scaleFactor);
         }

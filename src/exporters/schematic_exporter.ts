@@ -4,6 +4,7 @@ import { NBT, TagType } from 'prismarine-nbt';
 
 import { BLOCK_IDS } from '../../res/block_ids';
 import { BlockMesh } from '../block_mesh';
+import { LOC } from '../localiser';
 import { StatusHandler } from '../status';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
@@ -53,9 +54,7 @@ export class Schematic extends IExporter {
         }
 
         if (unsupportedBlocks.size > 0) {
-            StatusHandler.warning(
-                `${numBlocksUnsupported} blocks (${unsupportedBlocks.size} unique) are not supported by the .schematic format, Stone block are used in their place. Try using the schematic-friendly palette, or export using .litematica`,
-            );
+            StatusHandler.warning(LOC('export.schematic_unsupported_blocks', { count: numBlocksUnsupported, unique: unsupportedBlocks.size }));
             LOG_WARN(unsupportedBlocks);
         }
 

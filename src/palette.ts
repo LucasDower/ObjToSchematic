@@ -3,6 +3,7 @@ import { PALETTE_COLOURFUL } from '../res/palettes/colourful';
 import { PALETTE_GREYSCALE } from '../res/palettes/greyscale';
 import { PALETTE_SCHEMATIC_FRIENDLY } from '../res/palettes/schematic-friendly';
 import { Atlas } from './atlas';
+import { LOC } from './localiser';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
 import { LOG_WARN } from './util/log_util';
@@ -161,7 +162,7 @@ export class Palette {
         }
 
         if (missingBlocks.length > 0) {
-            StatusHandler.warning(`${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
+            StatusHandler.warning(LOC('assign.blocks_missing_textures', { count: missingBlocks }));
             LOG_WARN('Blocks missing atlas textures', missingBlocks);
         }
     }

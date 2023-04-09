@@ -6,6 +6,7 @@ import { RGBA_255, RGBAUtil } from './colour';
 import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
+import { LOC } from './localiser';
 import { Palette } from './palette';
 import { ProgressManager } from './progress';
 import { StatusHandler } from './status';
@@ -177,7 +178,7 @@ export class BlockMesh {
         ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
-            StatusHandler.warning(`${countFalling.toLocaleString()} blocks will fall under gravity when this structure is placed`);
+            StatusHandler.warning(LOC('assign.falling_blocks', { count: countFalling }));
         }
     }
 
@@ -217,7 +218,7 @@ export class BlockMesh {
             return true;
         }
 
-        throw new AppError('Block palette contains no light blocks to place');
+        throw new AppError(LOC('assign.block_palette_missing_light_blocks'));
     }
 
     public getBlockAt(pos: Vector3): TOptional<Block> {
@@ -236,9 +237,7 @@ export class BlockMesh {
     }
 
     public getVoxelMesh() {
-        if (!this._voxelMesh) {
-            throw new AppError('Could not get voxel mesh');
-        }
+        ASSERT(this._voxelMesh !== undefined, 'Block mesh has no voxel mesh');
         return this._voxelMesh;
     }
 

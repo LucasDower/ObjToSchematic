@@ -16,6 +16,7 @@
         "simple-import-sort"
     ],
     "rules": {
+        "camelcase": "off",
         "linebreak-style": "off",
         "object-curly-spacing": "off",
         "max-len": "off",

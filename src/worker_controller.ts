@@ -40,9 +40,7 @@ export class WorkerController {
                 payload: payload,
                 callback: res,
             });
-            if (!success) {
-                rej(new AppError('Already performing a job'));
-            }
+            ASSERT(success, 'Already performing a job');
         });
     }
 

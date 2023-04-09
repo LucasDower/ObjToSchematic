@@ -7,6 +7,7 @@ import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
 import { ImporterFactor } from './importers/importers';
+import { Localiser } from './localiser';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
 import { ASSERT } from './util/error_util';
@@ -65,6 +66,9 @@ export class WorkerClient {
             };
             postMessage(message);
         });
+
+        // TODO: Async: should await
+        Localiser.Get.init();
 
         return {};
     }

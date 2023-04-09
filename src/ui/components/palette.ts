@@ -1,4 +1,5 @@
 import { PALETTE_ALL_RELEASE } from '../../../res/palettes/all';
+import { LOC } from '../../localiser';
 import { Palette } from '../../palette';
 import { AppUtil } from '../../util';
 import { ASSERT } from '../../util/error_util';
@@ -64,7 +65,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
                     if (files?.length === 1) {
                         const file = files.item(0);
                         ASSERT(file !== null);
-                        AppConsole.info(`Reading ${file.name}...`);
+                        AppConsole.info(LOC('assign.reading_palette', { file_name: file.name }));
                         file.text().then((text) => {
                             this._onReadPaletteFile(text);
                         });
@@ -100,18 +101,18 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
                 ++countDeselected;
             }
         });
-        AppConsole.info(`Deselected ${countDeselected} blocks`);
+        AppConsole.info(LOC('assign.deselected_blocks', { count: countDeselected }));
 
-        AppConsole.info(`Found ${blockNames.length} blocks`);
+        AppConsole.info(LOC('assign.found_blocks', { count: blockNames.length }));
 
         let countChecked = 0;
         blockNames.forEach((blockName) => {
             if (!AppUtil.Text.isNamespacedBlock(blockName)) {
-                AppConsole.error(`'${blockName}' is not namespaced correctly, do you mean 'minecraft:${blockName}'?`);
+                AppConsole.error(LOC('assign.block_not_namespaced', { block_name: blockName }));
             } else {
                 const checkboxIndex = this._checkboxes.findIndex((x) => x.block === blockName);
                 if (checkboxIndex === -1) {
-                    AppConsole.error(`Could not use '${blockName}' as it is unsupported`);
+                    AppConsole.error(LOC('assign.could_not_use_block', { block_name: blockName }));
                 } else {
                     this._checkboxes[checkboxIndex].element.check();
                     ++countChecked;
@@ -119,7 +120,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
             }
         });
 
-        AppConsole.success(`Selected ${countChecked} blocks`);
+        AppConsole.info(LOC('assign.selected_blocks', { count: countChecked }));
 
         this._onCountSelectedChanged();
     }

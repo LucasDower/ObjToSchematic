@@ -3,8 +3,7 @@ import path from 'path';
 import ATLAS_VANILLA from '../res/atlases/vanilla.atlas';
 import { RGBA } from './colour';
 import { AppTypes, AppUtil, TOptional, UV } from './util';
-import { AppError, ASSERT } from './util/error_util';
-import { LOG } from './util/log_util';
+import { ASSERT } from './util/error_util';
 import { AppPaths } from './util/path_util';
 
 export type TAtlasBlockFace = {
@@ -56,9 +55,7 @@ export class Atlas {
 
         const atlasJSON = JSON.parse(ATLAS_VANILLA);
 
-        if (atlasJSON.formatVersion !== 3) {
-            throw new AppError(`The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
-        }
+        ASSERT(atlasJSON.formatVersion === 3, `The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
 
         const atlasData = atlasJSON;
         atlas._atlasSize = atlasData.atlasSize;

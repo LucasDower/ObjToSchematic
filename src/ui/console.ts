@@ -1,8 +1,9 @@
+import { TLocalisedString } from '../localiser';
 import { LOG, LOG_ERROR, LOG_WARN } from '../util/log_util';
 import { UIUtil } from '../util/ui_util';
 import { HTMLBuilder } from './misc';
 
-export type TMessage = { text: string, type: 'success' | 'info' | 'warning' | 'error' };
+export type TMessage = { text: TLocalisedString, type: 'success' | 'info' | 'warning' | 'error' };
 
 export class AppConsole {
     private static _instance: AppConsole;
@@ -77,25 +78,25 @@ export class AppConsole {
         }
     }
 
-    public static success(message: string) {
+    public static success(message: TLocalisedString) {
         LOG(message);
         this.Get._messages.push({ text: message, type: 'success' });
         this.Get.addLast();
     }
 
-    public static info(message: string) {
+    public static info(message: TLocalisedString) {
         LOG(message);
         this.Get._messages.push({ text: message, type: 'info' });
         this.Get.addLast();
     }
 
-    public static warning(message: string) {
+    public static warning(message: TLocalisedString) {
         LOG_WARN(message);
         this.Get._messages.push({ text: message, type: 'warning' });
         this.Get.addLast();
     }
 
-    public static error(message: string) {
+    public static error(message: TLocalisedString) {
         LOG_ERROR(message);
         this.Get._messages.push({ text: message, type: 'error' });
         this.Get.addLast();

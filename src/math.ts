@@ -1,5 +1,4 @@
-import { AppError } from './util/error_util';
-import { LOG_ERROR } from './util/log_util';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
 export namespace AppMath {
@@ -69,22 +68,7 @@ export const checkNaN = (...args: number[]) => {
     const existsNaN = args.some((arg) => {
         return isNaN(arg);
     });
-    if (existsNaN) {
-        LOG_ERROR(args);
-        throw new AppError('Found NaN');
-    }
-};
-
-/**
- * Throws if any number in not within [0, 1]
- */
-export const checkFractional = (...args: number[]) => {
-    const existsOutside = args.some((arg) => {
-        return arg > 1.0 || arg < 0.0;
-    });
-    if (existsOutside) {
-        throw new AppError('Found value outside of [0, 1]');
-    }
+    ASSERT(!existsNaN, 'Found NaN');
 };
 
 export const degreesToRadians = Math.PI / 180;
