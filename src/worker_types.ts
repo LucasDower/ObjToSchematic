@@ -21,6 +21,15 @@ export namespace InitParams {
     }
 }
 
+export namespace SettingsParams {
+    export type Input = {
+        language: string,
+    }
+
+    export type Output = {
+    }
+}
+
 export namespace ImportParams {
     export type Input = {
         file: File,
@@ -172,6 +181,7 @@ export type TaskParams =
 
 export type TToWorkerMessage =
     | { action: 'Init', params: InitParams.Input }
+    | { action: 'Settings', params: SettingsParams.Input }
     | { action: 'Import', params: ImportParams.Input }
     | { action: 'SetMaterials', params: SetMaterialsParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
@@ -189,6 +199,7 @@ export type TFromWorkerMessage =
     | { action: 'Progress', payload: TaskParams }
     | ({ messages: TMessage[] } & (
         | { action: 'Init', result: InitParams.Output }
+        | { action: 'Settings', result: SettingsParams.Output }
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'SetMaterials', result: SetMaterialsParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }

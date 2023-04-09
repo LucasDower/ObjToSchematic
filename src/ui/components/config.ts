@@ -1,4 +1,7 @@
+import { TTranslationMap } from '../../../loc/base';
+import { DeepLeafKeys, LOC, TLocalisedString } from '../../localiser';
 import { ASSERT } from '../../util/error_util';
+import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
 
 /**
@@ -6,7 +9,8 @@ import { BaseComponent } from './base';
  * For example, sliders, comboboxes and checkboxes are `ConfigComponent`.
  */
 export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
-    protected _label: string;
+    private _labelLocalisedKey?: string;
+    protected _label: TLocalisedString;
     private _value?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
     private _onEnabledChangedListeners: Array<(isEnabled: boolean) => void>;
@@ -14,7 +18,7 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     public constructor(defaultValue?: T) {
         super();
         this._value = defaultValue;
-        this._label = '';
+        this._label = '' as TLocalisedString;
         this._onValueChangedListeners = [];
         this._onEnabledChangedListeners = [];
     }
@@ -24,10 +28,40 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
         return this;
     }
 
-    public setLabel(label: string) {
+    public setLabel<P extends DeepLeafKeys<TTranslationMap>>(p: P) {
+        this._labelLocalisedKey = p;
+        this._label = LOC(p);
+        return this;
+    }
+
+    public setUnlocalisedLabel(p: string) {
+        this._label = p as TLocalisedString;
+        return this;
+    }
+
+    public refresh() {
+        this._updateLabel();
+
+        //const outer = UIUtil.getElementById(`${this._getId()}-prop`);
+        //outer.innerHTML = this._generateInnerHTML();
+    }
+
+    private _updateLabel() {
+        if (this._labelLocalisedKey !== undefined) {
+            ASSERT(this._labelLocalisedKey !== undefined, `Missing localisation key ${this._label}`);
+            this._label = LOC(this._labelLocalisedKey as any);
+
+            const labelElement = UIUtil.getElementById(this._getLabelId());
+            labelElement.innerHTML = this._label;
+        }
+    }
+
+    /*
+    public setLabel(label: TLocalisedString) {
         this._label = label;
         return this;
     }
+    */
 
     /**
      * Get the currently set value of this UI element.
@@ -70,7 +104,7 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
                 <div class="prop-key-container" id="${this._getLabelId()}">
                     ${this._label}
                 </div>
-                <div class="prop-value-container">
+                <div class="prop-value-container" id="${this._getId()}-prop">
                     ${this._generateInnerHTML()}
                 </div>
             </div>

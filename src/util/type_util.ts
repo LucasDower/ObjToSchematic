@@ -9,3 +9,7 @@ export type TAxis = 'x' | 'y' | 'z';
 export type TTexelExtension = 'repeat' | 'clamp';
 
 export type TTexelInterpolation = 'nearest' | 'linear';
+
+export type DeepPartial<T> = T extends object ? {
+    [P in keyof T]?: DeepPartial<T[P]>;
+} : T;

@@ -9,6 +9,7 @@ export enum EAppEvent {
     onTaskProgress,
     onTaskEnd,
     onComboBoxChanged,
+    onLanguageChanged,
 }
 /* eslint-enable */
 
@@ -34,7 +35,7 @@ export class EventManager {
             const lastAction = this._appContext?.getLastAction();
             if (lastAction !== undefined) {
                 UI.Get.getActionButton(lastAction)
-                    .startLoading()
+                    ?.startLoading()
                     .setProgress(0.0);
             }
         });
@@ -44,7 +45,7 @@ export class EventManager {
             const lastAction = this._appContext?.getLastAction();
             if (lastAction !== undefined) {
                 UI.Get.getActionButton(lastAction)
-                    .setProgress(data[0][1]);
+                    ?.setProgress(data[0][1]);
             }
         });
 
@@ -52,7 +53,7 @@ export class EventManager {
             const lastAction = this._appContext?.getLastAction();
             if (lastAction !== undefined) {
                 UI.Get.getActionButton(lastAction)
-                    .resetLoading();
+                    ?.resetLoading();
             }
         });
     }

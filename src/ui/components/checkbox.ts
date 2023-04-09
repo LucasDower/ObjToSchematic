@@ -1,23 +1,43 @@
+import { TTranslationMap } from '../../../loc/base';
+import { DeepLeafKeys, LOC } from '../../localiser';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 
 export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElement> {
-    private _labelChecked: string;
-    private _labelUnchecked: string;
+    private _checked: { type: 'localised', key: DeepLeafKeys<TTranslationMap> } | { type: 'unlocalised', text: string };
+    private _unchecked: { type: 'localised', key: DeepLeafKeys<TTranslationMap> } | { type: 'unlocalised', text: string };
 
     public constructor() {
         super(false);
-        this._labelChecked = 'On';
-        this._labelUnchecked = 'Off';
+        this._checked = { type: 'localised', key: 'misc.on' };
+        this._unchecked = { type: 'localised', key: 'misc.off' };
     }
 
-    public setCheckedText(label: string) {
-        this._labelChecked = label;
+    public setUnlocalisedCheckedText(text: string) {
+        this._checked = {
+            type: 'unlocalised', text: text,
+        };
         return this;
     }
 
-    public setUncheckedText(label: string) {
-        this._labelUnchecked = label;
+    public setUnlocalisedUncheckedText(text: string) {
+        this._unchecked = {
+            type: 'unlocalised', text: text,
+        };
+        return this;
+    }
+
+    public setCheckedText(key: DeepLeafKeys<TTranslationMap>) {
+        this._checked = {
+            type: 'localised', key: key,
+        };
+        return this;
+    }
+
+    public setUncheckedText(key: DeepLeafKeys<TTranslationMap>) {
+        this._unchecked = {
+            type: 'localised', key: key,
+        };
         return this;
     }
 
@@ -62,6 +82,10 @@ export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElemen
     }
 
     public override _generateInnerHTML(): string {
+        const displayText = this.getValue() ?
+            (this._checked.type === 'localised' ? LOC(this._checked.key) : this._checked.text) :
+            (this._unchecked.type === 'localised' ? LOC(this._unchecked.key) : this._unchecked.text);
+
         return `
             <div class="struct-prop container-checkbox" id="${this._getId()}">
                 <svg id="${this._getPipId()}" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -69,7 +93,7 @@ export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElemen
                     <path d="M5 12l5 5l10 -10" />
                 </svg>
             </div>
-            <div class="checkbox-text" id="${this._getTextId()}">${this.getValue() ? this._labelChecked : this._labelUnchecked}</div>
+            <div class="checkbox-text" id="${this._getTextId()}">${displayText}</div>
         `;
     }
 
@@ -118,7 +142,11 @@ export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElemen
         checkboxTextElement.classList.remove('text-standard');
         checkboxTextElement.classList.remove('text-light');
 
-        checkboxTextElement.innerHTML = this.getValue() ? this._labelChecked : this._labelUnchecked;
+        const displayText = this.getValue() ?
+            (this._checked.type === 'localised' ? LOC(this._checked.key) : this._checked.text) :
+            (this._unchecked.type === 'localised' ? LOC(this._unchecked.key) : this._unchecked.text);
+
+        checkboxTextElement.innerHTML = displayText;
         checkboxPipElement.style.visibility = this.getValue() ? 'visible' : 'hidden';
 
         if (this.enabled) {
@@ -130,5 +158,16 @@ export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElemen
         } else {
             checkboxTextElement.classList.add('text-dark');
         }
+    }
+
+    public override refresh(): void {
+        super.refresh();
+
+        const displayText = this.getValue() ?
+            (this._checked.type === 'localised' ? LOC(this._checked.key) : this._checked.text) :
+            (this._unchecked.type === 'localised' ? LOC(this._unchecked.key) : this._unchecked.text);
+
+        const checkboxTextElement = UIUtil.getElementById(this._getTextId());
+        checkboxTextElement.innerHTML = displayText;
     }
 }

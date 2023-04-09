@@ -13,18 +13,26 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         super(material);
 
         this._typeElement = new MaterialTypeComponent(material)
-            .setLabel('Type');
+            .setLabel('materials.components.material_type');
 
         this._ColourComponent = new ColourComponent(material.colour)
-            .setLabel('Colour');
+            .setLabel('voxelise.components.colour');
 
         this._alphaElement = new SliderComponent()
-            .setLabel('Alpha')
+            .setLabel('materials.components.alpha')
             .setMin(0.0)
             .setMax(1.0)
             .setDefaultValue(material.colour.a)
             .setDecimals(2)
             .setStep(0.01);
+    }
+
+    public override refresh() {
+        super.refresh();
+
+        this._typeElement.refresh();
+        this._ColourComponent.refresh();
+        this._alphaElement.refresh();
     }
 
     public override registerEvents(): void {

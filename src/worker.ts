@@ -20,6 +20,15 @@ export async function doWork(message: TToWorkerMessage): Promise<TFromWorkerMess
                     result: WorkerClient.Get.init(message.params),
                     messages: StatusHandler.getAll(),
                 });
+            case 'Settings': {
+                const result = await WorkerClient.Get.settings(message.params);
+
+                return Promise.resolve({
+                    action: 'Settings',
+                    result: result,
+                    messages: StatusHandler.getAll(),
+                });
+            }
             case 'Import':
                 const result = await WorkerClient.Get.import(message.params);
 

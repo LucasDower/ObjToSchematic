@@ -1,13 +1,16 @@
+import { TLocalisedString } from '../../localiser';
 import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
 
 export class ButtonComponent extends BaseComponent<HTMLDivElement> {
-    private _label: string;
+    private _label: TLocalisedString;
+    private _defaultLabel: TLocalisedString;
     private _onClick: () => void;
 
     public constructor() {
         super();
-        this._label = 'Unknown';
+        this._label = 'Unknown' as TLocalisedString;
+        this._defaultLabel = 'Unknown' as TLocalisedString;
         this._onClick = () => { };
     }
 
@@ -22,16 +25,24 @@ export class ButtonComponent extends BaseComponent<HTMLDivElement> {
     /**
      * Sets the label of this button.
      */
-    public setLabel(label: string) {
+    public setLabel(label: TLocalisedString) {
         this._label = label;
+        this._defaultLabel = label;
+        return this;
+    }
+
+    public updateLabel() {
+        const labelElement = UIUtil.getElementById(`${this._getId()}-button-label`);
+        labelElement.innerHTML = this._label;
         return this;
     }
 
     /**
      * Override the current label with a new value.
      */
-    public setLabelOverride(label: string) {
-        this._getElement().innerHTML = label;
+    public setLabelOverride(label: TLocalisedString) {
+        this._label = label;
+        this.updateLabel();
         return this;
     }
 
@@ -39,7 +50,8 @@ export class ButtonComponent extends BaseComponent<HTMLDivElement> {
      * Remove the label override and set the label back to its default
      */
     public removeLabelOverride() {
-        this._getElement().innerHTML = this._label;
+        this._label = this._defaultLabel;
+        this.updateLabel();
         return this;
     }
 
@@ -78,7 +90,7 @@ export class ButtonComponent extends BaseComponent<HTMLDivElement> {
         return `
             <div class="container-button">
                 <div class="struct-prop button" id="${this._getId()}">
-                    <div class="button-label">${this._label}</div>
+                    <div class="button-label" id="${this._getId()}-button-label">${this._label}</div>
                     <div class="button-progress" id="${this._getProgressBarId()}"></div>
                 </div>
             </div>

@@ -1,13 +1,17 @@
+import { TTranslationMap } from '../../../loc/base';
+import { DeepLeafKeys, LOC } from '../../localiser';
 import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { HTMLBuilder } from '../misc';
 import { ConfigComponent } from './config';
 
 export type ComboBoxItem<T> = {
-    payload: T;
-    displayText: string;
-    tooltip?: string;
-}
+    payload: T,
+    displayLocKey: DeepLeafKeys<TTranslationMap>,
+} | {
+    payload: T,
+    displayText: string,
+};
 
 export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> {
     private _items: ComboBoxItem<T>[];
@@ -25,8 +29,12 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
     }
 
     public addItem(item: ComboBoxItem<T>) {
+        if (this._items.length === 0) {
+            this.setDefaultValue(item.payload);
+        }
+
         this._items.push(item);
-        this._setValue(this._items[0].payload);
+        //this._setValue(this._items[0].payload);
         return this;
     }
 
@@ -52,9 +60,13 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
 
         builder.add('<div style="position: relative; width: 100%;">');
         builder.add(`<select class="struct-prop" name="${this._getId()}" id="${this._getId()}">`);
-        for (const item of this._items) {
-            builder.add(`<option value="${item.payload}" title="${item.tooltip || ''}">${item.displayText}</option>`);
-        }
+        this._items.forEach((item, index) => {
+            if ('displayLocKey' in item) {
+                builder.add(`<option id="${this._getId()}-${index}" value="${item.payload}">${LOC(item.displayLocKey)}</option>`);
+            } else {
+                builder.add(`<option id="${this._getId()}-${index}" value="${item.payload}">${item.displayText}</option>`);
+            }
+        });
         builder.add('</select>');
 
         builder.add(`<div id="${this._getId()}-arrow" class="checkbox-arrow">`);
@@ -106,5 +118,16 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
         element.selectedIndex = selectedIndex;
 
         this._updateStyles();
+    }
+
+    public override refresh(): void {
+        super.refresh();
+
+        this._items.forEach((item, index) => {
+            if ('displayLocKey' in item) {
+                const element = UIUtil.getElementById(this._getId() + '-' + index) as HTMLOptionElement;
+                element.text = LOC(item.displayLocKey);
+            }
+        });
     }
 }

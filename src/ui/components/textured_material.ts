@@ -23,35 +23,35 @@ export class TexturedMaterialComponent extends ConfigComponent<TexturedMaterial,
         super(material);
 
         this._typeElement = new MaterialTypeComponent(material)
-            .setLabel('Type');
+            .setLabel('materials.components.material_type');
 
         this._filteringElement = new ComboboxComponent<TTexelInterpolation>()
-            .setLabel('Filtering')
-            .addItem({ payload: 'linear', displayText: 'Linear' })
-            .addItem({ payload: 'nearest', displayText: 'Nearest' })
+            .setLabel('materials.components.texture_filtering')
+            .addItem({ payload: 'linear', displayLocKey: 'materials.components.linear' })
+            .addItem({ payload: 'nearest', displayLocKey: 'materials.components.nearest' })
             .setDefaultValue(material.interpolation);
 
         this._wrapElement = new ComboboxComponent<'clamp' | 'repeat'>()
-            .setLabel('Wrap')
-            .addItem({ payload: 'clamp', displayText: 'Clamp' })
-            .addItem({ payload: 'repeat', displayText: 'Repeat' })
+            .setLabel('materials.components.texture_wrap')
+            .addItem({ payload: 'clamp', displayLocKey: 'materials.components.clamp' })
+            .addItem({ payload: 'repeat', displayLocKey: 'materials.components.repeat' })
             .setDefaultValue(material.extension);
 
         this._transparencyElement = new ComboboxComponent<TTransparencyTypes>()
-            .setLabel('Transparency')
-            .addItem({ payload: 'None', displayText: 'None' })
-            .addItem({ payload: 'UseAlphaMap', displayText: 'Alpha map' })
-            .addItem({ payload: 'UseAlphaValue', displayText: 'Alpha constant' })
-            .addItem({ payload: 'UseDiffuseMapAlphaChannel', displayText: 'Diffuse map alpha channel' })
+            .setLabel('materials.components.transparency')
+            .addItem({ payload: 'None', displayLocKey: 'materials.components.none' })
+            .addItem({ payload: 'UseAlphaMap', displayLocKey: 'materials.components.alpha_map' })
+            .addItem({ payload: 'UseAlphaValue', displayLocKey: 'materials.components.alpha_constant' })
+            .addItem({ payload: 'UseDiffuseMapAlphaChannel', displayLocKey: 'materials.components.diffuse_map_alpha_channel' })
             .setDefaultValue(material.transparency.type);
 
         this._ImageComponent = new ImageComponent(material.diffuse)
-            .setLabel('Diffuse map');
+            .setLabel('materials.components.diffuse_map');
 
         switch (material.transparency.type) {
             case 'UseAlphaValue':
                 this._alphaValueElement = new SliderComponent()
-                    .setLabel('Alpha')
+                    .setLabel('materials.components.alpha')
                     .setMin(0.0)
                     .setMax(1.0)
                     .setDefaultValue(material.transparency.alpha)
@@ -60,17 +60,30 @@ export class TexturedMaterialComponent extends ConfigComponent<TexturedMaterial,
                 break;
             case 'UseAlphaMap':
                 this._alphaMapElement = new ImageComponent(material.transparency.alpha)
-                    .setLabel('Alpha map');
+                    .setLabel('materials.components.alpha_map');
 
                 this._alphaChannelElement = new ComboboxComponent<EImageChannel>()
-                    .setLabel('Alpha channel')
-                    .addItem({ payload: EImageChannel.R, displayText: 'Red' })
-                    .addItem({ payload: EImageChannel.G, displayText: 'Green' })
-                    .addItem({ payload: EImageChannel.B, displayText: 'Blue' })
-                    .addItem({ payload: EImageChannel.A, displayText: 'Alpha' })
+                    .setLabel('materials.components.alpha_channel')
+                    .addItem({ payload: EImageChannel.R, displayLocKey: 'misc.red' })
+                    .addItem({ payload: EImageChannel.G, displayLocKey: 'misc.green' })
+                    .addItem({ payload: EImageChannel.B, displayLocKey: 'misc.blue' })
+                    .addItem({ payload: EImageChannel.A, displayLocKey: 'misc.alpha' })
                     .setDefaultValue(material.transparency.channel);
                 break;
         }
+    }
+
+    public override refresh() {
+        super.refresh();
+
+        this._ImageComponent.refresh();
+        this._typeElement.refresh();
+        this._filteringElement.refresh();
+        this._wrapElement.refresh();
+        this._transparencyElement.refresh();
+        this._alphaValueElement?.refresh();
+        this._alphaMapElement?.refresh();
+        this._alphaChannelElement?.refresh();
     }
 
     public override registerEvents(): void {

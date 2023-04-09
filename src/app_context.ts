@@ -3,7 +3,7 @@ import '../styles.css';
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
 import { AppConfig } from './config';
-import { EventManager } from './event';
+import { EAppEvent, EventManager } from './event';
 import { LOC, Localiser, TLocalisedString } from './localiser';
 import { MaterialMapManager } from './material-map';
 import { MouseManager } from './mouse';
@@ -60,11 +60,16 @@ export class AppContext {
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         this.Get._workerController.execute({ action: 'Init', params: {}}).then(() => {
-            UI.Get.enable(EAction.Import);
+            UI.Get.enableTo(EAction.Import);
             AppConsole.success(LOC('init.ready'));
         });
 
         ArcballCamera.Get.toggleAngleSnap();
+
+        EventManager.Get.add(EAppEvent.onLanguageChanged, () => {
+            this.Get._workerController.execute({ action: 'Settings', params: { language: Localiser.Get.getCurrentLanguage() }}).then(() => {
+            });
+        });
     }
 
     public getLastAction() {
@@ -86,7 +91,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Import).resetLoading();
+            UI.Get.getActionButton(EAction.Import)?.resetLoading();
             if (this._handleErrors(resultImport)) {
                 return false;
             }
@@ -109,7 +114,7 @@ export class AppContext {
                 params: {},
             });
 
-            UI.Get.getActionButton(EAction.Import).resetLoading();
+            UI.Get.getActionButton(EAction.Import)?.resetLoading();
             if (this._handleErrors(resultRender)) {
                 return false;
             }
@@ -135,7 +140,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Materials).resetLoading();
+            UI.Get.getActionButton(EAction.Materials)?.resetLoading();
             if (this._handleErrors(resultMaterials)) {
                 return false;
             }
@@ -174,7 +179,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Voxelise).resetLoading();
+            UI.Get.getActionButton(EAction.Voxelise)?.resetLoading();
             if (this._handleErrors(resultVoxelise)) {
                 return false;
             }
@@ -197,7 +202,7 @@ export class AppContext {
                     },
                 });
 
-                UI.Get.getActionButton(EAction.Voxelise).resetLoading();
+                UI.Get.getActionButton(EAction.Voxelise)?.resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -238,7 +243,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Assign).resetLoading();
+            UI.Get.getActionButton(EAction.Assign)?.resetLoading();
             if (this._handleErrors(resultAssign)) {
                 return false;
             }
@@ -260,7 +265,7 @@ export class AppContext {
                     },
                 });
 
-                UI.Get.getActionButton(EAction.Assign).resetLoading();
+                UI.Get.getActionButton(EAction.Assign)?.resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -291,7 +296,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Export).resetLoading();
+            UI.Get.getActionButton(EAction.Export)?.resetLoading();
             if (this._handleErrors(resultExport)) {
                 return false;
             }

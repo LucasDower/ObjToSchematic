@@ -1,4 +1,3 @@
-import { TLocales } from '../loc/base';
 import { RGBA } from './colour';
 import { LOG } from './util/log_util';
 
@@ -16,7 +15,7 @@ export class AppConfig {
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
     public readonly MINECRAFT_VERSION = '1.19.3';
 
-    public readonly LOCALE: TLocales = 'en_GB';
+    public readonly LOCALE = 'en_GB';
     public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
     public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
     public readonly USE_WORKER_THREAD = true;

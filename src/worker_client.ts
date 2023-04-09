@@ -14,7 +14,7 @@ import { ASSERT } from './util/error_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -69,6 +69,12 @@ export class WorkerClient {
 
         // TODO: Async: should await
         Localiser.Get.init();
+
+        return {};
+    }
+
+    public async settings(params: SettingsParams.Input): Promise<SettingsParams.Output> {
+        await Localiser.Get.changeLanguage(params.language);
 
         return {};
     }

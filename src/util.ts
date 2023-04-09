@@ -21,12 +21,13 @@ export namespace AppUtil {
 
 /* eslint-disable */
 export enum EAction {
-    Import = 0,
-    Materials = 1,
-    Voxelise = 2,
-    Assign = 3,
-    Export = 4,
-    MAX = 5,
+    Settings = 0,
+    Import = 1,
+    Materials = 2,
+    Voxelise = 3,
+    Assign = 4,
+    Export = 5,
+    MAX = 6,
 }
 /* eslint-enable */
 

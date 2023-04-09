@@ -32,8 +32,8 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
                 block: block,
                 element: new CheckboxComponent()
                     .setDefaultValue(true)
-                    .setCheckedText(block)
-                    .setUncheckedText(block),
+                    .setUnlocalisedCheckedText(block)
+                    .setUnlocalisedUncheckedText(block),
             });
         });
 
@@ -135,7 +135,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
 
         return `
             <div class="row-container" style="width: 100%; gap: 5px;">
-                <input class="struct-prop" type="text" style="width: 100%; text-align: start;" placeholder="Search..." id="${this._getId() + '-search'}"></input>
+                <input class="struct-prop" type="text" style="width: 100%; text-align: start;" placeholder="${LOC('assign.components.search')}" id="${this._getId() + '-search'}"></input>
                 <div class="col-container header-cols" style="padding-top: 0px;">
                     <div class="col-container">
                         <div class="col-item">
@@ -252,5 +252,12 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
             isEnabled: this.enabled,
             isHovered: this.hovered,
         });
+    }
+
+    public override refresh(): void {
+        super.refresh();
+
+        const element = UIUtil.getElementById(this._getId() + '-search') as HTMLInputElement;
+        element.placeholder = LOC('assign.components.search');
     }
 }
