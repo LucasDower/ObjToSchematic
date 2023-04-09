@@ -294,6 +294,10 @@ export class UI {
                             payload: 'nbt',
                         },
                         {
+                            displayText: 'Indexed JSON (.json)',
+                            payload: 'indexed_json',
+                        },
+                        {
                             displayText: 'Uncompressed JSON (.json)',
                             payload: 'uncompressed_json',
                         },
@@ -565,7 +569,6 @@ export class UI {
 
     private _forEachComponent(action: EAction, functor: (component: ConfigComponent<unknown, unknown>) => void) {
         const group = this._getGroup(action);
-        console.log(group);
 
         for (const elementName of group.componentOrder) {
             const element = group.components[elementName];

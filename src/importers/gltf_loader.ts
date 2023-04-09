@@ -87,10 +87,29 @@ export class GltfLoader extends IImporter {
 
                                 materialNameToUse = materialName;
                                 materialMade = true;
+                            } else {
+                                const diffuseColour: (number[] | undefined) = pbr.baseColorFactor;
+
+                                if (diffuseColour !== undefined) {
+                                    meshMaterials.set(materialName, {
+                                        type: MaterialType.solid,
+                                        colour: {
+                                            r: diffuseColour[0],
+                                            g: diffuseColour[1],
+                                            b: diffuseColour[2],
+                                            a: diffuseColour[3],
+                                        },
+                                        needsAttention: false,
+                                        canBeTextured: false,
+                                    });
+                                }
+
+                                materialNameToUse = materialName;
+                                materialMade = true;
                             }
                         }
 
-                        const emissiveColour: (number[] | undefined) = primitive.material.emissiveFactor;
+                        const emissiveColour: (number[] | undefined) = primitive.material.pbr;
                         if (!materialMade && emissiveColour !== undefined) {
                             meshMaterials.set(materialName, {
                                 type: MaterialType.solid,
