@@ -48,6 +48,10 @@ export const en_GB = {
             components: {
                 'no_materials_loaded': 'No materials loaded',
                 'material_type': 'Type',
+                'solid': 'Solid',
+                'textured': 'Textured',
+                'no_image_loaded' : 'No image loaded',
+                'choose': 'Choose',
                 'texture_filtering': 'Filtering',
                 'texture_wrap': 'Wrap',
                 'transparency': 'Transparency',
