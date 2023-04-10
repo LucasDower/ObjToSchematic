@@ -1,7 +1,7 @@
 {
   "name": "objtoschematic",
   "private": true,
-  "version": "0.7.4",
+  "version": "0.0.0",
   "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
   "main": "./dist/src/main.js",
   "engines": {
@@ -15,7 +15,8 @@
     "dist": "webpack --config ./webpack.prod.js",
     "atlas": "ts-node ./tools/build-atlas.ts",
     "palette": "ts-node ./tools/build-palette.ts",
-    "headless": "ts-node ./tools/run-headless.ts"
+    "headless": "ts-node ./tools/run-headless.ts",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
