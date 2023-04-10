@@ -1,18 +1,20 @@
+import path from 'path';
+
 import { Atlas } from './atlas';
 import { BlockMesh } from './block_mesh';
 import { BufferGenerator } from './buffer';
 import { EAppEvent, EventManager } from './event';
 import { IExporter } from './exporters/base_exporter';
 import { ExporterFactory } from './exporters/exporters';
-import { ObjImporter } from './importers/obj_importer';
+import { ImporterFactor } from './importers/importers';
+import { Localiser } from './localiser';
 import { Mesh } from './mesh';
 import { ProgressManager, TTaskHandle } from './progress';
 import { ASSERT } from './util/error_util';
-import { Logger } from './util/log_util';
 import { VoxelMesh } from './voxel_mesh';
 import { IVoxeliser } from './voxelisers/base-voxeliser';
 import { VoxeliserFactory } from './voxelisers/voxelisers';
-import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -21,8 +23,6 @@ export class WorkerClient {
     }
 
     private constructor() {
-        Logger.Get.enableLogToFile();
-        Logger.Get.initLogFile('worker');
     }
 
     private _loadedMesh?: Mesh;
@@ -67,13 +67,24 @@ export class WorkerClient {
             postMessage(message);
         });
 
+        // TODO: Async: should await
+        Localiser.Get.init();
+
         return {};
     }
 
-    public import(params: ImportParams.Input): ImportParams.Output {
-        const importer = new ObjImporter();
-        importer.parseFile(params.filepath);
-        this._loadedMesh = importer.toMesh();
+    public async settings(params: SettingsParams.Input): Promise<SettingsParams.Output> {
+        await Localiser.Get.changeLanguage(params.language);
+
+        return {};
+    }
+
+    public async import(params: ImportParams.Input): Promise<ImportParams.Output> {
+        const parsed = path.parse(params.file.name);
+
+        const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
+        this._loadedMesh = await importer.import(params.file);
+
         this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
 
         return {
@@ -188,7 +199,7 @@ export class WorkerClient {
 
         return {
             buffer: buffer,
-            dimensions: this._loadedBlockMesh.getVoxelMesh().getBounds().getDimensions(),
+            bounds: this._loadedBlockMesh.getVoxelMesh().getBounds(),
             atlasTexturePath: atlas.getAtlasTexturePath(),
             atlasSize: atlas.getAtlasSize(),
             moreBlocksToBuffer: buffer.moreBlocksToBuffer,
@@ -216,13 +227,11 @@ export class WorkerClient {
         ASSERT(this._loadedBlockMesh !== undefined);
 
         const exporter: IExporter = ExporterFactory.GetExporter(params.exporter);
-        const fileExtension = '.' + exporter.getFileExtension();
-        if (!params.filepath.endsWith(fileExtension)) {
-            params.filepath += fileExtension;
-        }
-        exporter.export(this._loadedBlockMesh, params.filepath);
+        const buffer = exporter.export(this._loadedBlockMesh);
 
         return {
+            buffer: buffer,
+            extension: exporter.getFormatFilter().extension,
         };
     }
 }

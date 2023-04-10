@@ -10,24 +10,16 @@ import { Vector3 } from '../vector';
 import { IExporter } from './base_exporter';
 
 export class SchemExporter extends IExporter {
+    private static SCHEMA_VERSION = 2;
+
     public override getFormatFilter() {
         return {
-            name: this.getFormatName(),
-            extensions: ['schem'],
+            name: 'Sponge Schematic',
+            extension: 'schem',
         };
     }
 
-    public override getFormatName() {
-        return 'Sponge Schematic';
-    }
-
-    public override getFileExtension(): string {
-        return 'schem';
-    }
-
-    private static SCHEMA_VERSION = 2;
-
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -40,7 +32,7 @@ export class SchemExporter extends IExporter {
         let blockIndex = 1;
         for (const blockName of blockMesh.getBlockPalette()) {
             const namespacedBlockName = AppUtil.Text.namespaceBlock(blockName);
-            
+
             blockMapping[namespacedBlockName] = { type: TagType.Int, value: blockIndex };
             ++blockIndex;
         }
@@ -54,11 +46,11 @@ export class SchemExporter extends IExporter {
             const namespacedBlockName = AppUtil.Text.namespaceBlock(block.blockInfo.name);
             blockData[bufferIndex] = blockMapping[namespacedBlockName].value;
         }
-        
+
         const blockEncoding: number[] = [];
         for (let i = 0; i < blockData.length; ++i) {
             let id = blockData[i];
-          
+
             while ((id & -128) != 0) {
                 blockEncoding.push(id & 127 | 128);
                 id >>>= 7;
@@ -69,7 +61,7 @@ export class SchemExporter extends IExporter {
         for (let i = 0; i < blockEncoding.length; ++i) {
             blockEncoding[i] = MathUtil.int8(blockEncoding[i]);
         }
-        
+
         const nbt: NBT = {
             type: TagType.Compound,
             name: 'Schematic',
@@ -85,9 +77,7 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        saveNBT(nbt, filePath);
-
-        return false;
+        return saveNBT(nbt);
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {

@@ -1,9 +1,10 @@
 import { FallableBehaviour } from './block_mesh';
+import { Bounds } from './bounds';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
 import { TExporters } from './exporters/exporters';
 import { MaterialMap } from './mesh';
-import { StatusMessage } from './status';
+import { TMessage } from './ui/console';
 import { ColourSpace } from './util';
 import { AppError } from './util/error_util';
 import { TAxis } from './util/type_util';
@@ -20,9 +21,18 @@ export namespace InitParams {
     }
 }
 
+export namespace SettingsParams {
+    export type Input = {
+        language: string,
+    }
+
+    export type Output = {
+    }
+}
+
 export namespace ImportParams {
     export type Input = {
-        filepath: string,
+        file: File,
         rotation: Vector3,
     }
 
@@ -106,8 +116,9 @@ export type TPaletteId = string;
 export namespace AssignParams {
     export type Input = {
         textureAtlas: TAtlasId,
-        blockPalette: TPaletteId,
+        blockPalette: string[],
         dithering: TDithering,
+        ditheringMagnitude: number,
         colourSpace: ColourSpace,
         fallable: FallableBehaviour,
         resolution: RGBAUtil.TColourAccuracy,
@@ -129,7 +140,7 @@ export namespace RenderNextBlockMeshChunkParams {
 
     export type Output = {
         buffer: TBlockMeshBufferDescription,
-        dimensions: Vector3,
+        bounds: Bounds,
         atlasTexturePath: string,
         atlasSize: number,
         moreBlocksToBuffer: boolean,
@@ -154,17 +165,13 @@ export namespace RenderBlockMeshParams {
 
 export namespace ExportParams {
     export type Input = {
-        filepath: string,
         exporter: TExporters,
     }
 
     export type Output = {
-
+        buffer: Buffer,
+        extension: string,
     }
-}
-
-export type TStatus = {
-    statusMessages: StatusMessage[],
 }
 
 export type TaskParams =
@@ -174,6 +181,7 @@ export type TaskParams =
 
 export type TToWorkerMessage =
     | { action: 'Init', params: InitParams.Input }
+    | { action: 'Settings', params: SettingsParams.Input }
     | { action: 'Import', params: ImportParams.Input }
     | { action: 'SetMaterials', params: SetMaterialsParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
@@ -189,8 +197,9 @@ export type TFromWorkerMessage =
     | { action: 'KnownError', error: AppError }
     | { action: 'UnknownError', error: Error }
     | { action: 'Progress', payload: TaskParams }
-    | (TStatus & (
+    | ({ messages: TMessage[] } & (
         | { action: 'Init', result: InitParams.Output }
+        | { action: 'Settings', result: SettingsParams.Output }
         | { action: 'Import', result: ImportParams.Output }
         | { action: 'SetMaterials', result: SetMaterialsParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }

@@ -2,6 +2,7 @@ import { NBT, TagType } from 'prismarine-nbt';
 
 import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
+import { LOC } from '../localiser';
 import { StatusHandler } from '../status';
 import { AppUtil } from '../util';
 import { saveNBT } from '../util/nbt_util';
@@ -11,26 +12,18 @@ import { IExporter } from './base_exporter';
 export class NBTExporter extends IExporter {
     public override getFormatFilter() {
         return {
-            name: this.getFormatName(),
-            extensions: ['nbt'],
+            name: 'Structure Blocks',
+            extension: 'nbt',
         };
     }
 
-    public override getFormatName() {
-        return 'Structure Blocks';
-    }
-
-    public override getFileExtension(): string {
-        return 'nbt';
-    }
-
-    public override export(blockMesh: BlockMesh, filePath: string): boolean {
+    public override export(blockMesh: BlockMesh) {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
         const isTooBig = sizeVector.x > 48 && sizeVector.y > 48 && sizeVector.z > 48;
         if (isTooBig) {
-            StatusHandler.Get.add('warning', 'Structure blocks only support structures of size 48x48x48, blocks outside this range will be removed');
+            StatusHandler.warning(LOC('export.nbt_exporter_too_big'));
         }
 
         const blockNameToIndex = new Map<string, number>();
@@ -49,7 +42,7 @@ export class NBTExporter extends IExporter {
         for (const block of blockMesh.getBlocks()) {
             const pos = block.voxel.position;
             const blockIndex = blockNameToIndex.get(block.blockInfo.name);
-            if (blockIndex) {
+            if (blockIndex !== undefined) {
                 if (pos.x > -24 && pos.x <= 24 && pos.y > -24 && pos.y <= 24 && pos.z > -24 && pos.z <= 24) {
                     blocks.push({
                         pos: {
@@ -100,12 +93,6 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        saveNBT(nbt, filePath);
-
-        return false;
-    }
-
-    private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {
-        return vec.x + (vec.z * dimensions.x) + (vec.y * dimensions.x * dimensions.z);
+        return saveNBT(nbt);
     }
 }

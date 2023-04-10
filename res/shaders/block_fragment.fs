@@ -9,6 +9,7 @@ varying vec4 v_occlusion;
 varying vec2 v_texcoord;
 varying vec2 v_blockTexcoord;
 varying float v_blockLighting;
+varying float v_sliced;
 
 float dither8x8(vec2 position, float alpha) {
   int x = int(mod(position.x, 8.0));
@@ -102,6 +103,10 @@ void main() {
   float alpha = dither8x8(gl_FragCoord.xy, diffuse.a);
   if (alpha < 0.5)
   {
+    discard;
+  }
+
+  if(v_sliced > 0.5) {
     discard;
   }
 

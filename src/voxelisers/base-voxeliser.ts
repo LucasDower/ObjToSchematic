@@ -1,5 +1,6 @@
 import { RGBA, RGBAColours, RGBAUtil } from '../colour';
 import { AppConfig } from '../config';
+import { LOC } from '../localiser';
 import { MaterialType, Mesh } from '../mesh';
 import { StatusHandler } from '../status';
 import { Triangle, UVTriangle } from '../triangle';
@@ -13,10 +14,10 @@ export abstract class IVoxeliser {
     public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
         const voxelMesh = this._voxelise(mesh, voxeliseParams);
 
-        StatusHandler.Get.add('info', `Voxel mesh has ${voxelMesh.getVoxelCount().toLocaleString()} voxels`);
+        StatusHandler.info(LOC('voxelise.voxel_count', { count: voxelMesh.getVoxelCount() }));
 
         const dim = voxelMesh.getBounds().getDimensions().add(1);
-        StatusHandler.Get.add('info', `Dimensions are ${dim.x.toLocaleString()}x${dim.y.toLocaleString()}x${dim.z.toLocaleString()} voxels`);
+        StatusHandler.info(LOC('voxelise.voxel_mesh_dimensions', { x: dim.x, y: dim.y, z: dim.z }));
 
         return voxelMesh;
     }

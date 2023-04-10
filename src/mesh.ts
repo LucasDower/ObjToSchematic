@@ -1,11 +1,11 @@
-import fs from 'fs';
 import path from 'path';
 
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { LOC } from './localiser';
 import { degreesToRadians } from './math';
 import { StatusHandler } from './status';
-import { Texture, TextureConverter, TTransparencyOptions } from './texture';
+import { Texture, TextureConverter, TImageFiletype, TImageRawWrap, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
 import { AppError, ASSERT } from './util/error_util';
@@ -40,7 +40,7 @@ export type SolidMaterial = BaseMaterial & {
 }
 export type TexturedMaterial = BaseMaterial & {
     type: MaterialType.textured,
-    path: string,
+    diffuse?: TImageRawWrap,
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
     transparency: TTransparencyOptions,
@@ -145,24 +145,18 @@ export class Mesh {
         // TODO: Check indices exist
 
         if (this._vertices.length === 0) {
-            throw new AppError('No vertices were loaded');
+            throw new AppError(LOC('import.no_vertices_loaded'));
         }
 
         if (this._tris.length === 0) {
-            throw new AppError('No triangles were loaded');
+            throw new AppError(LOC('import.no_triangles_loaded'));
         }
 
         if (this._tris.length >= 100_000) {
-            StatusHandler.Get.add(
-                'warning',
-                `The imported mesh has ${this._tris.length.toLocaleString()} triangles, consider simplifying it in a DDC such as Blender`,
-            );
+            StatusHandler.warning(LOC('import.too_many_triangles', { count: this._tris.length }));
         }
 
-        StatusHandler.Get.add(
-            'info',
-            `${this._vertices.length.toLocaleString()} vertices, ${this._tris.length.toLocaleString()} triangles`,
-        );
+        StatusHandler.info(LOC('import.vertex_triangle_count', { vertex_count: this._vertices.length, triangle_count: this._tris.length }));
 
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
@@ -183,19 +177,11 @@ export class Mesh {
             }
         }
         if (giveNormalsWarning) {
-            StatusHandler.Get.add(
-                'warning',
-                'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
-            );
+            StatusHandler.warning(LOC('import.missing_normals'));
         };
     }
 
     private _checkMaterials() {
-        if (this._materials.size === 0) {
-            throw new AppError('Loaded mesh has no materials');
-        }
-
-
         // Check used materials exist
         const usedMaterials = new Set<string>();
         const missingMaterials = new Set<string>();
@@ -246,6 +232,8 @@ export class Mesh {
 
         // Check texture paths are absolute and exist
         this._materials.forEach((material, materialName) => {
+            // TODO Unimplemented
+            /*
             if (material.type === MaterialType.textured) {
                 ASSERT(path.isAbsolute(material.path), 'Material texture path not absolute');
                 if (!fs.existsSync(material.path)) {
@@ -263,6 +251,7 @@ export class Mesh {
                     }
                 }
             }
+            */
         });
 
         // Deduce default texture wrap mode for each material type
@@ -300,10 +289,7 @@ export class Mesh {
 
     private _centreMesh() {
         const centre = this.getBounds().getCentre();
-
-        if (!centre.isNumber()) {
-            throw new AppError('Could not find centre of mesh');
-        }
+        ASSERT(centre.isNumber(), 'Could not find centre of mesh');
 
         // Translate each triangle
         this.translateMesh(centre.negate());
@@ -315,7 +301,7 @@ export class Mesh {
         const scaleFactor = Mesh.desiredHeight / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
-            throw new AppError('Could not scale mesh correctly - mesh is likely 2D, rotate it so that it has a non-zero height');
+            throw new AppError(LOC('import.could_not_scale_mesh'));
         } else {
             this.scaleMesh(scaleFactor);
         }
@@ -325,7 +311,7 @@ export class Mesh {
         this._loadedTextures.clear();
         this._materials.forEach((material, materialName) => {
             if (material.type === MaterialType.textured && !this._loadedTextures.has(materialName)) {
-                this._loadedTextures.set(materialName, new Texture(material.path, material.transparency));
+                this._loadedTextures.set(materialName, new Texture({ diffuse: material.diffuse, transparency: material.transparency }));
             }
         });
     }

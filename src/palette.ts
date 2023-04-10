@@ -1,30 +1,24 @@
-import fs from 'fs';
-import path from 'path';
-
+import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
+import { PALETTE_COLOURFUL } from '../res/palettes/colourful';
+import { PALETTE_GREYSCALE } from '../res/palettes/greyscale';
+import { PALETTE_SCHEMATIC_FRIENDLY } from '../res/palettes/schematic-friendly';
 import { Atlas } from './atlas';
+import { LOC } from './localiser';
 import { StatusHandler } from './status';
 import { AppTypes, AppUtil, TOptional } from './util';
-import { ASSERT } from './util/error_util';
 import { LOG_WARN } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
+export type TPalettes = 'all' | 'colourful' | 'greyscale' | 'schematic-friendly';
+
 export class PaletteManager {
-    public static getPalettesInfo(): { paletteID: string, paletteDisplayName: string }[] {
-        const palettes: { paletteID: string, paletteDisplayName: string }[] = [];
-
-        fs.readdirSync(AppPaths.Get.palettes).forEach((file) => {
-            const paletteFilePath = path.parse(file);
-            if (paletteFilePath.ext === Palette.PALETTE_FILE_EXT) {
-                const paletteID = paletteFilePath.name;
-
-                let paletteDisplayName = paletteID.replace('-', ' ').toLowerCase();
-                paletteDisplayName = AppUtil.Text.capitaliseFirstLetter(paletteDisplayName);
-
-                palettes.push({ paletteID: paletteID, paletteDisplayName: paletteDisplayName });
-            }
-        });
-
-        return palettes;
+    public static getPalettesInfo(): { id: TPalettes, name: string }[] {
+        return [
+            { id: 'all', name: 'All' },
+            { id: 'colourful', name: 'Colourful' },
+            { id: 'greyscale', name: 'Greyscale' },
+            { id: 'schematic-friendly', name: 'Schematic-friendly' },
+        ];
     }
 }
 
@@ -33,17 +27,38 @@ export class Palette {
     public static PALETTE_FILE_EXT: string = '.palette';
     private static _FILE_VERSION: number = 1;
 
-    private _blocks: AppTypes.TNamespacedBlockName[];
+    private _blocks: Set<AppTypes.TNamespacedBlockName>;
 
     private constructor() {
-        this._blocks = [];
+        this._blocks = new Set();
     }
 
     public static create(): Palette {
         return new Palette();
     }
 
-    public static load(paletteName: string): TOptional<Palette> {
+    public static load(palette: TPalettes): TOptional<Palette> {
+        const outPalette = Palette.create();
+
+        switch (palette) {
+            case 'all':
+                outPalette.add(PALETTE_ALL_RELEASE);
+                break;
+            case 'colourful':
+                outPalette.add(PALETTE_COLOURFUL);
+                break;
+            case 'greyscale':
+                outPalette.add(PALETTE_GREYSCALE);
+                break;
+            case 'schematic-friendly':
+                outPalette.add(PALETTE_SCHEMATIC_FRIENDLY);
+                break;
+        }
+
+        return outPalette;
+
+        return undefined;
+        /*
         if (!Palette._isValidPaletteName(paletteName)) {
             return;
         }
@@ -74,9 +89,13 @@ export class Palette {
         }
 
         return palette;
+        */
     }
 
     public save(paletteName: string): boolean {
+        // TODO Unimplemented
+        return false;
+        /*
         if (!Palette._isValidPaletteName(paletteName)) {
             return false;
         }
@@ -93,37 +112,38 @@ export class Palette {
         } catch {
             return false;
         }
+        */
     }
 
-    public add(blockName: AppTypes.TNamespacedBlockName): void {
-        if (!this._blocks.includes(blockName)) {
-            this._blocks.push(AppUtil.Text.namespaceBlock(blockName));
-        }
+    public add(blockNames: AppTypes.TNamespacedBlockName[]): void {
+        blockNames.forEach((blockName) => {
+            if (!this._blocks.has(blockName)) {
+                this._blocks.add(AppUtil.Text.namespaceBlock(blockName));
+            }
+        });
     }
 
     public remove(blockName: string): boolean {
-        const index = this._blocks.indexOf(AppUtil.Text.namespaceBlock(blockName));
-        if (index !== -1) {
-            this._blocks.splice(index, 1);
-            return true;
-        }
-        return false;
+        return this._blocks.delete(blockName);
     }
 
     public has(blockName: string): boolean {
-        return this._blocks.includes(AppUtil.Text.namespaceBlock(blockName));
+        return this._blocks.has(AppUtil.Text.namespaceBlock(blockName));
     }
 
     public count() {
-        return this._blocks.length;
+        return this._blocks.size;
     }
 
     public getBlocks() {
-        return this._blocks;
+        return Array.from(this._blocks);
     }
 
     public static getAllPalette(): TOptional<Palette> {
-        return Palette.load('all-release');
+        const palette = Palette.create();
+        palette.add(PALETTE_ALL_RELEASE);
+        return palette;
+        //return Palette.load('all-release');
     }
 
     /**
@@ -132,8 +152,9 @@ export class Palette {
      */
     public removeMissingAtlasBlocks(atlas: Atlas) {
         const missingBlocks: AppTypes.TNamespacedBlockName[] = [];
-        for (let blockIndex = this._blocks.length - 1; blockIndex >= 0; --blockIndex) {
-            const blockName = this._blocks[blockIndex];
+
+        const blocksCopy = Array.from(this._blocks);
+        for (const blockName of blocksCopy) {
             if (!atlas.hasBlock(blockName)) {
                 missingBlocks.push(blockName);
                 this.remove(blockName);
@@ -141,7 +162,7 @@ export class Palette {
         }
 
         if (missingBlocks.length > 0) {
-            StatusHandler.Get.add('warning', `${missingBlocks.length} palette block(s) are missing atlas textures, they will not be used`);
+            StatusHandler.warning(LOC('assign.blocks_missing_textures', { count: missingBlocks }));
             LOG_WARN('Blocks missing atlas textures', missingBlocks);
         }
     }

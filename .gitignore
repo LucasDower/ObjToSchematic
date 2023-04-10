@@ -19,3 +19,6 @@ notes.txt
 *.DS_Store
 .dependency-cruiser.js
 dependencygraph.svg
+.firebase
+/webpack/
+.firebaserc

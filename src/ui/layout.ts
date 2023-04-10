@@ -1,135 +1,177 @@
-import fs from 'fs';
+import Split from 'split.js';
 
+import { locales } from '../../loc/base';
 import { AppContext } from '../app_context';
 import { FallableBehaviour } from '../block_mesh';
 import { ArcballCamera } from '../camera';
+import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../exporters/exporters';
-import { PaletteManager } from '../palette';
+import { LOC, Localiser, TLocalisedString } from '../localiser';
+import { MaterialMapManager } from '../material-map';
+import { MaterialType } from '../mesh';
 import { MeshType, Renderer } from '../renderer';
 import { EAction } from '../util';
 import { ASSERT } from '../util/error_util';
-import { LOG } from '../util/log_util';
-import { AppPaths } from '../util/path_util';
 import { TAxis } from '../util/type_util';
 import { TDithering } from '../util/type_util';
+import { UIUtil } from '../util/ui_util';
 import { TVoxelOverlapRule } from '../voxel_mesh';
 import { TVoxelisers } from '../voxelisers/voxelisers';
-import { ButtonElement } from './elements/button';
-import { CheckboxElement } from './elements/checkbox';
-import { ComboBoxElement, ComboBoxItem } from './elements/combobox';
-import { ConfigUIElement } from './elements/config_element';
-import { FileInputElement } from './elements/file_input';
-import { OutputElement } from './elements/output';
-import { SliderElement } from './elements/slider';
-import { ToolbarItemElement } from './elements/toolbar_item';
-import { VectorSpinboxElement } from './elements/vector_spinbox';
+import { ButtonComponent } from './components/button';
+import { CheckboxComponent } from './components/checkbox';
+import { ComboboxComponent } from './components/combobox';
+import { ConfigComponent } from './components/config';
+import { FileComponent } from './components/file_input';
+import { HeaderComponent } from './components/header';
+import { PaletteComponent } from './components/palette';
+import { PlaceholderComponent } from './components/placeholder';
+import { SliderComponent } from './components/slider';
+import { SolidMaterialComponent } from './components/solid_material';
+import { TexturedMaterialComponent } from './components/textured_material';
+import { ToolbarItemComponent } from './components/toolbar_item';
+import { VectorComponent } from './components/vector';
+import { AppConsole } from './console';
+import { AppIcons } from './icons';
+import { HTMLBuilder, MiscComponents } from './misc';
 
-export interface Group {
-    label: string;
-    elements: { [key: string]: ConfigUIElement<any, any> };
-    elementsOrder: string[];
-    submitButton: ButtonElement;
-    output: OutputElement;
+export type Group = {
+    id: string,
+    label: TLocalisedString;
+    components: { [key: string]: ConfigComponent<any, any> };
+    componentOrder: string[];
+    execButton?: ButtonComponent;
 }
 
 export interface ToolbarGroup {
-    elements: { [key: string]: ToolbarItemElement };
-    elementsOrder: string[];
+    components: { [key: string]: ToolbarItemComponent };
+    componentOrder: string[];
 }
 
 export class UI {
-    public uiOrder = ['import', 'materials', 'voxelise', 'assign', 'export'];
+    /* Singleton */
+    private static _instance: UI;
+    public static get Get() {
+        return this._instance || (this._instance = new this());
+    }
+
+    public constructor() {
+        const languageComponents = new ComboboxComponent<string>()
+            .setLabel('settings.components.language')
+            .addValueChangedListener((newLanguageCode) => {
+                AppConsole.info(LOC('settings.changing_language'));
+                Localiser.Get.changeLanguage(newLanguageCode);
+            });
+
+        locales.forEach((locale) => {
+            languageComponents.addItem({
+                displayText: locale.display_name,
+                payload: locale.language_code,
+            });
+        });
+        this._ui.settings.components.language = languageComponents;
+
+        EventManager.Get.add(EAppEvent.onLanguageChanged, () => {
+            this._handleLanguageChange();
+        });
+    }
+
+    public uiOrder = ['settings', 'import', 'materials', 'voxelise', 'assign', 'export'];
     private _ui = {
-        'import': {
-            label: 'Import',
-            elements: {
-                'input': new FileInputElement()
-                    .setFileExtensions(['obj'])
-                    .setLabel('Wavefront .obj file'),
-                'rotation': new VectorSpinboxElement()
-                    .setLabel('Rotation')
-                    .setWrap(360)
-                    .setUnits('°'),
+        'settings': {
+            id: 'settings',
+            label: LOC('settings.heading'),
+            components: {
+                'language': new ComboboxComponent<string>(), // Handled in constructor
             },
-            elementsOrder: ['input', 'rotation'],
-            submitButton: new ButtonElement()
+            componentOrder: ['language'],
+        },
+        'import': {
+            id: 'import',
+            label: LOC('import.heading'),
+            components: {
+                'input': new FileComponent()
+                    .setLabel('import.components.input'),
+                'rotation': new VectorComponent()
+                    .setLabel('import.components.rotation'),
+            },
+            componentOrder: ['input', 'rotation'],
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Import);
+                    this._appContext?.do(EAction.Import);
                 })
-                .setLabel('Load mesh'),
-            output: new OutputElement(),
+                .setLabel(LOC('import.button')),
         },
         'materials': {
-            label: 'Materials',
-            elements: {
+            id: 'materials',
+            label: LOC('materials.heading'),
+            components: {
             },
-            elementsOrder: [],
-            submitButton: new ButtonElement()
+            componentOrder: [],
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Materials);
+                    this._appContext?.do(EAction.Materials);
                 })
-                .setLabel('Update materials'),
-            output: new OutputElement(),
+                .setLabel(LOC('materials.button')),
         },
         'voxelise': {
-            label: 'Voxelise',
-            elements: {
-                'constraintAxis': new ComboBoxElement<TAxis>()
-                    .addItem({ payload: 'y', displayText: 'Y (height) (green)' })
-                    .addItem({ payload: 'x', displayText: 'X (width) (red)' })
-                    .addItem({ payload: 'z', displayText: 'Z (depth) (blue)' })
-                    .setLabel('Constraint axis')
+            id: 'voxelise',
+            label: LOC('voxelise.heading'),
+            components: {
+                'constraintAxis': new ComboboxComponent<TAxis>()
+                    .addItem({ payload: 'y', displayLocKey: 'voxelise.components.y_axis' })
+                    .addItem({ payload: 'x', displayLocKey: 'voxelise.components.x_axis' })
+                    .addItem({ payload: 'z', displayLocKey: 'voxelise.components.z_axis' })
+                    .setLabel('voxelise.components.constraint_axis')
                     .addValueChangedListener((value: TAxis) => {
                         /*
+                        TODO:
                         switch (value) {
                             case 'x':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.x ?? 400);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.x ?? 400);
                                 break;
                             case 'y':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
                                 break;
                             case 'z':
-                                this._ui.voxelise.elements.size.setMax(this._appContext.maxConstraint?.z ?? 400);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.z ?? 400);
                                 break;
                         }
                         */
                     }),
-                'size': new SliderElement()
+                'size': new SliderComponent()
                     .setMin(3)
                     .setMax(380)
                     .setDefaultValue(80)
                     .setDecimals(0)
                     .setStep(1)
-                    .setLabel('Size'),
-                'voxeliser': new ComboBoxElement<TVoxelisers>()
-                    .addItem({ payload: 'bvh-ray', displayText: 'BVH Ray-based' })
-                    .addItem({ payload: 'ncrb', displayText: 'NCRB' })
-                    .addItem({ payload: 'ray-based', displayText: 'Ray-based (legacy)' })
-                    .setLabel('Algorithm'),
-                'ambientOcclusion': new CheckboxElement()
-                    .setCheckedText('On (recommended)')
-                    .setUncheckedText('Off (faster)')
+                    .setLabel('voxelise.components.size'),
+                'voxeliser': new ComboboxComponent<TVoxelisers>()
+                    .addItem({ payload: 'ray-based', displayLocKey: 'voxelise.components.ray_based' })
+                    .addItem({ payload: 'bvh-ray', displayLocKey: 'voxelise.components.bvh_ray' })
+                    .addItem({ payload: 'ncrb', displayLocKey: 'voxelise.components.ncrb' })
+                    .setLabel('voxelise.components.algorithm'),
+                'ambientOcclusion': new CheckboxComponent()
+                    .setCheckedText('voxelise.components.on_recommended')
+                    .setUncheckedText('voxelise.components.off_faster')
                     .setDefaultValue(true)
-                    .setLabel('Ambient occlusion'),
-                'multisampleColouring': new CheckboxElement()
-                    .setCheckedText('On (recommended)')
-                    .setUncheckedText('Off (faster)')
+                    .setLabel('voxelise.components.ambient_occlusion'),
+                'multisampleColouring': new CheckboxComponent()
+                    .setCheckedText('voxelise.components.on_recommended')
+                    .setUncheckedText('voxelise.components.off_faster')
                     .setDefaultValue(true)
-                    .setLabel('Multisampling'),
-                'voxelOverlapRule': new ComboBoxElement<TVoxelOverlapRule>()
+                    .setLabel('voxelise.components.multisampling'),
+                'voxelOverlapRule': new ComboboxComponent<TVoxelOverlapRule>()
                     .addItem({
-                        displayText: 'Average (recommended)',
+                        displayLocKey: 'voxelise.components.average_recommended',
                         payload: 'average',
-                        tooltip: 'If multiple voxels are placed in the same location, take the average of their colours',
                     })
                     .addItem({
-                        displayText: 'First',
+                        displayLocKey: 'voxelise.components.first',
                         payload: 'first',
-                        tooltip: 'If multiple voxels are placed in the same location, use the first voxel\'s colour',
                     })
-                    .setLabel('Voxel overlap'),
+                    .setLabel('voxelise.components.voxel_overlap'),
             },
-            elementsOrder: [
+            componentOrder: [
                 'constraintAxis',
                 'size',
                 'voxeliser',
@@ -137,98 +179,110 @@ export class UI {
                 'multisampleColouring',
                 'voxelOverlapRule',
             ],
-            submitButton: new ButtonElement()
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Voxelise);
+                    this._appContext?.do(EAction.Voxelise);
                 })
-                .setLabel('Voxelise mesh'),
-            output: new OutputElement(),
+                .setLabel(LOC('voxelise.button')),
         },
         'assign': {
-            label: 'Assign',
-            elements: {
-                'textureAtlas': new ComboBoxElement<string>()
-                    .addItems(this._getTextureAtlases())
-                    .setLabel('Texture atlas'),
-                'blockPalette': new ComboBoxElement<string>()
-                    .addItems(this._getBlockPalettes())
-                    .setLabel('Block palette'),
-                'dithering': new ComboBoxElement<TDithering>()
+            id: 'assign',
+            label: LOC('assign.heading'),
+            components: {
+                'textureAtlas': new ComboboxComponent<string>()
+                    .addItem({ displayLocKey: 'assign.components.vanilla', payload: 'vanilla' })
+                    .setLabel('assign.components.texture_atlas')
+                    .setShouldObeyGroupEnables(false),
+                'blockPalette': new PaletteComponent()
+                    .setLabel('assign.components.block_palette'),
+                'dithering': new ComboboxComponent<TDithering>()
                     .addItems([{
-                        displayText: 'Ordered',
+                        displayLocKey: 'assign.components.ordered',
                         payload: 'ordered',
                     },
                     {
-                        displayText: 'Random',
+                        displayLocKey: 'assign.components.random',
                         payload: 'random',
                     },
                     {
-                        displayText: 'Off',
+                        displayLocKey: 'assign.components.off',
                         payload: 'off',
                     }])
-                    .setLabel('Dithering'),
-                'fallable': new ComboBoxElement<FallableBehaviour>()
+                    .setLabel('assign.components.dithering')
+                    .addEnabledChangedListener((isEnabled) => {
+                        this._ui.assign.components.ditheringMagnitude.setEnabled(isEnabled && this._ui.assign.components.dithering.getValue() !== 'off', false);
+                    })
+                    .addValueChangedListener((newValue: TDithering) => {
+                        this._ui.assign.components.ditheringMagnitude.setEnabled(newValue !== 'off', false);
+                    }),
+                'ditheringMagnitude': new SliderComponent()
+                    .setMin(1)
+                    .setMax(64)
+                    .setDefaultValue(32)
+                    .setDecimals(0)
+                    .setStep(1)
+                    .setLabel('assign.components.dithering_magnitude')
+                    .setShouldObeyGroupEnables(false),
+                'fallable': new ComboboxComponent<FallableBehaviour>()
                     .addItems([{
-                        displayText: 'Replace falling with solid',
+                        displayLocKey: 'assign.components.replace_falling',
                         payload: 'replace-falling',
-                        tooltip: 'Replace all blocks that will fall with solid blocks',
                     },
                     {
-                        displayText: 'Replace fallable with solid',
+                        displayLocKey: 'assign.components.fallable_blocks',
                         payload: 'replace-fallable',
-                        tooltip: 'Replace all blocks that can fall with solid blocks',
                     },
                     {
-                        displayText: 'Do nothing',
+                        displayLocKey: 'assign.components.do_nothing',
                         payload: 'do-nothing',
-                        tooltip: 'Let the block fall',
                     }])
-                    .setLabel('Fallable blocks'),
-                'colourAccuracy': new SliderElement()
+                    .setLabel('assign.components.fallable_blocks'),
+                'colourAccuracy': new SliderComponent()
                     .setMin(1)
                     .setMax(8)
                     .setDefaultValue(5)
                     .setDecimals(1)
                     .setStep(0.1)
-                    .setLabel('Colour accuracy'),
-                'contextualAveraging': new CheckboxElement()
-                    .setCheckedText('On (recommended)')
-                    .setUncheckedText('Off (faster)')
+                    .setLabel('assign.components.colour_accuracy'),
+                'contextualAveraging': new CheckboxComponent()
+                    .setCheckedText('voxelise.components.on_recommended')
+                    .setUncheckedText('voxelise.components.off_faster')
                     .setDefaultValue(true)
-                    .setLabel('Smart averaging'),
-                'errorWeight': new SliderElement()
+                    .setLabel('assign.components.smart_averaging'),
+                'errorWeight': new SliderComponent()
                     .setMin(0.0)
                     .setMax(2.0)
                     .setDefaultValue(0.2)
                     .setDecimals(2)
                     .setStep(0.01)
-                    .setLabel('Smoothness'),
-                'calculateLighting': new CheckboxElement()
-                    .setCheckedText('On')
-                    .setUncheckedText('Off')
+                    .setLabel('assign.components.smoothness'),
+                'calculateLighting': new CheckboxComponent()
+                    .setCheckedText('misc.on')
+                    .setUncheckedText('misc.off')
                     .setDefaultValue(false)
-                    .setLabel('Calculate lighting')
+                    .setLabel('assign.components.calculate_lighting')
                     .addValueChangedListener((newValue: boolean) => {
-                        const isEnabled = this._ui.assign.elements.calculateLighting.getEnabled();
-                        this._ui.assign.elements.lightThreshold.setEnabled(newValue && isEnabled, false);
+                        const isEnabled = this._ui.assign.components.calculateLighting.getEnabled();
+                        this._ui.assign.components.lightThreshold.setEnabled(newValue && isEnabled, false);
                     })
                     .addEnabledChangedListener((isEnabled: boolean) => {
-                        const value = this._ui.assign.elements.calculateLighting.getValue();
-                        this._ui.assign.elements.lightThreshold.setEnabled(value && isEnabled, false);
+                        const value = this._ui.assign.components.calculateLighting.getValue();
+                        this._ui.assign.components.lightThreshold.setEnabled(value && isEnabled, false);
                     }),
-                'lightThreshold': new SliderElement()
+                'lightThreshold': new SliderComponent()
                     .setMin(0)
                     .setMax(14)
                     .setDefaultValue(1)
                     .setDecimals(0)
                     .setStep(1)
-                    .setLabel('Light threshold')
+                    .setLabel('assign.components.light_threshold')
                     .setShouldObeyGroupEnables(false),
             },
-            elementsOrder: [
+            componentOrder: [
                 'textureAtlas',
                 'blockPalette',
                 'dithering',
+                'ditheringMagnitude',
                 'fallable',
                 'colourAccuracy',
                 'contextualAveraging',
@@ -236,56 +290,65 @@ export class UI {
                 'calculateLighting',
                 'lightThreshold',
             ],
-            submitButton: new ButtonElement()
+            execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Assign);
+                    this._appContext?.do(EAction.Assign);
                 })
-                .setLabel('Assign blocks'),
-            output: new OutputElement(),
+                .setLabel(LOC('assign.button')),
         },
         'export': {
-            label: 'Export',
-            elements: {
-                'export': new ComboBoxElement<TExporters>()
+            id: 'export',
+            label: LOC('export.heading'),
+            components: {
+                'export': new ComboboxComponent<TExporters>()
                     .addItems([
                         {
-                            displayText: 'Litematic (.litematic)',
+                            displayLocKey: 'export.components.litematic',
                             payload: 'litematic',
                         },
                         {
-                            displayText: 'Schematic (.schematic)',
+                            displayLocKey: 'export.components.schematic',
                             payload: 'schematic',
                         },
+                        /*
                         {
                             displayText: 'Wavefront OBJ (.obj)',
                             payload: 'obj',
                         },
+                        */
                         {
-                            displayText: 'Sponge Schematic (.schem)',
+                            displayLocKey: 'export.components.sponge_schematic',
                             payload: 'schem',
                         },
                         {
-                            displayText: 'Structure blocks (.nbt)',
+                            displayLocKey: 'export.exported_structure',
                             payload: 'nbt',
                         },
+                        {
+                            displayLocKey: 'export.components.indexed_json',
+                            payload: 'indexed_json',
+                        },
+                        {
+                            displayLocKey: 'export.components.uncompressed_json',
+                            payload: 'uncompressed_json',
+                        },
                     ])
-                    .setLabel('Exporter'),
+                    .setLabel('export.components.exporter'),
             },
-            elementsOrder: ['export'],
-            submitButton: new ButtonElement()
-                .setLabel('Export structure')
+            componentOrder: ['export'],
+            execButton: new ButtonComponent()
+                .setLabel(LOC('export.button'))
                 .setOnClick(() => {
-                    this._appContext.do(EAction.Export);
+                    this._appContext?.do(EAction.Export);
                 }),
-            output: new OutputElement(),
         },
     };
 
     private _toolbarLeft = {
         groups: {
             'viewmode': {
-                elements: {
-                    'mesh': new ToolbarItemElement({ icon: 'mesh' })
+                components: {
+                    'mesh': new ToolbarItemComponent({ id: 'mesh', iconSVG: AppIcons.MESH })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.TriangleMesh);
                         })
@@ -295,7 +358,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
                         }),
-                    'voxelMesh': new ToolbarItemElement({ icon: 'voxel' })
+                    'voxelMesh': new ToolbarItemComponent({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
                         })
@@ -305,7 +368,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         }),
-                    'blockMesh': new ToolbarItemElement({ icon: 'block' })
+                    'blockMesh': new ToolbarItemComponent({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
                         })
@@ -316,11 +379,11 @@ export class UI {
                             return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
                         }),
                 },
-                elementsOrder: ['mesh', 'voxelMesh', 'blockMesh'],
+                componentOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
             'debug': {
-                elements: {
-                    'grid': new ToolbarItemElement({ icon: 'grid' })
+                components: {
+                    'grid': new ToolbarItemComponent({ id: 'grid', iconSVG: AppIcons.GRID })
                         .onClick(() => {
                             Renderer.Get.toggleIsGridEnabled();
                         })
@@ -330,14 +393,14 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
                         }),
-                    'axes': new ToolbarItemElement({ icon: 'axes' })
+                    'axes': new ToolbarItemComponent({ id: 'axes', iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
                         })
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         }),
-                    'night-vision': new ToolbarItemElement({ icon: 'bulb' })
+                    'night-vision': new ToolbarItemComponent({ id: 'night', iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
                         })
@@ -348,61 +411,80 @@ export class UI {
                             return Renderer.Get.canToggleNightVision();
                         }),
                 },
-                elementsOrder: ['grid', 'axes', 'night-vision'],
+                componentOrder: ['grid', 'axes', 'night-vision'],
             },
-
+            'sliceHeight': {
+                components: {
+                    'slice': new ToolbarItemComponent({ id: 'slice', iconSVG: AppIcons.SLICE })
+                        .onClick(() => {
+                            Renderer.Get.toggleSliceViewerEnabled();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.getActiveMeshType() === MeshType.BlockMesh;
+                        })
+                        .isActive(() => {
+                            return Renderer.Get.isSliceViewerEnabled();
+                        }),
+                    'plus': new ToolbarItemComponent({ id: 'plus', iconSVG: AppIcons.PLUS })
+                        .onClick(() => {
+                            Renderer.Get.incrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canIncrementSliceHeight();
+                        }),
+                    'minus': new ToolbarItemComponent({ id: 'minus', iconSVG: AppIcons.MINUS })
+                        .onClick(() => {
+                            Renderer.Get.decrementSliceHeight();
+                        })
+                        .isEnabled(() => {
+                            return Renderer.Get.isSliceViewerEnabled() &&
+                                Renderer.Get.canDecrementSliceHeight();
+                        }),
+                },
+                componentOrder: ['slice', 'plus', 'minus'],
+            },
         },
-        groupsOrder: ['viewmode', 'debug'],
+        groupsOrder: ['viewmode', 'debug', 'sliceHeight'],
     };
 
     private _toolbarRight = {
         groups: {
             'zoom': {
-                elements: {
-                    'zoomOut': new ToolbarItemElement({ icon: 'minus' })
+                components: {
+                    'zoomOut': new ToolbarItemComponent({ id: 'zout', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
                         }),
-                    'zoomIn': new ToolbarItemElement({ icon: 'plus' })
+                    'zoomIn': new ToolbarItemComponent({ id: 'zin', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
                         }),
-                    'reset': new ToolbarItemElement({ icon: 'centre' })
+                    'reset': new ToolbarItemComponent({ id: 'reset', iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
                         }),
                 },
-                elementsOrder: ['zoomOut', 'zoomIn', 'reset'],
+                componentOrder: ['zoomOut', 'zoomIn', 'reset'],
             },
             'camera': {
-                elements: {
-                    'perspective': new ToolbarItemElement({ icon: 'perspective' })
+                components: {
+                    'perspective': new ToolbarItemComponent({ id: 'pers', iconSVG: AppIcons.PERSPECTIVE })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('perspective');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
                         }),
-                    'orthographic': new ToolbarItemElement({ icon: 'orthographic' })
+                    'orthographic': new ToolbarItemComponent({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isOrthographic();
                         }),
-                    'angleSnap': new ToolbarItemElement({ icon: 'magnet' })
-                        .onClick(() => {
-                            ArcballCamera.Get.toggleAngleSnap();
-                        })
-                        .isActive(() => {
-                            return ArcballCamera.Get.isAngleSnapEnabled();
-                        })
-                        .isEnabled(() => {
-                            return ArcballCamera.Get.isOrthographic();
-                        }),
-
                 },
-                elementsOrder: ['perspective', 'orthographic', 'angleSnap'],
+                componentOrder: ['perspective', 'orthographic'],
             },
         },
         groupsOrder: ['camera', 'zoom'],
@@ -412,10 +494,10 @@ export class UI {
     private _toolbarLeftDull: { [key: string]: ToolbarGroup } = this._toolbarLeft.groups;
     private _toolbarRightDull: { [key: string]: ToolbarGroup } = this._toolbarRight.groups;
 
-    private _appContext: AppContext;
+    private _appContext?: AppContext;
 
-    public constructor(appContext: AppContext) {
-        this._appContext = appContext;
+    public bindToContext(context: AppContext) {
+        this._appContext = context;
     }
 
     public tick(isBusy: boolean) {
@@ -425,170 +507,236 @@ export class UI {
             document.body.style.cursor = 'default';
         }
 
+        const canvasColumn = UIUtil.getElementById('col-canvas');
+        if (ArcballCamera.Get.isUserRotating || ArcballCamera.Get.isUserTranslating) {
+            canvasColumn.style.cursor = 'grabbing';
+        } else {
+            canvasColumn.style.cursor = 'grab';
+        }
+
         for (const groupName in this._toolbarLeftDull) {
             const toolbarGroup = this._toolbarLeftDull[groupName];
-            for (const toolbarItem of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[toolbarItem].tick();
+            for (const toolbarItem of toolbarGroup.componentOrder) {
+                toolbarGroup.components[toolbarItem].tick();
             }
         }
 
         for (const groupName in this._toolbarRightDull) {
             const toolbarGroup = this._toolbarRightDull[groupName];
-            for (const toolbarItem of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[toolbarItem].tick();
+            for (const toolbarItem of toolbarGroup.componentOrder) {
+                toolbarGroup.components[toolbarItem].tick();
             }
         }
     }
 
     public build() {
-        const groupHTML: { [key: string]: string } = {};
-        for (const groupName in this._ui) {
-            const group = this._uiDull[groupName];
-            groupHTML[groupName] = `
-            <div class="property">
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-                <div class="group-heading">
-                    ${group.label.toUpperCase()}
-                </div>
-                <div style="flex-grow: 1">
-                    <div class="h-div">
-                    </div>
-                </div>
-            </div>
-            `;
-            groupHTML[groupName] += this._getGroupHTML(group);
-        }
+        // Build properties
+        {
+            const sidebarHTML = new HTMLBuilder();
 
-        let itemHTML = '';
-        for (const groupName of this.uiOrder) {
-            itemHTML += groupHTML[groupName];
-        }
+            sidebarHTML.add(`<div class="container-properties">`);
+            {
+                sidebarHTML.add(HeaderComponent.Get.generateHTML());
 
-        document.getElementById('properties')!.innerHTML = `<div class="container">
-        ` + itemHTML + `</div>`;
+                for (const groupName of this.uiOrder) {
+                    const group = this._uiDull[groupName];
+                    sidebarHTML.add(this._getGroupHTML(group));
+                }
+            }
+            sidebarHTML.add(`</div>`);
+
+            sidebarHTML.placeInto('properties');
+        }
 
         // Build toolbar
-        let toolbarHTML = '';
-        // Left
-        toolbarHTML += '<div class="toolbar-column">';
-        for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
-            toolbarHTML += '<div class="toolbar-group">';
-            const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const groupElement = toolbarGroup.elements[groupElementName];
-                toolbarHTML += groupElement.generateHTML();
-            }
-            toolbarHTML += '</div>';
-        }
-        toolbarHTML += '</div>';
-        // Right
-        toolbarHTML += '<div class="toolbar-column">';
-        for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
-            toolbarHTML += '<div class="toolbar-group">';
-            const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                const groupElement = toolbarGroup.elements[groupElementName];
-                toolbarHTML += groupElement.generateHTML();
-            }
-            toolbarHTML += '</div>';
-        }
-        toolbarHTML += '</div>';
+        {
+            const toolbarHTML = new HTMLBuilder();
 
-        document.getElementById('toolbar')!.innerHTML = toolbarHTML;
+            // Left
+            toolbarHTML.add('<div class="toolbar-column">');
+            for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
+                toolbarHTML.add('<div class="toolbar-group">');
+                const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
+                for (const groupElementName of toolbarGroup.componentOrder) {
+                    const groupElement = toolbarGroup.components[groupElementName];
+                    toolbarHTML.add(groupElement.generateHTML());
+                }
+                toolbarHTML.add('</div>');
+            }
+            toolbarHTML.add('</div>');
+
+            // Right
+            toolbarHTML.add('<div class="toolbar-column">');
+            for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
+                toolbarHTML.add('<div class="toolbar-group">');
+                const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
+                for (const groupElementName of toolbarGroup.componentOrder) {
+                    const groupElement = toolbarGroup.components[groupElementName];
+                    toolbarHTML.add(groupElement.generateHTML());
+                }
+                toolbarHTML.add('</div>');
+            }
+            toolbarHTML.add('</div>');
+
+            toolbarHTML.placeInto('toolbar');
+        }
+
+        // Build console
+        AppConsole.Get.build();
+
+        Split(['.column-sidebar', '.column-canvas'], {
+            sizes: [20, 80],
+            minSize: [600, 500],
+            gutterSize: 5,
+        });
+
+        Split(['.column-properties', '.column-console'], {
+            sizes: [85, 15],
+            minSize: [0, 0],
+            direction: 'vertical',
+            gutterSize: 5,
+        });
     }
 
-    public cacheValues(action: EAction) {
-        const group = this._getEActionGroup(action);
-        for (const elementName of group.elementsOrder) {
-            LOG(`[UI]: Caching ${elementName}`);
-            const element = group.elements[elementName];
-            element.cacheValue();
+    private _forEachComponent(action: EAction, functor: (component: ConfigComponent<unknown, unknown>) => void) {
+        const group = this._getGroup(action);
+
+        for (const elementName of group.componentOrder) {
+            const element = group.components[elementName];
+            functor(element);
         }
     }
 
-    public refreshSubcomponents(group: Group) {
-        const element = document.getElementById(`subcomponents_${group.label}`);
+    private _getGroupHeadingLabel(action: EAction): TLocalisedString {
+        switch (action) {
+            case EAction.Settings:
+                return LOC('settings.heading');
+            case EAction.Import:
+                return LOC('import.heading');
+            case EAction.Materials:
+                return LOC('materials.heading');
+            case EAction.Voxelise:
+                return LOC('voxelise.heading');
+            case EAction.Assign:
+                return LOC('assign.heading');
+            case EAction.Export:
+                return LOC('export.heading');
+        }
+        ASSERT(false);
+    }
+
+    private _getGroupButtonLabel(action: EAction): TLocalisedString {
+        switch (action) {
+            case EAction.Import:
+                return LOC('import.button');
+            case EAction.Materials:
+                return LOC('materials.button');
+            case EAction.Voxelise:
+                return LOC('voxelise.button');
+            case EAction.Assign:
+                return LOC('assign.button');
+            case EAction.Export:
+                return LOC('export.button');
+        }
+        ASSERT(false, `Cannot get label of '${action}'`);
+    }
+
+    private _handleLanguageChange() {
+        for (let i = 0; i < EAction.MAX; ++i) {
+            const group = this._getGroup(i);
+            const header = UIUtil.getElementById(`component_header_${group.id}`);
+
+            group.label = this._getGroupHeadingLabel(i);
+            header.innerHTML = MiscComponents.createGroupHeader(group.label);
+
+            if (group.execButton !== undefined) {
+                const newButtonLabel = this._getGroupButtonLabel(i);
+                group.execButton.setLabel(newButtonLabel).updateLabel();
+            }
+
+            this._forEachComponent(i, (component) => {
+                component.refresh();
+            });
+        }
+
+        AppConsole.success(LOC('settings.changed_language'));
+    }
+
+    /**
+     * Rebuilds the HTML for all components in an action group.
+     */
+    public refreshComponents(action: EAction) {
+        const group = this._getGroup(action);
+
+        const element = document.getElementById(`subcomponents_${group.id}`);
         ASSERT(element !== null);
 
-        element.innerHTML = this._getGroupSubcomponentsHTML(group);
+        element.innerHTML = this._getComponentsHTML(group);
 
-        for (const elementName in group.elements) {
-            const element = group.elements[elementName];
-            element.registerEvents();
-            element.finalise();
-        }
+        this._forEachComponent(action, (component) => {
+            component.registerEvents();
+            component.finalise();
+        });
     }
 
-    private _getGroupSubcomponentsHTML(group: Group) {
+    private _getComponentsHTML(group: Group) {
         let groupHTML = '';
-        for (const elementName of group.elementsOrder) {
-            const element = group.elements[elementName];
+        for (const elementName of group.componentOrder) {
+            const element = group.components[elementName];
             ASSERT(element !== undefined, `No element for: ${elementName}`);
-            groupHTML += this._buildSubcomponent(element, group.label === 'Materials');
+            groupHTML += element.generateHTML();
         }
         return groupHTML;
     }
 
     private _getGroupHTML(group: Group) {
         return `
-            <div id="subcomponents_${group.label}">
-                ${this._getGroupSubcomponentsHTML(group)}
+            <div id="component_header_${group.id}">
+                ${MiscComponents.createGroupHeader(group.label)}
             </div>
-            <div class="property">
-                <div class="prop-value-container">
-                    ${group.submitButton.generateHTML()}
-                </div>
+            <div class="component-group" id="subcomponents_${group.id}">
+                ${this._getComponentsHTML(group)}
             </div>
-            <div class="property">
-                ${group.output.generateHTML()}
-            </div>
+            ${group.execButton?.generateHTML() ?? ''}
         `;
-    }
-
-    private _buildSubcomponent(element: ConfigUIElement<any, any>, bigPadding: boolean) {
-        return `
-            <div class="property ${bigPadding ? 'big-padding' : ''}">
-                ${element.generateHTML()}
-            </div>
-        `;
-    }
-
-    public getActionOutput(action: EAction) {
-        const group = this._getEActionGroup(action);
-        return group.output;
     }
 
     public getActionButton(action: EAction) {
-        const group = this._getEActionGroup(action);
-        return group.submitButton;
+        const group = this._getGroup(action);
+        return group.execButton;
     }
 
     public registerEvents() {
-        for (const groupName in this._ui) {
-            const group = this._uiDull[groupName];
-            for (const elementName in group.elements) {
-                const element = group.elements[elementName];
-                element.registerEvents();
-                element.finalise();
-            }
-            group.submitButton.registerEvents();
+        HeaderComponent.Get.registerEvents();
+        HeaderComponent.Get.finalise();
+
+        for (let action = 0; action < EAction.MAX; ++action) {
+            this._forEachComponent(action, (component) => {
+                component.registerEvents();
+                component.finalise();
+            });
+
+            const group = this._getGroup(action);
+            group.execButton?.registerEvents();
+            group.execButton?.finalise();
         }
 
         // Register toolbar left
         for (const toolbarGroupName of this._toolbarLeft.groupsOrder) {
             const toolbarGroup = this._toolbarLeftDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[groupElementName].registerEvents();
+            for (const groupElementName of toolbarGroup.componentOrder) {
+                const element = toolbarGroup.components[groupElementName];
+                element.registerEvents();
+                element.finalise();
             }
         }
         // Register toolbar right
         for (const toolbarGroupName of this._toolbarRight.groupsOrder) {
             const toolbarGroup = this._toolbarRightDull[toolbarGroupName];
-            for (const groupElementName of toolbarGroup.elementsOrder) {
-                toolbarGroup.elements[groupElementName].registerEvents();
+            for (const groupElementName of toolbarGroup.componentOrder) {
+                const element = toolbarGroup.components[groupElementName];
+                element.registerEvents();
+                element.finalise();
             }
         }
     }
@@ -601,79 +749,87 @@ export class UI {
         return this._uiDull;
     }
 
+    /**
+     * Enable a specific action.
+     */
+    public enable(action: EAction) {
+        this._forEachComponent(action, (component) => {
+            component.setEnabled(true);
+        });
+        this._getGroup(action).execButton?.setEnabled(true);
+    }
+
+    /**
+     * Enable all actions up to and including a specific action.
+     */
     public enableTo(action: EAction) {
         for (let i = 0; i <= action; ++i) {
             this.enable(i);
         }
     }
 
-    public enable(action: EAction) {
-        if (action >= EAction.MAX) {
-            return;
-        }
-
-        LOG('[UI]: Enabling', action);
-        const group = this._getEActionGroup(action);
-        for (const compName in group.elements) {
-            group.elements[compName].setEnabled(true);
-        }
-        group.submitButton.setEnabled(true);
-    }
-
-    public disableAll() {
-        this.disable(EAction.Import, false);
-    }
-
-    public disable(action: EAction, clearOutput: boolean = true) {
-        if (action < 0) {
-            return;
-        }
-
+    /**
+     * Disable a specific action and its dependent actions.
+     */
+    public disable(action: EAction) {
         for (let i = action; i < EAction.MAX; ++i) {
-            const group = this._getEActionGroup(i);
-            //LOG('[UI]: Disabling', group.label);
-            for (const compName in group.elements) {
-                group.elements[compName].setEnabled(false);
-            }
-            group.submitButton.setEnabled(false);
-            if (clearOutput) {
-                group.output.getMessage().clearAll();
-                group.output.updateMessage();
-            }
+            this._forEachComponent(i, (component) => {
+                component.setEnabled(false);
+            });
+
+            this._getGroup(i).execButton?.setEnabled(false);
         }
     }
 
-    private _getEActionGroup(action: EAction): Group {
+    /**
+     * Disables all the actions.
+     */
+    public disableAll() {
+        this.disable(EAction.Settings);
+    }
+
+    /**
+     * Util function to get the `Group` associated with an `EAction`.
+     */
+    private _getGroup(action: EAction): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
     }
 
-    private _getTextureAtlases(): ComboBoxItem<string>[] {
-        const textureAtlases: ComboBoxItem<string>[] = [];
+    public updateMaterialsAction(materialManager: MaterialMapManager) {
+        this.layout.materials.components = {};
+        this.layout.materials.componentOrder = [];
 
-        fs.readdirSync(AppPaths.Get.atlases).forEach((file) => {
-            if (file.endsWith('.atlas')) {
-                const paletteID = file.split('.')[0];
-                let paletteName = paletteID.replace('-', ' ').toLowerCase();
-                paletteName = paletteName.charAt(0).toUpperCase() + paletteName.slice(1);
-                textureAtlases.push({ payload: paletteID, displayText: paletteName });
-            }
-        });
+        if (materialManager.materials.size == 0) {
+            this.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent()
+                .setPlaceholderText('materials.components.no_materials_loaded');
+            this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
+        } else {
+            materialManager.materials.forEach((material, materialName) => {
+                if (material.type === MaterialType.solid) {
+                    this.layoutDull['materials'].components[`mat_${materialName}`] = new SolidMaterialComponent(materialName, material)
+                        .setUnlocalisedLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            materialManager.changeMaterialType(materialName, MaterialType.textured);
+                            this.updateMaterialsAction(materialManager);
+                        });
+                } else {
+                    this.layoutDull['materials'].components[`mat_${materialName}`] = new TexturedMaterialComponent(materialName, material)
+                        .setUnlocalisedLabel(materialName)
+                        .onChangeTypeDelegate(() => {
+                            materialManager.changeMaterialType(materialName, MaterialType.solid);
+                            this.updateMaterialsAction(materialManager);
+                        })
+                        .onChangeTransparencyTypeDelegate((newTransparency) => {
+                            materialManager.changeTransparencyType(materialName, newTransparency);
+                            this.updateMaterialsAction(materialManager);
+                        });
+                }
 
-        return textureAtlases;
-    }
-
-    private _getBlockPalettes(): ComboBoxItem<string>[] {
-        const blockPalettes: ComboBoxItem<string>[] = [];
-
-        const palettes = PaletteManager.getPalettesInfo();
-        for (const palette of palettes) {
-            blockPalettes.push({
-                payload: palette.paletteID,
-                displayText: palette.paletteDisplayName,
+                this.layoutDull['materials'].componentOrder.push(`mat_${materialName}`);
             });
         }
 
-        return blockPalettes;
+        this.refreshComponents(EAction.Materials);
     }
 }

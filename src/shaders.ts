@@ -1,8 +1,16 @@
-import * as fs from 'fs';
 import * as twgl from 'twgl.js';
 
+import FRAG_BLOCK from '../res/shaders/block_fragment.fs';
+import VERT_BLOCK from '../res/shaders/block_vertex.vs';
+import FRAG_DEBUG from '../res/shaders/debug_fragment.fs';
+import VERT_DEBUG from '../res/shaders/debug_vertex.vs';
+import FRAG_TRI_SOLID from '../res/shaders/solid_tri_fragment.fs';
+import VERT_TRI_SOLID from '../res/shaders/solid_tri_vertex.vs';
+import FRAG_TRI_TEXTURE from '../res/shaders/texture_tri_fragment.fs';
+import VERT_TRI_TEXTURE from '../res/shaders/texture_tri_vertex.vs';
+import FRAG_VOXEL from '../res/shaders/voxel_fragment.fs';
+import VERT_VOXEL from '../res/shaders/voxel_vertex.vs';
 import { Renderer } from './renderer';
-import { AppPaths, PathUtil } from './util/path_util';
 
 export class ShaderManager {
     public readonly textureTriProgram: twgl.ProgramInfo;
@@ -19,29 +27,14 @@ export class ShaderManager {
     private constructor() {
         const gl = Renderer.Get._gl;
 
-        const textureTriVertex = this._getShader('texture_tri_vertex.vs');
-        const textureTriFragment = this._getShader('texture_tri_fragment.fs');
-        this.textureTriProgram = twgl.createProgramInfo(gl, [textureTriVertex, textureTriFragment]);
+        this.textureTriProgram = twgl.createProgramInfo(gl, [VERT_TRI_TEXTURE, FRAG_TRI_TEXTURE]);
 
-        const solidTriVertex = this._getShader('solid_tri_vertex.vs');
-        const solidTriFragment = this._getShader('solid_tri_fragment.fs');
-        this.solidTriProgram = twgl.createProgramInfo(gl, [solidTriVertex, solidTriFragment]);
+        this.solidTriProgram = twgl.createProgramInfo(gl, [VERT_TRI_SOLID, FRAG_TRI_SOLID]);
 
-        const voxelVertexShader = this._getShader('voxel_vertex.vs');
-        const voxelFragmentShader = this._getShader('voxel_fragment.fs');
-        this.voxelProgram = twgl.createProgramInfo(gl, [voxelVertexShader, voxelFragmentShader]);
+        this.voxelProgram = twgl.createProgramInfo(gl, [VERT_VOXEL, FRAG_VOXEL]);
 
-        const blockVertexShader = this._getShader('block_vertex.vs');
-        const blockFragmentShader = this._getShader('block_fragment.fs');
-        this.blockProgram = twgl.createProgramInfo(gl, [blockVertexShader, blockFragmentShader]);
+        this.blockProgram = twgl.createProgramInfo(gl, [VERT_BLOCK, FRAG_BLOCK]);
 
-        const debugVertexShader = this._getShader('debug_vertex.vs');
-        const debugFragmentShader = this._getShader('debug_fragment.fs');
-        this.debugProgram = twgl.createProgramInfo(gl, [debugVertexShader, debugFragmentShader]);
-    }
-
-    private _getShader(filename: string) {
-        const absPath = PathUtil.join(AppPaths.Get.shaders, filename);
-        return fs.readFileSync(absPath, 'utf8');
+        this.debugProgram = twgl.createProgramInfo(gl, [VERT_DEBUG, FRAG_DEBUG]);
     }
 }

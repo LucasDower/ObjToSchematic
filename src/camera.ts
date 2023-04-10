@@ -4,6 +4,7 @@ import { AppConfig } from './config';
 import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from './math';
 import { MouseManager } from './mouse';
 import { Renderer } from './renderer';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
 export class ArcballCamera {
@@ -27,6 +28,7 @@ export class ArcballCamera {
     private _azimuthRelief = 0.0;
     private _elevationRelief = 0.0;
     private _isAngleSnapped = false;
+    private _angleSnap = true;
 
     private _gl: WebGLRenderingContext;
 
@@ -50,8 +52,23 @@ export class ArcballCamera {
 
         this._elevation.setClamp(0.001, Math.PI - 0.001);
         this._distance.setClamp(1.0, 100.0);
+    }
 
+    public init() {
         this.setCameraMode(this._isPerspective ? 'perspective' : 'orthographic');
+
+        const canvas = document.getElementById('canvas');
+        ASSERT(canvas !== null);
+
+        canvas.addEventListener('mousedown', (e) => {
+            this.onMouseDown(e);
+        });
+        document.addEventListener('mouseup', (e) => {
+            this.onMouseUp(e);
+        });
+        canvas.addEventListener('wheel', (e) => {
+            this.onWheelScroll(e);
+        });
     }
 
     public isPerspective() {
@@ -80,7 +97,6 @@ export class ArcballCamera {
         this._isPerspective = mode === 'perspective';
     }
 
-    private _angleSnap = false;
     public toggleAngleSnap() {
         this._angleSnap = !this._angleSnap;
 

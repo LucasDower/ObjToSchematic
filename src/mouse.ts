@@ -28,8 +28,14 @@ export class MouseManager {
         this.prevMouse = { x: -1, y: -1, buttons: 0 };
     }
 
+    public init() {
+        document.addEventListener('mousemove', (e) => {
+            this.onMouseMove(e);
+        });
+    }
+
     public onMouseMove(e: MouseEvent) {
-            this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
+        this.currMouse = { x: e.clientX, y: e.clientY, buttons: e.buttons };
     }
 
     public isMouseLeftDown() {

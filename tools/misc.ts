@@ -1,6 +1,4 @@
-import fs from 'fs';
 import path from 'path';
-import { PNG } from 'pngjs';
 import prompt from 'prompt';
 
 import { RGBA } from '../src/colour';
@@ -13,26 +11,10 @@ export const ASSERT = (condition: boolean, onFailMessage: string) => {
     }
 };
 
-export const ASSERT_EXISTS = (path: fs.PathLike) => {
-    clog(
-        fs.existsSync(path),
-        `Found '${path}'`,
-        `Could not find '${path}'`,
-    );
-};
-
-export function isDirSetup(absolutePath: string) {
-    if (fs.existsSync(absolutePath)) {
-        if (fs.readdirSync(absolutePath).length > 0) {
-            return true;
-        }
-    } else {
-        fs.mkdirSync(absolutePath);
-    }
-    return false;
-}
+type PNG = {};
 
 export function getAverageColour(image: PNG): RGBA {
+    /*
     let r = 0;
     let g = 0;
     let b = 0;
@@ -57,9 +39,14 @@ export function getAverageColour(image: PNG): RGBA {
         b: b / weight,
         a: a / numPixels,
     };
+    */
+    return { r: 0, g: 0, b: 0, a: 0 };
 }
 
+
 export function getStandardDeviation(image: PNG, average: RGBA): number {
+    return 0; // TODO Unimplemented
+    /*
     let squaredDist = 0.0;
     let weight = 0.0;
     for (let x = 0; x < image.width; ++x) {
@@ -75,6 +62,7 @@ export function getStandardDeviation(image: PNG, average: RGBA): number {
         }
     }
     return Math.sqrt(squaredDist / weight);
+    */
 }
 
 export async function getPermission() {

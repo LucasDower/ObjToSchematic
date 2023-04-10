@@ -1,10 +1,11 @@
+import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
 import { ColourSpace } from '../src/util';
 import { Vector3 } from '../src/vector';
 import { THeadlessConfig } from './headless';
 
 export const headlessConfig: THeadlessConfig = {
     import: {
-        filepath: '/Users/lucasdower/ObjToSchematic/res/samples/skull.obj', // Must be an absolute path
+        file: new File([], '/Users/lucasdower/ObjToSchematic/res/samples/skull.obj'),
         rotation: new Vector3(0, 0, 0),
     },
     voxelise: {
@@ -17,8 +18,9 @@ export const headlessConfig: THeadlessConfig = {
     },
     assign: {
         textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
-        blockPalette: 'all-snapshot', // Must be a palette name that exists in /resources/palettes
+        blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
+        ditheringMagnitude: 32,
         colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,
@@ -28,8 +30,7 @@ export const headlessConfig: THeadlessConfig = {
         errorWeight: 0.0,
     },
     export: {
-        filepath: '/Users/lucasdower/Documents/out.obj', // Must be an absolute path to the file (can be anywhere)
-        exporter: 'obj', // 'schematic' / 'litematic',
+        exporter: 'litematic', // 'schematic' / 'litematic',
     },
     debug: {
         showLogs: true,

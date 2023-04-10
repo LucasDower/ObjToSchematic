@@ -46,6 +46,7 @@ export type TBlockMeshBuffer = {
     texcoord: { numComponents: 2, data: Float32Array },
     normal: { numComponents: 3, data: Float32Array },
     blockTexcoord: { numComponents: 2, data: Float32Array },
+    blockPosition: { numComponents: 3, data: Float32Array, },
     lighting: { numComponents: 1, data: Float32Array },
     indices: { numComponents: 3, data: Uint32Array },
 };
@@ -163,6 +164,11 @@ export class ChunkedBufferGenerator {
 
                     newBuffer.lighting.data[lightingInsertIndex++] = faceLighting;
                 }
+            }
+
+            const blockPosition = blocks[blockIndex].voxel.position.toArray();
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.blockPosition.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = blockPosition[j % 3];
             }
         }
 
@@ -421,6 +427,10 @@ export class BufferGenerator {
             blockTexcoord: {
                 numComponents: AppConstants.ComponentSize.TEXCOORD,
                 data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.TEXCOORD),
+            },
+            blockPosition: {
+                numComponents: AppConstants.ComponentSize.POSITION,
+                data: new Float32Array(numBlocks * AppConstants.VoxelMeshBufferComponentOffsets.POSITION),
             },
             lighting: {
                 numComponents: AppConstants.ComponentSize.LIGHTING,

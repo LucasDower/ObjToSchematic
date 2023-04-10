@@ -1,8 +1,10 @@
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
-import { ASSERT } from './util/error_util';
+import { AppError, ASSERT } from './util/error_util';
 import { LOG } from './util/log_util';
 import { doWork } from './worker';
+// @ts-ignore
+import AppWorker from './worker_interface.worker.ts';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 
 export type TWorkerJob = {
@@ -12,19 +14,34 @@ export type TWorkerJob = {
 }
 
 export class WorkerController {
-    private _worker: Worker;
+    private _worker?: Worker;
     private _jobQueue: TWorkerJob[];
     private _jobPending: TWorkerJob | undefined;
     private _jobStartTime: number;
     private _timerOn: boolean;
 
-    public constructor(scriptURL: string, options?: WorkerOptions) {
-        this._worker = new Worker(scriptURL, options);
-        this._worker.onmessage = this._onWorkerMessage.bind(this);
+    public constructor() {
+        if (AppConfig.Get.USE_WORKER_THREAD) {
+            this._worker = new AppWorker();
+            if (this._worker) {
+                this._worker.onmessage = this._onWorkerMessage.bind(this);
+            }
+        }
 
         this._jobQueue = [];
         this._jobStartTime = 0;
         this._timerOn = false;
+    }
+
+    public async execute(payload: TToWorkerMessage): Promise<TFromWorkerMessage> {
+        return new Promise((res, rej) => {
+            const success = this.addJob({
+                id: 'ExecuteJob',
+                payload: payload,
+                callback: res,
+            });
+            ASSERT(success, 'Already performing a job');
+        });
     }
 
     public addJob(newJob: TWorkerJob): boolean {
@@ -105,12 +122,16 @@ export class WorkerController {
         }
 
         if (AppConfig.Get.USE_WORKER_THREAD) {
+            ASSERT(this._worker !== undefined, 'No worker instance');
             this._worker.postMessage(this._jobPending.payload);
         } else {
-            const result = doWork(this._jobPending.payload);
-            if (this._jobPending.callback) {
-                this._jobPending.callback(result);
-            }
+            const pendingJob = this._jobPending;
+
+            doWork(this._jobPending.payload).then((result) => {
+                if (pendingJob.callback) {
+                    pendingJob.callback(result);
+                }
+            });
         }
     }
 }

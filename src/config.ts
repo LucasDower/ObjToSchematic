@@ -1,8 +1,5 @@
-import fs from 'fs';
-
 import { RGBA } from './colour';
 import { LOG } from './util/log_util';
-import { AppPaths, PathUtil } from './util/path_util';
 
 export class AppConfig {
     /* Singleton */
@@ -11,69 +8,41 @@ export class AppConfig {
         return this._instance || (this._instance = new this());
     }
 
-    public readonly RELEASE_MODE: boolean;
-    public readonly RELEASE_VERSION: string;
-    public readonly VOXEL_BUFFER_CHUNK_SIZE: number;
+    public readonly RELEASE_MODE = true;
+    public readonly MAJOR_VERSION = 0;
+    public readonly MINOR_VERSION = 8;
+    public readonly HOTFIX_VERSION = 0;
+    public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
+    public readonly MINECRAFT_VERSION = '1.19.3';
 
-    // Loaded from .json
-    public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER: boolean;
-    public readonly LOG_TO_FILE: boolean;
-    public readonly USE_WORKER_THREAD: boolean;
-    public readonly MULTISAMPLE_COUNT: number;
-    public readonly OLD_SPACE_SIZE_MB: number;
-    public readonly ALPHA_BIAS: number;
-    public readonly ANGLE_SNAP_RADIUS_DEGREES: number;
-    public readonly RENDER_TRIANGLE_THRESHOLD: number;
-    public readonly MAXIMUM_IMAGE_MEM_ALLOC: number;
-    public readonly CAMERA_FOV_DEGREES: number;
-    public readonly CAMERA_DEFAULT_DISTANCE_UNITS: number;
-    public readonly CAMERA_DEFAULT_AZIMUTH_RADIANS: number;
-    public readonly CAMERA_DEFAULT_ELEVATION_RADIANS: number;
-    public readonly CAMERA_SENSITIVITY_ROTATION: number;
-    public readonly CAMERA_SENSITIVITY_ZOOM: number;
-    public readonly CONSTRAINT_MAXIMUM_HEIGHT: number;
-    public readonly DITHER_MAGNITUDE: number;
-    public readonly SMOOTHNESS_MAX: number;
-    public readonly CAMERA_SMOOTHING: number;
-    public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA;
-    public readonly FRESNEL_EXPONENT: number;
-    public readonly FRESNEL_MIX: number;
+    public readonly LOCALE = 'en_GB';
+    public readonly VOXEL_BUFFER_CHUNK_SIZE = 5_000;
+    public readonly AMBIENT_OCCLUSION_OVERRIDE_CORNER = true;
+    public readonly USE_WORKER_THREAD = true;
+    public readonly MULTISAMPLE_COUNT = 16;
+    public readonly ALPHA_BIAS = 1.0;
+    public readonly ANGLE_SNAP_RADIUS_DEGREES = 10.0;
+    public readonly RENDER_TRIANGLE_THRESHOLD = 1_000_000;
+    public readonly MAXIMUM_IMAGE_MEM_ALLOC = 2048;
+    public readonly CAMERA_FOV_DEGREES = 30.0;
+    public readonly CAMERA_DEFAULT_DISTANCE_UNITS = 18.0;
+    public readonly CAMERA_DEFAULT_AZIMUTH_RADIANS = -1.0;
+    public readonly CAMERA_DEFAULT_ELEVATION_RADIANS = 1.3;
+    public readonly CAMERA_SENSITIVITY_ROTATION = 0.005;
+    public readonly CAMERA_SENSITIVITY_ZOOM = 0.005;
+    public readonly CONSTRAINT_MAXIMUM_HEIGHT = 380;
+    public readonly SMOOTHNESS_MAX = 3.0;
+    public readonly CAMERA_SMOOTHING = 1.0;
+    public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA = {
+        r: 0.125,
+        g: 0.125,
+        b: 0.125,
+        a: 1.0,
+    };
+    public readonly FRESNEL_EXPONENT = 3.0;
+    public readonly FRESNEL_MIX = 0.3;
 
     private constructor() {
-        this.RELEASE_MODE = true;
-        this.RELEASE_VERSION = '0.7.1r';
-        this.VOXEL_BUFFER_CHUNK_SIZE = 5_000;
-
-        const configFile = fs.readFileSync(PathUtil.join(AppPaths.Get.resources, 'config.json'), 'utf8');
-        const configJSON = JSON.parse(configFile);
-
-        this.AMBIENT_OCCLUSION_OVERRIDE_CORNER = configJSON.AMBIENT_OCCLUSION_OVERRIDE_CORNER;
-        this.LOG_TO_FILE = configJSON.LOG_TO_FILE;
-        this.USE_WORKER_THREAD = configJSON.USE_WORKER_THREAD && !process.argv.includes('--OTS-ENABLE-DEBUG');
-        this.MULTISAMPLE_COUNT = configJSON.MULTISAMPLE_COUNT;
-        this.OLD_SPACE_SIZE_MB = configJSON.OLD_SPACE_SIZE_MB;
-        this.ALPHA_BIAS = configJSON.ALPHA_BIAS;
-        this.ANGLE_SNAP_RADIUS_DEGREES = configJSON.ANGLE_SNAP_RADIUS_DEGREES;
-        this.RENDER_TRIANGLE_THRESHOLD = configJSON.RENDER_TRIANGLE_THRESHOLD;
-        this.MAXIMUM_IMAGE_MEM_ALLOC = configJSON.MAXIMUM_IMAGE_MEM_ALLOC;
-        this.CAMERA_FOV_DEGREES = configJSON.CAMERA_FOV_DEGREES;
-        this.CAMERA_DEFAULT_DISTANCE_UNITS = configJSON.CAMERA_DEFAULT_DISTANCE_UNITS;
-        this.CAMERA_DEFAULT_AZIMUTH_RADIANS = configJSON.CAMERA_DEFAULT_AZIMUTH_RADIANS;
-        this.CAMERA_DEFAULT_ELEVATION_RADIANS = configJSON.CAMERA_DEFAULT_ELEVATION_RADIANS;
-        this.CAMERA_SENSITIVITY_ROTATION = configJSON.CAMERA_SENSITIVITY_ROTATION;
-        this.CAMERA_SENSITIVITY_ZOOM = configJSON.CAMERA_SENSITIVITY_ZOOM;
-        this.CONSTRAINT_MAXIMUM_HEIGHT = configJSON.CONSTRAINT_MAXIMUM_HEIGHT;
-        this.DITHER_MAGNITUDE = configJSON.DITHER_MAGNITUDE;
-        this.SMOOTHNESS_MAX = configJSON.SMOOTHNESS_MAX;
-        this.CAMERA_SMOOTHING = configJSON.CAMERA_SMOOTHING;
-        this.VIEWPORT_BACKGROUND_COLOUR = {
-            r: configJSON.VIEWPORT_BACKGROUND_COLOUR.R,
-            g: configJSON.VIEWPORT_BACKGROUND_COLOUR.G,
-            b: configJSON.VIEWPORT_BACKGROUND_COLOUR.B,
-            a: 1.0,
-        };
-        this.FRESNEL_EXPONENT = configJSON.FRESNEL_EXPONENT;
-        this.FRESNEL_MIX = configJSON.FRESNEL_MIX;
     }
 
     public dumpConfig() {

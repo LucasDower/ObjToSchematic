@@ -1,6 +1,5 @@
 import { Mesh } from '../mesh';
 
 export abstract class IImporter {
-    abstract parseFile(filePath: string): void;
-    abstract toMesh(): Mesh;
+    public abstract import(file: File): Promise<Mesh>;
 }
