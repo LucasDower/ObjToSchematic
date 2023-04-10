@@ -16,5 +16,5 @@ export const locales = [
     en_GB,
     en_US,
     ru_RU,
-	zh_CN,
+    zh_CN,
 ];
