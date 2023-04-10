@@ -60,6 +60,9 @@ Currently there's not much docs but if you're looking for where to get started, 
 
 If you have any questions or need help getting started then feel free to join the [Discord](https://discord.gg/McS2VrBZPD) or message me **SinJi#4165**.
 
+#### Translations
+Translations files are stored in `/loc/`. To add a new language, duplicate the `en_GB.ts` file, rename it to the language code you are adding. The `en-GB.ts` file is the main language file. All the possible translation keys that you can override exist in `en-GB.ts`. Your translation file does not need to override every key, missing translations will fallback to the British English translation. Translation files are checked at compile-time for invalid keys. Once your translation file is complete, modify `/loc/base.ts` to include your new language. And that's it! Visit the [i18next](https://www.i18next.com/) documentation if your language requires special attention such as plurals or visit the Discord for help or if the current implementation isn't sufficient for your language.
+
 ## Gallery
 <p align="center">
   <img src="https://i.imgur.com/wmNQnkN.png" alt="Gallery1" width="600"><br>
