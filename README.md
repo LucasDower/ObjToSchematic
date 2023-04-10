@@ -8,7 +8,7 @@
   A visual tool to convert 3D .obj models into Minecraft structures (.schematic, <a href="https://www.curseforge.com/minecraft/mc-mods/litematica/files">.litematic</a>, <a href="https://github.com/SpongePowered/Schematic-Specification">.schem</a>, .nbt)
   <br>
   <b><a href="https://objtoschematic.com">Online</a></b> •
-  <b><a href="https://github.com/LucasDower/ObjToSchematic/releases/latest">Desktop</a></b>
+  <b><a href="https://github.com/LucasDower/ObjToSchematic/releases/latest">Desktop (Legacy)</a></b>
 </p>
 <p align="center">
   <a href="#usage">Usage</a> •
@@ -29,7 +29,10 @@
 </p>
 
 ## Usage
-You can either download the [latest release](https://github.com/LucasDower/ObjToSchematic/releases) or if you want the latest features you can build it yourself by following the instructions below.
+:warning: **ObjToSchematic is now primarily a website, visit https://objtoschematic.com for the latest version.**
+
+#### Desktop Version
+The Desktop version is no longer updated but can still be downloaded [here](https://github.com/LucasDower/ObjToSchematic/releases/latest) for Windows, macOS, or Linux*. If you want to use a non-release build, use the following steps to run it: 
 
 * Download and install [Node.js](https://nodejs.org/en/).
 * Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
@@ -41,17 +44,6 @@ You can either download the [latest release](https://github.com/LucasDower/ObjTo
   <img src="res/samples/editor.png">
   <sub>"Cut Fish" (https://skfb.ly/orWLC) by Suushimi<br>is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
 </p>
-
-### Advanced
-
-#### Block Palettes
-You can create your own block palettes to fit the build you desire. When you select this palette, the generated structure will only use the blocks defined in your palette. To create a palette, list every block you want to use in `/tools/new-palette-blocks`. A list of every supported block can be found in `/tools/all-supported-blocks`. When your list is complete, run `npm run palette`, (make sure you run `npm run build` before  the first time you do this). If everything is successful, the next time you run the program you'll be able to select your new palette in the 'Block palette' dropdown.
-
-#### Texture Atlases
-If you play Minecraft with a resource pack, you will probably want to build your own texture atlas. This way the program will use the same resource pack for its visualisation and more accurate colour-to-block conversions can be made. To do this, run `npm run atlas` (make sure you run `npm run build` before the first time you do this) and follow the instructions. If everything is successful, the next time you run the program you'll be able to select your resource pack in the 'Texture atlas' dropdown.
-
-#### Headless
-If you want to use the program without using the GUI, you can edit `/tools/headless-config.ts` and run `npm run headless` (make sure to run `npm run build` after **each time** you edit the `headless-config.ts`).
 
 ## Progress
 The progress tracker and remaining to-dos are now maintained in the [Discord](https://discord.gg/McS2VrBZPD) server's #to-do channel.
@@ -67,9 +59,6 @@ Any contributions are welcome, just fork and submit a PR! Just make sure the cod
 Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also.
 
 If you have any questions or need help getting started then feel free to join the [Discord](https://discord.gg/McS2VrBZPD) or message me **SinJi#4165**.
-
-### Debugging
-To allow for your favourite debugging tools like breakpoints and call stacks, I've included launch options for debugging in [VSCode](https://code.visualstudio.com/). **Be sure to use `npm run debug` instead of `npm start`** as this will disable the worker thread allowing you to add breakpoints anywhere in the code. Once the editor is running run "*Attach to Render Process*" and VSCode will hook to the Chromium debugger.
 
 ## Gallery
 <p align="center">
