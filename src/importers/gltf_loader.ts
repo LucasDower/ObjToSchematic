@@ -2,13 +2,17 @@ import { parse } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
 import { RGBAColours, RGBAUtil } from '../colour';
+import { LOC } from '../localiser';
 import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
+import { StatusHandler } from '../status';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 
 export class GltfLoader extends IImporter {
     public override import(file: File): Promise<Mesh> {
+        StatusHandler.warning(LOC('import.gltf_experimental'));
+
         return new Promise<Mesh>((resolve, reject) => {
             parse(file, GLTFLoader, { limit: 0 })
                 .then((gltf: any) => {

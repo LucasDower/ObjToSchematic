@@ -34,6 +34,7 @@ export const en_GB = {
             vertex_triangle_count: '{{vertex_count, number}} vertices, {{triangle_count, number}} triangles',
             missing_normals: 'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
             failed_to_parse_line: 'Failed attempt to parse "{{line}}", because "{{error}}"',
+            gltf_experimental: 'The GLTF importer is experimental and may produce unexpected results',
             components: {
                 input: '3D Model (.obj, .gltf/.glb)',
                 rotation: 'Rotation',
