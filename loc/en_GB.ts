@@ -50,7 +50,7 @@ export const en_GB = {
                 'material_type': 'Type',
                 'solid': 'Solid',
                 'textured': 'Textured',
-                'no_image_loaded' : 'No image loaded',
+                'no_image_loaded': 'No image loaded',
                 'choose': 'Choose',
                 'texture_filtering': 'Filtering',
                 'texture_wrap': 'Wrap',
