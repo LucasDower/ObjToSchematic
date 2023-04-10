@@ -1,5 +1,6 @@
 import { MaterialType, SolidMaterial, TexturedMaterial } from '../../mesh';
 import { AppIcons } from '../icons';
+import { LOC } from '../../localiser';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
 
@@ -13,7 +14,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
         this._material = material;
 
         this._solidButton = new ToolbarItemComponent({ id: 'sw1', iconSVG: AppIcons.COLOUR_SWATCH })
-            .setLabel('Solid')
+            .setLabel(LOC('materials.components.solid'))
             .setGrow()
             .onClick(() => {
                 if (this._material.type === MaterialType.textured) {
@@ -22,7 +23,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
             });
 
         this._texturedButton = new ToolbarItemComponent({ id: 'sw2', iconSVG: AppIcons.IMAGE })
-            .setLabel('Textured')
+            .setLabel(LOC('materials.components.textured'))
             .setGrow()
             .onClick(() => {
                 if (this._material.type === MaterialType.solid) {

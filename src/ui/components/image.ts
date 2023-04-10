@@ -2,6 +2,7 @@ import { TImageRawWrap } from '../../texture';
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
+import { LOC } from '../../localiser';
 import { AppIcons } from '../icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
@@ -15,7 +16,7 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
         super(Promise.resolve(param ?? { raw: '', filetype: 'png' }));
 
         this._switchElement = new ToolbarItemComponent({ id: 'sw', iconSVG: AppIcons.UPLOAD })
-            .setLabel('Choose')
+            .setLabel(LOC('materials.components.choose'))
             .onClick(() => {
                 const inputElement = UIUtil.getElementById(this._getId() + '-input') as HTMLInputElement;
                 inputElement.click();
@@ -32,7 +33,7 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                     <div id="${this._imageId}-placeholder" class="texture-preview-placeholder">
                         <div class="row-container" style="align-items: center;">
                             <div class="row-item">${AppIcons.IMAGE_MISSING}</div>
-                            <div class="row-item">No image loaded</div>
+                            <div class="row-item">${LOC('materials.components.no_image_loaded')}</div>
                         </div>
                     </div>
                 </div>
