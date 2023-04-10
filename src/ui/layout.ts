@@ -229,7 +229,7 @@ export class UI {
                         payload: 'replace-falling',
                     },
                     {
-                        displayLocKey: 'assign.components.fallable_blocks',
+                        displayLocKey: 'assign.components.replace_fallable',
                         payload: 'replace-fallable',
                     },
                     {
@@ -321,7 +321,7 @@ export class UI {
                             payload: 'schem',
                         },
                         {
-                            displayLocKey: 'export.exported_structure',
+                            displayLocKey: 'export.components.structure_blocks',
                             payload: 'nbt',
                         },
                         {
