@@ -2,7 +2,7 @@
 // KatMelon
 
 export const zh_CN = {
-    display_name: '中文（中国大陆）',
+    display_name: '简体中文',
     language_code: 'zh_CN',
     translations: {
         something_went_wrong: '发生了意料之外的错误',
