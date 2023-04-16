@@ -165,7 +165,7 @@ export class BlockMesh {
                 const examinedBlock = this._blocks[examined.id];
 
                 const topBlockPosition = Vector3.add(examinedBlock.voxel.position, new Vector3(0, 1, 0));
-                const topBlockIndex = this._voxelMesh.getVoxelIndex(topBlockPosition);
+                const topBlockIndex = 0; //this._voxelMesh.getVoxelIndex(topBlockPosition);
 
                 if (topBlockIndex !== undefined && !AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.includes(this._blocks[topBlockIndex].blockInfo.name)) {
                     const block = atlasPalette.getBlock(examined.voxelColour, nonGrassLikeBlockCollection, examined.faceVisibility, examined.errWeight);
@@ -211,7 +211,7 @@ export class BlockMesh {
         });
 
         if (bestBlock !== undefined) {
-            const blockIndex = this._voxelMesh.getVoxelIndex(pos);
+            const blockIndex = 0; //this._voxelMesh.getVoxelIndex(pos);
             ASSERT(blockIndex !== undefined, 'Setting emissive block of block that doesn\'t exist');
             this._blocks[blockIndex].blockInfo = bestBlock;
 
@@ -222,7 +222,7 @@ export class BlockMesh {
     }
 
     public getBlockAt(pos: Vector3): TOptional<Block> {
-        const index = this._voxelMesh.getVoxelIndex(pos);
+        const index = 0; //this._voxelMesh.getVoxelIndex(pos);
         if (index !== undefined) {
             return this._blocks[index];
         }

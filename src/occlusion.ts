@@ -27,14 +27,14 @@ export class OcclusionManager {
 
     public getOcclusions(centre: Vector3, voxelMesh: VoxelMesh) {
         // Cache local neighbours
-        const neighbourData = voxelMesh.getNeighbourhoodMap().get(centre.hash());
+        const neighbourData = voxelMesh.getNeighbours(centre);
         if (neighbourData === undefined) {
             // This voxel has no neighbours within a 1-block radius
             return this.getBlankOcclusions();
         }
 
         for (let i = 0; i < 27; ++i) {
-            this._localNeighbourhoodCache[i] = (neighbourData.value & (1 << i)) > 0 ? 1 : 0;
+            this._localNeighbourhoodCache[i] = (neighbourData & (1 << i)) > 0 ? 1 : 0;
         }
 
         // For each face

@@ -120,6 +120,7 @@ export class WorkerClient {
 
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
+        this._loadedVoxelMesh.calculateNeighbours();
 
         this._voxelMeshChunkIndex = 0;
 
