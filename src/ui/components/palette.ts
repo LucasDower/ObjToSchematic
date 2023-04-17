@@ -103,10 +103,15 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
         });
         AppConsole.info(LOC('assign.deselected_blocks', { count: countDeselected }));
 
-        AppConsole.info(LOC('assign.found_blocks', { count: blockNames.length }));
-
+        let countFound = 0;
         let countChecked = 0;
         blockNames.forEach((blockName) => {
+            blockName = blockName.trim();
+            if (blockName.length === 0) {
+                return;
+            }
+            ++countFound;
+
             if (!AppUtil.Text.isNamespacedBlock(blockName)) {
                 AppConsole.error(LOC('assign.block_not_namespaced', { block_name: blockName }));
             } else {
@@ -120,6 +125,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
             }
         });
 
+        AppConsole.info(LOC('assign.found_blocks', { count: countFound }));
         AppConsole.info(LOC('assign.selected_blocks', { count: countChecked }));
 
         this._onCountSelectedChanged();
