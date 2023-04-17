@@ -673,3 +673,7 @@ a {
 .comp-slider.enabled {
   cursor: e-resize;
 }
+
+.hide {
+  display: none;
+}

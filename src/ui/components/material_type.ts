@@ -1,6 +1,6 @@
+import { LOC } from '../../localiser';
 import { MaterialType, SolidMaterial, TexturedMaterial } from '../../mesh';
 import { AppIcons } from '../icons';
-import { LOC } from '../../localiser';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
 

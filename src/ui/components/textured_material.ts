@@ -71,6 +71,8 @@ export class TexturedMaterialComponent extends ConfigComponent<TexturedMaterial,
                     .setDefaultValue(material.transparency.channel);
                 break;
         }
+
+        this.setCanMinimise();
     }
 
     public override refresh() {

@@ -2,6 +2,7 @@ import { TTranslationMap } from '../../../loc/base';
 import { DeepLeafKeys, LOC, TLocalisedString } from '../../localiser';
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
+import { AppIcons } from '../icons';
 import { BaseComponent } from './base';
 
 /**
@@ -14,6 +15,7 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     private _value?: T;
     private _onValueChangedListeners: Array<(newValue: T) => void>;
     private _onEnabledChangedListeners: Array<(isEnabled: boolean) => void>;
+    private _canMinimise: boolean;
 
     public constructor(defaultValue?: T) {
         super();
@@ -21,6 +23,7 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
         this._label = '' as TLocalisedString;
         this._onValueChangedListeners = [];
         this._onEnabledChangedListeners = [];
+        this._canMinimise = false;
     }
 
     public setDefaultValue(value: T) {
@@ -88,6 +91,33 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
     }
 
     public override finalise(): void {
+        if (this._canMinimise) {
+            const minimiserElement = UIUtil.getElementById(this._getId() + '-minimiser') as HTMLDivElement;
+            const labelElement = UIUtil.getElementById(this._getLabelId()) as HTMLDivElement;
+            const propElement = UIUtil.getElementById(this._getId() + '-prop') as HTMLDivElement;
+
+            labelElement.addEventListener('click', () => {
+                propElement.classList.toggle('hide');
+                if (propElement.classList.contains('hide')) {
+                    minimiserElement.innerHTML = AppIcons.ARROW_RIGHT;
+                } else {
+                    minimiserElement.innerHTML = AppIcons.ARROW_DOWN;
+                }
+            });
+
+            labelElement.addEventListener('mouseenter', () => {
+                if (this.enabled) {
+                    labelElement.style.color = '#d9d9d9';
+                }
+                labelElement.style.cursor = 'pointer';
+            });
+
+            labelElement.addEventListener('mouseleave', () => {
+                labelElement.style.color = '';
+                labelElement.style.cursor = '';
+            });
+        }
+
         super.finalise();
 
         /*
@@ -98,11 +128,17 @@ export abstract class ConfigComponent<T, F> extends BaseComponent<F> {
         */
     }
 
+    public setCanMinimise() {
+        this._canMinimise = true;
+        return this;
+    }
+
     public override generateHTML() {
         return `
             <div class="property">
                 <div class="prop-key-container" id="${this._getLabelId()}">
                     ${this._label}
+                    ${this._canMinimise ? `<div style="display: flex;" id="${this._getId()}-minimiser">${AppIcons.ARROW_DOWN}</div>` : ''}
                 </div>
                 <div class="prop-value-container" id="${this._getId()}-prop">
                     ${this._generateInnerHTML()}

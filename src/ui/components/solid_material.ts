@@ -25,6 +25,8 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
             .setDefaultValue(material.colour.a)
             .setDecimals(2)
             .setStep(0.01);
+
+        this.setCanMinimise();
     }
 
     public override refresh() {
@@ -56,6 +58,8 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
     }
 
     public override finalise(): void {
+        super.finalise();
+
         this._typeElement.finalise();
         this._ColourComponent.finalise();
         this._alphaElement.finalise();

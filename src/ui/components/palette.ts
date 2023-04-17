@@ -217,6 +217,8 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
     }
 
     public override finalise(): void {
+        super.finalise();
+
         this._checkboxes.forEach((checkbox) => {
             checkbox.element.finalise();
         });
