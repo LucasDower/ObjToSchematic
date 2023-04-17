@@ -4,7 +4,7 @@
 import { TLocaleDefinition } from './base';
 
 export const ru_RU: TLocaleDefinition = {
-    display_name: 'Russian', // TODO: This should be 'Russian' in Russian not English
+    display_name: 'Ру́сский',
     language_code: 'ru_RU',
     translations: {
         import: {
