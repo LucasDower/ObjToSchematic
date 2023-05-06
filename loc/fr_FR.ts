@@ -2,7 +2,9 @@
 // LeGrandGeek
 // 0-zen
 
-export const fr_FR = {
+import { TLocaleDefinition } from './base';
+
+export const fr_FR: TLocaleDefinition = {
     display_name: 'Français',
     language_code: 'fr_FR',
     translations: {

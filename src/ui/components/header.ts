@@ -1,5 +1,7 @@
 import IMAGE_LOGO from '../../../res/static/icon.png';
 import { AppConfig } from '../../config';
+import { LOC } from '../../localiser';
+import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { BaseComponent } from './base';
 import { ToolbarItemComponent } from './toolbar_item';
@@ -63,11 +65,15 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                 </div>
             </div>
             <div class="col-container header-cols">
-                <div class="col-container" style="padding-top: 5px;">
-                    A tool to convert 3D models into Minecraft formats such as .schematic, .litematic, .schem and .nbt.
+                <div class="col-container" style="padding-top: 5px;" id="header-desc">
+                    ${LOC('description')}
                 </div>
             </div>
         `;
+    }
+
+    public refresh() {
+        UIUtil.getElementById('header-desc').innerText = LOC('description');
     }
 
     public override registerEvents(): void {

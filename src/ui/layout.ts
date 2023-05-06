@@ -642,6 +642,8 @@ export class UI {
     }
 
     private _handleLanguageChange() {
+        HeaderComponent.Get.refresh();
+
         for (let i = 0; i < EAction.MAX; ++i) {
             const group = this._getGroup(i);
             const header = UIUtil.getElementById(`component_header_${group.id}`);

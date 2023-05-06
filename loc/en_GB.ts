@@ -6,6 +6,7 @@ export const en_GB = {
     language_code: 'en_GB',
     translations: {
         something_went_wrong: 'Something unexpectedly went wrong',
+        description: 'A tool to convert 3D models into Minecraft formats such as .schematic, .litematic, .schem and .nbt.',
         init: {
             initialising: 'Initialising...',
             ready: 'Ready',

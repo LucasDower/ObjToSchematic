@@ -1,7 +1,9 @@
 // Credits:
 // KatMelon
 
-export const zh_CN = {
+import { TLocaleDefinition } from './base';
+
+export const zh_CN: TLocaleDefinition = {
     display_name: '简体中文',
     language_code: 'zh_CN',
     translations: {
