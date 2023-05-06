@@ -37,7 +37,7 @@ export const fr_FR = {
             failed_to_parse_line: 'Impossible de lire la ligne "{{line}}", raison : "{{error}}"',
             gltf_experimental: 'L\'importeur GLTF est expérimental et peut se comporter de manière inattendue',
             components: {
-                input: 'Modèle 3D (.obj, .gltf/.glb)',
+                input: 'Modèle 3D (.obj, .glb)',
                 rotation: 'Rotation',
             },
         },

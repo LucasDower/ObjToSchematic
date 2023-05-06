@@ -15,7 +15,7 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
     protected override _generateInnerHTML() {
         return `
             <div class="input-file struct-prop" id="${this._getId()}">
-                <input type="file" accept=".obj,.gltf,.glb" style="display: none;" id="${this._getId()}-input">
+                <input type="file" accept=".obj,,.glb" style="display: none;" id="${this._getId()}-input">
                 ${this._loadedFilePath}
             </div>
         `;

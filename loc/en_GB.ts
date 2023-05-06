@@ -36,7 +36,7 @@ export const en_GB = {
             failed_to_parse_line: 'Failed attempt to parse "{{line}}", because "{{error}}"',
             gltf_experimental: 'The GLTF importer is experimental and may produce unexpected results',
             components: {
-                input: '3D Model (.obj, .gltf/.glb)',
+                input: '3D Model (.obj, .glb)',
                 rotation: 'Rotation',
             },
         },

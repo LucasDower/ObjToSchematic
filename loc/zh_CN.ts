@@ -36,7 +36,7 @@ export const zh_CN = {
             failed_to_parse_line: '尝试解析 "{{line}}" 失败，原因： "{{error}}"',
             gltf_experimental: '导入 GLTF 目前为实验性功能，可能产生预料外的结果',
             components: {
-                input: '3D 模型（.obj, .gltf/.glb）',
+                input: '3D 模型（.obj, /.glb)',
                 rotation: '旋转',
             },
         },
@@ -50,7 +50,7 @@ export const zh_CN = {
                 'material_type': '类型',
                 'solid': '纯色',
                 'textured': '纹理',
-                'no_image_loaded' : '未加载图像',
+                'no_image_loaded': '未加载图像',
                 'choose': '选择',
                 'texture_filtering': '纹理过滤',
                 'texture_wrap': '纹理环绕',
