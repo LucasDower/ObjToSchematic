@@ -2,7 +2,7 @@
   "name": "objtoschematic",
   "private": true,
   "version": "0.0.0",
-  "description": "A tool to convert .obj files into voxels and then into Minecraft Schematic files",
+  "description": "A tool to convert 3D models into Minecraft formats such as .schematic, .litematic, .schem and .nbt",
   "main": "./dist/src/main.js",
   "engines": {
     "node": ">=16.8.0"

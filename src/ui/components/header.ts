@@ -62,6 +62,11 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                     ${this._discordButton.generateHTML()}
                 </div>
             </div>
+            <div class="col-container header-cols">
+                <div class="col-container" style="padding-top: 5px;">
+                    A tool to convert 3D models into Minecraft formats such as .schematic, .litematic, .schem and .nbt.
+                </div>
+            </div>
         `;
     }
 
