@@ -1,8 +1,8 @@
+import { LOC } from '../../localiser';
 import { TImageRawWrap } from '../../texture';
 import { getRandomID } from '../../util';
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
-import { LOC } from '../../localiser';
 import { AppIcons } from '../icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
@@ -60,6 +60,8 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                     const fileReader = new FileReader();
                     fileReader.onload = function () {
                         if (typeof fileReader.result === 'string') {
+                            // convert image file to base64 string
+                            console.log('base64 png', fileReader.result);
                             res({ filetype: file.type === 'image/jpeg' ? 'jpg' : 'png', raw: fileReader.result });
                         } else {
                             rej(Error());

@@ -6,6 +6,7 @@ import { LOC } from '../localiser';
 import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
 import { StatusHandler } from '../status';
 import { UV } from '../util';
+import { AppError } from '../util/error_util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 
@@ -14,7 +15,7 @@ export class GltfLoader extends IImporter {
         StatusHandler.warning(LOC('import.gltf_experimental'));
 
         return new Promise<Mesh>((resolve, reject) => {
-            parse(file, GLTFLoader, { limit: 0 })
+            parse(file, GLTFLoader, { loadImages: true })
                 .then((gltf: any) => {
                     resolve(this._handleGLTF(gltf));
                 })
@@ -82,12 +83,43 @@ export class GltfLoader extends IImporter {
                         if (pbr !== undefined) {
                             const diffuseTexture = pbr.baseColorTexture;
                             if (diffuseTexture !== undefined) {
-                                meshMaterials.set(materialName, {
-                                    type: MaterialType.solid,
-                                    colour: RGBAUtil.copy(RGBAColours.WHITE),
-                                    needsAttention: false,
-                                    canBeTextured: true,
-                                });
+                                const imageData: Uint8Array = diffuseTexture.texture.source.bufferView.data;
+                                const mimeType: string = diffuseTexture.texture.source.mimeType;
+
+                                try {
+                                    if (mimeType !== 'image/png' && mimeType !== 'image/jpeg') {
+                                        StatusHandler.warning(LOC('import.unsupported_image_type', { file_name: diffuseTexture.texture.source.id, file_type: mimeType }));
+                                        throw new Error('Unsupported image type');
+                                    }
+
+                                    const base64 = btoa(
+                                        imageData.reduce((data, byte) => data + String.fromCharCode(byte), ''),
+                                    );
+
+                                    meshMaterials.set(materialName, {
+                                        type: MaterialType.textured,
+                                        diffuse: {
+                                            filetype: mimeType === 'image/jpeg' ? 'jpg' : 'png',
+                                            raw: (mimeType === 'image/jpeg' ? 'data:image/jpeg;base64,' : 'data:image/png;base64,') + base64,
+                                        },
+                                        extension: 'clamp',
+                                        interpolation: 'linear',
+                                        needsAttention: false,
+                                        transparency: { type: 'None' },
+                                    });
+                                } catch {
+                                    meshMaterials.set(materialName, {
+                                        type: MaterialType.solid,
+                                        colour: RGBAUtil.copy(RGBAColours.WHITE),
+                                        needsAttention: false,
+                                        canBeTextured: true,
+                                    });
+                                }
+
+
+                                /*
+
+                                */
 
                                 materialNameToUse = materialName;
                                 materialMade = true;

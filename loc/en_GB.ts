@@ -36,6 +36,7 @@ export const en_GB = {
             missing_normals: 'Some vertices do not have their normals defined, this may cause voxels to be aligned incorrectly',
             failed_to_parse_line: 'Failed attempt to parse "{{line}}", because "{{error}}"',
             gltf_experimental: 'The GLTF importer is experimental and may produce unexpected results',
+            unsupported_image_type: 'Cannot read \'{{file_name}}\', unsupported file type \'{{file_type}}\'',
             components: {
                 input: '3D Model (.obj, .glb)',
                 rotation: 'Rotation',
