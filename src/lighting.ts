@@ -458,7 +458,7 @@ export class BlockMeshLighting {
 
         const limit = this._limits.get(key.hash());
         if (limit !== undefined) {
-            return vec.y >= this._bounds.min.y && vec.y <= limit.maxY + 1;
+            return vec.y >= this._bounds.min.y - 1 && vec.y <= limit.maxY + 1;
         } else {
             return false;
         }
