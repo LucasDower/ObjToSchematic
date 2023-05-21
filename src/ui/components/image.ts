@@ -61,7 +61,6 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                     fileReader.onload = function () {
                         if (typeof fileReader.result === 'string') {
                             // convert image file to base64 string
-                            console.log('base64 png', fileReader.result);
                             res({ filetype: file.type === 'image/jpeg' ? 'jpg' : 'png', raw: fileReader.result });
                         } else {
                             rej(Error());

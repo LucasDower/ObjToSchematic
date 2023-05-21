@@ -170,14 +170,25 @@ export class UI {
                         payload: 'first',
                     })
                     .setLabel('voxelise.components.voxel_overlap'),
+                'colourAccuracy': new SliderComponent()
+                    .setMin(1)
+                    .setMax(8)
+                    .setDefaultValue(5)
+                    .setDecimals(1)
+                    .setStep(0.1)
+                    .setLabel('assign.components.colour_accuracy'),
+                'placeholder': new PlaceholderComponent()
+                    .setPlaceholderText('misc.advanced_settings'),
             },
             componentOrder: [
                 'constraintAxis',
                 'size',
+                'placeholder',
                 'voxeliser',
                 'ambientOcclusion',
                 'multisampleColouring',
                 'voxelOverlapRule',
+                'colourAccuracy'
             ],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
@@ -277,11 +288,14 @@ export class UI {
                     .setStep(1)
                     .setLabel('assign.components.light_threshold')
                     .setShouldObeyGroupEnables(false),
+                'placeholder': new PlaceholderComponent()
+                    .setPlaceholderText('misc.advanced_settings'),
             },
             componentOrder: [
-                'textureAtlas',
                 'blockPalette',
                 'dithering',
+                'placeholder',
+                'textureAtlas',
                 'ditheringMagnitude',
                 'fallable',
                 'colourAccuracy',

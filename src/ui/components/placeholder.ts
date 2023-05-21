@@ -27,10 +27,10 @@ export class PlaceholderComponent extends ConfigComponent<undefined, HTMLDivElem
 
     public override generateHTML(): string {
         return `
-            <div class="property" style="justify-content: center;">
+            <div class="property" style="justify-content: center; height: var(--property-height);">
                 <div id="${this._getLabelId()}"></div>
                 <div id="${this._getId()}-prop"></div>
-                ${this._generateInnerHTML()}
+                <i>${this._generateInnerHTML()}</i>
             </div>
         `;
     }

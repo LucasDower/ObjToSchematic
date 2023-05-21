@@ -160,6 +160,7 @@ export const en_GB = {
             alpha: 'Alpha',
             on: 'On',
             off: 'Off',
+            advanced_settings: 'Advanced settings'
         },
     },
 };
