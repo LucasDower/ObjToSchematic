@@ -23,7 +23,7 @@ interface Block {
 }
 
 interface GrassLikeBlock {
-    id: number;
+    hash: number;
     voxelColour: RGBA_255;
     errWeight: number;
     faceVisibility: EFaceVisibility;
@@ -40,7 +40,8 @@ export interface BlockMeshParams {
 
 export class BlockMesh {
     private _blocksUsed: Set<string>;
-    private _blocks: Block[];
+    private _blocks: Map<number, Block>;
+    //private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _atlas: Atlas;
     private _lighting: BlockMeshLighting;
@@ -63,7 +64,7 @@ export class BlockMesh {
 
     private constructor(voxelMesh: VoxelMesh) {
         this._blocksUsed = new Set();
-        this._blocks = [];
+        this._blocks = new Map();
         this._voxelMesh = voxelMesh;
         this._atlas = Atlas.getVanillaAtlas()!;
         this._lighting = new BlockMeshLighting(this);
@@ -107,7 +108,7 @@ export class BlockMesh {
 
         const atlasPalette = new AtlasPalette(atlas, palette);
         const allBlockCollection = atlasPalette.createBlockCollection([]);
-        const nonFallableBlockCollection = atlasPalette.createBlockCollection(AppRuntimeConstants.Get.FALLABLE_BLOCKS);
+        const nonFallableBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.FALLABLE_BLOCKS));
         const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
 
         let countFalling = 0;
@@ -126,7 +127,7 @@ export class BlockMesh {
 
             // Check that this block meets the fallable behaviour, we may need
             // to choose a different block if the current one doesn't meet the requirements
-            const isBlockFallable = AppRuntimeConstants.Get.FALLABLE_BLOCKS.includes(block.name);
+            const isBlockFallable = AppRuntimeConstants.Get.FALLABLE_BLOCKS.has(block.name);
             const isBlockSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
 
             if (isBlockFallable && !isBlockSupported) {
@@ -141,16 +142,16 @@ export class BlockMesh {
                 block = atlasPalette.getBlock(voxelColour, nonFallableBlockCollection, faceVisibility, blockMeshParams.errorWeight);
             }
 
-            if (AppRuntimeConstants.Get.GRASS_LIKE_BLOCKS.includes(block.name)) {
+            if (AppRuntimeConstants.Get.GRASS_LIKE_BLOCKS.has(block.name)) {
                 grassLikeBlocksBuffer.push({
-                    id: this._blocks.length,
+                    hash: voxel.position.hash(),
                     voxelColour: voxelColour,
                     errWeight: blockMeshParams.errorWeight,
                     faceVisibility: faceVisibility,
                 });
             }
 
-            this._blocks.push({
+            this._blocks.set(voxel.position.hash(), {
                 voxel: voxel,
                 blockInfo: block,
             });
@@ -158,21 +159,23 @@ export class BlockMesh {
         }
 
         if (grassLikeBlocksBuffer.length > 0) {
-            const nonGrassLikeBlockCollection = atlasPalette.createBlockCollection(AppRuntimeConstants.Get.GRASS_LIKE_BLOCKS);
+            const nonGrassLikeBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.GRASS_LIKE_BLOCKS));
             for (let index=0; index < grassLikeBlocksBuffer.length; index++) {
                 ProgressManager.Get.progress(taskHandle, index / grassLikeBlocksBuffer.length);
                 const examined = grassLikeBlocksBuffer[index];
-                const examinedBlock = this._blocks[examined.id];
+                const examinedBlock = this._blocks.get(examined.hash);
+                ASSERT(examinedBlock, 'Missing examined block');
 
                 const topBlockPosition = Vector3.add(examinedBlock.voxel.position, new Vector3(0, 1, 0));
-                const topBlockIndex = 0; //this._voxelMesh.getVoxelIndex(topBlockPosition);
-
-                if (topBlockIndex !== undefined && !AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.includes(this._blocks[topBlockIndex].blockInfo.name)) {
-                    const block = atlasPalette.getBlock(examined.voxelColour, nonGrassLikeBlockCollection, examined.faceVisibility, examined.errWeight);
-                    examinedBlock.blockInfo = block;
-                    this._blocks[examined.id] = examinedBlock;
-                    this._blocksUsed.add(block.name);
-                };
+                const topBlock = this._blocks.get(topBlockPosition.hash());
+                if (topBlock !== undefined) {
+                    if (!AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.has(topBlock.blockInfo.name)) {
+                        const block = atlasPalette.getBlock(examined.voxelColour, nonGrassLikeBlockCollection, examined.faceVisibility, examined.errWeight);
+                        examinedBlock.blockInfo = block;
+                        this._blocks.set(examined.hash, examinedBlock);
+                        this._blocksUsed.add(block.name);
+                    }
+                }
             }
         }
         ProgressManager.Get.end(taskHandle);
@@ -213,8 +216,11 @@ export class BlockMesh {
         if (bestBlock !== undefined) {
             const blockIndex = 0; //this._voxelMesh.getVoxelIndex(pos);
             ASSERT(blockIndex !== undefined, 'Setting emissive block of block that doesn\'t exist');
-            this._blocks[blockIndex].blockInfo = bestBlock;
 
+            const block = this._blocks.get(pos.hash());
+            ASSERT(block !== undefined);
+
+            block.blockInfo = bestBlock;
             return true;
         }
 
@@ -222,14 +228,11 @@ export class BlockMesh {
     }
 
     public getBlockAt(pos: Vector3): TOptional<Block> {
-        const index = 0; //this._voxelMesh.getVoxelIndex(pos);
-        if (index !== undefined) {
-            return this._blocks[index];
-        }
+        return this._blocks.get(pos.hash());
     }
 
     public getBlocks(): Block[] {
-        return this._blocks;
+        return Array.from(this._blocks.values());
     }
 
     public getBlockPalette() {
@@ -246,11 +249,11 @@ export class BlockMesh {
     }
 
     public isEmissiveBlock(block: Block) {
-        return AppRuntimeConstants.Get.EMISSIVE_BLOCKS.includes(block.blockInfo.name);
+        return AppRuntimeConstants.Get.EMISSIVE_BLOCKS.has(block.blockInfo.name);
     }
 
     public isTransparentBlock(block: Block) {
-        return AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.includes(block.blockInfo.name);
+        return AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.has(block.blockInfo.name);
     }
 
     /*

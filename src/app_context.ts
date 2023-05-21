@@ -253,6 +253,8 @@ export class AppContext {
         }
         AppConsole.success(LOC('assign.loaded_block_mesh'));
 
+        Renderer.Get.setLightingAvailable(components.calculateLighting.getValue());
+
         AppConsole.info(LOC('assign.rendering_block_mesh'));
         {
             let moreBlocksToBuffer = false;
