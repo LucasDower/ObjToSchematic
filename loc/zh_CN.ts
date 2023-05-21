@@ -8,6 +8,7 @@ export const zh_CN: TLocaleDefinition = {
     language_code: 'zh_CN',
     translations: {
         something_went_wrong: '发生了意料之外的错误',
+        description: '一款将 3D 模型转换为 .schematic，.litematic，.schem 和 .nbt 等 Minecraft 方块格式的工具',
         init: {
             initialising: '正在初始化...',
             ready: '完毕',
