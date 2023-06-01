@@ -176,21 +176,19 @@ export class ObjImporter extends IImporter {
     ];
 
     public override import(file: File): Promise<Mesh> {
-        return new Promise((res, rej) => {
-            file.text().then((fileSource) => {
-                if (fileSource.includes('�')) {
-                    rej(new AppError(LOC('import.invalid_encoding')));
-                }
+        return file.text().then((fileSource) => {
+            if (fileSource.includes('�')) {
+                throw new AppError(LOC('import.invalid_encoding'));
+            }
 
-                fileSource.replace('\r', ''); // Convert Windows carriage return
-                const fileLines = fileSource.split('\n');
+            fileSource.replace('\r', ''); // Convert Windows carriage return
+            const fileLines = fileSource.split('\n');
 
-                for (const line of fileLines) {
-                    this.parseOBJLine(line);
-                }
+            for (const line of fileLines) {
+                this.parseOBJLine(line);
+            }
 
-                res(new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map()));
-            });
+            return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
         });
     }
     public parseOBJLine(line: string) {
