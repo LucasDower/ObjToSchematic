@@ -80,9 +80,14 @@ export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
         const elementX = UIUtil.getElementById(this._getValueId('x')) as HTMLInputElement;
         const elementY = UIUtil.getElementById(this._getValueId('y')) as HTMLInputElement;
         const elementZ = UIUtil.getElementById(this._getValueId('z')) as HTMLInputElement;
+        
         elementX.addEventListener('change', () => {
             this.getValue().x = parseInt(elementX.value);
+        });
+        elementY.addEventListener('change', () => {
             this.getValue().y = parseInt(elementY.value);
+        });
+        elementZ.addEventListener('change', () => {
             this.getValue().z = parseInt(elementZ.value);
         });
     }
