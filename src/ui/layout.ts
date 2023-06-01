@@ -73,6 +73,13 @@ export class UI {
         EventManager.Get.add(EAppEvent.onLanguageChanged, () => {
             this._handleLanguageChange();
         });
+
+        EventManager.Get.add(EAppEvent.onTaskProgress, (e: any) => {
+            const lastAction = this._appContext?.getLastAction();
+            if (lastAction !== undefined) {
+                this.getActionButton(lastAction)?.setProgress(e[1]);
+            }
+        });
     }
 
     public uiOrder = ['settings', 'import', 'materials', 'voxelise', 'assign', 'export'];

@@ -1,3 +1,4 @@
+import { ProgressManager } from '../progress';
 import { LOC } from '../localiser';
 import { checkNaN } from '../math';
 import { Mesh, Tri } from '../mesh';
@@ -183,10 +184,13 @@ export class ObjImporter extends IImporter {
 
             fileSource.replace('\r', ''); // Convert Windows carriage return
             const fileLines = fileSource.split('\n');
+            const numLines = fileLines.length;
 
-            for (const line of fileLines) {
+            const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
+            fileLines.forEach((line, index) => {
                 this.parseOBJLine(line);
-            }
+                ProgressManager.Get.progress(progressHandle, index / numLines);
+            })
 
             return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
         });
