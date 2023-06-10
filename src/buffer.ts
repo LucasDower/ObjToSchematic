@@ -12,8 +12,6 @@ import { Vector3 } from './vector';
 import { VoxelMesh } from './voxel_mesh';
 import { RenderNextVoxelMeshChunkParams } from './worker_types';
 
-import * as twgl from 'twgl.js';
-
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
     texcoord: { numComponents: 2, data: Float32Array },
@@ -37,12 +35,9 @@ export type TVoxelMeshBuffer = {
     indices: { numComponents: 3, data: Uint32Array },
 };
 
-export type TTWGLBuffer = { [key: string]: twgl.primitives.TypedArray };
-
 export type TVoxelMeshBufferDescription = {
-    occlusionTextureData?: Float32Array,
-    numInstances: number,
-    buffers: { [key: string]: twgl.primitives.TypedArray },
+    buffer: TVoxelMeshBuffer,
+    numElements: number,
 }
 
 export type TBlockMeshBuffer = {
@@ -72,84 +67,67 @@ export class ChunkedBufferGenerator {
         ASSERT(voxelsStartIndex < numTotalVoxels, 'Invalid voxel start index');
 
         const numBufferVoxels = voxelsEndIndex - voxelsStartIndex;
+        const newBuffer: TVoxelMeshBuffer = BufferGenerator.createVoxelMeshBuffer(numBufferVoxels);
+
+        const cube: AttributeData = GeometryTemplates.getBoxBufferData(new Vector3(0, 0, 0));
         const voxels = voxelMesh.getVoxels();
 
-        const instancePositions = new Float32Array(numBufferVoxels * 3);
+        // Build position buffer
         for (let i = 0; i < numBufferVoxels; ++i) {
             const voxel = voxels[i + voxelsStartIndex];
+            const voxelPositionArray = voxel.position.toArray();
 
-            instancePositions[i * 3 + 0] = voxel.position.x;
-            instancePositions[i * 3 + 1] = voxel.position.y;
-            instancePositions[i * 3 + 2] = voxel.position.z;
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.POSITION; ++j) {
+                newBuffer.position.data[i * AppConstants.VoxelMeshBufferComponentOffsets.POSITION + j] = cube.custom.position[j] + voxelPositionArray[j % 3];
+            }
         }
 
-        const instanceColours = new Float32Array(numBufferVoxels * 4);
+        // Build colour buffer
         for (let i = 0; i < numBufferVoxels; ++i) {
             const voxel = voxels[i + voxelsStartIndex];
+            newBuffer.colour.data[i * 96 + 0] = voxel.colour.r;
+            newBuffer.colour.data[i * 96 + 1] = voxel.colour.g;
+            newBuffer.colour.data[i * 96 + 2] = voxel.colour.b;
+            newBuffer.colour.data[i * 96 + 3] = voxel.colour.a;
 
-            instanceColours[i * 4 + 0] = voxel.colour.r;
-            instanceColours[i * 4 + 1] = voxel.colour.g;
-            instanceColours[i * 4 + 2] = voxel.colour.b;
-            instanceColours[i * 4 + 3] = voxel.colour.a;
+            AppUtil.Array.repeatedFill(newBuffer.colour.data, i * 96, 4, 24);
         }
 
-        const arrays = twgl.primitives.createCubeVertices(1.0);
+        // Build normal buffer
+        {
+            newBuffer.normal.data.set(cube.custom.normal, 0);
+            AppUtil.Array.repeatedFill(newBuffer.normal.data, 0, 72, numBufferVoxels);
+        }
 
-        Object.assign(arrays, {
-            instancePosition: {
-                numComponents: 3,
-                data: instancePositions,
-                divisor: 1,
-            },
-            instanceColour: {
-                numComponents: 4,
-                data: instanceColours,
-                divisor: 1,
-            },
-        });
+        // Build texcoord buffer
+        {
+            newBuffer.texcoord.data.set(cube.custom.texcoord, 0);
+            AppUtil.Array.repeatedFill(newBuffer.texcoord.data, 0, 48, numBufferVoxels);
+        }
+
+
+        // Build indices buffer
+        for (let i = 0; i < numBufferVoxels; ++i) {
+            for (let j = 0; j < AppConstants.VoxelMeshBufferComponentOffsets.INDICES; ++j) {
+                newBuffer.indices.data[i * AppConstants.VoxelMeshBufferComponentOffsets.INDICES + j] = cube.indices[j] + (i * AppConstants.INDICES_PER_VOXEL);
+            }
+        }
 
         // Build occlusion buffer
-        let occlusionTextureData: Float32Array | undefined; // RGBA square texture
         if (params.enableAmbientOcclusion) {
-            const instanceOcclusionOriginPixelIndices = new Float32Array(numBufferVoxels);
-            const occlusionTextureWidth = Math.ceil(Math.sqrt((numBufferVoxels * 24)));
-            occlusionTextureData = new Float32Array(occlusionTextureWidth * occlusionTextureWidth * 4); // RGBA square texture
+            const voxelOcclusionArray = new Float32Array(96);
 
-            if (params.enableAmbientOcclusion) {
-                const voxelOcclusionArray = new Float32Array(24 * 4);
+            for (let i = 0; i < numBufferVoxels; ++i) {
+                const voxel = voxels[i + voxelsStartIndex];
+                OcclusionManager.Get.getOcclusions(voxelOcclusionArray, voxel.position, voxelMesh);
 
-                for (let i = 0; i < numBufferVoxels; ++i) {
-                    const voxel = voxels[i + voxelsStartIndex];
-                    OcclusionManager.Get.getOcclusions(voxelOcclusionArray, voxel.position, voxelMesh);
-                    occlusionTextureData.set(voxelOcclusionArray, i * 24 * 4);
-
-                    instanceOcclusionOriginPixelIndices[i] = i;
-                }
+                newBuffer.occlusion.data.set(voxelOcclusionArray, i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION);
             }
-
-            const occlusionOffsets = new Float32Array(72);
-            for (let i = 0; i < 24; ++i) {
-                for (let j = 0; j < 3; ++j) {
-                    occlusionOffsets[i * 3 + 0] = i;
-                    occlusionOffsets[i * 3 + 0] = i;
-                    occlusionOffsets[i * 3 + 0] = i;
-                }
-            }
-
-            Object.assign(arrays, {
-                instanceOcclusionOriginPixelIndex: {
-                    numComponents: 1,
-                    data: instanceOcclusionOriginPixelIndices,
-                    divisor: 1,
-                },
-                occlusionOffsets: occlusionOffsets,
-            });
         }
 
         return {
-            occlusionTextureData: occlusionTextureData,
-            numInstances: numBufferVoxels,
-            buffers: arrays,
+            buffer: newBuffer,
+            numElements: newBuffer.indices.data.length,
             moreVoxelsToBuffer: voxelsEndIndex !== numTotalVoxels,
             progress: voxelsStartIndex / numTotalVoxels,
         };
@@ -184,7 +162,7 @@ export class ChunkedBufferGenerator {
         const numBufferBlocks = blocksEndIndex - blocksStartIndex;
 
         const voxelChunkBuffer = blockMesh.getVoxelMesh().getChunkedBuffer(chunkIndex);
-        const newBuffer = BufferGenerator.createBlockMeshBuffer(numBufferBlocks, voxelChunkBuffer.buffers as any); // TODO: Broken ASF
+        const newBuffer = BufferGenerator.createBlockMeshBuffer(numBufferBlocks, voxelChunkBuffer.buffer);
 
         const faceOrder = ['north', 'south', 'up', 'down', 'east', 'west'];
         let insertIndex = 0;

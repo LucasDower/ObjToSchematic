@@ -25,49 +25,6 @@ export class OcclusionManager {
         return new Array<number>(96).fill(1.0);
     }
 
-    // Assume's buffer is of length 24
-    public getOcclusionsUnpacked(buffer: Float32Array, centre: Vector3, voxelMesh: VoxelMesh) {
-        // Cache local neighbours
-        const neighbourData = voxelMesh.getNeighbours(centre);
-        if (neighbourData === undefined) {
-            // This voxel has no neighbours within a 1-block radius
-            buffer.fill(0.0);
-            return;
-        }
-
-        for (let i = 0; i < 27; ++i) {
-            this._localNeighbourhoodCache[i] = (neighbourData & (1 << i)) > 0 ? 1 : 0;
-        }
-
-        // For each face
-        for (let f = 0; f < 6; ++f) {
-            for (let v = 0; v < 4; ++v) {
-                let numNeighbours = 0;
-                let occlusionValue = 1.0;
-                for (let i = 0; i < 2; ++i) {
-                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, i)];
-                    numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
-                }
-                // If both edge blocks along this vertex exist,
-                // assume corner exists (even if it doesnt)
-                // (This is a stylistic choice)
-                if (numNeighbours == 2 && AppConfig.Get.AMBIENT_OCCLUSION_OVERRIDE_CORNER) {
-                    ++numNeighbours;
-                } else {
-                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, 2)];
-                    numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
-                }
-
-                // Convert from occlusion denoting the occlusion factor to the
-                // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
-                occlusionValue = 1.0 - 0.2 * numNeighbours;
-                const ind = f * 4 + v;
-                console.log(ind, occlusionValue);
-                buffer[f * 4 + v] = occlusionValue;
-            }
-        }
-    }
-
     // Assume's buffer is of length 96
     public getOcclusions(buffer: Float32Array, centre: Vector3, voxelMesh: VoxelMesh): void {
         // Cache local neighbours

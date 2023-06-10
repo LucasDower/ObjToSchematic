@@ -334,16 +334,7 @@ export class AppContext {
 
         this._lastAction = action;
 
-        let success = false;
-        try {
-            success = await this._executeAction(action);
-        } catch (err) {
-            console.error(err);
-            AppConsole.error(LOC('something_went_wrong'));
-
-            UI.Get.enableTo(action);
-            return;
-        }
+        const success = await this._executeAction(action);
         if (success) {
             if (action === EAction.Import) {
                 UI.Get.enableTo(EAction.Voxelise);

@@ -1,7 +1,7 @@
 import { EFaceVisibility } from './block_assigner';
 import { Bounds } from './bounds';
 import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
-import { RGBA, RGBAColours } from './colour';
+import { RGBA } from './colour';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
@@ -80,13 +80,6 @@ export class VoxelMesh {
     }
 
     public addVoxel(inPos: Vector3, colour: RGBA) {
-        /*
-        if (this._voxels.size === 0) {
-            this._voxels.set(new Vector3(0, 0, 0).hash(), { position: new Vector3(0, 0, 0), colour: RGBAColours.WHITE, collisions: 1, neighbours: 0 });
-            this._voxels.set(new Vector3(1, 1, 0).hash(), { position: new Vector3(1, 1, 0), colour: RGBAColours.WHITE, collisions: 1, neighbours: 0 });
-        }
-        */
-
         if (colour.a === 0) {
             return;
         }

@@ -15,7 +15,7 @@ import { Renderer } from './renderer';
 export class ShaderManager {
     public readonly textureTriProgram: twgl.ProgramInfo;
     public readonly solidTriProgram: twgl.ProgramInfo;
-    //public readonly voxelProgram: twgl.ProgramInfo;
+    public readonly voxelProgram: twgl.ProgramInfo;
     public readonly blockProgram: twgl.ProgramInfo;
     public readonly debugProgram: twgl.ProgramInfo;
 
@@ -31,14 +31,10 @@ export class ShaderManager {
 
         this.solidTriProgram = twgl.createProgramInfo(gl, [VERT_TRI_SOLID, FRAG_TRI_SOLID]);
 
-        //this.voxelProgram = twgl.createProgramInfo(gl, [VERT_VOXEL, FRAG_VOXEL]);
+        this.voxelProgram = twgl.createProgramInfo(gl, [VERT_VOXEL, FRAG_VOXEL]);
 
         this.blockProgram = twgl.createProgramInfo(gl, [VERT_BLOCK, FRAG_BLOCK]);
 
         this.debugProgram = twgl.createProgramInfo(gl, [VERT_DEBUG, FRAG_DEBUG]);
-    }
-
-    public createNewVoxelProgram() {
-        return twgl.createProgramInfo(Renderer.Get._gl, [VERT_VOXEL, FRAG_VOXEL]);
     }
 }
