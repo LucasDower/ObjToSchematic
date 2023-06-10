@@ -74,6 +74,8 @@ export class Renderer {
         numElements: number,
         materialName: string,
     }>;
+    public _newVertexArrayBuffer: { vertexArrayInfo: twgl.VertexArrayInfo, numInstances: number, program: twgl.ProgramInfo, occlusionTex: WebGLTexture | undefined, textureWidth: number }[] = [];
+
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
     private _blockBounds: Bounds;
@@ -349,11 +351,29 @@ export class Renderer {
     public useVoxelMeshChunk(params: RenderNextVoxelMeshChunkParams.Output) {
         if (params.isFirstChunk) {
             this._voxelBuffer = [];
+            this._newVertexArrayBuffer = [];
         }
 
         this._allVoxelChunks = !params.moreVoxelsToBuffer;
 
-        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
+        let occlusionTexture: WebGLTexture | undefined;
+        let textureWidth = 1;
+        if (params.buffer.occlusionTextureData !== undefined) {
+            textureWidth = Math.sqrt(params.buffer.occlusionTextureData.length / 4); // should be int
+            occlusionTexture = twgl.createTexture(this._gl, {
+                mag: this._gl.NEAREST,
+                min: this._gl.NEAREST,
+                src: params.buffer.occlusionTextureData,
+                width: textureWidth,
+                height: textureWidth,
+            });
+        }
+
+        const program = ShaderManager.Get.createNewVoxelProgram();
+        const bufferInfo = twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffers)
+        const vertexArrayInfo = twgl.createVertexArrayInfo(this._gl, program, bufferInfo);
+        this._newVertexArrayBuffer.push({ vertexArrayInfo: vertexArrayInfo, numInstances: params.buffer.numInstances, program: program, occlusionTex: occlusionTexture, textureWidth: textureWidth });
+
         this._voxelSize = params.voxelSize;
 
         if (params.isFirstChunk) {
@@ -478,7 +498,7 @@ export class Renderer {
                 if (gridBuffer !== undefined) {
                     this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-                        u_worldOffset: [0, this._sliceViewEnabled ? this._sliceHeight * this._voxelSize: 0, 0],
+                        u_worldOffset: [0, this._sliceViewEnabled ? this._sliceHeight * this._voxelSize : 0, 0],
                     });
                 }
             }
@@ -498,7 +518,7 @@ export class Renderer {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
             if (materialBuffer.material.type === MaterialType.textured) {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI / 4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_texture: materialBuffer.material.diffuseTexture,
@@ -511,7 +531,7 @@ export class Renderer {
                 });
             } else {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
+                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI / 4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
                     u_fillColour: materialBuffer.material.colourArray,
@@ -524,18 +544,40 @@ export class Renderer {
     }
 
     private _drawVoxelMesh() {
-        const shader = ShaderManager.Get.voxelProgram;
-        const uniforms = {
-            u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-            u_voxelSize: this._voxelSize,
-            u_gridOffset: this._gridOffset.toArray(),
-            u_ambientOcclusion: this._allVoxelChunks,
-        };
+        //const shader = ShaderManager.Get.voxelProgram;
+
+        /*
         this._voxelBuffer?.forEach((buffer) => {
             this._gl.useProgram(shader.program);
             twgl.setBuffersAndAttributes(this._gl, shader, buffer);
             twgl.setUniforms(shader, uniforms);
             this._gl.drawElements(this._gl.TRIANGLES, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        });
+        */
+
+        this._newVertexArrayBuffer.forEach(({ vertexArrayInfo, numInstances, program, occlusionTex, textureWidth }) => {
+            const uniforms = {
+                u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                u_voxelSize: this._voxelSize,
+                u_gridOffset: this._gridOffset.toArray(),
+                u_ambientOcclusion: occlusionTex !== undefined,
+                u_occlusion_texture: occlusionTex,
+                u_sampler_width: textureWidth,
+            };
+
+            this._gl.useProgram(program.program);
+            twgl.setBuffersAndAttributes(this._gl, program, vertexArrayInfo);
+            twgl.setUniforms(program, uniforms);
+
+            //twgl.drawBufferInfo(this._gl, vertexArrayInfo, this._gl.TRIANGLES, vertexArrayInfo.numElements, 0, numInstances);
+            twgl.drawObjectList(this._gl, [
+                {
+                    programInfo: program,
+                    vertexArrayInfo: vertexArrayInfo,
+                    uniforms: uniforms,
+                    instanceCount: numInstances,
+                },
+            ]);
         });
     }
 
@@ -589,7 +631,8 @@ export class Renderer {
         this._gl.useProgram(shader.program);
         twgl.setBuffersAndAttributes(this._gl, shader, buffer.buffer);
         twgl.setUniforms(shader, uniforms);
-        this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_INT, 0);
+        twgl.drawBufferInfo(this._gl, buffer.buffer, drawMode);
+        //this._gl.drawElements(drawMode, buffer.numElements, this._gl.UNSIGNED_INT, 0);
     }
 
     public getModelsAvailable() {
