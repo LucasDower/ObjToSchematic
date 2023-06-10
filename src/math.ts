@@ -26,6 +26,10 @@ export namespace AppMath {
     export function uint8(decimal: number) {
         return Math.floor(decimal * 255);
     }
+
+    export function largestPowerOfTwoLessThanN(n: number) {
+        return Math.floor(Math.log2(n));
+    }
 }
 
 export const argMax = (array: [number]) => {

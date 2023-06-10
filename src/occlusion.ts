@@ -25,12 +25,14 @@ export class OcclusionManager {
         return new Array<number>(96).fill(1.0);
     }
 
-    public getOcclusions(centre: Vector3, voxelMesh: VoxelMesh) {
+    // Assume's buffer is of length 96
+    public getOcclusions(buffer: Float32Array, centre: Vector3, voxelMesh: VoxelMesh): void {
         // Cache local neighbours
         const neighbourData = voxelMesh.getNeighbours(centre);
         if (neighbourData === undefined) {
             // This voxel has no neighbours within a 1-block radius
-            return this.getBlankOcclusions();
+            buffer.fill(0.0);
+            return;
         }
 
         for (let i = 0; i < 27; ++i) {
@@ -69,7 +71,8 @@ export class OcclusionManager {
             }
         }
 
-        return this._occlusions;
+        buffer.set(this._occlusions, 0);
+        return;
     }
 
     public static getNeighbourIndex(neighbour: Vector3) {

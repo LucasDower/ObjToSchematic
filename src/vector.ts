@@ -249,6 +249,12 @@ export class Vector3 implements IHashable {
     public stringify() {
         return `${this.x}_${this.y}_${this.z}`;
     }
+
+    public intoArray(array: Float32Array, start: number) {
+        array[start + 0] = this.x;
+        array[start + 1] = this.y;
+        array[start + 2] = this.z;
+    }
 }
 
 export const fastCrossXAxis = (vec: Vector3) => {
