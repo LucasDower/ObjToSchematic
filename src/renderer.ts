@@ -13,6 +13,7 @@ import { EImageChannel } from './texture';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
+import { UIUtil } from './util/ui_util';
 
 /* eslint-disable */
 export enum MeshType {
@@ -131,28 +132,42 @@ export class Renderer {
         this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(1, 0, 0), { r: 0.96, g: 0.21, b: 0.32, a: 1.0 }));
         this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 1, 0), { r: 0.44, g: 0.64, b: 0.11, a: 1.0 }));
         this._axisBuffer.add(DebugGeometryTemplates.arrow(new Vector3(0, 0, 0), new Vector3(0, 0, 1), { r: 0.18, g: 0.52, b: 0.89, a: 1.0 }));
+
+        const resizeObserver = new ResizeObserver(() => {
+            this.forceRedraw();
+        });
+
+        resizeObserver.observe(UIUtil.getElementById('canvas'));
     }
 
     public update() {
         ArcballCamera.Get.updateCamera();
     }
 
+    private _redraw = true;
+    public forceRedraw() {
+        this._redraw = true;
+    }
+
     public draw() {
-        this._setupScene();
+        if (this._redraw || ArcballCamera.Get.isUserRotating || ArcballCamera.Get.isUserTranslating) {
+            this._setupScene();
 
-        switch (this._meshToUse) {
-            case MeshType.TriangleMesh:
-                this._drawMesh();
-                break;
-            case MeshType.VoxelMesh:
-                this._drawVoxelMesh();
-                break;
-            case MeshType.BlockMesh:
-                this._drawBlockMesh();
-                break;
-        };
+            switch (this._meshToUse) {
+                case MeshType.TriangleMesh:
+                    this._drawMesh();
+                    break;
+                case MeshType.VoxelMesh:
+                    this._drawVoxelMesh();
+                    break;
+                case MeshType.BlockMesh:
+                    this._drawBlockMesh();
+                    break;
+            };
 
-        this._drawDebug();
+            this._drawDebug();
+            this._redraw = false;
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////
@@ -163,10 +178,12 @@ export class Renderer {
 
     public toggleSliceViewerEnabled() {
         this._sliceViewEnabled = !this._sliceViewEnabled;
+        this.forceRedraw();
     }
 
     public canIncrementSliceHeight() {
         return this._blockBounds.max.y > this._sliceHeight;
+
     }
 
     public canDecrementSliceHeight() {
@@ -176,12 +193,14 @@ export class Renderer {
     public incrementSliceHeight() {
         if (this.canIncrementSliceHeight()) {
             ++this._sliceHeight;
+            this.forceRedraw();
         }
     }
 
     public decrementSliceHeight() {
         if (this.canDecrementSliceHeight()) {
             --this._sliceHeight;
+            this.forceRedraw();
         }
     }
 
@@ -195,6 +214,7 @@ export class Renderer {
 
     public toggleIsGridEnabled() {
         this._gridEnabled = !this._gridEnabled;
+        this.forceRedraw();
     }
 
     public isGridEnabled() {
@@ -207,6 +227,7 @@ export class Renderer {
 
     public toggleIsAxesEnabled() {
         this._axesEnabled = !this._axesEnabled;
+        this.forceRedraw();
     }
 
     public canToggleNightVision() {
@@ -218,6 +239,7 @@ export class Renderer {
         if (!this._lightingAvailable) {
             this._nightVisionEnabled = true;
         }
+        this.forceRedraw();
     }
 
     public isNightVisionEnabled() {
@@ -227,16 +249,19 @@ export class Renderer {
     public toggleIsWireframeEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Wireframe];
         this._isGridComponentEnabled[EDebugBufferComponents.Wireframe] = isEnabled;
+        this.forceRedraw();
     }
 
     public toggleIsNormalsEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Normals];
         this._isGridComponentEnabled[EDebugBufferComponents.Normals] = isEnabled;
+        this.forceRedraw();
     }
 
     public toggleIsDevDebugEnabled() {
         const isEnabled = !this._isGridComponentEnabled[EDebugBufferComponents.Dev];
         this._isGridComponentEnabled[EDebugBufferComponents.Dev] = isEnabled;
+        this.forceRedraw();
     }
 
     public clearMesh() {
@@ -259,6 +284,8 @@ export class Renderer {
                 src: [
                     255, 0, 255, 255,
                 ],
+            }, () => {
+                this.forceRedraw();
             });
 
             let diffuseTexture = blankTexture;
@@ -270,6 +297,8 @@ export class Renderer {
                     min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
                     mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
                     wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+                }, () => {
+                    this.forceRedraw();
                 });
             }
 
@@ -281,6 +310,8 @@ export class Renderer {
                         min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
                         mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
                         wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
+                    }, () => {
+                        this.forceRedraw();
                     });
                 }
             }
@@ -422,6 +453,8 @@ export class Renderer {
             this._atlasTexture = twgl.createTexture(this._gl, {
                 src: VANILLA_TEXTURE,
                 mag: this._gl.NEAREST,
+            }, () => {
+                this.forceRedraw();
             });
 
             this._atlasSize = params.atlasSize;
@@ -571,6 +604,7 @@ export class Renderer {
         if (isModelAvailable) {
             this._meshToUse = meshType;
         }
+        this.forceRedraw();
     }
 
     private _setupScene() {

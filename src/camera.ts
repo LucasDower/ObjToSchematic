@@ -95,6 +95,7 @@ export class ArcballCamera {
 
     public setCameraMode(mode: 'perspective' | 'orthographic') {
         this._isPerspective = mode === 'perspective';
+        Renderer.Get.forceRedraw();
     }
 
     public toggleAngleSnap() {
@@ -105,6 +106,8 @@ export class ArcballCamera {
             this._azimuthRelief = 0.0;
             this._elevationRelief = 0.0;
         }
+
+        Renderer.Get.forceRedraw();
     }
     public isAngleSnapEnabled() {
         return this._angleSnap;
@@ -270,6 +273,7 @@ export class ArcballCamera {
 
     public onWheelScroll(e: WheelEvent) {
         this._distance.addToTarget(e.deltaY * AppConfig.Get.CAMERA_SENSITIVITY_ZOOM);
+        Renderer.Get.forceRedraw();
     }
 
     public getProjectionMatrix() {
@@ -311,10 +315,12 @@ export class ArcballCamera {
 
     public onZoomOut() {
         this._distance.addToTarget(1);
+        Renderer.Get.forceRedraw();
     }
 
     public onZoomIn() {
         this._distance.addToTarget(-1);
+        Renderer.Get.forceRedraw();
     }
 
     public reset() {
@@ -329,6 +335,8 @@ export class ArcballCamera {
         while (this._azimuth.getActual() > AppConfig.Get.CAMERA_DEFAULT_ELEVATION_RADIANS + Math.PI) {
             this._azimuth.setActual(this._azimuth.getActual() - Math.PI * 2);
         }
+
+        Renderer.Get.forceRedraw();
     }
 
     public getAspect() {
@@ -338,24 +346,6 @@ export class ArcballCamera {
     public setAspect(aspect: number) {
         this._aspect = aspect;
     }
-
-    /*
-    public getMouseRay() {
-        const mousePos = this.mouseManager.getMousePosNorm();
-        const inverseProjectionMatrix = this.getInverseWorldViewProjection();
-        var origin = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, -1.0, 1.0]);
-        var dest = mathUtil.multiplyMatVec4(inverseProjectionMatrix, [mousePos.x, mousePos.y, 1.0, 1.0]);
-
-        origin[0] /= origin[3];
-        origin[1] /= origin[3];
-        origin[2] /= origin[3];
-        dest[0] /= dest[3];
-        dest[1] /= dest[3];
-        dest[2] /= dest[3];
-
-        return {origin: origin, dest: dest};
-    }
-    */
 }
 
 
