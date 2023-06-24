@@ -1,4 +1,4 @@
-import { RGBAColours } from './colour';
+import { RGBAColours, RGBAUtil } from './colour';
 import { MaterialMap, MaterialType } from './mesh';
 import { EImageChannel, TTransparencyTypes } from './texture';
 import { ASSERT } from './util/error_util';
@@ -59,7 +59,7 @@ export class MaterialMapManager {
                 ASSERT(currentMaterial.type === MaterialType.textured, 'Old material expect to be texture');
                 this.materials.set(materialName, {
                     type: MaterialType.solid,
-                    colour: RGBAColours.MAGENTA,
+                    colour: RGBAUtil.randomPretty(),
                     canBeTextured: true,
                     needsAttention: true,
                 });

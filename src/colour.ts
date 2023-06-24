@@ -1,6 +1,8 @@
 import { AppConfig } from './config';
 import { TBrand } from './util/type_util';
 
+const hsv_rgb = require('hsv-rgb');
+
 export type RGBA = {
     r: number,
     g: number,
@@ -13,6 +15,21 @@ export type RGBA_255 = TBrand<RGBA, '255'>;
 export namespace RGBAUtil {
     export function toString(a: RGBA) {
         return `(${a.r}, ${a.g}, ${a.b}, ${a.a})`;
+    }
+
+    export function randomPretty(): RGBA {
+        const hue = Math.random() * 360;
+        const sat = 65;
+        const val = 85;
+
+        const rgb: number[] = hsv_rgb(hue, sat, val);
+
+        return {
+            r: rgb[0] / 255,
+            g: rgb[1] / 255,
+            b: rgb[2] / 255,
+            a: 1.0,
+        }
     }
 
     export function random(): RGBA {

@@ -194,7 +194,7 @@ export class Mesh {
                     // No texcoords are defined, therefore make a solid material
                     this._materials.set(tri.material, {
                         type: MaterialType.solid,
-                        colour: RGBAColours.MAGENTA,
+                        colour: RGBAUtil.randomPretty(),
                         canBeTextured: false,
                         needsAttention: true,
                     });
@@ -202,7 +202,7 @@ export class Mesh {
                     // Texcoords exist
                     this._materials.set(tri.material, {
                         type: MaterialType.solid,
-                        colour: RGBAUtil.random(),
+                        colour: RGBAUtil.randomPretty(),
                         canBeTextured: true,
                         needsAttention: true,
                     });
@@ -240,7 +240,7 @@ export class Mesh {
                     LOG_WARN(`Could not find ${material.path} for material ${materialName}, changing to solid material`);
                     this._materials.set(materialName, {
                         type: MaterialType.solid,
-                        colour: RGBAColours.MAGENTA,
+                        colour: RGBAUtil.copy(RGBAColours.MAGENTA),
                         canBeTextured: true,
                         needsAttention: true,
                     });
