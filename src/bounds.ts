@@ -22,6 +22,7 @@ export class Bounds {
         this._max = Vector3.max(this._max, volume._max);
     }
 
+    // TODO: rename to `createInfinitesimalBounds`
     public static getInfiniteBounds() {
         return new Bounds(
             new Vector3(Infinity, Infinity, Infinity),
@@ -37,11 +38,13 @@ export class Bounds {
         return this._max;
     }
 
+    // TODO: Rename to `calcCentre`
     public getCentre() {
         const extents = Vector3.sub(this._max, this._min).divScalar(2);
         return Vector3.add(this.min, extents);
     }
 
+    // TODO: Rename to `calcDimensions`
     public getDimensions() {
         return Vector3.sub(this._max, this._min);
     }

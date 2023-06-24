@@ -7,7 +7,8 @@ import { AppTypes } from '../util';
 import { ASSERT } from '../util/error_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
-import { IExporter } from './base_exporter';
+import { IExporter, TStructureExport } from './base_exporter';
+import { save } from '@loaders.gl/core';
 
 type BlockID = number;
 type long = [number, number];
@@ -21,9 +22,9 @@ export class Litematic extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh) {
+    public override export(blockMesh: BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
-        return saveNBT(nbt);
+        return { type: 'single', extension: '.litematic', content: saveNBT(nbt) };
     }
 
     /**

@@ -1,5 +1,5 @@
 import { BlockMesh } from '../block_mesh';
-import { IExporter } from './base_exporter';
+import { IExporter, TStructureExport } from './base_exporter';
 
 export class IndexedJSONExporter extends IExporter {
     public override getFormatFilter() {
@@ -9,7 +9,7 @@ export class IndexedJSONExporter extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): Buffer {
+    public override export(blockMesh: BlockMesh): TStructureExport {
         const blocks = blockMesh.getBlocks();
 
         const blocksUsed = blockMesh.getBlockPalette();
@@ -34,6 +34,6 @@ export class IndexedJSONExporter extends IExporter {
             xyzi: blockArray,
         });
 
-        return Buffer.from(json);
+        return { type: 'single', extension: '.json', content: Buffer.from(json) };
     }
 }

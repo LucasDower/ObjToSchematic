@@ -228,11 +228,10 @@ export class WorkerClient {
         ASSERT(this._loadedBlockMesh !== undefined);
 
         const exporter: IExporter = ExporterFactory.GetExporter(params.exporter);
-        const buffer = exporter.export(this._loadedBlockMesh);
+        const files = exporter.export(this._loadedBlockMesh);
 
         return {
-            buffer: buffer,
-            extension: exporter.getFormatFilter().extension,
+            files: files,
         };
     }
 }

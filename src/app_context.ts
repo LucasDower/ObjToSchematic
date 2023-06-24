@@ -12,7 +12,7 @@ import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
 import { ColourSpace, EAction } from './util';
 import { ASSERT } from './util/error_util';
-import { download } from './util/file_util';
+import { download, downloadAsZip } from './util/file_util';
 import { LOG_ERROR, Logger } from './util/log_util';
 import { Vector3 } from './vector';
 import { WorkerController } from './worker_controller';
@@ -29,10 +29,12 @@ export class AppContext {
     private _lastAction?: EAction;
     public maxConstraint?: Vector3;
     private _materialManager: MaterialMapManager;
+    private _loadedFilename: string | null;
 
     private constructor() {
         this._workerController = new WorkerController();
         this._materialManager = new MaterialMapManager(new Map());
+        this._loadedFilename = null;
     }
 
     public static async init() {
@@ -83,10 +85,12 @@ export class AppContext {
         AppConsole.info(LOC('import.importing_mesh'));
         {
             // Instruct the worker to perform the job and await the result
+            const file = components.input.getValue();
+
             const resultImport = await this._workerController.execute({
                 action: 'Import',
                 params: {
-                    file: components.input.getValue(),
+                    file: file,
                     rotation: components.rotation.getValue(),
                 },
             });
@@ -104,6 +108,8 @@ export class AppContext {
                 .mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
             this._materialManager = new MaterialMapManager(resultImport.result.materials);
             UI.Get.updateMaterialsAction(this._materialManager);
+
+            this._loadedFilename = file.name.split('.')[0] ?? 'result';
         }
 
         AppConsole.info(LOC('import.rendering_mesh'));
@@ -305,7 +311,19 @@ export class AppContext {
             ASSERT(resultExport.action === 'Export');
 
             this._addWorkerMessagesToConsole(resultExport.messages);
-            download(resultExport.result.buffer, 'result.' + resultExport.result.extension);
+
+            ASSERT(this._loadedFilename !== null)
+            const fileExport = resultExport.result.files;
+            if (fileExport.type === 'single') {
+                download(fileExport.content, `${this._loadedFilename}_OTS${fileExport.extension}`);
+            } else {
+                const zipFiles = fileExport.regions.map((region) => {
+                    // .nbt exports need to be lowercase
+                    return { content: region.content, filename: `ots_${region.name}${fileExport.extension}` }
+                });
+
+                downloadAsZip(`${this._loadedFilename}_OTS.zip`, zipFiles);
+            }
         }
         AppConsole.success(LOC('export.exported_structure'));
 

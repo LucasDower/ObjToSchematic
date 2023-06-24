@@ -7,7 +7,7 @@ import { LOG } from '../util/log_util';
 import { MathUtil } from '../util/math_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
-import { IExporter } from './base_exporter';
+import { IExporter, TStructureExport } from './base_exporter';
 
 export class SchemExporter extends IExporter {
     private static SCHEMA_VERSION = 2;
@@ -19,7 +19,7 @@ export class SchemExporter extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh) {
+    public override export(blockMesh: BlockMesh): TStructureExport {
         const bounds = blockMesh.getVoxelMesh().getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -77,7 +77,7 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        return saveNBT(nbt);
+        return { type: 'single', extension: '.schem', content: saveNBT(nbt) };
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {

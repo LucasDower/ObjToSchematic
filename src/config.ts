@@ -11,7 +11,7 @@ export class AppConfig {
     public readonly RELEASE_MODE = true;
     public readonly MAJOR_VERSION = 0;
     public readonly MINOR_VERSION = 8;
-    public readonly HOTFIX_VERSION = 4;
+    public readonly HOTFIX_VERSION = 5;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
     public readonly MINECRAFT_VERSION = '1.19.4';
 

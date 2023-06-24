@@ -9,7 +9,7 @@ import { StatusHandler } from '../status';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
-import { IExporter } from './base_exporter';
+import { IExporter, TStructureExport } from './base_exporter';
 
 export class Schematic extends IExporter {
     public override getFormatFilter() {
@@ -19,9 +19,9 @@ export class Schematic extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh) {
+    public override export(blockMesh: BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
-        return saveNBT(nbt);
+        return { type: 'single', extension: '.schematic', content: saveNBT(nbt) };
     }
 
     private _convertToNBT(blockMesh: BlockMesh): NBT {

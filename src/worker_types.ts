@@ -2,6 +2,7 @@ import { FallableBehaviour } from './block_mesh';
 import { Bounds } from './bounds';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from './buffer';
 import { RGBAUtil } from './colour';
+import { TStructureExport } from './exporters/base_exporter';
 import { TExporters } from './exporters/exporters';
 import { MaterialMap } from './mesh';
 import { TMessage } from './ui/console';
@@ -169,8 +170,7 @@ export namespace ExportParams {
     }
 
     export type Output = {
-        buffer: Buffer,
-        extension: string,
+        files: TStructureExport
     }
 }
 
