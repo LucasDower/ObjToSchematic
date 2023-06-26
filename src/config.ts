@@ -49,4 +49,8 @@ export class AppConfig {
     public dumpConfig() {
         LOG(this);
     }
+
+    public getVersionString() {
+        return `v${this.MAJOR_VERSION}.${this.MINOR_VERSION}.${this.HOTFIX_VERSION}${this.VERSION_TYPE}`;
+    }
 }

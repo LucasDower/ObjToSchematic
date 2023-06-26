@@ -56,7 +56,7 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                                 ObjToSchematic
                             </div>
                             <div class="row-item subtitle">
-                                v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
+                                ${AppConfig.Get.getVersionString()} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
                             </div>
                         </div>
                     </div>
