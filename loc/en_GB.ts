@@ -39,6 +39,7 @@ export const en_GB = {
             unsupported_image_type: 'Cannot read \'{{file_name}}\', unsupported file type \'{{file_type}}\'',
             components: {
                 input: '3D Model (.obj, .glb)',
+                no_file_chosen: 'No file chosen',
                 rotation: 'Rotation',
             },
         },
@@ -162,5 +163,24 @@ export const en_GB = {
             off: 'Off',
             advanced_settings: 'Advanced settings'
         },
+        toolbar: {
+            view_mesh: 'View mesh',
+            view_voxel_mesh: 'View voxel mesh',
+            view_block_mesh: 'View block mesh',
+            toggle_grid: 'Toggle grid',
+            toggle_axes: 'Toggle axes',
+            toggle_night_vision: 'Toggle night vision',
+            toggle_slice_viewer: 'Toggle slice viewer',
+            decrement_slice: 'Decrement slice',
+            increment_slice: 'Increment slice',
+            zoom_in: 'Zoom in',
+            zoom_out: 'Zoom out',
+            reset_camera: 'Reset camera',
+            perspective_camera: 'Perspective camera',
+            orthographic_camera: 'Orthographic camera',
+            open_github_repo: 'Open GitHub repo',
+            open_github_issues: 'Open GitHub issues',
+            join_discord: 'Join Discord server',
+        }
     },
 };

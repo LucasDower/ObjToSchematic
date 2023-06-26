@@ -4,6 +4,7 @@ import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 import { AppIcons } from '../icons';
+import { LOC } from '../../localiser';
 
 export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
     private _loadedFilePath: string | null;
@@ -17,7 +18,7 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
         return `
             <div class="input-file struct-prop" id="${this._getId()}">
                 <input type="file" accept=".obj,,.glb" style="display: none;" id="${this._getId()}-input">
-                ${this._loadedFilePath ?? 'No file chosen'}
+                ${this._loadedFilePath ?? LOC('import.components.no_file_chosen')}
             </div>
         `;
     }
@@ -67,7 +68,7 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
             const parsedPath = path.parse(this._loadedFilePath);
             this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
         } else {
-            this._getElement().innerHTML = '<i>No file chosen</i>';
+            this._getElement().innerHTML = `<i>${LOC('import.components.no_file_chosen')}</i>`;
         }
 
         UIUtil.updateStyles(this._getElement(), {
@@ -75,5 +76,9 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
             isEnabled: this.enabled,
             isActive: false,
         });
+    }
+
+    public override refresh(): void {
+        this._getElement().innerHTML = `<i>${LOC('import.components.no_file_chosen')}</i>`;
     }
 }

@@ -379,7 +379,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
                         })
-                        .setTooltip('View mesh'),
+                        .setTooltip('toolbar.view_mesh'),
                     'voxelMesh': new ToolbarItemComponent({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
@@ -390,7 +390,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
                         })
-                        .setTooltip('View voxel mesh'),
+                        .setTooltip('toolbar.view_voxel_mesh'),
                     'blockMesh': new ToolbarItemComponent({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
@@ -401,7 +401,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
                         })
-                        .setTooltip('View block mesh'),
+                        .setTooltip('toolbar.view_block_mesh'),
                 },
                 componentOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
@@ -417,7 +417,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
                         })
-                        .setTooltip('Toggle grid'),
+                        .setTooltip('toolbar.toggle_grid'),
                     'axes': new ToolbarItemComponent({ id: 'axes', iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
@@ -425,7 +425,7 @@ export class UI {
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
                         })
-                        .setTooltip('Toggle axes'),
+                        .setTooltip('toolbar.toggle_axes'),
                     'night-vision': new ToolbarItemComponent({ id: 'night', iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
@@ -436,7 +436,7 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.canToggleNightVision();
                         })
-                        .setTooltip('Toggle night vision'),
+                        .setTooltip('toolbar.toggle_night_vision'),
                 },
                 componentOrder: ['grid', 'axes', 'night-vision'],
             },
@@ -452,7 +452,7 @@ export class UI {
                         .isActive(() => {
                             return Renderer.Get.isSliceViewerEnabled();
                         })
-                        .setTooltip('Toggle slice viewer'),
+                        .setTooltip('toolbar.toggle_slice_viewer'),
                     'plus': new ToolbarItemComponent({ id: 'plus', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             Renderer.Get.incrementSliceHeight();
@@ -461,7 +461,7 @@ export class UI {
                             return Renderer.Get.isSliceViewerEnabled() &&
                                 Renderer.Get.canIncrementSliceHeight();
                         })
-                        .setTooltip('Decrement slice'),
+                        .setTooltip('toolbar.decrement_slice'),
                     'minus': new ToolbarItemComponent({ id: 'minus', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             Renderer.Get.decrementSliceHeight();
@@ -470,7 +470,7 @@ export class UI {
                             return Renderer.Get.isSliceViewerEnabled() &&
                                 Renderer.Get.canDecrementSliceHeight();
                         })
-                        .setTooltip('Increment slice'),
+                        .setTooltip('toolbar.increment_slice'),
                 },
                 componentOrder: ['slice', 'plus', 'minus'],
             },
@@ -486,17 +486,17 @@ export class UI {
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
                         })
-                        .setTooltip('Zoom out'),
+                        .setTooltip('toolbar.zoom_out'),
                     'zoomIn': new ToolbarItemComponent({ id: 'zin', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
                         })
-                        .setTooltip('Zoom in'),
+                        .setTooltip('toolbar.zoom_in'),
                     'reset': new ToolbarItemComponent({ id: 'reset', iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
                         })
-                        .setTooltip('Reset camera'),
+                        .setTooltip('toolbar.reset_camera'),
                 },
                 componentOrder: ['zoomOut', 'zoomIn', 'reset'],
             },
@@ -509,7 +509,7 @@ export class UI {
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
                         })
-                        .setTooltip('Perspective camera'),
+                        .setTooltip('toolbar.perspective_camera'),
                     'orthographic': new ToolbarItemComponent({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
@@ -517,7 +517,7 @@ export class UI {
                         .isActive(() => {
                             return ArcballCamera.Get.isOrthographic();
                         })
-                        .setTooltip('Orthographic camera'),
+                        .setTooltip('toolbar.orthographic_camera'),
                 },
                 componentOrder: ['perspective', 'orthographic'],
             },
@@ -678,6 +678,20 @@ export class UI {
 
     private _handleLanguageChange() {
         HeaderComponent.Get.refresh();
+
+
+        Object.values(this._toolbarLeft.groups).forEach((group) => {
+            Object.values(group.components).forEach((comp) => {
+                comp.updateTranslation();
+            });
+        });
+
+        Object.values(this._toolbarRight.groups).forEach((group) => {
+            Object.values(group.components).forEach((comp) => {
+                comp.updateTranslation();
+            });
+        });
+
 
         for (let i = 0; i < EAction.MAX; ++i) {
             const group = this._getGroup(i);

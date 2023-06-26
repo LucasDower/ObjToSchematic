@@ -23,19 +23,19 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic');
             })
-            .setTooltip('Open GitHub repo');
+            .setTooltip('toolbar.open_github_repo');
 
         this._bugButton = new ToolbarItemComponent({ id: 'bug', iconSVG: AppIcons.BUG })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic/issues');
             })
-            .setTooltip('Open GitHub issues');
+            .setTooltip('toolbar.open_github_issues');
 
         this._discordButton = new ToolbarItemComponent({ id: 'disc', iconSVG: AppIcons.DISCORD })
             .onClick(() => {
                 window.open('https://discord.gg/McS2VrBZPD');
             })
-            .setTooltip('Open Discord server');
+            .setTooltip('toolbar.join_discord');
     }
 
     // Header element shouldn't be
@@ -80,6 +80,10 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
 
     public refresh() {
         UIUtil.getElementById('header-desc').innerText = LOC('description');
+
+        this._githubButton.updateTranslation();
+        this._bugButton.updateTranslation();
+        this._discordButton.updateTranslation();
     }
 
     public override registerEvents(): void {

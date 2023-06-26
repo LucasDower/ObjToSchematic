@@ -1,6 +1,7 @@
 import { ASSERT } from '../../util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
+import { LOC, TLocalisedKey } from '../../localiser';
 
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 
@@ -12,10 +13,10 @@ export type TToolbarItemParams = {
 export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
     private _iconSVG: SVGSVGElement;
     private _label: string;
-    private _tooltip: string | null;
     private _onClick?: () => void;
     private _isActive: boolean;
     private _grow: boolean;
+    private _tooltipLocKey: TLocalisedKey | null;
 
     public constructor(params: TToolbarItemParams) {
         super();
@@ -34,12 +35,18 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
         }
 
         this._label = '';
-        this._tooltip = null;
+        this._tooltipLocKey = null;
     }
 
     public setGrow() {
         this._grow = true;
         return this;
+    }
+
+    public updateTranslation() {
+        if (this._tooltipLocKey) {
+            UIUtil.getElementById(this._getId() + '-tooltip').innerHTML = LOC(this._tooltipLocKey);
+        }
     }
 
     public setActive(isActive: boolean) {
@@ -92,8 +99,8 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
         return this;
     }
 
-    public setTooltip(text: string) {
-        this._tooltip = text;
+    public setTooltip(text: TLocalisedKey) {
+        this._tooltipLocKey = text;
         return this;
     }
 
@@ -105,7 +112,7 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
                 </div>
             `;
         } else {
-            if (this._tooltip === null) {
+            if (this._tooltipLocKey === null) {
                 return `
                 <div class="struct-prop container-icon-button " style="aspect-ratio: 1;" id="${this._getId()}">
                     ${this._iconSVG.outerHTML} ${this._label}
@@ -115,7 +122,7 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
                 return `
                     <div class="struct-prop container-icon-button hover-text" style="aspect-ratio: 1;" id="${this._getId()}">
                         ${this._iconSVG.outerHTML} ${this._label}
-                        <span class="tooltip-text left">${this._tooltip}</span>
+                        <span class="tooltip-text left" id="${this._getId()}-tooltip">${LOC(this._tooltipLocKey)}</span>
                     </div>
                 `;
             }
