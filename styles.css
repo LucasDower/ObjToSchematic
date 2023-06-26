@@ -735,3 +735,8 @@ a {
 .hover-text {
   position: relative;
 }
+
+.privacy-disclaimer {
+  font-size: var(--font-size-small);
+  color: var(--text-dim);
+}
