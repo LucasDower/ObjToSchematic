@@ -12,6 +12,7 @@ export type TToolbarItemParams = {
 export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
     private _iconSVG: SVGSVGElement;
     private _label: string;
+    private _tooltip: string | null;
     private _onClick?: () => void;
     private _isActive: boolean;
     private _grow: boolean;
@@ -33,6 +34,7 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
         }
 
         this._label = '';
+        this._tooltip = null;
     }
 
     public setGrow() {
@@ -90,6 +92,11 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
         return this;
     }
 
+    public setTooltip(text: string) {
+        this._tooltip = text;
+        return this;
+    }
+
     public generateHTML() {
         if (this._grow) {
             return `
@@ -98,11 +105,20 @@ export class ToolbarItemComponent extends BaseComponent<HTMLDivElement>  {
                 </div>
             `;
         } else {
-            return `
-                <div class="struct-prop container-icon-button" style="aspect-ratio: 1;" id="${this._getId()}">
+            if (this._tooltip === null) {
+                return `
+                <div class="struct-prop container-icon-button " style="aspect-ratio: 1;" id="${this._getId()}">
                     ${this._iconSVG.outerHTML} ${this._label}
                 </div>
             `;
+            } else {
+                return `
+                    <div class="struct-prop container-icon-button hover-text" style="aspect-ratio: 1;" id="${this._getId()}">
+                        ${this._iconSVG.outerHTML} ${this._label}
+                        <span class="tooltip-text left">${this._tooltip}</span>
+                    </div>
+                `;
+            }
         }
     }
 

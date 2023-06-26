@@ -14,31 +14,24 @@ export namespace UIUtil {
     }
 
     export function clearStyles(element: HTMLElement) {
-        element.classList.remove('style-inactive-disabled');
-        element.classList.remove('style-inactive-enabled');
-        element.classList.remove('style-inactive-hover');
-        element.classList.remove('style-active-disabled');
-        element.classList.remove('style-active-enabled');
-        element.classList.remove('style-active-hover');
+        element.classList.remove('disabled');
+        element.classList.remove('hover');
+        element.classList.remove('active');
     }
 
     export function updateStyles(element: HTMLElement, style: TStyleParams) {
         clearStyles(element);
 
-        let styleToApply = `style`;
-
-        styleToApply += style.isActive ? '-active' : '-inactive';
-
-        if (style.isEnabled) {
-            if (style.isHovered) {
-                styleToApply += '-hover';
-            } else {
-                styleToApply += '-enabled';
-            }
-        } else {
-            styleToApply += '-disabled';
+        if (style.isActive) {
+            element.classList.add('active');
         }
 
-        element.classList.add(styleToApply);
+        if (!style.isEnabled) {
+            element.classList.add('disabled');
+        }
+
+        if (style.isHovered && style.isEnabled) {
+            element.classList.add('hover');
+        }
     }
 }

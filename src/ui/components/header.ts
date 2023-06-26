@@ -22,17 +22,20 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
         this._githubButton = new ToolbarItemComponent({ id: 'gh', iconSVG: AppIcons.GITHUB })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic');
-            });
+            })
+            .setTooltip('Open GitHub repo');
 
         this._bugButton = new ToolbarItemComponent({ id: 'bug', iconSVG: AppIcons.BUG })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic/issues');
-            });
+            })
+            .setTooltip('Open GitHub issues');
 
         this._discordButton = new ToolbarItemComponent({ id: 'disc', iconSVG: AppIcons.DISCORD })
             .onClick(() => {
                 window.open('https://discord.gg/McS2VrBZPD');
-            });
+            })
+            .setTooltip('Open Discord server');
     }
 
     // Header element shouldn't be

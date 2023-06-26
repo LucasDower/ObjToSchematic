@@ -378,7 +378,8 @@ export class UI {
                         })
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.TriangleMesh;
-                        }),
+                        })
+                        .setTooltip('View mesh'),
                     'voxelMesh': new ToolbarItemComponent({ id: 'voxelMesh', iconSVG: AppIcons.VOXEL })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.VoxelMesh);
@@ -388,7 +389,8 @@ export class UI {
                         })
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.VoxelMesh;
-                        }),
+                        })
+                        .setTooltip('View voxel mesh'),
                     'blockMesh': new ToolbarItemComponent({ id: 'blockMesh', iconSVG: AppIcons.BLOCK })
                         .onClick(() => {
                             Renderer.Get.setModelToUse(MeshType.BlockMesh);
@@ -398,7 +400,8 @@ export class UI {
                         })
                         .isEnabled(() => {
                             return Renderer.Get.getModelsAvailable() >= MeshType.BlockMesh;
-                        }),
+                        })
+                        .setTooltip('View block mesh'),
                 },
                 componentOrder: ['mesh', 'voxelMesh', 'blockMesh'],
             },
@@ -413,14 +416,16 @@ export class UI {
                         })
                         .isEnabled(() => {
                             return Renderer.Get.getActiveMeshType() !== MeshType.None;
-                        }),
+                        })
+                        .setTooltip('Toggle grid'),
                     'axes': new ToolbarItemComponent({ id: 'axes', iconSVG: AppIcons.AXES })
                         .onClick(() => {
                             Renderer.Get.toggleIsAxesEnabled();
                         })
                         .isActive(() => {
                             return Renderer.Get.isAxesEnabled();
-                        }),
+                        })
+                        .setTooltip('Toggle axes'),
                     'night-vision': new ToolbarItemComponent({ id: 'night', iconSVG: AppIcons.BULB })
                         .onClick(() => {
                             Renderer.Get.toggleIsNightVisionEnabled();
@@ -430,7 +435,8 @@ export class UI {
                         })
                         .isEnabled(() => {
                             return Renderer.Get.canToggleNightVision();
-                        }),
+                        })
+                        .setTooltip('Toggle night vision'),
                 },
                 componentOrder: ['grid', 'axes', 'night-vision'],
             },
@@ -445,7 +451,8 @@ export class UI {
                         })
                         .isActive(() => {
                             return Renderer.Get.isSliceViewerEnabled();
-                        }),
+                        })
+                        .setTooltip('Toggle slice viewer'),
                     'plus': new ToolbarItemComponent({ id: 'plus', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             Renderer.Get.incrementSliceHeight();
@@ -453,7 +460,8 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.isSliceViewerEnabled() &&
                                 Renderer.Get.canIncrementSliceHeight();
-                        }),
+                        })
+                        .setTooltip('Decrement slice'),
                     'minus': new ToolbarItemComponent({ id: 'minus', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             Renderer.Get.decrementSliceHeight();
@@ -461,7 +469,8 @@ export class UI {
                         .isEnabled(() => {
                             return Renderer.Get.isSliceViewerEnabled() &&
                                 Renderer.Get.canDecrementSliceHeight();
-                        }),
+                        })
+                        .setTooltip('Increment slice'),
                 },
                 componentOrder: ['slice', 'plus', 'minus'],
             },
@@ -476,15 +485,18 @@ export class UI {
                     'zoomOut': new ToolbarItemComponent({ id: 'zout', iconSVG: AppIcons.MINUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomOut();
-                        }),
+                        })
+                        .setTooltip('Zoom out'),
                     'zoomIn': new ToolbarItemComponent({ id: 'zin', iconSVG: AppIcons.PLUS })
                         .onClick(() => {
                             ArcballCamera.Get.onZoomIn();
-                        }),
+                        })
+                        .setTooltip('Zoom in'),
                     'reset': new ToolbarItemComponent({ id: 'reset', iconSVG: AppIcons.CENTRE })
                         .onClick(() => {
                             ArcballCamera.Get.reset();
-                        }),
+                        })
+                        .setTooltip('Reset camera'),
                 },
                 componentOrder: ['zoomOut', 'zoomIn', 'reset'],
             },
@@ -496,14 +508,16 @@ export class UI {
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isPerspective();
-                        }),
+                        })
+                        .setTooltip('Perspective camera'),
                     'orthographic': new ToolbarItemComponent({ id: 'orth', iconSVG: AppIcons.ORTHOGRAPHIC })
                         .onClick(() => {
                             ArcballCamera.Get.setCameraMode('orthographic');
                         })
                         .isActive(() => {
                             return ArcballCamera.Get.isOrthographic();
-                        }),
+                        })
+                        .setTooltip('Orthographic camera'),
                 },
                 componentOrder: ['perspective', 'orthographic'],
             },

@@ -253,6 +253,9 @@ select {
   transition: width 0.2s;
 }
 
+
+
+
 .struct-prop {
   display: flex;
   align-items: center;
@@ -264,41 +267,48 @@ select {
   border-style: solid;
 }
 
-.style-inactive-disabled {
+.struct-prop.disabled {
   border-color: var(--gray-500);
   color: var(--text-dark);
   background: var(--gray-400);
   cursor: inherit;
 }
-.style-inactive-enabled {
-  border-color: var(--gray-600);
-  color: var(--text-standard);
-  background: var(--gray-500);
-}
-.style-inactive-hover {
+
+.struct-prop.hover {
   border-color: var(--gray-700);
   color: var(--text-light);
   background: var(--gray-600);
   cursor: pointer;
 }
 
-.style-active-disabled {
+.struct-prop:not(.disabled):not(.hover) {
+  border-color: var(--gray-600);
+  color: var(--text-standard);
+  background: var(--gray-500);
+}
+
+.struct-prop.active.disabled {
   border-color: var(--blue-450);
   color: var(--text-dim);
   background: var(--blue-400);
   cursor: inherit;
 }
-.style-active-enabled {
-  border-color: var(--blue-600);
-  color: var(--text-bright);
-  background: var(--blue-500);
-}
-.style-active-hover {
+
+.struct-prop.active.hover {
   border-color: var(--blue-700);
   color: var(--text-bright);
   background: var(--blue-600);
   cursor: pointer;
 }
+
+.struct-prop.active:not(.disabled):not(.hover) {
+  border-color: var(--blue-600);
+  color: var(--text-bright);
+  background: var(--blue-500);
+}
+
+
+
 
 .h-div {
   height: 0px;
@@ -348,7 +358,7 @@ select {
   justify-content: center;
   flex-grow: 1;
 }
-.spinbox-value.style-inactive-hover {
+.spinbox-value .inactive .hover {
   cursor: e-resize;
 }
 
@@ -676,4 +686,52 @@ a {
 
 .hide {
   display: none;
+}
+
+
+
+.tooltip-text {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  z-index: 1;
+  font-size: var(--font-size-small);
+  color: var(--text-light);
+  background-color: var(--gray-600);
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--gray-700);
+  transition: 0.15s;
+  pointer-events: none;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 16px;
+  white-space: nowrap;
+}
+
+.hover-text:hover:not(.disabled) .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.top {
+  top: -40px;
+  left: -50%;
+}
+
+.bottom {
+  top: 25px;
+  left: -50%;
+}
+
+.left {
+  top: 1px;
+  right: 120%;
+}
+
+.right {
+  top: 2px;
+  left: 120%;
+}
+
+.hover-text {
+  position: relative;
 }
