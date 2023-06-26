@@ -790,10 +790,12 @@ export class UI {
      * Enable a specific action.
      */
     public enable(action: EAction) {
-        this._forEachComponent(action, (component) => {
-            component.setEnabled(true);
-        });
-        this._getGroup(action).execButton?.setEnabled(true);
+        if (action < EAction.MAX) {
+            this._forEachComponent(action, (component) => {
+                component.setEnabled(true);
+            });
+            this._getGroup(action).execButton?.setEnabled(true);
+        }
     }
 
     /**
