@@ -5,7 +5,7 @@ import { TLocaleDefinition } from './base';
 
 export const en_US: TLocaleDefinition = {
     display_name: 'American English',
-    language_code: 'en_US',
+    language_code: 'en-US',
     translations: {
         init: {
             initialising: 'Initializing...',

@@ -3,7 +3,7 @@
 
 export const en_GB = {
     display_name: 'British English',
-    language_code: 'en_GB',
+    language_code: 'en-GB',
     translations: {
         something_went_wrong: 'Something unexpectedly went wrong',
         description: 'A tool to convert 3D models into Minecraft formats such as .schematic, .litematic, .schem and .nbt.',

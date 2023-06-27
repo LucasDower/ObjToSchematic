@@ -38,7 +38,7 @@ export class Localiser {
 
         await i18next.init({
             lng: AppConfig.Get.LOCALE,
-            fallbackLng: 'en_GB',
+            fallbackLng: 'en-GB',
             debug: true,
             resources: localResources,
         });

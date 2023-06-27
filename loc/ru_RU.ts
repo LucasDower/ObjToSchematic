@@ -5,7 +5,7 @@ import { TLocaleDefinition } from './base';
 
 export const ru_RU: TLocaleDefinition = {
     display_name: 'Ру́сский',
-    language_code: 'ru_RU',
+    language_code: 'ru-RU',
     translations: {
         import: {
             button: 'Загрузить mesh',

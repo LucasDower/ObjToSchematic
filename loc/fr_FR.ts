@@ -6,7 +6,7 @@ import { TLocaleDefinition } from './base';
 
 export const fr_FR: TLocaleDefinition = {
     display_name: 'Français',
-    language_code: 'fr_FR',
+    language_code: 'fr-FR',
     translations: {
         something_went_wrong: 'Une erreur s\'est produite',
         init: {

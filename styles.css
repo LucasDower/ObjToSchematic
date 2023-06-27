@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Martian+Mono&display=swap');
 
 :root {
   --pill-radius: 5px;
@@ -100,9 +100,9 @@ canvas {
 
 .column-console {
   background: hsl(0, 0%, 5%);
-  font-size: var(--font-size-standard);
+  font-size: var(--font-size-small);
   color: var(--text-dim);
-  font-family: 'Courier Prime';
+  font-family: 'Martian Mono';
 }
 
 .column-sidebar {

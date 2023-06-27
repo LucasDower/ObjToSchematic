@@ -5,7 +5,7 @@ import { TLocaleDefinition } from './base';
 
 export const zh_CN: TLocaleDefinition = {
     display_name: '简体中文',
-    language_code: 'zh_CN',
+    language_code: 'zh-CN',
     translations: {
         something_went_wrong: '发生了意料之外的错误',
         description: '一款将 3D 模型转换为 .schematic，.litematic，.schem 和 .nbt 等 Minecraft 方块格式的工具',
