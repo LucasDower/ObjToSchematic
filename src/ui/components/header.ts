@@ -22,17 +22,20 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
         this._githubButton = new ToolbarItemComponent({ id: 'gh', iconSVG: AppIcons.GITHUB })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic');
-            });
+            })
+            .setTooltip('toolbar.open_github_repo');
 
         this._bugButton = new ToolbarItemComponent({ id: 'bug', iconSVG: AppIcons.BUG })
             .onClick(() => {
                 window.open('https://github.com/LucasDower/ObjToSchematic/issues');
-            });
+            })
+            .setTooltip('toolbar.open_github_issues');
 
         this._discordButton = new ToolbarItemComponent({ id: 'disc', iconSVG: AppIcons.DISCORD })
             .onClick(() => {
                 window.open('https://discord.gg/McS2VrBZPD');
-            });
+            })
+            .setTooltip('toolbar.join_discord');
     }
 
     // Header element shouldn't be
@@ -53,7 +56,7 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                                 ObjToSchematic
                             </div>
                             <div class="row-item subtitle">
-                                v${AppConfig.Get.MAJOR_VERSION}.${AppConfig.Get.MINOR_VERSION}.${AppConfig.Get.HOTFIX_VERSION}${AppConfig.Get.VERSION_TYPE} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
+                                ${AppConfig.Get.getVersionString()} • Minecraft ${AppConfig.Get.MINECRAFT_VERSION}
                             </div>
                         </div>
                     </div>
@@ -64,9 +67,12 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                     ${this._discordButton.generateHTML()}
                 </div>
             </div>
-            <div class="col-container header-cols">
-                <div class="col-container" style="padding-top: 5px;" id="header-desc">
+            <div class="row-container header-cols">
+                <div class="row-container" style="padding-top: 5px;" id="header-desc">
                     ${LOC('description')}
+                </div>
+                <div class="row-container privacy-disclaimer" style="padding-top: 5px;">
+                    This site may use cookies and similar tracking technologies (like web beacons) to access and store information about usage.
                 </div>
             </div>
         `;
@@ -74,6 +80,10 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
 
     public refresh() {
         UIUtil.getElementById('header-desc').innerText = LOC('description');
+
+        this._githubButton.updateTranslation();
+        this._bugButton.updateTranslation();
+        this._discordButton.updateTranslation();
     }
 
     public override registerEvents(): void {

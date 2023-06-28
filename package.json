@@ -49,6 +49,7 @@
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-simple-import-sort": "^8.0.0",
     "file-loader": "^6.2.0",
+    "ga-gtag": "^1.1.7",
     "hsv-rgb": "^1.0.0",
     "html-webpack-plugin": "^5.5.0",
     "i18next": "^22.4.14",

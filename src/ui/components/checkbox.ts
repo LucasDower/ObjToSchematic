@@ -152,7 +152,7 @@ export class CheckboxComponent extends ConfigComponent<boolean, HTMLSelectElemen
         if (this.enabled) {
             if (this.hovered) {
                 checkboxTextElement.classList.add('text-light');
-            } else if (this.getValue()) {
+            } else {
                 checkboxTextElement.classList.add('text-standard');
             }
         } else {

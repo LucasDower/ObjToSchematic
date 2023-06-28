@@ -8,10 +8,10 @@ export class AppConfig {
         return this._instance || (this._instance = new this());
     }
 
-    public readonly RELEASE_MODE = true;
+    public readonly RELEASE_MODE;
     public readonly MAJOR_VERSION = 0;
     public readonly MINOR_VERSION = 8;
-    public readonly HOTFIX_VERSION = 5;
+    public readonly HOTFIX_VERSION = 8;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'r'; // dev, alpha, or release build
     public readonly MINECRAFT_VERSION = '1.19.4';
 
@@ -43,9 +43,14 @@ export class AppConfig {
     public readonly FRESNEL_MIX = 0.3;
 
     private constructor() {
+        this.RELEASE_MODE = this.VERSION_TYPE === 'r';
     }
 
     public dumpConfig() {
         LOG(this);
+    }
+
+    public getVersionString() {
+        return `v${this.MAJOR_VERSION}.${this.MINOR_VERSION}.${this.HOTFIX_VERSION}${this.VERSION_TYPE}`;
     }
 }

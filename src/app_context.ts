@@ -1,4 +1,5 @@
 import '../styles.css';
+import { AppAnalytics } from './analytics';
 
 import { FallableBehaviour } from './block_mesh';
 import { ArcballCamera } from './camera';
@@ -38,6 +39,8 @@ export class AppContext {
     }
 
     public static async init() {
+        AppAnalytics.Init();
+
         await Localiser.Get.init();
         AppConsole.info(LOC('init.initialising'));
 
@@ -81,11 +84,13 @@ export class AppContext {
     private async _import(): Promise<boolean> {
         // Gather data from the UI to send to the worker
         const components = UI.Get.layout.import.components;
+        let filetype: string;
 
         AppConsole.info(LOC('import.importing_mesh'));
         {
             // Instruct the worker to perform the job and await the result
             const file = components.input.getValue();
+            filetype = file.type;
 
             const resultImport = await this._workerController.execute({
                 action: 'Import',
@@ -131,6 +136,9 @@ export class AppContext {
         }
         AppConsole.success(LOC('import.rendered_mesh'));
 
+        AppAnalytics.Event('import', {
+            'filetype': filetype,
+        });
         return true;
     }
 
@@ -163,6 +171,7 @@ export class AppContext {
         }
         AppConsole.success(LOC('materials.updated_materials'));
 
+        AppAnalytics.Event('materials')
         return true;
     }
 
@@ -222,6 +231,14 @@ export class AppContext {
         }
         AppConsole.success(LOC('voxelise.rendered_voxel_mesh'));
 
+        AppAnalytics.Event('voxelise', {
+            constraintAxis: components.constraintAxis.getValue(),
+            voxeliser: components.voxeliser.getValue(),
+            size: components.size.getValue(),
+            useMultisampleColouring: components.multisampleColouring.getValue(),
+            enableAmbientOcclusion: components.ambientOcclusion.getValue(),
+            voxelOverlapRule: components.voxelOverlapRule.getValue(),
+        });
         return true;
     }
 
@@ -287,6 +304,16 @@ export class AppContext {
         }
         AppConsole.success(LOC('assign.rendered_block_mesh'));
 
+        AppAnalytics.Event('assign', {
+            dithering: components.dithering.getValue(),
+            ditheringMagnitude: components.ditheringMagnitude.getValue(),
+            fallable: components.fallable.getValue() as FallableBehaviour,
+            resolution: Math.pow(2, components.colourAccuracy.getValue()),
+            calculateLighting: components.calculateLighting.getValue(),
+            lightThreshold: components.lightThreshold.getValue(),
+            contextualAveraging: components.contextualAveraging.getValue(),
+            errorWeight: components.errorWeight.getValue() / 10,
+        });
         return true;
     }
 
@@ -327,6 +354,9 @@ export class AppContext {
         }
         AppConsole.success(LOC('export.exported_structure'));
 
+        AppAnalytics.Event('export', {
+            exporter: components.export.getValue(),
+        });
         return true;
     }
 

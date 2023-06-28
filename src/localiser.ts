@@ -23,6 +23,8 @@ export type Concat<K extends string, P extends string> =
 
 export type TLocalisedString = TBrand<string, 'loc'>;
 
+export type TLocalisedKey = DeepLeafKeys<TTranslationMap>;
+
 export class Localiser {
     /* Singleton */
     private static _instance: Localiser;
