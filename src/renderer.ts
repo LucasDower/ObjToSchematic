@@ -412,6 +412,8 @@ export class Renderer {
             this._modelsAvailable = 2;
             this.setModelToUse(MeshType.VoxelMesh);
         }
+
+        this.forceRedraw();
     }
 
     /*
@@ -470,6 +472,8 @@ export class Renderer {
             this._modelsAvailable = 3;
             this.setModelToUse(MeshType.BlockMesh);
         }
+
+        this.forceRedraw();
     }
 
     // /////////////////////////////////////////////////////////////////////////
