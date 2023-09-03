@@ -1,419 +1,288 @@
-// import images from 'images';
-// import path from 'path';
-// import prompt from 'prompt';
+import { program } from 'commander';
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
+import { getAverageColour, getStandardDeviation } from './misc';
+import { ASSERT } from '../src/util/error_util';
+import { RGBAUtil } from '../src/colour';
 
-// import { RGBA, RGBAUtil } from '../src/colour';
-// import { AppUtil } from '../src/util';
-// import { LOG, LOG_WARN, Logger } from '../src/util/log_util';
+program
+    .argument('<textures_directory>', 'The directory to load the blocks texture files from (assets/minecraft/textures/block)')
+    .argument('<models_directory>', 'The directory to load the blocks model files from (assets/minecraft/models/block)')
+    .argument('<output_directory>', 'The directory to write the texture atlas files to')
+    .argument('<ignore_file_path>', 'Ignore file path')
 
-// const AdmZip = require('adm-zip');
-// const copydir = require('copy-dir');
+program.parse();
 
-// import { AppPaths, PathUtil } from '../src/util/path_util';
-// import { log } from './logging';
-// import { ASSERT_EXISTS, getAverageColour, getMinecraftDir, getStandardDeviation } from './misc';
+const paths = {
+    textures: program.args[0],
+    models: program.args[1],
+    output: program.args[2],
+    ignore: program.args[3],
+}
 
-// const BLOCKS_DIR = PathUtil.join(AppPaths.Get.tools, '/blocks');
-// const MODELS_DIR = PathUtil.join(AppPaths.Get.tools, '/models');
+type FaceData<T> = {
+    up: T,
+    down: T,
+    north: T,
+    south: T,
+    east: T,
+    west: T,
+}
 
-// type TFaceData<T> = {
-//     up: T,
-//     down: T,
-//     north: T,
-//     south: T,
-//     east: T,
-//     west: T,
-// }
+// GO!
 
-// export type TAtlasVersion = {
-//     formatVersion: 3,
-//     atlasSize: number,
-//     blocks: Array<{ name: string, faces: TFaceData<string>, colour: RGBA }>,
-//     textures: { [texture: string]: { atlasColumn: number, atlasRow: number, colour: RGBA, std: number } },
-//     supportedBlockNames: string[],
-// };
+const ignoreList = new Set(fs.readFileSync(paths.ignore, 'utf8').split(/\r?\n/));
 
-// void async function main() {
-//     AppPaths.Get.setBaseDir(PathUtil.join(__dirname, '../..'));
-//     Logger.Get.enableLogToFile();
-//     Logger.Get.initLogFile('atlas');
+// Load all models to use
+const allModels = fs.readdirSync(paths.models);
+const loadedModels = allModels
+    // Remove ignored models
+    .filter((modelFileName) => {
+        return !ignoreList.has(modelFileName);
+    })
+    // Get each models content
+    .map((modelFileName) => {
+        const modelFilePath = path.join(paths.models, modelFileName);
+        const fileContents = fs.readFileSync(modelFilePath, 'utf8');
+        const model = JSON.parse(fileContents);
 
-//     const minecraftDir = getMinecraftDir();
+        switch (model.parent) {
+            case 'minecraft:block/cube_column_horizontal':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.side,
+                    down: model.textures.side,
+                    north: model.textures.end,
+                    south: model.textures.end,
+                    east: model.textures.side,
+                    west: model.textures.side,
+                };
+            case 'minecraft:block/cube_all':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.all,
+                    down: model.textures.all,
+                    north: model.textures.all,
+                    south: model.textures.all,
+                    east: model.textures.all,
+                    west: model.textures.all,
+                };
+            case 'minecraft:block/cube_column':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.end,
+                    down: model.textures.end,
+                    north: model.textures.side,
+                    south: model.textures.side,
+                    east: model.textures.side,
+                    west: model.textures.side,
+                };
+            case 'minecraft:block/cube_bottom_top':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.top,
+                    down: model.textures.bottom,
+                    north: model.textures.side,
+                    south: model.textures.side,
+                    east: model.textures.side,
+                    west: model.textures.side,
+                };
+            case 'minecraft:block/cube':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.up,
+                    down: model.textures.down,
+                    north: model.textures.north,
+                    south: model.textures.south,
+                    east: model.textures.east,
+                    west: model.textures.west,
+                };
+            case 'minecraft:block/template_single_face':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.texture,
+                    down: model.textures.texture,
+                    north: model.textures.texture,
+                    south: model.textures.texture,
+                    east: model.textures.texture,
+                    west: model.textures.texture,
+                };
+            case 'minecraft:block/template_glazed_terracotta':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.pattern,
+                    down: model.textures.pattern,
+                    north: model.textures.pattern,
+                    south: model.textures.pattern,
+                    east: model.textures.pattern,
+                    west: model.textures.pattern,
+                };
+            case 'minecraft:block/leaves':
+                return {
+                    modelFileName: modelFileName,
+                    up: model.textures.all,
+                    down: model.textures.all,
+                    north: model.textures.all,
+                    south: model.textures.all,
+                    east: model.textures.all,
+                    west: model.textures.all,
+                };
+            default:
+                return null;
+        }
+    }, [])
+    .filter((entry) => {
+        return entry !== null;
+    });
 
-//     // Clean up temporary data from previous use
-//     {
-//         fs.rmSync(BLOCKS_DIR, { recursive: true, force: true });
-//         fs.rmSync(MODELS_DIR, { recursive: true, force: true });
-//     }
+const allTextures = new Set<string>();
+loadedModels.forEach((model) => {
+    allTextures.add(model?.up);
+    allTextures.add(model?.down);
+    allTextures.add(model?.east);
+    allTextures.add(model?.west);
+    allTextures.add(model?.north);
+    allTextures.add(model?.south);
+});
 
-//     // Ask for permission to access Minecraft dir
-//     {
-//         log('Prompt', `This script requires files inside '${minecraftDir}'`);
 
-//         const { permission } = await prompt.get({
-//             properties: {
-//                 permission: {
-//                     pattern: /^[YyNn]$/,
-//                     description: 'Do you give permission to access these files? (y/n)',
-//                     message: 'Response must be Y or N',
-//                     required: true,
-//                 },
-//             },
-//         });
+const atlasSize = Math.ceil(Math.sqrt(allTextures.size));
+let nextAtlasColumn = 0;
+let nextAtlasRow = 0;
 
-//         const isResponseYes = ['Y', 'y'].includes(permission as string);
-//         if (!isResponseYes) {
-//             process.exit(0);
-//         }
-//     }
+const textureData = Array.from(allTextures)
+    .map(async (texture) => {
+        const shortName = texture.split('/')[1]; // Eww
+        const texturePath = path.join(paths.textures, shortName + '.png');
 
-//     ASSERT_EXISTS(minecraftDir);
+        const image = sharp(texturePath);
+        const imageData = Uint8ClampedArray.from(await image.raw().ensureAlpha(1.0).toBuffer()); // 16 x 16 x 4
 
-//     // Prompt user to pick a version
-//     let chosenVersionName: string;
-//     let chosenVersionDir: string;
-//     {
-//         const versionsDir = PathUtil.join(minecraftDir, '/versions');
-//         ASSERT_EXISTS(versionsDir);
+        return {
+            textureName: texture,
+            texturePath: texturePath,
+            image: image,
+            imageData: imageData,
+        }
+    });
 
-//         const versions = fs.readdirSync(versionsDir)
-//             .filter((file) => fs.lstatSync(PathUtil.join(versionsDir, file)).isDirectory())
-//             .map((file) => ({ file, birthtime: fs.lstatSync(PathUtil.join(versionsDir, file)).birthtime }))
-//             .sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
-//         {
-//             versions.forEach((version, index) => {
-//                 log('Option', `${index + 1}) ${version.file}`);
-//             });
-//         }
+type ArrayElement<ArrayType extends readonly unknown[]> =
+    ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 
-//         // Prompt user to pick a version
-//         const { packChoice } = await prompt.get({
-//             properties: {
-//                 packChoice: {
-//                     description: `Which version do you want to build an atlas for? (1-${versions.length})`,
-//                     message: `Response must be between 1 and ${versions.length}`,
-//                     required: true,
-//                     conform: (value) => {
-//                         return value >= 1 && value <= versions.length;
-//                     },
-//                 },
-//             },
-//         });
+Promise.all(textureData)
+    .then(async (res) => {
+        const tmp = res
+            .sort((a, b) => {
+                return a.textureName < b.textureName ? -1 : 1;
+            })
+            .map(async (texture) => {
+                const averageColour = getAverageColour(texture.imageData);
+                const standardDeviation = getStandardDeviation(texture.imageData, averageColour);
 
-//         chosenVersionName = versions[(<number>packChoice) - 1].file;
-//         chosenVersionDir = PathUtil.join(versionsDir, chosenVersionName);
-//     }
+                const atlasColumn = nextAtlasColumn;
+                const atlasRow = nextAtlasRow;
 
-//     // Get vanilla models and textures
-//     {
-//         const jarName = `${chosenVersionName}.jar`;
-//         const jarDir = PathUtil.join(chosenVersionDir, jarName);
-//         ASSERT_EXISTS(jarDir);
+                ++nextAtlasColumn;
+                if (nextAtlasColumn >= atlasSize) {
+                    ++nextAtlasRow;
+                    nextAtlasColumn = 0;
+                }
 
-//         log('Info', `Upzipping '${jarDir}'...`);
-//         {
-//             const zip = new AdmZip(jarDir);
-//             const zipEntries = zip.getEntries();
-//             zipEntries.forEach((zipEntry: any) => {
-//                 if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-//                     zip.extractEntryTo(zipEntry.entryName, BLOCKS_DIR, false, true);
-//                 } else if (zipEntry.entryName.startsWith('assets/minecraft/models/block')) {
-//                     zip.extractEntryTo(zipEntry.entryName, MODELS_DIR, false, true);
-//                 }
-//             });
-//         }
-//         log('Success', `Extracted Vanilla models to '${MODELS_DIR}'`);
-//         log('Success', `Extracted Vanilla textures to '${BLOCKS_DIR}'`);
-//     }
+                return {
+                    textureName: texture.textureName,
+                    texturePath: texture.texturePath,
+                    atlasColumn: atlasColumn,
+                    atlasRow: atlasRow,
+                    colour: averageColour,
+                    std: standardDeviation,
+                };
+            });
 
-//     // Prompt user to pick a resource pack
-//     let chosenResourcePackDir: string | undefined;
-//     {
-//         const resourcePacksDir = PathUtil.join(minecraftDir, '/resourcepacks');
-//         ASSERT_EXISTS(resourcePacksDir);
+        Promise.all(tmp)
+            .then(async (data) => {
+                const textureMap = new Map<string, Omit<ArrayElement<typeof data>, 'textureName' | 'texturePath'>>();
+                data.forEach((texture) => {
+                    textureMap.set(texture.textureName, {
+                        atlasColumn: texture.atlasColumn,
+                        atlasRow: texture.atlasRow,
+                        colour: texture.colour,
+                        std: texture.std,
+                    });
+                });
 
-//         const resourcePacks = fs.readdirSync(resourcePacksDir);
-//         {
-//             log('Option', `1) Vanilla`);
-//             resourcePacks.forEach((resourcePack, index) => {
-//                 log('Option', `${index + 2}) ${resourcePack}`);
-//             });
-//         }
+                const baseImage = await sharp({
+                    create: {
+                        width: atlasSize * 16 * 3,
+                        height: atlasSize * 16 * 3,
+                        channels: 4,
+                        background: { r: 255, g: 255, b: 255, alpha: 0.0 },
+                    }
+                });
 
-//         const { resourcePackChoiceIndex } = await prompt.get({
-//             properties: {
-//                 packChoice: {
-//                     description: `Which resource pack do you want to build an atlas for? (1-${resourcePacks.length + 1})`,
-//                     message: `Response must be between 1 and ${resourcePacks.length + 1}`,
-//                     required: true,
-//                     conform: (value) => {
-//                         return value >= 1 && value <= resourcePacks.length + 1;
-//                     },
-//                 },
-//             },
-//         });
+                const compositeData: sharp.OverlayOptions[] = [];
+                data.forEach((x) => {
+                    for (let i = 0; i < 3; ++i) {
+                        for (let j = 0; j < 3; ++j) {
+                            compositeData.push({
+                                input: x.texturePath,
+                                blend: 'over',
+                                left: (x.atlasColumn * 16) * 3 + 16 * i,
+                                top: (x.atlasRow * 16) * 3 + 16 * j,
+                            });
+                        }
+                    }
+                })
 
-//         chosenResourcePackDir = (<number>resourcePackChoiceIndex) === 1 ? undefined : resourcePacks[(<number>resourcePackChoiceIndex) - 2];
-//     }
+                baseImage.composite(compositeData)
+                    .toFile(path.join(paths.output, 'atlas.png'))
+                    .then((res) => {
+                        console.log('Done!');
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                    });
 
-//     // Get resource pack textures
-//     if (chosenResourcePackDir !== undefined) {
-//         log('Warning', 'Using non-16x16 texture packs is not supported and will result in undefined behaviour');
-//         {
-//             if (fs.lstatSync(chosenResourcePackDir).isDirectory()) {
-//                 log('Info', `Resource pack '${chosenResourcePackDir}' is a directory`);
+                const blocks = loadedModels.map((model) => {
+                    ASSERT(model !== null);
 
-//                 const blockTexturesSrc = PathUtil.join(chosenResourcePackDir, 'assets/minecraft/textures/block');
-//                 const blockTexturesDst = BLOCKS_DIR;
+                    const faces = {
+                        up: model.up,
+                        down: model.down,
+                        north: model.north,
+                        south: model.south,
+                        east: model.east,
+                        west: model.west,
+                    };
 
-//                 log('Info', `Copying ${blockTexturesSrc} to ${blockTexturesDst}...`);
-//                 copydir(blockTexturesSrc, blockTexturesDst, {
-//                     utimes: true,
-//                     mode: true,
-//                     cover: true,
-//                 });
-//             } else {
-//                 log('Info', `Resource pack '${chosenResourcePackDir}' is not a directory, expecting to be a .zip`);
+                    const faceColours = Object.values(faces).map((texture) => {
+                        const textureData = textureMap.get(texture);
+                        ASSERT(textureData !== undefined);
+                        return textureData.colour;
+                    });
 
-//                 const zip = new AdmZip(chosenResourcePackDir);
-//                 const zipEntries = zip.getEntries();
-//                 zipEntries.forEach((zipEntry: any) => {
-//                     if (zipEntry.entryName.startsWith('assets/minecraft/textures/block')) {
-//                         zip.extractEntryTo(zipEntry.entryName, BLOCKS_DIR, false, true);
-//                     }
-//                 });
-//             }
-//         }
-//         log('Success', `Copied block textures successfully`);
-//     }
+                    return {
+                        name: 'minecraft:' + model.modelFileName.split('.')[0],
+                        faces: faces,
+                        colour: RGBAUtil.average(...faceColours),
+                    }
+                });
 
-//     // Load the ignore list
-//     let ignoreList: Array<string> = [];
-//     {
-//         log('Info', 'Loading ignore list...');
-//         {
-//             const ignoreListPath = PathUtil.join(AppPaths.Get.tools, './models-ignore-list.txt');
-//             if (fs.existsSync(ignoreListPath)) {
-//                 log('Success', `Found ignore list in '${ignoreListPath}'`);
-//                 ignoreList = fs.readFileSync(ignoreListPath, 'utf-8').replace(/\r/g, '').split('\n');
-//                 log('Info', `Found ${ignoreList.length} blocks in ignore list`);
-//             } else {
-//                 log('Warning', `Could not find ignore list '${ignoreListPath}'`);
-//             }
-//         }
-//     }
+                console.log(textureMap);
 
-//     const usedTextures = new Set<string>();
-//     const usedModels: Array<{ name: string, faces: TFaceData<string> }> = [];
+                const textures: Record<any, any> = {};
+                textureMap.forEach((value, key) => {
+                    textures[key] = value;
+                });
 
-//     // Load all models to use
-//     {
-//         const allModels = fs.readdirSync(MODELS_DIR);
-//         log('Info', `Found ${allModels.length} models in '${MODELS_DIR}'`);
+                const atlasFile = {
+                    formatVersion: 3,
+                    atlasSize: atlasSize,
+                    blocks: blocks,
+                    textures: textures,
+                }
 
-//         allModels.forEach((modelRelDir, index) => {
-//             const modelAbsDir = PathUtil.join(MODELS_DIR, modelRelDir);
-//             const parsed = path.parse(modelAbsDir);
+                fs.writeFileSync(path.join(paths.output, 'atlas.atlas'), JSON.stringify(atlasFile, null, 4));
+            });
 
-//             if (parsed.ext !== '.json' || ignoreList.includes(parsed.base)) {
-//                 return;
-//             }
-
-//             const fileData = fs.readFileSync(modelAbsDir, 'utf8');
-//             const modelData = JSON.parse(fileData);
-
-//             const faceData: TFaceData<string> | undefined = (() => {
-//                 switch (modelData.parent) {
-//                     case 'minecraft:block/cube_column_horizontal':
-//                         return {
-//                             up: modelData.textures.side,
-//                             down: modelData.textures.side,
-//                             north: modelData.textures.end,
-//                             south: modelData.textures.end,
-//                             east: modelData.textures.side,
-//                             west: modelData.textures.side,
-//                         };
-//                     case 'minecraft:block/cube_all':
-//                         return {
-//                             up: modelData.textures.all,
-//                             down: modelData.textures.all,
-//                             north: modelData.textures.all,
-//                             south: modelData.textures.all,
-//                             east: modelData.textures.all,
-//                             west: modelData.textures.all,
-//                         };
-//                     case 'minecraft:block/cube_column':
-//                         return {
-//                             up: modelData.textures.end,
-//                             down: modelData.textures.end,
-//                             north: modelData.textures.side,
-//                             south: modelData.textures.side,
-//                             east: modelData.textures.side,
-//                             west: modelData.textures.side,
-//                         };
-//                     case 'minecraft:block/cube_bottom_top':
-//                         return {
-//                             up: modelData.textures.top,
-//                             down: modelData.textures.bottom,
-//                             north: modelData.textures.side,
-//                             south: modelData.textures.side,
-//                             east: modelData.textures.side,
-//                             west: modelData.textures.side,
-//                         };
-//                     case 'minecraft:block/cube':
-//                         return {
-//                             up: modelData.textures.up,
-//                             down: modelData.textures.down,
-//                             north: modelData.textures.north,
-//                             south: modelData.textures.south,
-//                             east: modelData.textures.east,
-//                             west: modelData.textures.west,
-//                         };
-//                     case 'minecraft:block/template_single_face':
-//                         return {
-//                             up: modelData.textures.texture,
-//                             down: modelData.textures.texture,
-//                             north: modelData.textures.texture,
-//                             south: modelData.textures.texture,
-//                             east: modelData.textures.texture,
-//                             west: modelData.textures.texture,
-//                         };
-//                     case 'minecraft:block/template_glazed_terracotta':
-//                         return {
-//                             up: modelData.textures.pattern,
-//                             down: modelData.textures.pattern,
-//                             north: modelData.textures.pattern,
-//                             south: modelData.textures.pattern,
-//                             east: modelData.textures.pattern,
-//                             west: modelData.textures.pattern,
-//                         };
-//                     case 'minecraft:block/leaves':
-//                         return {
-//                             up: modelData.textures.all,
-//                             down: modelData.textures.all,
-//                             north: modelData.textures.all,
-//                             south: modelData.textures.all,
-//                             east: modelData.textures.all,
-//                             west: modelData.textures.all,
-//                         };
-//                 }
-//             })();
-
-//             // Debug logging to file
-//             if (faceData === undefined) {
-//                 LOG_WARN(`Could not parse '${parsed.base}'`);
-//                 return;
-//             } else {
-//                 LOG(`Parsed '${parsed.base}'`);
-//             }
-
-//             // Check that the textures that this model uses can be found
-//             Object.values(faceData).forEach((texture) => {
-//                 const textureBaseName = texture.split('/')[1] + '.png';
-//                 const textureAbsDir = PathUtil.join(BLOCKS_DIR, textureBaseName);
-
-//                 if (fs.existsSync(textureAbsDir)) {
-//                     LOG(`Found '${textureAbsDir}'`);
-//                 } else {
-//                     log('Warning', `'${parsed.base}' uses texture '${texture}' but the texture file could not be found at '${textureAbsDir}'`);
-//                     return;
-//                 }
-//             });
-
-//             // Update usedTextures and usedModels
-//             Object.values(faceData).forEach((texture) => {
-//                 usedTextures.add(texture);
-//             });
-//             usedModels.push({
-//                 name: parsed.name,
-//                 faces: faceData,
-//             });
-//         });
-
-//         LOG('All Textures', usedTextures);
-//         LOG('All Models', usedModels);
-//         log('Info', `Found ${usedModels.length} models to use`);
-
-//         // Prompt user for an atlas name
-//         const { atlasName } = await prompt.get({
-//             properties: {
-//                 atlasName: {
-//                     pattern: /^[a-zA-Z\-]+$/,
-//                     description: 'What do you want to call this texture atlas?',
-//                     message: 'Name must only be letters or dash',
-//                     required: true,
-//                 },
-//             },
-//         });
-
-//         // Create atlas texture file
-//         const textureDetails: { [texture: string]: { atlasColumn: number, atlasRow: number, colour: RGBA, std: number } } = {};
-//         const atlasSize = Math.ceil(Math.sqrt(usedTextures.size));
-//         {
-//             const atlasWidth = atlasSize * 16;
-
-//             let offsetX = 0;
-//             let offsetY = 0;
-//             const outputImage = images(atlasWidth * 3, atlasWidth * 3);
-
-//             usedTextures.forEach((texture) => {
-//                 const shortName = texture.split('/')[1]; // Eww
-//                 const absolutePath = path.join(BLOCKS_DIR, shortName + '.png');
-//                 const fileData = fs.readFileSync(absolutePath);
-//                 //const pngData = PNG.sync.read(fileData);
-//                 const image = images(absolutePath);
-
-//                 for (let x = 0; x < 3; ++x) {
-//                     for (let y = 0; y < 3; ++y) {
-//                         outputImage.draw(image, 16 * (3 * offsetX + x), 16 * (3 * offsetY + y));
-//                     }
-//                 }
-
-//                 // TODO Unimplemented
-//                 /*
-//                 const average = getAverageColour(pngData);
-//                 textureDetails[texture] = {
-//                     atlasColumn: offsetX,
-//                     atlasRow: offsetY,
-//                     colour: average,
-//                     std: getStandardDeviation(pngData, average),
-//                 };
-//                 */
-
-//                 ++offsetX;
-//                 if (offsetX >= atlasSize) {
-//                     ++offsetY;
-//                     offsetX = 0;
-//                 }
-//             });
-
-//             const atlasDir = PathUtil.join(AppPaths.Get.atlases, `./${atlasName}.png`);
-//             outputImage.save(atlasDir);
-//         }
-
-//         const modelDetails = new Array<{ name: string, faces: TFaceData<string>, colour: RGBA }>();
-//         {
-//             usedModels.forEach((model) => {
-//                 const faceColours = Object.values(model.faces)
-//                     .map((face) => textureDetails[face]!.colour);
-
-//                 modelDetails.push({
-//                     name: AppUtil.Text.namespaceBlock(model.name),
-//                     faces: model.faces,
-//                     colour: RGBAUtil.average(...faceColours),
-//                 });
-//             });
-//         }
-
-//         const toExport: TAtlasVersion = {
-//             formatVersion: 3,
-//             atlasSize: atlasSize,
-//             blocks: modelDetails,
-//             textures: textureDetails,
-//             supportedBlockNames: modelDetails.map((model) => model.name),
-//         };
-
-//         fs.writeFileSync(path.join(AppPaths.Get.atlases, `./${atlasName}.atlas`), JSON.stringify(toExport, null, 4));
-//     }
-// }();
-console.log('Unimplemented');
+    });

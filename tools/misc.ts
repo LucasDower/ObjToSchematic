@@ -1,29 +1,15 @@
-import path from 'path';
-import prompt from 'prompt';
-
 import { RGBA } from '../src/colour';
-import { clog, log } from './logging';
 
-export const ASSERT = (condition: boolean, onFailMessage: string) => {
-    if (!condition) {
-        log('Failure', onFailMessage);
-        process.exit(0);
-    }
-};
-
-type PNG = {};
-
-export function getAverageColour(image: PNG): RGBA {
-    /*
+export function getAverageColour(image: Uint8ClampedArray): RGBA {
     let r = 0;
     let g = 0;
     let b = 0;
     let a = 0;
     let weight = 0;
-    for (let x = 0; x < image.width; ++x) {
-        for (let y = 0; y < image.height; ++y) {
-            const index = 4 * (image.width * y + x);
-            const rgba = image.data.slice(index, index + 4);
+    for (let x = 0; x < 16; ++x) {
+        for (let y = 0; y < 16; ++y) {
+            const index = 4 * (16 * y + x);
+            const rgba = image.slice(index, index + 4);
             const alpha = rgba[3] / 255;
             r += (rgba[0] / 255) * alpha;
             g += (rgba[1] / 255) * alpha;
@@ -32,27 +18,22 @@ export function getAverageColour(image: PNG): RGBA {
             weight += alpha;
         }
     }
-    const numPixels = image.width * image.height;
+    const numPixels = 16 * 16;
     return {
         r: r / weight,
         g: g / weight,
         b: b / weight,
         a: a / numPixels,
     };
-    */
-    return { r: 0, g: 0, b: 0, a: 0 };
 }
 
-
-export function getStandardDeviation(image: PNG, average: RGBA): number {
-    return 0; // TODO Unimplemented
-    /*
+export function getStandardDeviation(image: Uint8ClampedArray, average: RGBA): number {
     let squaredDist = 0.0;
     let weight = 0.0;
-    for (let x = 0; x < image.width; ++x) {
-        for (let y = 0; y < image.height; ++y) {
-            const index = 4 * (image.width * y + x);
-            const rgba = image.data.slice(index, index + 4);
+    for (let x = 0; x < 16; ++x) {
+        for (let y = 0; y < 16; ++y) {
+            const index = 4 * (16 * y + x);
+            const rgba = image.slice(index, index + 4);
             const alpha = rgba[3] / 255;
             weight += alpha;
             const r = (rgba[0] / 255) * alpha;
@@ -62,35 +43,4 @@ export function getStandardDeviation(image: PNG, average: RGBA): number {
         }
     }
     return Math.sqrt(squaredDist / weight);
-    */
-}
-
-export async function getPermission() {
-    const directory = getMinecraftDir();
-    log('Prompt', `This script requires files inside of ${directory}`);
-    const { permission } = await prompt.get({
-        properties: {
-            permission: {
-                pattern: /^[YyNn]$/,
-                description: 'Do you give permission to access these files? (y/n)',
-                message: 'Response must be Y or N',
-                required: true,
-            },
-        },
-    });
-    const responseYes = ['Y', 'y'].includes(permission as string);
-    if (!responseYes) {
-        process.exit(0);
-    }
-}
-
-export function getMinecraftDir(): string {
-    switch (process.platform) {
-        case 'darwin': // MacOS
-            return path.join(process.env.HOME!, './Library/Application Support/minecraft');
-        case 'win32': // Windows
-            return path.join(process.env.APPDATA!, './.minecraft');
-        default:
-            return path.join(require('os').homedir(), '/.minecraft');
-    }
 }
