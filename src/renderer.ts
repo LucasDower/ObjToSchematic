@@ -56,7 +56,7 @@ type InternalTextureMaterial = {
 };
 
 export class Renderer {
-    public _gl: WebGLRenderingContext;
+    public _gl: WebGL2RenderingContext;
 
     private _backgroundColour: RGBA = { r: 0.125, g: 0.125, b: 0.125, a: 1.0 };
     private _atlasTexture?: WebGLTexture;
@@ -99,9 +99,15 @@ export class Renderer {
     }
 
     private constructor() {
-        this._gl = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl', {
+        const webgl2Context = (<HTMLCanvasElement>document.getElementById('canvas')).getContext('webgl2', {
             alpha: false,
-        })!;
+        });
+
+        if (webgl2Context === null) {
+            throw 'Could not get WebGL2';
+        }
+
+        this._gl = webgl2Context;
         twgl.addExtensionsToContext(this._gl);
 
         this._backgroundColour = AppConfig.Get.VIEWPORT_BACKGROUND_COLOUR;
