@@ -57,7 +57,6 @@ export class Mesh {
 
     private _materials!: MaterialMap;
     private _loadedTextures: Map<string, Texture>;
-    public static desiredHeight = 8.0;
 
     constructor(vertices: Vector3[], normals: Vector3[], uvs: UV[], tris: Tri[], materials: MaterialMap) {
         this.id = getRandomID();
@@ -298,7 +297,7 @@ export class Mesh {
     private _normaliseMesh() {
         const bounds = this.getBounds();
         const size = Vector3.sub(bounds.max, bounds.min);
-        const scaleFactor = Mesh.desiredHeight / size.y;
+        const scaleFactor = 1.0 / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
             throw new AppError(LOC('import.could_not_scale_mesh'));

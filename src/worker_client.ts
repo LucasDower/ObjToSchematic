@@ -154,7 +154,7 @@ export class WorkerClient {
         return {
             buffer: buffer,
             dimensions: this._loadedVoxelMesh.getBounds().getDimensions(),
-            voxelSize: 8.0 / params.desiredHeight,
+            voxelSize: 1.0 / params.desiredHeight,
             moreVoxelsToBuffer: buffer.moreVoxelsToBuffer,
             isFirstChunk: isFirstChunk,
         };
