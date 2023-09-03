@@ -13,7 +13,7 @@ export class AppConfig {
     public readonly MINOR_VERSION = 8;
     public readonly HOTFIX_VERSION = 9;
     public readonly VERSION_TYPE: 'd' | 'a' | 'r' = 'd'; // dev, alpha, or release build
-    public readonly MINECRAFT_VERSION = '1.19.4';
+    public readonly MINECRAFT_VERSION = '1.20.1';
 
     public readonly LOCALE = 'en-GB';
     public readonly VOXEL_BUFFER_CHUNK_SIZE = 50_000;
