@@ -38,7 +38,7 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                     </div>
                 </div>
                 <div class="row-item">
-                    <input type="file" accept="images/png" style="display: none;" id="${this._getId()}-input">
+                    <input type="file" accept="image/png,image/jpeg" style="display: none;" id="${this._getId()}-input">
                     ${this._switchElement.generateHTML()}
                 </div>
             </div>
