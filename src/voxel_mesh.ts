@@ -87,7 +87,7 @@ export class VoxelMesh {
         const pos = inPos.copy().round();
         const voxel = this._voxels.get(pos.hash());
 
-        if (voxel !== undefined) {
+        if (voxel !== undefined && this._voxelMeshParams.voxelOverlapRule === 'average') {
             voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);
             voxel.colour.g = ((voxel.colour.g * voxel.collisions) + colour.g) / (voxel.collisions + 1);
             voxel.colour.b = ((voxel.colour.b * voxel.collisions) + colour.b) / (voxel.collisions + 1);
