@@ -51,7 +51,7 @@ export class ArcballCamera {
         this._target = new SmoothVectorVariable(new Vector3(0, 0, 0), AppConfig.Get.CAMERA_SMOOTHING);
 
         this._elevation.setClamp(0.001, Math.PI - 0.001);
-        this._distance.setClamp(1.0, 100.0);
+        this._distance.setClamp(AppConfig.Get.CAMERA_MINIMUM_DISTANCE, 100.0);
     }
 
     public init() {

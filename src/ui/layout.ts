@@ -90,8 +90,18 @@ export class UI {
             label: LOC('settings.heading'),
             components: {
                 'language': new ComboboxComponent<string>(), // Handled in constructor
+                'overrideHeight': new SliderComponent()
+                    .setMin(16)
+                    .setMax(10000)
+                    .setDefaultValue(380)
+                    .setDecimals(0)
+                    .setStep(1)
+                    .setLabel('settings.components.overrideHeight')
+                    .addValueChangedListener((newValue) => {
+                        AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT = newValue;
+                    })
             },
-            componentOrder: ['language'],
+            componentOrder: ['language', 'overrideHeight'],
         },
         'import': {
             id: 'import',

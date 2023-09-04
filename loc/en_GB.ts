@@ -15,6 +15,7 @@ export const en_GB = {
             heading: 'SETTINGS',
             components: {
                 language: 'Language',
+                overrideHeight: 'Max height override',
             },
             changing_language: 'Changing languages...',
             changed_language: 'Changed language',

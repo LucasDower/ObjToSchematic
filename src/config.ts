@@ -25,13 +25,14 @@ export class AppConfig {
     public readonly RENDER_TRIANGLE_THRESHOLD = 1_000_000;
     public readonly MAXIMUM_IMAGE_MEM_ALLOC = 2048;
     public readonly CAMERA_FOV_DEGREES = 30.0;
+    public readonly CAMERA_MINIMUM_DISTANCE = 0.125;
     public readonly CAMERA_DEFAULT_DISTANCE_UNITS = 4.0;
     public readonly CAMERA_DEFAULT_AZIMUTH_RADIANS = -1.0;
     public readonly CAMERA_DEFAULT_ELEVATION_RADIANS = 1.3;
     public readonly CAMERA_SENSITIVITY_ROTATION = 0.005;
     public readonly CAMERA_SENSITIVITY_ZOOM = 0.0025;
     public readonly CONSTRAINT_MINIMUM_HEIGHT = 3;
-    public readonly CONSTRAINT_MAXIMUM_HEIGHT = 380;
+    public CONSTRAINT_MAXIMUM_HEIGHT = 380;
     public readonly SMOOTHNESS_MAX = 3.0;
     public readonly CAMERA_SMOOTHING = 1.0;
     public readonly VIEWPORT_BACKGROUND_COLOUR: RGBA = {
