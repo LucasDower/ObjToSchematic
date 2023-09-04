@@ -28,7 +28,8 @@ export class AppContext {
 
     private _workerController: WorkerController;
     private _lastAction?: EAction;
-    public maxConstraint?: Vector3;
+    public minConstraint?: { x: number, z: number };
+    public maxConstraint?: { x: number, z: number };
     private _materialManager: MaterialMapManager;
     private _loadedFilename: string | null;
 
@@ -109,8 +110,17 @@ export class AppContext {
             AppConsole.success(LOC('import.imported_mesh'));
             this._addWorkerMessagesToConsole(resultImport.messages);
 
+            UI.Get._ui.voxelise.components.constraintAxis.setValue('y');
+            UI.Get._ui.voxelise.components.size.setValue(80);
+
+            this.minConstraint = Vector3.copy(resultImport.result.dimensions)
+                .mulScalar(AppConfig.Get.CONSTRAINT_MINIMUM_HEIGHT).ceil();
             this.maxConstraint = Vector3.copy(resultImport.result.dimensions)
-                .mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT / 8.0).floor();
+                .mulScalar(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT).floor();
+
+            UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(0, this.minConstraint.x > 0 && this.minConstraint.x <= this.maxConstraint.x);
+            UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(2, this.minConstraint.z > 0 && this.minConstraint.z <= this.maxConstraint.z);
+
             this._materialManager = new MaterialMapManager(resultImport.result.materials);
             UI.Get.updateMaterialsAction(this._materialManager);
 

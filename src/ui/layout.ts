@@ -33,6 +33,7 @@ import { VectorComponent } from './components/vector';
 import { AppConsole } from './console';
 import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
+import { AppConfig } from '../config';
 
 export type Group = {
     id: string,
@@ -83,7 +84,7 @@ export class UI {
     }
 
     public uiOrder = ['settings', 'import', 'materials', 'voxelise', 'assign', 'export'];
-    private _ui = {
+    public _ui = {
         'settings': {
             id: 'settings',
             label: LOC('settings.heading'),
@@ -130,20 +131,27 @@ export class UI {
                     .addItem({ payload: 'z', displayLocKey: 'voxelise.components.z_axis' })
                     .setLabel('voxelise.components.constraint_axis')
                     .addValueChangedListener((value: TAxis) => {
-                        /*
-                        TODO:
                         switch (value) {
-                            case 'x':
-                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.x ?? 400);
+                            case 'x': {
+                                ASSERT(this._appContext !== undefined && this._appContext.minConstraint !== undefined && this._appContext.maxConstraint !== undefined);
+                                console.log('min', this._appContext.minConstraint, 'max', this._appContext.maxConstraint);
+                                this._ui.voxelise.components.size.setMin(this._appContext.minConstraint.x);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint.x);
                                 break;
-                            case 'y':
-                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.y ?? AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
+                            }
+                            case 'y': {
+                                this._ui.voxelise.components.size.setMin(AppConfig.Get.CONSTRAINT_MINIMUM_HEIGHT);
+                                this._ui.voxelise.components.size.setMax(AppConfig.Get.CONSTRAINT_MAXIMUM_HEIGHT);
                                 break;
-                            case 'z':
-                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint?.z ?? 400);
+                            }
+                            case 'z': {
+                                ASSERT(this._appContext !== undefined && this._appContext.minConstraint !== undefined && this._appContext.maxConstraint !== undefined);
+                                console.log('min', this._appContext.minConstraint, 'max', this._appContext.maxConstraint);
+                                this._ui.voxelise.components.size.setMin(this._appContext.minConstraint.z);
+                                this._ui.voxelise.components.size.setMax(this._appContext.maxConstraint.z);
                                 break;
+                            }
                         }
-                        */
                     }),
                 'size': new SliderComponent()
                     .setMin(3)

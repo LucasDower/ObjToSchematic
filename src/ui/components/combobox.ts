@@ -55,6 +55,11 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
         });
     }
 
+    public setOptionEnabled(index: number, enabled: boolean) {
+        const option = UIUtil.getElementById(this._getId() + '-' + index) as HTMLOptionElement;
+        option.disabled = !enabled;
+    }
+
     public override _generateInnerHTML() {
         const builder = new HTMLBuilder();
 
@@ -129,5 +134,9 @@ export class ComboboxComponent<T> extends ConfigComponent<T, HTMLSelectElement> 
                 element.text = LOC(item.displayLocKey);
             }
         });
+    }
+
+    public setValue(value: T) {
+        this._setValue(value);
     }
 }

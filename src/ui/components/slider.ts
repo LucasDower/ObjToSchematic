@@ -31,6 +31,10 @@ export class SliderComponent extends ConfigComponent<number, HTMLDivElement> {
         this._valueHovered = false;
     }
 
+    public setValue(value: number) {
+        this._setValue(value);
+    }
+
     public override setDefaultValue(value: number) {
         super.setDefaultValue(value);
         this._internalValue = value;
