@@ -75,12 +75,22 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
     protected override _onEnabledChanged(): void {
         super._onEnabledChanged();
 
+        const imageElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
+        const placeholderComponent = UIUtil.getElementById(this._imageId + '-placeholder');
+        if (!this.enabled) {
+            imageElement.classList.add('disabled');
+            placeholderComponent.classList.add('disabled');
+        } else {
+            imageElement.classList.remove('disabled');
+            placeholderComponent.classList.remove('disabled');
+        }
+
         this._switchElement.setEnabled(this.enabled);
     }
 
     protected override _onValueChanged(): void {
         const inputElement = UIUtil.getElementById(this._imageId) as HTMLImageElement;
-        const PlaceholderComponent = UIUtil.getElementById(this._imageId + '-placeholder');
+        const placeholderComponent = UIUtil.getElementById(this._imageId + '-placeholder');
 
         this.getValue()
             .then((res) => {
@@ -90,13 +100,13 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                 this._switchElement.setActive(false);
                 inputElement.src = res.raw;
                 inputElement.style.display = 'unset';
-                PlaceholderComponent.style.display = 'none';
+                placeholderComponent.style.display = 'none';
             })
             .catch((err) => {
                 this._switchElement.setActive(true);
                 inputElement.src = '';
                 inputElement.style.display = 'none';
-                PlaceholderComponent.style.display = 'flex';
+                placeholderComponent.style.display = 'flex';
             });
     }
 

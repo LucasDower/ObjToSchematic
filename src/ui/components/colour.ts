@@ -21,9 +21,9 @@ export class ColourComponent extends ConfigComponent<RGBA, HTMLInputElement> {
         super._onEnabledChanged();
 
         if (this.enabled) {
-            this._getElement().classList.add('enabled');
+            this._getElement().disabled = false;
         } else {
-            this._getElement().classList.remove('enabled');
+            this._getElement().disabled = true;
         }
     }
 }

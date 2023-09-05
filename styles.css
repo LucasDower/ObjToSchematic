@@ -488,10 +488,13 @@ svg {
   border-radius: 5px;
   border: 1px solid var(--gray-600);
 }
-.enabled.colour-swatch::-webkit-color-swatch:hover {
+.colour-swatch:enabled::-webkit-color-swatch:hover {
   border: 1px solid var(--gray-700);
   filter: brightness(1.1);
   cursor: pointer;
+}
+.colour-swatch:disabled::-webkit-color-swatch {
+  opacity: 0.25;
 }
 
 .texture-preview {
@@ -501,6 +504,10 @@ svg {
 }
 .texture-preview-missing {
   border-color: orange !important;
+}
+.texture-preview.disabled {
+  filter: grayscale(0.5);
+  opacity: 0.5;
 }
 
 .texture-preview-placeholder {
@@ -512,6 +519,9 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.texture-preview-placeholder.disabled {
+  color: var(--text-dark);
 }
 
 .texture-hover {
