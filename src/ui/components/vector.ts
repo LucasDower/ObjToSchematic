@@ -6,6 +6,7 @@ import { ConfigComponent } from './config';
 export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
     private _mouseover: TAxis | null;
     private _showY: boolean;
+    private _onMouseEnterExit?: (state: 'enter' | 'exit', component: TAxis) => void;
 
     public constructor() {
         super(new Vector3(0, 0, 0));
@@ -62,11 +63,13 @@ export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
         elementValue.onmouseenter = () => {
             this._mouseover = axis;
             this._updateStyles();
+            this._onMouseEnterExit?.('enter', axis);
         };
 
         elementValue.onmouseleave = () => {
             this._mouseover = null;
             this._updateStyles();
+            this._onMouseEnterExit?.('exit', axis);
         };
     }
 
@@ -80,7 +83,7 @@ export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
         const elementX = UIUtil.getElementById(this._getValueId('x')) as HTMLInputElement;
         const elementY = UIUtil.getElementById(this._getValueId('y')) as HTMLInputElement;
         const elementZ = UIUtil.getElementById(this._getValueId('z')) as HTMLInputElement;
-        
+
         elementX.addEventListener('change', () => {
             this.getValue().x = parseInt(elementX.value);
         });
@@ -90,6 +93,11 @@ export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
         elementZ.addEventListener('change', () => {
             this.getValue().z = parseInt(elementZ.value);
         });
+    }
+
+    public setOnMouseEnterExit(delegate: (state: 'enter' | 'exit', component: TAxis) => void) {
+        this._onMouseEnterExit = delegate;
+        return this;
     }
 
     private _updateValue(e: MouseEvent) {

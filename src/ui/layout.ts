@@ -110,7 +110,14 @@ export class UI {
                 'input': new FileComponent()
                     .setLabel('import.components.input'),
                 'rotation': new VectorComponent()
-                    .setLabel('import.components.rotation'),
+                    .setLabel('import.components.rotation')
+                    .setOnMouseEnterExit((state, component) => {
+                        if (state === 'exit') {
+                            Renderer.Get.clearAxisToHighlight();
+                        } else {
+                            Renderer.Get.setAxisToHighlight(component);
+                        }
+                    }),
             },
             componentOrder: ['input', 'rotation'],
             execButton: new ButtonComponent()

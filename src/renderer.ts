@@ -14,6 +14,7 @@ import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker_types';
 import { UIUtil } from './util/ui_util';
+import { TAxis } from './util/type_util';
 
 /* eslint-disable */
 export enum MeshType {
@@ -25,6 +26,7 @@ export enum MeshType {
 /* eslint-enable */
 
 /* eslint-disable */
+
 enum EDebugBufferComponents {
     Wireframe,
     Normals,
@@ -78,8 +80,13 @@ export class Renderer {
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
     private _blockBounds: Bounds;
-    private _debugBuffers: { [meshType: string]: { [bufferComponent: string]: RenderBuffer } };
     private _axisBuffer: RenderBuffer;
+
+    private _axisHighlightBuffer: {
+        x: { enabled: boolean, buffer: RenderBuffer },
+        y: { enabled: boolean, buffer: RenderBuffer },
+        z: { enabled: boolean, buffer: RenderBuffer },
+    }
 
     private _isGridComponentEnabled: { [bufferComponent: string]: boolean };
     private _axesEnabled: boolean;
@@ -118,12 +125,6 @@ export class Renderer {
         this._gridBuffers = { x: {}, y: {}, z: {} };
         this._gridEnabled = false;
 
-        this._debugBuffers = {};
-        this._debugBuffers[MeshType.None] = {};
-        this._debugBuffers[MeshType.TriangleMesh] = {};
-        this._debugBuffers[MeshType.VoxelMesh] = {};
-        this._debugBuffers[MeshType.BlockMesh] = {};
-
         this._isGridComponentEnabled = {};
         this._axesEnabled = true;
         this._nightVisionEnabled = true;
@@ -144,6 +145,33 @@ export class Renderer {
         });
 
         resizeObserver.observe(UIUtil.getElementById('canvas'));
+
+        {
+            this._axisHighlightBuffer = {
+                x: {
+                    enabled: false, buffer: new RenderBuffer([
+                        { name: 'position', numComponents: 3 },
+                        { name: 'colour', numComponents: 4 },
+                    ])
+                },
+                y: {
+                    enabled: false, buffer: new RenderBuffer([
+                        { name: 'position', numComponents: 3 },
+                        { name: 'colour', numComponents: 4 },
+                    ])
+                },
+                z: {
+                    enabled: false, buffer: new RenderBuffer([
+                        { name: 'position', numComponents: 3 },
+                        { name: 'colour', numComponents: 4 },
+                    ])
+                },
+            }
+
+            this._axisHighlightBuffer.x.buffer.add(DebugGeometryTemplates.line(new Vector3(-10, 0, 0), new Vector3(10, 0, 0), { r: 0.96, g: 0.21, b: 0.32, a: 1.0 }));
+            this._axisHighlightBuffer.y.buffer.add(DebugGeometryTemplates.line(new Vector3(0, -10, 0), new Vector3(0, 10, 0), { r: 0.44, g: 0.64, b: 0.11, a: 1.0 }));
+            this._axisHighlightBuffer.z.buffer.add(DebugGeometryTemplates.line(new Vector3(0, 0, -10), new Vector3(0, 0, 10), { r: 0.18, g: 0.52, b: 0.89, a: 1.0 }));
+        }
     }
 
     public update() {
@@ -478,28 +506,37 @@ export class Renderer {
 
     // /////////////////////////////////////////////////////////////////////////
 
+    public setAxisToHighlight(axis: TAxis) {
+        this.clearAxisToHighlight();
+        this._axisHighlightBuffer[axis].enabled = true;
+        this.forceRedraw();
+    }
+
+    public clearAxisToHighlight() {
+        this._axisHighlightBuffer.x.enabled = false;
+        this._axisHighlightBuffer.y.enabled = false;
+        this._axisHighlightBuffer.z.enabled = false;
+        this.forceRedraw();
+    }
+
     private _drawDebug() {
-        /*
-        const debugComponents = [EDebugBufferComponents.GridY];
-        for (const debugComp of debugComponents) {
-            if (this._isGridComponentEnabled[debugComp]) {
-                ASSERT(this._debugBuffers[this._meshToUse]);
-                const buffer = this._debugBuffers[this._meshToUse][debugComp];
-                if (buffer) {
-                    if (debugComp === EDebugBufferComponents.Dev) {
-                        this._gl.disable(this._gl.DEPTH_TEST);
-                    }
-                    if (debugComp === EDebugBufferComponents.GridY && !ArcballCamera.Get.isAlignedWithAxis('y')) {
-                        continue;
-                    }
-                    this._drawBuffer(this._gl.LINES, buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+        // Draw debug modes
+        {
+            //this._gl.disable(this._gl.DEPTH_TEST);
+
+            const axes: TAxis[] = ['x', 'y', 'z'];
+            axes.forEach((axis) => {
+                if (this._axisHighlightBuffer[axis].enabled) {
+                    this._drawBuffer(this._gl.LINES, this._axisHighlightBuffer[axis].buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
-                    this._gl.enable(this._gl.DEPTH_TEST);
                 }
-            }
+            })
+
+
+            //this._gl.enable(this._gl.DEPTH_TEST);
         }
-        */
+
         // Draw grid
         if (this._gridEnabled) {
             if (ArcballCamera.Get.isAlignedWithAxis('x') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
