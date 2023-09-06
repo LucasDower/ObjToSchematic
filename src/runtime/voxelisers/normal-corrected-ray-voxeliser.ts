@@ -1,6 +1,5 @@
 import { Bounds } from '../bounds';
 import { Mesh } from '../mesh';
-import { ProgressManager } from '../../editor/progress';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { UVTriangle } from '../triangle';
 import { ASSERT } from '../util/error_util';
@@ -20,7 +19,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _size!: Vector3;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh {
         this._mesh = mesh;
         this._voxelMesh = new VoxelMesh(voxeliseParams);
         this._voxeliseParams = voxeliseParams;
@@ -53,15 +52,13 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
 
         const numTris = mesh.getTriangleCount();
 
-        const taskHandle = ProgressManager.Get.start('Voxelising');
         for (let triIndex = 0; triIndex < numTris; ++triIndex) {
-            ProgressManager.Get.progress(taskHandle, triIndex / numTris);
+            onProgress?.(triIndex / numTris);
             const uvTriangle = mesh.getUVTriangle(triIndex);
             const normals = mesh.getNormals(triIndex);
             const material = mesh.getMaterialByTriangle(triIndex);
             this._voxeliseTri(uvTriangle, material, normals);
         }
-        ProgressManager.Get.end(taskHandle);
 
         mesh.clearTransform();
 

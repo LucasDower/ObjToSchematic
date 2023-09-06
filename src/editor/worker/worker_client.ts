@@ -119,7 +119,15 @@ export class WorkerClient {
         ASSERT(this._loadedMesh !== undefined);
 
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
-        this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params);
+
+        const handle = ProgressManager.Get.start('Voxelising');
+        {
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params, (percentage) => {
+                ProgressManager.Get.progress(handle, percentage);
+            });
+        }
+        ProgressManager.Get.end(handle);
+
         this._loadedVoxelMesh.calculateNeighbours();
 
         this._voxelMeshChunkIndex = 0;

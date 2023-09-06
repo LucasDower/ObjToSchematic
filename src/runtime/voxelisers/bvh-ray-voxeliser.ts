@@ -1,5 +1,4 @@
 import { Mesh } from '../mesh';
-import { ProgressManager } from '../../editor/progress';
 import { Axes, axesToDirection, Ray } from '../ray';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
@@ -15,7 +14,7 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh {
         const voxelMesh = new VoxelMesh(voxeliseParams);
 
         const meshDimensions = mesh.getBounds().getDimensions();
@@ -94,9 +93,8 @@ export class BVHRayVoxeliser extends IVoxeliser {
         LOG('Rays created...');
 
         // Ray test BVH
-        const taskHandle = ProgressManager.Get.start('Voxelising');
         for (rayIndex = 0; rayIndex < rays.length; ++rayIndex) {
-            ProgressManager.Get.progress(taskHandle, rayIndex / rays.length);
+            onProgress?.(rayIndex / rays.length);
 
             const ray = rays[rayIndex];
             const intersections = bvh.intersectRay(ray.origin, axesToDirection(ray.axis), false);
@@ -115,7 +113,6 @@ export class BVHRayVoxeliser extends IVoxeliser {
                 voxelMesh.addVoxel(position, voxelColour);
             }
         }
-        ProgressManager.Get.end(taskHandle);
 
         mesh.clearTransform();
 

@@ -11,8 +11,8 @@ import { VoxelMesh } from '../voxel_mesh';
 import { VoxeliseParams } from '../../editor/worker/worker_types';
 
 export abstract class IVoxeliser {
-    public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh {
-        const voxelMesh = this._voxelise(mesh, voxeliseParams);
+    public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress: (percentage: number) => void): VoxelMesh {
+        const voxelMesh = this._voxelise(mesh, voxeliseParams, onProgress);
 
         StatusHandler.info(LOC('voxelise.voxel_count', { count: voxelMesh.getVoxelCount() }));
 
@@ -22,7 +22,7 @@ export abstract class IVoxeliser {
         return voxelMesh;
     }
 
-    protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input): VoxelMesh;
+    protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh;
 
     /**
      * `Location` should be in block-space.
