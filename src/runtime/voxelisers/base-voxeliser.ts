@@ -1,8 +1,6 @@
 import { RGBA, RGBAColours, RGBAUtil } from '../colour';
 import { AppConfig } from '../../editor/config';
-import { LOC } from '../../editor/localiser';
 import { MaterialType, Mesh } from '../mesh';
-import { StatusHandler } from '../../editor/status';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
@@ -13,12 +11,6 @@ import { VoxeliseParams } from '../../editor/worker/worker_types';
 export abstract class IVoxeliser {
     public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress: (percentage: number) => void): VoxelMesh {
         const voxelMesh = this._voxelise(mesh, voxeliseParams, onProgress);
-
-        StatusHandler.info(LOC('voxelise.voxel_count', { count: voxelMesh.getVoxelCount() }));
-
-        const dim = voxelMesh.getBounds().getDimensions().add(1);
-        StatusHandler.info(LOC('voxelise.voxel_mesh_dimensions', { x: dim.x, y: dim.y, z: dim.z }));
-
         return voxelMesh;
     }
 

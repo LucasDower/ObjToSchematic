@@ -7,7 +7,7 @@ import { EAppEvent, EventManager } from '../event';
 import { IExporter } from '../../runtime/exporters/base_exporter';
 import { ExporterFactory } from '../../runtime/exporters/exporters';
 import { ImporterFactor } from '../../runtime/importers/importers';
-import { Localiser } from '../localiser';
+import { LOC, Localiser } from '../localiser';
 import { Mesh } from '../../runtime/mesh';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../runtime/util/error_util';
@@ -15,6 +15,7 @@ import { VoxelMesh } from '../../runtime/voxel_mesh';
 import { IVoxeliser } from '../../runtime/voxelisers/base-voxeliser';
 import { VoxeliserFactory } from '../../runtime/voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
+import { StatusHandler } from '../status';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -131,6 +132,13 @@ export class WorkerClient {
         this._loadedVoxelMesh.calculateNeighbours();
 
         this._voxelMeshChunkIndex = 0;
+
+        {
+            StatusHandler.info(LOC('voxelise.voxel_count', { count: this._loadedVoxelMesh.getVoxelCount() }));
+
+            const dim = this._loadedVoxelMesh.getBounds().getDimensions().add(1);
+            StatusHandler.info(LOC('voxelise.voxel_mesh_dimensions', { x: dim.x, y: dim.y, z: dim.z }));
+        }
 
         return {
         };

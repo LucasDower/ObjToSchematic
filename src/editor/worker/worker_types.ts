@@ -77,7 +77,6 @@ export namespace VoxeliseParams {
     }
 
     export type Output = {
-
     }
 }
 

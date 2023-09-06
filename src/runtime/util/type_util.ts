@@ -13,3 +13,10 @@ export type TTexelInterpolation = 'nearest' | 'linear';
 export type DeepPartial<T> = T extends object ? {
     [P in keyof T]?: DeepPartial<T[P]>;
 } : T;
+
+export type WrappedWarnings = {};
+
+export type WrappedInfo = {}
+
+/** Wrapped simply wraps a payload with a list of warnings/info associated with it */
+export type Wrapped<T> = { payload: T, warnings: WrappedWarnings[], info: WrappedInfo[] };
