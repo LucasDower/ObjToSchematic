@@ -1,5 +1,4 @@
 import { RGBA, RGBAColours, RGBAUtil } from '../colour';
-import { AppConfig } from '../../editor/config';
 import { MaterialType, Mesh } from '../mesh';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
@@ -9,6 +8,8 @@ import { TVoxelOverlapRule, VoxelMesh } from '../voxel_mesh';
 import { TAxis } from '../util/type_util';
 
 export abstract class IVoxeliser {
+    private _multisampleCount: number = 16;
+
     public voxelise(mesh: Mesh, overlapRule: TVoxelOverlapRule, ambientOcclusion: boolean, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): VoxelMesh {
         const voxelMesh = new VoxelMesh(overlapRule, ambientOcclusion);
         this._voxelise(mesh, voxelMesh, constraintAxis, size, multisampling, onProgress);
@@ -29,7 +30,7 @@ export abstract class IVoxeliser {
         }
 
         const samples: RGBA[] = [];
-        for (let i = 0; i < (multisample ? AppConfig.Get.MULTISAMPLE_COUNT : 1); ++i) {
+        for (let i = 0; i < (multisample ? this._multisampleCount : 1); ++i) {
             const offset = Vector3.random().sub(0.5);
             samples.push(this._internalGetVoxelColour(
                 mesh,
@@ -65,5 +66,10 @@ export abstract class IVoxeliser {
         }
 
         return mesh.sampleTextureMaterial(materialName, uv);
+    }
+
+
+    public setMultisampleCount(count: number) {
+        this._multisampleCount = count;
     }
 }

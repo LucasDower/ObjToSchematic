@@ -16,6 +16,7 @@ import { IVoxeliser } from '../../runtime/voxelisers/base-voxeliser';
 import { VoxeliserFactory } from '../../runtime/voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 import { StatusHandler } from '../status';
+import { AppConfig } from '../config';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -120,6 +121,7 @@ export class WorkerClient {
         ASSERT(this._loadedMesh !== undefined);
 
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
+        voxeliser.setMultisampleCount(AppConfig.Get.MULTISAMPLE_COUNT);
 
         const handle = ProgressManager.Get.start('Voxelising');
         {
