@@ -4,7 +4,7 @@ import { PALETTE_GREYSCALE } from '../../res/palettes/greyscale';
 import { PALETTE_SCHEMATIC_FRIENDLY } from '../../res/palettes/schematic-friendly';
 import { Atlas } from '../runtime/atlas';
 import { LOC } from '../editor/localiser';
-import { StatusHandler } from './status';
+import { StatusHandler } from '../editor/status';
 import { AppTypes, AppUtil, TOptional } from './util';
 import { LOG_WARN } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';

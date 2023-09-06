@@ -1,4 +1,4 @@
-import { StatusHandler } from '../src/runtime/status';
+import { StatusHandler } from '../src/editor/status';
 import { LOG_MAJOR, Logger, TIME_END, TIME_START } from '../src/runtime/util/log_util';
 import { WorkerClient } from '../src/editor/worker/worker_client';
 import { AssignParams, ExportParams, ImportParams, VoxeliseParams } from '../src/editor/worker/worker_types';

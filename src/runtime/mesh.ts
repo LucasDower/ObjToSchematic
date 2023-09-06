@@ -2,7 +2,7 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAUtil } from '../runtime/colour';
 import { LOC } from '../editor/localiser';
 import { degreesToRadians } from './math';
-import { StatusHandler } from './status';
+import { StatusHandler } from '../editor/status';
 import { Texture, TextureConverter, TImageFiletype, TImageRawWrap, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';

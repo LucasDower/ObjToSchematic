@@ -1,5 +1,5 @@
 import { ProgressManager } from '../progress';
-import { StatusHandler } from '../../runtime/status';
+import { StatusHandler } from '../status';
 import { AppError } from '../../runtime/util/error_util';
 import { LOG_ERROR } from '../../runtime/util/log_util';
 import { WorkerClient } from './worker_client';

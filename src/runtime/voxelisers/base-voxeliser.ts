@@ -2,7 +2,7 @@ import { RGBA, RGBAColours, RGBAUtil } from '../colour';
 import { AppConfig } from '../../editor/config';
 import { LOC } from '../../editor/localiser';
 import { MaterialType, Mesh } from '../mesh';
-import { StatusHandler } from '../status';
+import { StatusHandler } from '../../editor/status';
 import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';

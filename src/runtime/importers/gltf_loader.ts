@@ -4,7 +4,7 @@ import { GLTFLoader } from '@loaders.gl/gltf';
 import { RGBAColours, RGBAUtil } from '../colour';
 import { LOC } from '../../editor/localiser';
 import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
-import { StatusHandler } from '../status';
+import { StatusHandler } from '../../editor/status';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';

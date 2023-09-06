@@ -1,6 +1,6 @@
-import { TLocalisedString } from '../editor/localiser';
-import { TMessage } from '../editor/ui/console';
-import { LOG, LOG_ERROR, LOG_WARN } from './util/log_util';
+import { TLocalisedString } from './localiser';
+import { TMessage } from './ui/console';
+import { LOG, LOG_ERROR, LOG_WARN } from '../runtime/util/log_util';
 
 /**
  * `StatusHandler` is used to track success, info, warning, and error messages.

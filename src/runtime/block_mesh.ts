@@ -9,7 +9,7 @@ import { BlockMeshLighting } from './lighting';
 import { LOC } from '../editor/localiser';
 import { Palette } from './palette';
 import { ProgressManager } from '../editor/progress';
-import { StatusHandler } from './status';
+import { StatusHandler } from '../editor/status';
 import { ColourSpace, TOptional } from './util';
 import { AppError, ASSERT } from './util/error_util';
 import { LOGF } from './util/log_util';

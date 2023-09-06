@@ -5,7 +5,7 @@ import { NBT, TagType } from 'prismarine-nbt';
 import { BLOCK_IDS } from '../../../res/block_ids';
 import { BlockMesh } from '../block_mesh';
 import { LOC } from '../../editor/localiser';
-import { StatusHandler } from '../status';
+import { StatusHandler } from '../../editor/status';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
