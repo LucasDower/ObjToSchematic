@@ -5,8 +5,8 @@ import { UVTriangle } from '../triangle';
 import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
 import { VoxelMesh } from '../voxel_mesh';
-import { VoxeliseParams } from '../../editor/worker/worker_types';
 import { IVoxeliser } from './base-voxeliser';
+import { TAxis } from '../util/type_util';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -15,26 +15,24 @@ import { IVoxeliser } from './base-voxeliser';
 export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
-    private _voxeliseParams?: VoxeliseParams.Input;
     private _size!: Vector3;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
         this._mesh = mesh;
-        this._voxelMesh = new VoxelMesh(voxeliseParams);
-        this._voxeliseParams = voxeliseParams;
+        this._voxelMesh = outVoxelMesh;
 
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
-        switch (voxeliseParams.constraintAxis) {
+        switch (constraintAxis) {
             case 'x':
-                scale = voxeliseParams.size / meshDimensions.x;
+                scale = size / meshDimensions.x;
                 break;
             case 'y':
-                scale = voxeliseParams.size / meshDimensions.y;
+                scale = size / meshDimensions.y;
                 break;
             case 'z':
-                scale = voxeliseParams.size / meshDimensions.z;
+                scale = size / meshDimensions.z;
                 break;
         }
 
@@ -57,21 +55,18 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             const uvTriangle = mesh.getUVTriangle(triIndex);
             const normals = mesh.getNormals(triIndex);
             const material = mesh.getMaterialByTriangle(triIndex);
-            this._voxeliseTri(uvTriangle, material, normals);
+            this._voxeliseTri(uvTriangle, material, normals, multisampling);
         }
 
         mesh.clearTransform();
-
-        return this._voxelMesh;
     }
 
-    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3 }) {
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3 }, multisampling: boolean) {
         const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2,
             this._offset,
         );
 
         ASSERT(this._mesh !== undefined);
-        ASSERT(this._voxeliseParams !== undefined);
         ASSERT(this._voxelMesh !== undefined);
 
         for (const ray of rayList) {
@@ -101,7 +96,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                     triangle,
                     materialName,
                     voxelPosition,
-                    this._voxeliseParams.useMultisampleColouring,
+                    multisampling,
                 );
 
                 this._voxelMesh.addVoxel(voxelPosition, voxelColour);

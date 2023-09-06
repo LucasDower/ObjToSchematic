@@ -123,7 +123,7 @@ export class WorkerClient {
 
         const handle = ProgressManager.Get.start('Voxelising');
         {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params, (percentage) => {
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params.voxelOverlapRule, params.enableAmbientOcclusion, params.constraintAxis, params.size, params.useMultisampleColouring, (percentage) => {
                 ProgressManager.Get.progress(handle, percentage);
             });
         }

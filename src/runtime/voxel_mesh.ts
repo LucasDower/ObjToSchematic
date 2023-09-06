@@ -23,12 +23,14 @@ export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | '
 export class VoxelMesh {
     private _voxels: Map<number, Voxel>;
     private _bounds: Bounds;
-    private _voxelMeshParams: TVoxelMeshParams;
+    private readonly _overlapRule: TVoxelOverlapRule;
+    private readonly _ambientOcclusion: boolean;
 
-    public constructor(voxelMeshParams: TVoxelMeshParams) {
+    public constructor(overlapRule: TVoxelOverlapRule, ambientOcclusion: boolean) {
         this._voxels = new Map();
         this._bounds = Bounds.getInfiniteBounds();
-        this._voxelMeshParams = voxelMeshParams;
+        this._overlapRule = overlapRule;
+        this._ambientOcclusion = ambientOcclusion;
         this._recreateBuffer = true;
     }
 
@@ -88,7 +90,7 @@ export class VoxelMesh {
         const voxel = this._voxels.get(pos.hash());
 
         if (voxel !== undefined) {
-            if (this._voxelMeshParams.voxelOverlapRule === 'average') {
+            if (this._overlapRule === 'average') {
                 voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);
                 voxel.colour.g = ((voxel.colour.g * voxel.collisions) + colour.g) / (voxel.collisions + 1);
                 voxel.colour.b = ((voxel.colour.b * voxel.collisions) + colour.b) / (voxel.collisions + 1);
@@ -152,7 +154,7 @@ export class VoxelMesh {
      * directly up, down, north, south, east, west as they're not needed.
      */
     public calculateNeighbours() {
-        if (!this._voxelMeshParams.enableAmbientOcclusion) {
+        if (!this._ambientOcclusion) {
             return;
         }
 
@@ -191,18 +193,6 @@ export class VoxelMesh {
         this._recreateBuffer = true;
         this._bufferChunks = [];
     }
-
-    /*
-    private _buffer?: TVoxelMeshBufferDescription;
-    public getBuffer(): TVoxelMeshBufferDescription {
-        ASSERT(this._renderParams, 'Called VoxelMesh.getBuffer() without setting render params');
-        if (this._buffer === undefined || this._recreateBuffer) {
-            this._buffer = BufferGenerator.fromVoxelMesh(this, this._renderParams);
-            this._recreateBuffer = false;
-        }
-        return this._buffer;
-    }
-    */
 
     private _bufferChunks: Array<TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number }> = [];
     public getChunkedBuffer(chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {

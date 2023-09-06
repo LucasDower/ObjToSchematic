@@ -4,40 +4,37 @@ import { Mesh } from '../mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { UVTriangle } from '../triangle';
 import { ASSERT } from '../util/error_util';
+import { TAxis } from '../util/type_util';
 import { Vector3 } from '../vector';
-import { VoxelMesh } from '../voxel_mesh';
-import { VoxeliseParams } from '../../editor/worker/worker_types';
+import { TVoxelOverlapRule, VoxelMesh } from '../voxel_mesh';
 import { IVoxeliser } from './base-voxeliser';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
  * on each of the principle angles and testing for intersections
- */
-export class RayVoxeliser extends IVoxeliser {
+ */export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
     private _voxelMesh?: VoxelMesh;
-    private _voxeliseParams?: VoxeliseParams.Input;
 
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh {
+    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
         this._mesh = mesh;
-        this._voxelMesh = new VoxelMesh(voxeliseParams);
-        this._voxeliseParams = voxeliseParams;
+        this._voxelMesh = outVoxelMesh;
 
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
         let offset = new Vector3(0.0, 0.0, 0.0);
-        switch (voxeliseParams.constraintAxis) {
+        switch (constraintAxis) {
             case 'x':
-                scale = (voxeliseParams.size - 1) / meshDimensions.x;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.x;
+                offset = (size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
                 break;
             case 'y':
-                scale = (voxeliseParams.size - 1) / meshDimensions.y;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.y;
+                offset = (size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
                 break;
             case 'z':
-                scale = (voxeliseParams.size - 1) / meshDimensions.z;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.z;
+                offset = (size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
                 break;
         }
 
@@ -51,24 +48,21 @@ export class RayVoxeliser extends IVoxeliser {
             onProgress?.(triIndex / numTris);
             const uvTriangle = mesh.getUVTriangle(triIndex);
             const material = mesh.getMaterialByTriangle(triIndex);
-            this._voxeliseTri(uvTriangle, material);
+            this._voxeliseTri(uvTriangle, material, multisampling);
         }
 
         mesh.clearTransform();
-
-        return this._voxelMesh;
     }
 
     private _rayList = new LinearAllocator<Ray>(() => {
         const ray: Ray = { origin: new Vector3(0, 0, 0), axis: Axes.x };
         return ray;
     });
-    private _voxeliseTri(triangle: UVTriangle, materialName: string) {
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, multisampling: boolean) {
         this._rayList.reset();
         this._generateRays(triangle.v0, triangle.v1, triangle.v2);
 
         ASSERT(this._mesh !== undefined);
-        ASSERT(this._voxeliseParams !== undefined);
         ASSERT(this._voxelMesh !== undefined);
 
         const voxelPosition = new Vector3(0, 0, 0);
@@ -101,7 +95,7 @@ export class RayVoxeliser extends IVoxeliser {
                     triangle,
                     materialName,
                     voxelPosition,
-                    this._voxeliseParams.useMultisampleColouring,
+                    multisampling,
                 );
 
                 this._voxelMesh.addVoxel(voxelPosition, voxelColour);

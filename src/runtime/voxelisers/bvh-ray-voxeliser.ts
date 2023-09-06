@@ -4,8 +4,8 @@ import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { Vector3 } from '../vector';
 import { VoxelMesh } from '../voxel_mesh';
-import { VoxeliseParams } from '../../editor/worker/worker_types';
 import { IVoxeliser } from './base-voxeliser';
+import { TAxis } from '../util/type_util';
 
 const bvhtree = require('bvh-tree');
 
@@ -14,24 +14,22 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh {
-        const voxelMesh = new VoxelMesh(voxeliseParams);
-
+    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
         let offset = new Vector3(0.0, 0.0, 0.0);
-        switch (voxeliseParams.constraintAxis) {
+        switch (constraintAxis) {
             case 'x':
-                scale = (voxeliseParams.size - 1) / meshDimensions.x;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.x;
+                offset = (size % 2 === 0) ? new Vector3(0.5, 0.0, 0.0) : new Vector3(0.0, 0.0, 0.0);
                 break;
             case 'y':
-                scale = (voxeliseParams.size - 1) / meshDimensions.y;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.y;
+                offset = (size % 2 === 0) ? new Vector3(0.0, 0.5, 0.0) : new Vector3(0.0, 0.0, 0.0);
                 break;
             case 'z':
-                scale = (voxeliseParams.size - 1) / meshDimensions.z;
-                offset = (voxeliseParams.size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
+                scale = (size - 1) / meshDimensions.z;
+                offset = (size % 2 === 0) ? new Vector3(0.0, 0.0, 0.5) : new Vector3(0.0, 0.0, 0.0);
                 break;
         }
 
@@ -107,15 +105,13 @@ export class BVHRayVoxeliser extends IVoxeliser {
                     mesh.getUVTriangle(intersection.triangleIndex),
                     mesh.getMaterialByTriangle(intersection.triangleIndex),
                     position,
-                    voxeliseParams.useMultisampleColouring,
+                    multisampling,
                 );
 
-                voxelMesh.addVoxel(position, voxelColour);
+                outVoxelMesh.addVoxel(position, voxelColour);
             }
         }
 
         mesh.clearTransform();
-
-        return voxelMesh;
     }
 }

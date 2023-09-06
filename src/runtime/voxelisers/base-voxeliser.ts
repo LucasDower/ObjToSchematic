@@ -5,16 +5,17 @@ import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
-import { VoxelMesh } from '../voxel_mesh';
-import { VoxeliseParams } from '../../editor/worker/worker_types';
+import { TVoxelOverlapRule, VoxelMesh } from '../voxel_mesh';
+import { TAxis } from '../util/type_util';
 
 export abstract class IVoxeliser {
-    public voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress: (percentage: number) => void): VoxelMesh {
-        const voxelMesh = this._voxelise(mesh, voxeliseParams, onProgress);
+    public voxelise(mesh: Mesh, overlapRule: TVoxelOverlapRule, ambientOcclusion: boolean, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): VoxelMesh {
+        const voxelMesh = new VoxelMesh(overlapRule, ambientOcclusion);
+        this._voxelise(mesh, voxelMesh, constraintAxis, size, multisampling, onProgress);
         return voxelMesh;
     }
 
-    protected abstract _voxelise(mesh: Mesh, voxeliseParams: VoxeliseParams.Input, onProgress?: (percentage: number) => void): VoxelMesh;
+    protected abstract _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void;
 
     /**
      * `Location` should be in block-space.
