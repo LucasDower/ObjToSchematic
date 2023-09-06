@@ -1,4 +1,4 @@
-import { Palette } from '../src/palette';
+import { Palette } from '../src/runtime/palette';
 
 test('Palette', () => {
     const myPalette = Palette.create();

@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 import { getAverageColour, getStandardDeviation } from './misc';
-import { ASSERT } from '../src/util/error_util';
-import { RGBAUtil } from '../src/colour';
+import { ASSERT } from '../src/runtime/util/error_util';
+import { RGBAUtil } from '../src/runtime/colour';
 
 program
     .argument('<textures_directory>', 'The directory to load the blocks texture files from (assets/minecraft/textures/block)')

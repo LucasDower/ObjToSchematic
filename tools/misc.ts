@@ -1,4 +1,4 @@
-import { RGBA } from '../src/colour';
+import { RGBA } from '../src/runtime/colour';
 
 export function getAverageColour(image: Uint8ClampedArray): RGBA {
     let r = 0;

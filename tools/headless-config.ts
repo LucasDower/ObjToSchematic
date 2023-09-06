@@ -1,6 +1,6 @@
 import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
-import { ColourSpace } from '../src/util';
-import { Vector3 } from '../src/vector';
+import { ColourSpace } from '../src/runtime/util';
+import { Vector3 } from '../src/runtime/vector';
 import { THeadlessConfig } from './headless';
 
 export const headlessConfig: THeadlessConfig = {

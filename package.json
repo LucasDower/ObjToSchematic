@@ -15,7 +15,8 @@
     "dist": "webpack --config ./webpack.prod.js",
     "atlas": "ts-node ./tools/build-atlas.ts",
     "headless": "ts-node ./tools/run-headless.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "check": "npx depcruise src"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "css-loader": "^6.7.3",
+    "dependency-cruiser": "^13.1.5",
     "eslint": "^8.7.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-simple-import-sort": "^8.0.0",

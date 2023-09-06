@@ -1,7 +1,7 @@
-import { Axes, Ray, rayIntersectTriangle } from '../src/ray';
-import { Triangle } from '../src/triangle';
-import { ASSERT } from '../src/util/error_util';
-import { Vector3 } from '../src/vector';
+import { Axes, Ray, rayIntersectTriangle } from '../src/runtime/ray';
+import { Triangle } from '../src/runtime/triangle';
+import { ASSERT } from '../src/runtime/util/error_util';
+import { Vector3 } from '../src/runtime/vector';
 import { TEST_PREAMBLE } from './preamble';
 
 test('rayIntersectTriangle x-axis #1', () => {

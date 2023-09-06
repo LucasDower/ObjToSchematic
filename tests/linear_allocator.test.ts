@@ -1,5 +1,5 @@
-import { LinearAllocator } from '../src/linear_allocator';
-import { Vector3 } from '../src/vector';
+import { LinearAllocator } from '../src/runtime/linear_allocator';
+import { Vector3 } from '../src/runtime/vector';
 import { TEST_PREAMBLE } from './preamble';
 
 test('RegExpBuilder', () => {

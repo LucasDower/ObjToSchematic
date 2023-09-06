@@ -1,6 +1,6 @@
-import { AppUtil } from '../src/util';
-import { ASSERT } from '../src/util/error_util';
-import { REGEX_NUMBER, REGEX_NZ_ANY, RegExpBuilder } from '../src/util/regex_util';
+import { AppUtil } from '../src/runtime/util';
+import { ASSERT } from '../src/runtime/util/error_util';
+import { REGEX_NUMBER, REGEX_NZ_ANY, RegExpBuilder } from '../src/runtime/util/regex_util';
 import { TEST_PREAMBLE } from './preamble';
 
 test('RegExpBuilder', () => {

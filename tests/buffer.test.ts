@@ -1,4 +1,4 @@
-import { AttributeData, MergeAttributeData } from '../src/render_buffer';
+import { AttributeData, MergeAttributeData } from '../src/editor/render_buffer';
 import { TEST_PREAMBLE } from './preamble';
 
 test('MergeAttributeData #1', () => {

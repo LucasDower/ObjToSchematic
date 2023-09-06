@@ -1,7 +1,7 @@
-import { RGBAColours } from '../src/colour';
-import { ASSERT } from '../src/util/error_util';
-import { Vector3 } from '../src/vector';
-import { VoxelMesh } from '../src/voxel_mesh';
+import { RGBAColours } from '../src/runtime/colour';
+import { ASSERT } from '../src/runtime/util/error_util';
+import { Vector3 } from '../src/runtime/vector';
+import { VoxelMesh } from '../src/runtime/voxel_mesh';
 import { TEST_PREAMBLE } from './preamble';
 
 test('Voxel neighbours', () => {

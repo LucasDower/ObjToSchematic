@@ -1,5 +1,5 @@
-import { LOG_MAJOR } from '../src/util/log_util';
-import { AppPaths, PathUtil } from '../src/util/path_util';
+import { LOG_MAJOR } from '../src/runtime/util/log_util';
+import { AppPaths, PathUtil } from '../src/runtime/util/path_util';
 import { runHeadless } from './headless';
 import { headlessConfig } from './headless-config';
 
