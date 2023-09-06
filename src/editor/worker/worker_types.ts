@@ -1,6 +1,6 @@
 import { FallableBehaviour } from '../../runtime/block_mesh';
 import { Bounds } from '../../runtime/bounds';
-import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from '../../runtime/buffer';
+import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from '../buffer';
 import { RGBAUtil } from '../../runtime/colour';
 import { TStructureExport } from '../../runtime/exporters/base_exporter';
 import { TExporters } from '../../runtime/exporters/exporters';

@@ -1,13 +1,13 @@
 import { EFaceVisibility } from '../runtime/block_assigner';
 import { Bounds } from './bounds';
-import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from '../editor/buffer';
 import { RGBA } from '../runtime/colour';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
-import { RenderNextVoxelMeshChunkParams, VoxeliseParams } from '../editor/worker/worker_types';
+import { RenderNextVoxelMeshChunkParams } from '../editor/worker/worker_types';
 
 export interface Voxel {
     position: Vector3,
@@ -17,8 +17,6 @@ export interface Voxel {
 }
 
 export type TVoxelOverlapRule = 'first' | 'average';
-
-export type TVoxelMeshParams = Pick<VoxeliseParams.Input, 'voxelOverlapRule' | 'enableAmbientOcclusion'>;
 
 export class VoxelMesh {
     private _voxels: Map<number, Voxel>;

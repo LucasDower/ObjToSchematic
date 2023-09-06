@@ -1,16 +1,16 @@
-import { BlockMesh } from './block_mesh';
-import { AppConfig } from '../editor/config';
-import { AppConstants } from './constants';
-import { GeometryTemplates } from './geometry';
-import { Mesh, SolidMaterial, TexturedMaterial } from './mesh';
-import { OcclusionManager } from './occlusion';
-import { ProgressManager } from '../editor/progress';
-import { AttributeData } from '../editor/render_buffer';
-import { AppUtil } from './util';
-import { ASSERT } from './util/error_util';
-import { Vector3 } from './vector';
-import { VoxelMesh } from './voxel_mesh';
-import { RenderNextVoxelMeshChunkParams } from '../editor/worker/worker_types';
+import { BlockMesh } from '../runtime/block_mesh';
+import { AppConfig } from './config';
+import { AppConstants } from '../runtime/constants';
+import { GeometryTemplates } from '../runtime/geometry';
+import { Mesh, SolidMaterial, TexturedMaterial } from '../runtime/mesh';
+import { OcclusionManager } from '../runtime/occlusion';
+import { ProgressManager } from './progress';
+import { AttributeData } from './render_buffer';
+import { AppUtil } from '../runtime/util';
+import { ASSERT } from '../runtime/util/error_util';
+import { Vector3 } from '../runtime/vector';
+import { VoxelMesh } from '../runtime/voxel_mesh';
+import { RenderNextVoxelMeshChunkParams } from './worker/worker_types';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },

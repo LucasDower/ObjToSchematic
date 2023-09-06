@@ -2,7 +2,7 @@ import path from 'path';
 
 import { Atlas } from '../../runtime/atlas';
 import { BlockMesh } from '../../runtime/block_mesh';
-import { BufferGenerator } from '../../runtime/buffer';
+import { BufferGenerator } from '../buffer';
 import { EAppEvent, EventManager } from '../event';
 import { IExporter } from '../../runtime/exporters/base_exporter';
 import { ExporterFactory } from '../../runtime/exporters/exporters';

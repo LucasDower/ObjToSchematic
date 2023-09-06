@@ -1,7 +1,7 @@
 import { Atlas, TAtlasBlock } from '../runtime/atlas';
 import { AtlasPalette, EFaceVisibility } from '../runtime/block_assigner';
 import { BlockInfo } from './block_atlas';
-import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from './buffer';
+import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from '../editor/buffer';
 import { RGBA_255, RGBAUtil } from '../runtime/colour';
 import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
