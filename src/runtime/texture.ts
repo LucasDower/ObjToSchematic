@@ -2,7 +2,6 @@ import * as jpeg from 'jpeg-js';
 import { PNG } from 'pngjs';
 
 import { RGBA, RGBAColours, RGBAUtil } from '../runtime/colour';
-import { AppConfig } from '../editor/config';
 import { clamp } from './math';
 import { TOptional, UV } from './util';
 import { ASSERT } from './util/error_util';
@@ -77,7 +76,7 @@ export class Texture {
             const jpg = params.raw.split(',')[1];
             if (jpg !== undefined) {
                 return jpeg.decode(Buffer.from(jpg, 'base64'), {
-                    maxMemoryUsageInMB: AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
+                    maxMemoryUsageInMB: 2048, //AppConfig.Get.MAXIMUM_IMAGE_MEM_ALLOC,
                     formatAsRGBA: true,
                 });
             }

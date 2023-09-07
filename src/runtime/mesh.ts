@@ -1,8 +1,6 @@
 import { Bounds } from './bounds';
 import { RGBA, RGBAUtil } from '../runtime/colour';
-import { LOC } from '../editor/localiser';
 import { degreesToRadians } from './math';
-import { StatusHandler } from '../editor/status';
 import { Texture, TImageRawWrap, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
@@ -164,11 +162,15 @@ export class Mesh {
             return 'no-triangles-loaded';
         }
 
+        // TODO: StatusRework
+        /*
         if (this._tris.length >= 100_000) {
             StatusHandler.warning(LOC('import.too_many_triangles', { count: this._tris.length }));
         }
+        */
 
-        StatusHandler.info(LOC('import.vertex_triangle_count', { vertex_count: this._vertices.length, triangle_count: this._tris.length }));
+        // TODO: StatusRework
+        //StatusHandler.info(LOC('import.vertex_triangle_count', { vertex_count: this._vertices.length, triangle_count: this._tris.length }));
 
         // Give warning if normals are not defined
         let giveNormalsWarning = false;
@@ -188,9 +190,13 @@ export class Mesh {
                 break;
             }
         }
+
+        // TODO: StatusRework
+        /*
         if (giveNormalsWarning) {
             StatusHandler.warning(LOC('import.missing_normals'));
         };
+        */
 
         return null;
     }

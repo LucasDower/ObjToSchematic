@@ -1,4 +1,3 @@
-import { ProgressManager } from '../../editor/progress';
 import { anyNaN } from '../math';
 import { Mesh, Tri } from '../mesh';
 import { UV } from '../util';
@@ -233,14 +232,16 @@ export class ObjImporter extends IImporter {
         const fileLines = fileSource.split(/\r?\n/);
         const numLines = fileLines.length;
 
-        const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
+        // TODO: ProgressRework
+        //const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
         fileLines.forEach((line, index) => {
-            const { err }  = this.parseOBJLine(line);
+            const { err } = this.parseOBJLine(line);
             if (err !== null) {
                 throw new ObjImporterError(err);
             }
-            ProgressManager.Get.progress(progressHandle, index / numLines);
-        })
+            //ProgressManager.Get.progress(progressHandle, index / numLines);
+        });
+        // BUG: Maybe end the progress??? Regression?
 
         return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
     }

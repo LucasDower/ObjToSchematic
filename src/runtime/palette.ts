@@ -2,11 +2,9 @@ import { PALETTE_ALL_RELEASE } from '../../res/palettes/all';
 import { PALETTE_COLOURFUL } from '../../res/palettes/colourful';
 import { PALETTE_GREYSCALE } from '../../res/palettes/greyscale';
 import { PALETTE_SCHEMATIC_FRIENDLY } from '../../res/palettes/schematic-friendly';
+
 import { Atlas } from '../runtime/atlas';
-import { LOC } from '../editor/localiser';
-import { StatusHandler } from '../editor/status';
 import { AppTypes, AppUtil, TOptional } from './util';
-import { LOG_WARN } from './util/log_util';
 import { AppPaths, PathUtil } from './util/path_util';
 
 export type TPalettes = 'all' | 'colourful' | 'greyscale' | 'schematic-friendly';
@@ -161,10 +159,13 @@ export class Palette {
             }
         }
 
+        // This shouldn't happen with future changes anyway
+        /*
         if (missingBlocks.length > 0) {
             StatusHandler.warning(LOC('assign.blocks_missing_textures', { count: missingBlocks }));
             LOG_WARN('Blocks missing atlas textures', missingBlocks);
         }
+        */
     }
 
     private static _isValidPaletteName(paletteName: string): boolean {

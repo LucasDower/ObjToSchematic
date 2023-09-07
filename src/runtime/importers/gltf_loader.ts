@@ -2,9 +2,7 @@ import { parse } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
 import { RGBAColours, RGBAUtil } from '../colour';
-import { LOC } from '../../editor/localiser';
 import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
-import { StatusHandler } from '../../editor/status';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
@@ -24,7 +22,8 @@ export class GltfImporterError extends Error {
 
 export class GltfLoader extends IImporter {
     public override async import(file: File): Promise<Mesh> {
-        StatusHandler.warning(LOC('import.gltf_experimental'));
+        // TODO: StatusRework
+        //StatusHandler.warning(LOC('import.gltf_experimental'));
 
         let gltf;
         try {
@@ -99,7 +98,8 @@ export class GltfLoader extends IImporter {
 
                                 try {
                                     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg') {
-                                        StatusHandler.warning(LOC('import.unsupported_image_type', { file_name: diffuseTexture.texture.source.id, file_type: mimeType }));
+                                        // TODO: StatusRework
+                                        //StatusHandler.warning(LOC('import.unsupported_image_type', { file_name: diffuseTexture.texture.source.id, file_type: mimeType }));
                                         throw new GltfImporterError({ type: 'unsupported-image-format' })
                                     }
 
