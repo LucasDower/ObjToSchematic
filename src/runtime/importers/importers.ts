@@ -5,6 +5,7 @@ import { ObjImporter } from './obj_importer';
 
 export type TImporters = 'obj' | 'gltf';
 
+
 export class ImporterFactor {
     public static GetImporter(importer: TImporters): IImporter {
         switch (importer) {

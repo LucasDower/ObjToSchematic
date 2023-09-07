@@ -19,6 +19,8 @@ import { StatusHandler } from '../status';
 import { AppConfig } from '../config';
 import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
 import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
+import { AppError } from '../util/editor_util';
+import { ObjImporterError } from '../../runtime/importers/obj_importer';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -93,9 +95,22 @@ export class WorkerClient {
         const parsed = path.parse(params.file.name);
 
         const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
+
         this._loadedMesh = await importer.import(params.file);
 
-        this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
+        const err = this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
+        if (err !== null) {
+            switch (err) {
+                case 'could-not-normalise':
+                    throw new AppError(LOC('import.could_not_scale_mesh'));
+                case 'no-triangles-loaded':
+                    throw new AppError(LOC('import.no_triangles_loaded'));
+                case 'no-vertices-loaded':
+                    throw new AppError(LOC('import.no_vertices_loaded'));
+                default:
+                    throw new AppError(LOC('import.could_not_parse'));
+            }
+        }
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),

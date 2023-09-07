@@ -3,10 +3,10 @@ import { RGBA, RGBAUtil } from '../runtime/colour';
 import { LOC } from '../editor/localiser';
 import { degreesToRadians } from './math';
 import { StatusHandler } from '../editor/status';
-import { Texture, TextureConverter, TImageFiletype, TImageRawWrap, TTransparencyOptions } from './texture';
+import { Texture, TImageRawWrap, TTransparencyOptions } from './texture';
 import { Triangle, UVTriangle } from './triangle';
 import { getRandomID, UV } from './util';
-import { AppError, ASSERT } from './util/error_util';
+import { ASSERT } from './util/error_util';
 import { LOG, LOG_WARN } from './util/log_util';
 import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 import { Vector3 } from './vector';
@@ -45,6 +45,11 @@ export type TexturedMaterial = BaseMaterial & {
 }
 export type MaterialMap = Map<string, SolidMaterial | TexturedMaterial>;
 
+export type TProcessMeshError =
+    | 'no-vertices-loaded'
+    | 'no-triangles-loaded'
+    | 'could-not-normalise';
+
 export class Mesh {
     public readonly id: string;
 
@@ -68,15 +73,25 @@ export class Mesh {
     }
 
     // TODO: Always check
-    public processMesh(pitch: number, roll: number, yaw: number) {
-        this._checkMesh();
+    // TODO: Provide better error reporting
+    public processMesh(pitch: number, roll: number, yaw: number): (null | TProcessMeshError) {
+        const checkErr = this._checkMesh();
+        if (checkErr !== null) {
+            return checkErr;
+        }
+
         this._checkMaterials();
 
         this._centreMesh();
         this._rotateMesh(pitch, roll, yaw);
-        this._normaliseMesh();
+        const couldNormalise = this._normaliseMesh();
+        if (!couldNormalise) {
+            return 'could-not-normalise';
+        }
 
         this._loadTextures();
+
+        return null;
     }
 
     private _rotateMesh(pitch: number, roll: number, yaw: number) {
@@ -138,15 +153,15 @@ export class Mesh {
         });
     }
 
-    private _checkMesh() {
+    private _checkMesh(): (null | TProcessMeshError) {
         // TODO: Check indices exist
 
         if (this._vertices.length === 0) {
-            throw new AppError(LOC('import.no_vertices_loaded'));
+            return 'no-vertices-loaded';
         }
 
         if (this._tris.length === 0) {
-            throw new AppError(LOC('import.no_triangles_loaded'));
+            return 'no-triangles-loaded';
         }
 
         if (this._tris.length >= 100_000) {
@@ -176,6 +191,8 @@ export class Mesh {
         if (giveNormalsWarning) {
             StatusHandler.warning(LOC('import.missing_normals'));
         };
+
+        return null;
     }
 
     private _checkMaterials() {
@@ -292,15 +309,16 @@ export class Mesh {
         this.translateMesh(centre.negate());
     }
 
-    private _normaliseMesh() {
+    private _normaliseMesh(): boolean {
         const bounds = this.getBounds();
         const size = Vector3.sub(bounds.max, bounds.min);
         const scaleFactor = 1.0 / size.y;
 
         if (isNaN(scaleFactor) || !isFinite(scaleFactor)) {
-            throw new AppError(LOC('import.could_not_scale_mesh'));
+            return false;
         } else {
             this.scaleMesh(scaleFactor);
+            return true;
         }
     }
 

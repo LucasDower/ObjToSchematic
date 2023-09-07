@@ -1,9 +1,9 @@
 import { ProgressManager } from '../progress';
 import { StatusHandler } from '../status';
-import { AppError } from '../../runtime/util/error_util';
 import { LOG_ERROR } from '../../runtime/util/log_util';
 import { WorkerClient } from './worker_client';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
+import { AppError } from '../util/editor_util';
 
 export async function doWork(message: TToWorkerMessage): Promise<TFromWorkerMessage> {
     StatusHandler.Get.clear();

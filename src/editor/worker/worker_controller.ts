@@ -1,6 +1,6 @@
 import { AppConfig } from '../../editor/config';
 import { EAppEvent, EventManager } from '../../editor/event';
-import { AppError, ASSERT } from '../../runtime/util/error_util';
+import { ASSERT } from '../../runtime/util/error_util';
 import { LOG } from '../../runtime/util/log_util';
 import { doWork } from './worker';
 // @ts-ignore

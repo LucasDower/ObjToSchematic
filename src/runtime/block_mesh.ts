@@ -10,7 +10,7 @@ import { Palette } from './palette';
 import { ProgressManager } from '../editor/progress';
 import { StatusHandler } from '../editor/status';
 import { ColourSpace, TOptional } from './util';
-import { AppError, ASSERT } from './util/error_util';
+import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { AssignParams } from '../editor/worker/worker_types';
@@ -222,7 +222,7 @@ export class BlockMesh {
             return true;
         }
 
-        throw new AppError(LOC('assign.block_palette_missing_light_blocks'));
+        return false;
     }
 
     public getBlockAt(pos: Vector3): TOptional<Block> {

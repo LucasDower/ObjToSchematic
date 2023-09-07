@@ -66,13 +66,12 @@ export const wayThrough = (value: number, min: number, max: number) => {
 };
 
 /**
- * Throws is any number in args is NaN
+ * Returs true if any number in args is NaN
  */
-export const checkNaN = (...args: number[]) => {
-    const existsNaN = args.some((arg) => {
+export const anyNaN = (...args: number[]) => {
+    return args.some((arg) => {
         return isNaN(arg);
     });
-    ASSERT(!existsNaN, 'Found NaN');
 };
 
 export const degreesToRadians = Math.PI / 180;

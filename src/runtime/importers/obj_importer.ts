@@ -1,14 +1,34 @@
 import { ProgressManager } from '../../editor/progress';
-import { LOC } from '../../editor/localiser';
-import { checkNaN } from '../math';
+import { anyNaN } from '../math';
 import { Mesh, Tri } from '../mesh';
 import { UV } from '../util';
-import { AppError, ASSERT } from '../util/error_util';
+import { ASSERT } from '../util/error_util';
 import { RegExpBuilder } from '../util/regex_util';
 import { REGEX_NZ_ANY } from '../util/regex_util';
 import { REGEX_NUMBER } from '../util/regex_util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
+
+type TObjImporterParser = {
+    regex: RegExp,
+    delegate: (match: { [key: string]: string }) => (null | TObjImporterError),
+}
+
+export type TObjImporterError =
+    | { type: 'invalid-encoding' }
+    | { type: 'invalid-material-name', name: string }
+    | { type: 'invalid-data' }
+    | { type: 'failed-to-parse', line: string }
+    | { type: 'failed-to-parse-essential-token', line: string }
+
+export class ObjImporterError extends Error {
+    public error: TObjImporterError;
+
+    constructor(error: TObjImporterError) {
+        super();
+        this.error = error;
+    }
+}
 
 export class ObjImporter extends IImporter {
     private _vertices: Vector3[] = [];
@@ -17,13 +37,19 @@ export class ObjImporter extends IImporter {
     private _tris: Tri[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
 
-    private _objParsers = [
+    private _objParsers: TObjImporterParser[] = [
         {
             // e.g. 'usemtl my_material'
             regex: new RegExpBuilder().add(/^usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
             delegate: (match: { [key: string]: string }) => {
                 this._currentMaterialName = match.name.trim();
-                ASSERT(this._currentMaterialName, 'invalid material name');
+
+                if (this._currentMaterialName.length === 0) {
+                    const err: TObjImporterError = { type: 'invalid-material-name', name: match.name };
+                    return err;
+                }
+
+                return null;
             },
         },
         {
@@ -41,8 +67,14 @@ export class ObjImporter extends IImporter {
                 const x = parseFloat(match.x);
                 const y = parseFloat(match.y);
                 const z = parseFloat(match.z);
-                checkNaN(x, y, z);
+
+                if (anyNaN(x, y, z)) {
+                    const err: TObjImporterError = { type: 'invalid-data' };
+                    return err;
+                }
+
                 this._vertices.push(new Vector3(x, y, z));
+                return null;
             },
         },
         {
@@ -60,8 +92,14 @@ export class ObjImporter extends IImporter {
                 const x = parseFloat(match.x);
                 const y = parseFloat(match.y);
                 const z = parseFloat(match.z);
-                checkNaN(x, y, z);
+
+                if (anyNaN(x, y, z)) {
+                    const err: TObjImporterError = { type: 'invalid-data' };
+                    return err;
+                }
+
                 this._normals.push(new Vector3(x, y, z));
+                return null;
             },
         },
         {
@@ -76,8 +114,14 @@ export class ObjImporter extends IImporter {
             delegate: (match: { [key: string]: string }) => {
                 const u = parseFloat(match.u);
                 const v = parseFloat(match.v);
-                checkNaN(u, v);
+
+                if (anyNaN(u, v)) {
+                    const err: TObjImporterError = { type: 'invalid-data' };
+                    return err;
+                }
+
                 this._uvs.push(new UV(u, v));
+                return null;
             },
         },
         {
@@ -95,8 +139,8 @@ export class ObjImporter extends IImporter {
                 });
 
                 if (vertices.length < 3) {
-                    // this.addWarning('')
-                    // throw new AppError('Face data should have at least 3 vertices');
+                    const err: TObjImporterError = { type: 'invalid-data' };
+                    return err;
                 }
 
                 const points: {
@@ -138,7 +182,8 @@ export class ObjImporter extends IImporter {
                             break;
                         }
                         default:
-                            throw new AppError(LOC('import.invalid_face_data', { count: vertexData.length}));
+                            const err: TObjImporterError = { type: 'invalid-data' };
+                            return err;
                     }
                 }
 
@@ -172,51 +217,57 @@ export class ObjImporter extends IImporter {
                     }
                     this._tris.push(tri);
                 }
+
+                return null;
             },
         },
     ];
 
-    public override import(file: File): Promise<Mesh> {
-        return file.text().then((fileSource) => {
-            if (fileSource.includes('�')) {
-                throw new AppError(LOC('import.invalid_encoding'));
+    public override async import(file: File): Promise<Mesh> {
+        const fileSource = await file.text();
+
+        if (fileSource.includes('�')) {
+            throw new ObjImporterError({ type: 'invalid-encoding' });
+        }
+
+        const fileLines = fileSource.split(/\r?\n/);
+        const numLines = fileLines.length;
+
+        const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
+        fileLines.forEach((line, index) => {
+            const { err }  = this.parseOBJLine(line);
+            if (err !== null) {
+                throw new ObjImporterError(err);
             }
+            ProgressManager.Get.progress(progressHandle, index / numLines);
+        })
 
-            fileSource.replace('\r', ''); // Convert Windows carriage return
-            const fileLines = fileSource.split('\n');
-            const numLines = fileLines.length;
-
-            const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
-            fileLines.forEach((line, index) => {
-                this.parseOBJLine(line);
-                ProgressManager.Get.progress(progressHandle, index / numLines);
-            })
-
-            return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
-        });
+        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
     }
-    public parseOBJLine(line: string) {
+
+    /**
+     * Attempts to parse the given line of an OBJ file.
+     * Potentially returns an error if failed to do so.
+     */
+    public parseOBJLine(line: string): { err: null | TObjImporterError} {
         const essentialTokens = ['usemtl ', 'v ', 'vt ', 'f ', 'vn '];
 
         for (const parser of this._objParsers) {
             const match = parser.regex.exec(line);
             if (match && match.groups) {
-                try {
-                    parser.delegate(match.groups);
-                } catch (error) {
-                    if (error instanceof AppError) {
-                        throw new AppError(LOC('import.failed_to_parse_line', { line: line, error: error.message }));
-                    }
-                }
-                return;
+                const err = parser.delegate(match.groups);
+                return { err: err };
             }
         }
 
         const beginsWithEssentialToken = essentialTokens.some((token) => {
             return line.startsWith(token);
         });
+
         if (beginsWithEssentialToken) {
-            ASSERT(false, `Failed to parse essential token for <b>${line}</b>`);
+            return { err: { type: 'failed-to-parse-essential-token', line: line } }
         }
+
+        return { err: null };
     }
 }

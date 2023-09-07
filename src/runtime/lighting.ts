@@ -73,26 +73,25 @@ export class BlockMeshLighting {
 
             if (this.getMaxLightLevel(potentialBlockPos) < threshold) {
                 const success = this._owner.setEmissiveBlock(potentialBlockPos);
+                ASSERT(success);
 
-                if (success) {
-                    const newBlockLight = 14; // TODO: Not necessarily 14
-                    this._blockLightValues.set(potentialBlockPos.hash(), newBlockLight);
+                const newBlockLight = 14; // TODO: Not necessarily 14
+                this._blockLightValues.set(potentialBlockPos.hash(), newBlockLight);
 
-                    const attenuated: TLightLevel = {
-                        sunLightValue: this.getLightLevel(potentialBlockPos).sunLightValue - 1,
-                        blockLightValue: newBlockLight - 1,
-                    };
-                    const updates: TLightUpdate[] = [];
-                    updates.push({ pos: new Vector3(0, 1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Down });
-                    updates.push({ pos: new Vector3(0, -1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Up });
-                    updates.push({ pos: new Vector3(1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.South });
-                    updates.push({ pos: new Vector3(-1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.North });
-                    updates.push({ pos: new Vector3(0, 0, 1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.West });
-                    updates.push({ pos: new Vector3(0, 0, -1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.East });
-                    //this._handleUpdates(updates, false, true);
-                    this._handleBlockLightUpdates(updates);
-                    ASSERT(updates.length === 0);
-                }
+                const attenuated: TLightLevel = {
+                    sunLightValue: this.getLightLevel(potentialBlockPos).sunLightValue - 1,
+                    blockLightValue: newBlockLight - 1,
+                };
+                const updates: TLightUpdate[] = [];
+                updates.push({ pos: new Vector3(0, 1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Down });
+                updates.push({ pos: new Vector3(0, -1, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.Up });
+                updates.push({ pos: new Vector3(1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.South });
+                updates.push({ pos: new Vector3(-1, 0, 0).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.North });
+                updates.push({ pos: new Vector3(0, 0, 1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.West });
+                updates.push({ pos: new Vector3(0, 0, -1).add(potentialBlockPos), sunLightValue: attenuated.sunLightValue, blockLightValue: attenuated.blockLightValue, from: EFace.East });
+                //this._handleUpdates(updates, false, true);
+                this._handleBlockLightUpdates(updates);
+                ASSERT(updates.length === 0);
             }
         }
     }

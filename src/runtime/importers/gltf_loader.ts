@@ -9,19 +9,31 @@ import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 
+export type TGltfImporterError =
+    | { type: 'failed-to-parse' }
+    | { type: 'unsupported-image-format' };
+
+export class GltfImporterError extends Error {
+    public error: TGltfImporterError;
+
+    constructor(error: TGltfImporterError) {
+        super();
+        this.error = error;
+    }
+}
+
 export class GltfLoader extends IImporter {
-    public override import(file: File): Promise<Mesh> {
+    public override async import(file: File): Promise<Mesh> {
         StatusHandler.warning(LOC('import.gltf_experimental'));
 
-        return new Promise<Mesh>((resolve, reject) => {
-            parse(file, GLTFLoader, { loadImages: true })
-                .then((gltf: any) => {
-                    resolve(this._handleGLTF(gltf));
-                })
-                .catch((err: any) => {
-                    reject(err);
-                });
-        });
+        let gltf;
+        try {
+            gltf = await parse(file, GLTFLoader, { loadImages: true });
+        } catch (err) {
+            throw new GltfImporterError({ type: 'failed-to-parse' });
+        }
+
+        return this._handleGLTF(gltf);
     }
 
     private _handleGLTF(gltf: any): Mesh {
@@ -88,7 +100,7 @@ export class GltfLoader extends IImporter {
                                 try {
                                     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg') {
                                         StatusHandler.warning(LOC('import.unsupported_image_type', { file_name: diffuseTexture.texture.source.id, file_type: mimeType }));
-                                        throw new Error('Unsupported image type');
+                                        throw new GltfImporterError({ type: 'unsupported-image-format' })
                                     }
 
                                     const base64 = btoa(
@@ -192,12 +204,14 @@ export class GltfLoader extends IImporter {
             });
         });
 
-        return new Mesh(
+        const mesh = new Mesh(
             meshVertices,
             meshNormals,
             meshTexcoords,
             meshTriangles,
             meshMaterials,
         );
+
+        return mesh;
     }
 }

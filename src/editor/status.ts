@@ -8,6 +8,7 @@ import { LOG, LOG_ERROR, LOG_WARN } from '../runtime/util/log_util';
  * has completed a Job it needs to send its status messages to the Client
  * along with its payload so that the messages can be displayed in the console.
  */
+// TODO: Remove
 export class StatusHandler {
     /** Singleton accessor */
     private static _instance: StatusHandler;
