@@ -2,13 +2,13 @@ import '../../styles.css';
 import { AppAnalytics } from './analytics';
 
 import { FallableBehaviour } from '../runtime/block_mesh';
-import { ArcballCamera } from './camera';
+import { ArcballCamera } from './renderer/camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { LOC, Localiser, TLocalisedString } from './localiser';
 import { MaterialMapManager } from '../runtime/material-map';
 import { MouseManager } from './mouse';
-import { MeshType, Renderer } from './renderer';
+import { MeshType, Renderer } from './renderer/renderer';
 import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
 import { ColourSpace, EAction } from '../runtime/util';

@@ -5,7 +5,7 @@ import { GeometryTemplates } from '../runtime/geometry';
 import { Mesh, SolidMaterial, TexturedMaterial } from '../runtime/mesh';
 import { OcclusionManager } from '../runtime/occlusion';
 import { ProgressManager } from './progress';
-import { AttributeData } from './render_buffer';
+import { AttributeData } from './renderer/render_buffer';
 import { AppUtil } from '../runtime/util';
 import { ASSERT } from '../runtime/util/error_util';
 import { Vector3 } from '../runtime/vector';

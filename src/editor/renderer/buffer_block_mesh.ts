@@ -4,7 +4,7 @@ import { AppConfig } from "../config";
 import { ASSERT } from "../../runtime/util/error_util";
 import { Vector3 } from "../../runtime/vector";
 import { GeometryTemplates } from "../../runtime/geometry";
-import { AttributeData } from "../render_buffer";
+import { AttributeData } from "./render_buffer";
 import { AppUtil } from "../../runtime/util";
 import { AppConstants } from "../../runtime/constants";
 import { OcclusionManager } from "../../runtime/occlusion";

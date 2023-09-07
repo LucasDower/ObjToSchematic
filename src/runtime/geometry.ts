@@ -3,7 +3,7 @@ import * as twgl from 'twgl.js';
 import { Bounds } from './bounds';
 import { RGBA } from '../runtime/colour';
 import { Mesh } from './mesh';
-import { AttributeData, MergeAttributeData, RenderBuffer } from '../editor/render_buffer';
+import { AttributeData, MergeAttributeData, RenderBuffer } from '../editor/renderer/render_buffer';
 import { Triangle, UVTriangle } from './triangle';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';

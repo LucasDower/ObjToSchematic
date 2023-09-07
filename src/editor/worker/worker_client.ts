@@ -202,7 +202,16 @@ export class WorkerClient {
         ASSERT(this._loadedVoxelMesh !== undefined);
         this._bufferGenerator_BlockMesh = undefined;
 
-        this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, params);
+        const result = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, params);
+        this._loadedBlockMesh = result.blockMesh;
+
+        if (result.warnings) {
+            switch (result.warnings.type) {
+                case 'falling-blocks':
+                    StatusHandler.warning(LOC('assign.falling_blocks', result.warnings.count));
+                    break;
+            }
+        }
 
         return {
         };

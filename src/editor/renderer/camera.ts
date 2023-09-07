@@ -1,11 +1,11 @@
 import { m4, v3 } from 'twgl.js';
 
-import { AppConfig } from '../editor/config';
-import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from '../runtime/math';
-import { MouseManager } from './mouse';
+import { AppConfig } from '../config';
+import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from '../../runtime/math';
+import { MouseManager } from '../mouse';
 import { Renderer } from './renderer';
-import { ASSERT } from '../runtime/util/error_util';
-import { Vector3 } from '../runtime/vector';
+import { ASSERT } from '../../runtime/util/error_util';
+import { Vector3 } from '../../runtime/vector';
 
 export class ArcballCamera {
     public isUserRotating = false;

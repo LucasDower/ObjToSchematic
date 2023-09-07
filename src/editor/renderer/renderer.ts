@@ -1,21 +1,21 @@
 import * as twgl from 'twgl.js';
 
 import VANILLA_TEXTURE from '../../res/atlases/vanilla.png';
-import { Bounds } from '../runtime/bounds';
+import { Bounds } from '../../runtime/bounds';
 import { ArcballCamera } from './camera';
-import { RGBA, RGBAUtil } from '../runtime/colour';
-import { AppConfig } from './config';
-import { DebugGeometryTemplates } from '../runtime/geometry';
-import { MaterialType, SolidMaterial, TexturedMaterial } from '../runtime/mesh';
+import { RGBA, RGBAUtil } from '../../runtime/colour';
+import { AppConfig } from '../config';
+import { DebugGeometryTemplates } from '../../runtime/geometry';
+import { MaterialType, SolidMaterial, TexturedMaterial } from '../../runtime/mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { EImageChannel } from '../runtime/texture';
-import { ASSERT } from '../runtime/util/error_util';
-import { Vector3 } from '../runtime/vector';
-import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker/worker_types';
-import { UIUtil } from '../runtime/util/ui_util';
-import { TAxis } from '../runtime/util/type_util';
-import { Atlas } from '../runtime/atlas';
+import { EImageChannel } from '../../runtime/texture';
+import { ASSERT } from '../../runtime/util/error_util';
+import { Vector3 } from '../../runtime/vector';
+import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
+import { UIUtil } from '../../runtime/util/ui_util';
+import { TAxis } from '../../runtime/util/type_util';
+import { Atlas } from '../../runtime/atlas';
 
 /* eslint-disable */
 export enum MeshType {

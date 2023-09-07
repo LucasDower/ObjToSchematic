@@ -1,7 +1,7 @@
 import * as twgl from 'twgl.js';
 
 import { Renderer } from './renderer';
-import { ASSERT } from '../runtime/util/error_util';
+import { ASSERT } from '../../runtime/util/error_util';
 
 export interface Attribute {
     name: string,
