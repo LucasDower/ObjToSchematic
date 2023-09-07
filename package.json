@@ -16,7 +16,8 @@
     "atlas": "ts-node ./tools/build-atlas.ts",
     "headless": "ts-node ./tools/run-headless.ts",
     "build": "tsc",
-    "check": "npx depcruise src"
+    "check": "npx depcruise src",
+    "graph": "npx depcruise --exclude \"^node_modules\" --output-type dot src | dot -T jpg > dependencies.jpg"
   },
   "repository": {
     "type": "git",

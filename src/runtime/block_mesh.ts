@@ -5,10 +5,8 @@ import { RGBA_255, RGBAUtil } from '../runtime/colour';
 import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
-import { LOC } from '../editor/localiser';
 import { Palette } from './palette';
 import { ProgressManager } from '../editor/progress';
-import { StatusHandler } from '../editor/status';
 import { ColourSpace, TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
@@ -36,6 +34,9 @@ export interface BlockMeshParams {
     fallable: FallableBehaviour,
 }
 
+export type TAssignBlocksWarning =
+    | { type: 'falling-blocks', count: number };
+
 export class BlockMesh {
     private _blocksUsed: Set<string>;
     private _blocks: Map<number, Block>;
@@ -46,7 +47,7 @@ export class BlockMesh {
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
         const blockMesh = new BlockMesh(voxelMesh);
-        blockMesh._assignBlocks(blockMeshParams);
+        const warn = blockMesh._assignBlocks(blockMeshParams);
 
         //blockMesh._calculateLighting(blockMeshParams.lightThreshold);
         if (blockMeshParams.calculateLighting) {
@@ -57,7 +58,7 @@ export class BlockMesh {
             blockMesh._lighting.dumpInfo();
         }
 
-        return blockMesh;
+        return { blockMesh: blockMesh, warnings: warn };
     }
 
     private constructor(voxelMesh: VoxelMesh) {
@@ -95,7 +96,7 @@ export class BlockMesh {
         return ditheredColour;
     }
 
-    private _assignBlocks(blockMeshParams: AssignParams.Input) {
+    private _assignBlocks(blockMeshParams: AssignParams.Input): (null | TAssignBlocksWarning) {
         const atlas = Atlas.load(blockMeshParams.textureAtlas);
         ASSERT(atlas !== undefined, 'Could not load atlas');
         this._atlas = atlas;
@@ -179,8 +180,10 @@ export class BlockMesh {
         ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
-            StatusHandler.warning(LOC('assign.falling_blocks', { count: countFalling }));
+            return { type: 'falling-blocks', count: countFalling }
         }
+
+        return null;
     }
 
     // Face order: ['north', 'south', 'up', 'down', 'east', 'west']
