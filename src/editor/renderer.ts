@@ -15,6 +15,7 @@ import { Vector3 } from '../runtime/vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from './worker/worker_types';
 import { UIUtil } from '../runtime/util/ui_util';
 import { TAxis } from '../runtime/util/type_util';
+import { Atlas } from '../runtime/atlas';
 
 /* eslint-disable */
 export enum MeshType {
@@ -118,6 +119,11 @@ export class Renderer {
         twgl.addExtensionsToContext(this._gl);
 
         this._backgroundColour = AppConfig.Get.VIEWPORT_BACKGROUND_COLOUR;
+
+        const atlas = Atlas.load('vanilla');
+        ASSERT(atlas !== undefined);
+        this._atlasSize = atlas.getAtlasSize();
+
 
         this._modelsAvailable = 0;
         this._materialBuffers = new Map();
@@ -298,6 +304,19 @@ export class Renderer {
         this.forceRedraw();
     }
 
+    public initAtlas() {
+        const atlas = Atlas.load('vanilla');
+        ASSERT(atlas !== undefined, 'Could not load atlas');
+
+        this._atlasSize = atlas.getAtlasSize();
+        this._atlasTexture = twgl.createTexture(this._gl, {
+            src: VANILLA_TEXTURE,
+            mag: this._gl.NEAREST,
+        }, () => {
+            this.forceRedraw();
+        });
+    }
+
     public clearMesh() {
         this._materialBuffers = new Map();
 
@@ -444,32 +463,9 @@ export class Renderer {
         this.forceRedraw();
     }
 
-    /*
-    public useVoxelMesh(params: RenderNextVoxelMeshChunkParams.Output) {
-        this._voxelBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
-        this._voxelSize = params.voxelSize;
-
-        const voxelSize = this._voxelSize;
-        const dimensions = new Vector3(0, 0, 0);
-        dimensions.setFrom(params.dimensions);
-
-        this._gridOffset = new Vector3(
-            dimensions.x % 2 === 0 ? 0 : -0.5,
-            dimensions.y % 2 === 0 ? 0 : -0.5,
-            dimensions.z % 2 === 0 ? 0 : -0.5,
-        );
-        dimensions.add(1);
-
-        this._gridBuffers.x[MeshType.VoxelMesh] = DebugGeometryTemplates.gridX(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        this._gridBuffers.y[MeshType.VoxelMesh] = DebugGeometryTemplates.gridY(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-        this._gridBuffers.z[MeshType.VoxelMesh] = DebugGeometryTemplates.gridZ(Vector3.mulScalar(dimensions, voxelSize), voxelSize);
-
-        this._modelsAvailable = 2;
-        this.setModelToUse(MeshType.VoxelMesh);
-    }
-    */
-
     public useBlockMeshChunk(params: RenderNextBlockMeshChunkParams.Output) {
+        ASSERT(this._atlasTexture !== undefined, 'Atlas texture not initialised');
+
         if (params.isFirstChunk) {
             this._blockBuffer = [];
 
@@ -486,14 +482,7 @@ export class Renderer {
         this._blockBuffer?.push(twgl.createBufferInfoFromArrays(this._gl, params.buffer.buffer));
 
         if (params.isFirstChunk) {
-            this._atlasTexture = twgl.createTexture(this._gl, {
-                src: VANILLA_TEXTURE,
-                mag: this._gl.NEAREST,
-            }, () => {
-                this.forceRedraw();
-            });
 
-            this._atlasSize = params.atlasSize;
 
             this._gridBuffers.y[MeshType.BlockMesh] = this._gridBuffers.y[MeshType.VoxelMesh];
 
@@ -523,7 +512,6 @@ export class Renderer {
         // Draw debug modes
         {
             //this._gl.disable(this._gl.DEPTH_TEST);
-
             const axes: TAxis[] = ['x', 'y', 'z'];
             axes.forEach((axis) => {
                 if (this._axisHighlightBuffer[axis].enabled) {
@@ -532,8 +520,6 @@ export class Renderer {
                     });
                 }
             })
-
-
             //this._gl.enable(this._gl.DEPTH_TEST);
         }
 

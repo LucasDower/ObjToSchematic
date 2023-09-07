@@ -1,13 +1,9 @@
 import { EFaceVisibility } from '../runtime/block_assigner';
 import { Bounds } from './bounds';
-import { ChunkedBufferGenerator, TVoxelMeshBufferDescription } from '../editor/buffer';
 import { RGBA } from '../runtime/colour';
 import { OcclusionManager } from './occlusion';
 import { TOptional } from './util';
-import { ASSERT } from './util/error_util';
-import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
-import { RenderNextVoxelMeshChunkParams } from '../editor/worker/worker_types';
 
 export interface Voxel {
     position: Vector3,
@@ -29,7 +25,6 @@ export class VoxelMesh {
         this._bounds = Bounds.getInfiniteBounds();
         this._overlapRule = overlapRule;
         this._ambientOcclusion = ambientOcclusion;
-        this._recreateBuffer = true;
     }
 
     public getVoxels(): Voxel[] {
@@ -182,25 +177,5 @@ export class VoxelMesh {
      */
     public hasNeighbour(pos: Vector3, offset: Vector3): boolean {
         return (this.getNeighbours(pos) & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
-    }
-
-    private _renderParams?: RenderNextVoxelMeshChunkParams.Input;
-    private _recreateBuffer: boolean;
-    public setRenderParams(params: RenderNextVoxelMeshChunkParams.Input) {
-        this._renderParams = params;
-        this._recreateBuffer = true;
-        this._bufferChunks = [];
-    }
-
-    private _bufferChunks: Array<TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number }> = [];
-    public getChunkedBuffer(chunkIndex: number): TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number } {
-        ASSERT(this._renderParams, 'Called VoxelMesh.getChunkedBuffer() without setting render params');
-        if (this._bufferChunks[chunkIndex] === undefined) {
-            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
-            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromVoxelMesh(this, this._renderParams, chunkIndex);
-        } else {
-            LOGF(`[VoxelMesh]: getChunkedBuffer: ci: ${chunkIndex} cached`);
-        }
-        return this._bufferChunks[chunkIndex];
     }
 }

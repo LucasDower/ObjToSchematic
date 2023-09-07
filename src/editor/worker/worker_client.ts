@@ -17,6 +17,8 @@ import { VoxeliserFactory } from '../../runtime/voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 import { StatusHandler } from '../status';
 import { AppConfig } from '../config';
+import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
+import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -30,6 +32,12 @@ export class WorkerClient {
     private _loadedMesh?: Mesh;
     private _loadedVoxelMesh?: VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
+
+    private _voxelMeshProgressHandle?: TTaskHandle;
+    private _bufferGenerator_VoxelMesh?: BufferGenerator_VoxelMesh;
+
+    private _blockMeshProgressHandle?: TTaskHandle;
+    private _bufferGenerator_BlockMesh?: BufferGenerator_BlockMesh;
 
     /**
      * This function should only be called if the client is using the worker.
@@ -119,6 +127,7 @@ export class WorkerClient {
 
     public voxelise(params: VoxeliseParams.Input): VoxeliseParams.Output {
         ASSERT(this._loadedMesh !== undefined);
+        this._bufferGenerator_VoxelMesh = undefined;
 
         const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
         voxeliser.setMultisampleCount(AppConfig.Get.MULTISAMPLE_COUNT);
@@ -133,8 +142,6 @@ export class WorkerClient {
 
         this._loadedVoxelMesh.calculateNeighbours();
 
-        this._voxelMeshChunkIndex = 0;
-
         {
             StatusHandler.info(LOC('voxelise.voxel_count', { count: this._loadedVoxelMesh.getVoxelCount() }));
 
@@ -146,27 +153,25 @@ export class WorkerClient {
         };
     }
 
-    private _voxelMeshChunkIndex = 0;
-    private _voxelMeshProgressHandle?: TTaskHandle;
     public renderChunkedVoxelMesh(params: RenderNextVoxelMeshChunkParams.Input): RenderNextVoxelMeshChunkParams.Output {
         ASSERT(this._loadedVoxelMesh !== undefined);
 
-        const isFirstChunk = this._voxelMeshChunkIndex === 0;
+        const isFirstChunk = this._bufferGenerator_VoxelMesh === undefined;
         if (isFirstChunk) {
             this._voxelMeshProgressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
-            this._loadedVoxelMesh.setRenderParams(params);
+            this._bufferGenerator_VoxelMesh = new BufferGenerator_VoxelMesh(this._loadedVoxelMesh, params.enableAmbientOcclusion);
         }
 
-        const buffer = this._loadedVoxelMesh.getChunkedBuffer(this._voxelMeshChunkIndex);
-        ++this._voxelMeshChunkIndex;
+        ASSERT(this._bufferGenerator_VoxelMesh !== undefined, 'No buffer generator for voxel mesh');
+        ASSERT(this._voxelMeshProgressHandle !== undefined, 'No progress handle for voxel mesh');
 
-        if (this._voxelMeshProgressHandle !== undefined) {
-            if (buffer.moreVoxelsToBuffer) {
-                ProgressManager.Get.progress(this._voxelMeshProgressHandle, buffer.progress);
-            } else {
-                ProgressManager.Get.end(this._voxelMeshProgressHandle);
-                this._voxelMeshProgressHandle = undefined;
-            }
+        const buffer = this._bufferGenerator_VoxelMesh.getNext();
+
+        if (buffer.moreVoxelsToBuffer) {
+            ProgressManager.Get.progress(this._voxelMeshProgressHandle, buffer.progress);
+        } else {
+            ProgressManager.Get.end(this._voxelMeshProgressHandle);
+            this._voxelMeshProgressHandle = undefined;
         }
 
         return {
@@ -180,67 +185,43 @@ export class WorkerClient {
 
     public assign(params: AssignParams.Input): AssignParams.Output {
         ASSERT(this._loadedVoxelMesh !== undefined);
+        this._bufferGenerator_BlockMesh = undefined;
 
         this._loadedBlockMesh = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, params);
-
-        this._blockMeshChunkIndex = 0;
 
         return {
         };
     }
 
-    private _blockMeshChunkIndex = 0;
-    //private _blockMeshProgressHandle?: TTaskHandle;
     public renderChunkedBlockMesh(params: RenderNextBlockMeshChunkParams.Input): RenderNextBlockMeshChunkParams.Output {
-        ASSERT(this._loadedBlockMesh !== undefined);
+        ASSERT(this._loadedBlockMesh !== undefined, 'No block mesh loaded for chunk renderer');
+        ASSERT(this._bufferGenerator_VoxelMesh !== undefined, 'No voxel mesh buffer generator for block mesh chunk renderer');
 
-        const isFirstChunk = this._blockMeshChunkIndex === 0;
+        const isFirstChunk = this._bufferGenerator_BlockMesh === undefined;
         if (isFirstChunk) {
-            //this._blockMeshProgressHandle = ProgressManager.Get.start('BlockMeshBuffer');
+            this._blockMeshProgressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
+            this._bufferGenerator_BlockMesh = new BufferGenerator_BlockMesh(this._loadedBlockMesh, this._bufferGenerator_VoxelMesh);
         }
 
-        const buffer = this._loadedBlockMesh.getChunkedBuffer(this._blockMeshChunkIndex);
-        ++this._blockMeshChunkIndex;
+        ASSERT(this._bufferGenerator_BlockMesh !== undefined, 'No buffer generator for block mesh');
+        ASSERT(this._blockMeshProgressHandle !== undefined, 'No progress handle for block mesh');
 
-        /*
-        if (this._blockMeshProgressHandle !== undefined) {
-            if (buffer.moreBlocksToBuffer) {
-                ProgressManager.Get.progress(this._blockMeshProgressHandle, buffer.progress);
-            } else {
-                ProgressManager.Get.end(this._blockMeshProgressHandle);
-                this._blockMeshProgressHandle = undefined;
-            }
+        const buffer = this._bufferGenerator_BlockMesh.getNext();
+
+        if (buffer.moreBlocksToBuffer) {
+            ProgressManager.Get.progress(this._blockMeshProgressHandle, buffer.progress);
+        } else {
+            ProgressManager.Get.end(this._blockMeshProgressHandle);
+            this._blockMeshProgressHandle = undefined;
         }
-        */
-
-        const atlas = Atlas.load(params.textureAtlas);
-        ASSERT(atlas !== undefined);
 
         return {
             buffer: buffer,
             bounds: this._loadedBlockMesh.getVoxelMesh().getBounds(),
-            atlasTexturePath: atlas.getAtlasTexturePath(),
-            atlasSize: atlas.getAtlasSize(),
             moreBlocksToBuffer: buffer.moreBlocksToBuffer,
             isFirstChunk: isFirstChunk,
         };
     }
-
-    /*
-    public renderBlockMesh(params: RenderBlockMeshParams.Input): RenderBlockMeshParams.Output {
-        ASSERT(this._loadedBlockMesh !== undefined);
-
-        const atlas = Atlas.load(params.textureAtlas);
-        ASSERT(atlas !== undefined);
-
-        return {
-            buffer: this._loadedBlockMesh.getBuffer(),
-            dimensions: this._loadedBlockMesh.getVoxelMesh().getBounds().getDimensions(),
-            atlasTexturePath: atlas.getAtlasTexturePath(),
-            atlasSize: atlas.getAtlasSize(),
-        };
-    }
-    */
 
     public export(params: ExportParams.Input): ExportParams.Output {
         ASSERT(this._loadedBlockMesh !== undefined);

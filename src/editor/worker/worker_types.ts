@@ -135,14 +135,11 @@ export namespace AssignParams {
 
 export namespace RenderNextBlockMeshChunkParams {
     export type Input = {
-        textureAtlas: TAtlasId,
     }
 
     export type Output = {
         buffer: TBlockMeshBufferDescription,
         bounds: Bounds,
-        atlasTexturePath: string,
-        atlasSize: number,
         moreBlocksToBuffer: boolean,
         isFirstChunk: boolean,
     }

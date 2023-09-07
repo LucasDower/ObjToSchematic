@@ -51,7 +51,6 @@ export class AppContext {
 
         AppConfig.Get.dumpConfig();
 
-
         EventManager.Get.bindToContext(this.Get);
 
         UI.Get.bindToContext(this.Get);
@@ -76,6 +75,8 @@ export class AppContext {
             this.Get._workerController.execute({ action: 'Settings', params: { language: Localiser.Get.getCurrentLanguage() }}).then(() => {
             });
         });
+
+        Renderer.Get.initAtlas();
     }
 
     public getLastAction() {

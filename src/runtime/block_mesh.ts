@@ -1,7 +1,6 @@
 import { Atlas, TAtlasBlock } from '../runtime/atlas';
 import { AtlasPalette, EFaceVisibility } from '../runtime/block_assigner';
 import { BlockInfo } from './block_atlas';
-import { ChunkedBufferGenerator, TBlockMeshBufferDescription } from '../editor/buffer';
 import { RGBA_255, RGBAUtil } from '../runtime/colour';
 import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
@@ -12,12 +11,11 @@ import { ProgressManager } from '../editor/progress';
 import { StatusHandler } from '../editor/status';
 import { ColourSpace, TOptional } from './util';
 import { AppError, ASSERT } from './util/error_util';
-import { LOGF } from './util/log_util';
 import { Vector3 } from './vector';
 import { Voxel, VoxelMesh } from './voxel_mesh';
 import { AssignParams } from '../editor/worker/worker_types';
 
-interface Block {
+export interface Block {
     voxel: Voxel;
     blockInfo: BlockInfo;
 }
@@ -254,32 +252,5 @@ export class BlockMesh {
 
     public isTransparentBlock(block: Block) {
         return AppRuntimeConstants.Get.TRANSPARENT_BLOCKS.has(block.blockInfo.name);
-    }
-
-    /*
-    private _buffer?: TBlockMeshBufferDescription;
-    public getBuffer(): TBlockMeshBufferDescription {
-        //ASSERT(this._renderParams, 'Called BlockMesh.getBuffer() without setting render params');
-        if (this._buffer === undefined) {
-            this._buffer = BufferGenerator.fromBlockMesh(this);
-            //this._recreateBuffer = false;
-        }
-        return this._buffer;
-    }
-    */
-
-    private _bufferChunks: Array<TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number }> = [];
-    public getChunkedBuffer(chunkIndex: number): TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number } {
-        if (this._bufferChunks[chunkIndex] === undefined) {
-            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
-            this._bufferChunks[chunkIndex] = ChunkedBufferGenerator.fromBlockMesh(this, chunkIndex);
-        } else {
-            LOGF(`[BlockMesh]: getChunkedBuffer: ci: ${chunkIndex} not cached`);
-        }
-        return this._bufferChunks[chunkIndex];
-    }
-
-    public getAllChunkedBuffers() {
-        return this._bufferChunks;
     }
 }
