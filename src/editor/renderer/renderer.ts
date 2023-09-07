@@ -1,11 +1,11 @@
 import * as twgl from 'twgl.js';
 
-import VANILLA_TEXTURE from '../../res/atlases/vanilla.png';
+import VANILLA_TEXTURE from '../../../res/atlases/vanilla.png';
 import { Bounds } from '../../runtime/bounds';
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from '../../runtime/colour';
 import { AppConfig } from '../config';
-import { DebugGeometryTemplates } from '../../runtime/geometry';
+import { DebugGeometryTemplates } from './geometry';
 import { MaterialType, SolidMaterial, TexturedMaterial } from '../../runtime/mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';

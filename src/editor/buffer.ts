@@ -1,7 +1,7 @@
 import { BlockMesh } from '../runtime/block_mesh';
 import { AppConfig } from './config';
 import { AppConstants } from '../runtime/constants';
-import { GeometryTemplates } from '../runtime/geometry';
+import { GeometryTemplates } from './renderer/geometry';
 import { Mesh, SolidMaterial, TexturedMaterial } from '../runtime/mesh';
 import { OcclusionManager } from '../runtime/occlusion';
 import { ProgressManager } from './progress';

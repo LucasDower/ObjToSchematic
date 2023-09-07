@@ -6,12 +6,11 @@ import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
 import { Palette } from './palette';
-import { ProgressManager } from '../editor/progress';
 import { ColourSpace, TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { Voxel, VoxelMesh } from './voxel_mesh';
-import { AssignParams } from '../editor/worker/worker_types';
+import { TDithering } from './util/type_util';
 
 export interface Block {
     voxel: Voxel;
@@ -28,10 +27,16 @@ interface GrassLikeBlock {
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
-    textureAtlas: Atlas,
-    blockPalette: Palette,
+    blockPalette: string[],
+    dithering: TDithering,
+    ditheringMagnitude: number,
     colourSpace: ColourSpace,
     fallable: FallableBehaviour,
+    resolution: RGBAUtil.TColourAccuracy,
+    calculateLighting: boolean,
+    lightThreshold: number,
+    contextualAveraging: boolean,
+    errorWeight: number,
 }
 
 export type TAssignBlocksWarning =
@@ -40,12 +45,11 @@ export type TAssignBlocksWarning =
 export class BlockMesh {
     private _blocksUsed: Set<string>;
     private _blocks: Map<number, Block>;
-    //private _blocks: Block[];
     private _voxelMesh: VoxelMesh;
     private _atlas: Atlas;
     private _lighting: BlockMeshLighting;
 
-    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: AssignParams.Input) {
+    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
         const warn = blockMesh._assignBlocks(blockMeshParams);
 
@@ -73,7 +77,7 @@ export class BlockMesh {
      * Before we turn a voxel into a block we have the opportunity to alter the voxel's colour.
      * This is where the colour accuracy bands colours together and where dithering is calculated.
      */
-    private _getFinalVoxelColour(voxel: Voxel, blockMeshParams: AssignParams.Input) {
+    private _getFinalVoxelColour(voxel: Voxel, blockMeshParams: BlockMeshParams) {
         const voxelColour = RGBAUtil.copy(voxel.colour);
 
         const binnedColour = RGBAUtil.bin(voxelColour, blockMeshParams.resolution);
@@ -96,14 +100,13 @@ export class BlockMesh {
         return ditheredColour;
     }
 
-    private _assignBlocks(blockMeshParams: AssignParams.Input): (null | TAssignBlocksWarning) {
-        const atlas = Atlas.load(blockMeshParams.textureAtlas);
+    private _assignBlocks(blockMeshParams: BlockMeshParams): (null | TAssignBlocksWarning) {
+        const atlas = Atlas.load('vanilla'); // TODO: AtlasPaletteRework
         ASSERT(atlas !== undefined, 'Could not load atlas');
         this._atlas = atlas;
 
         const palette = Palette.create();
         palette.add(blockMeshParams.blockPalette);
-        ASSERT(palette !== undefined, 'Could not load palette');
 
         const atlasPalette = new AtlasPalette(atlas, palette);
         const allBlockCollection = atlasPalette.createBlockCollection([]);
@@ -111,10 +114,11 @@ export class BlockMesh {
         const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
 
         let countFalling = 0;
-        const taskHandle = ProgressManager.Get.start('Assigning');
+        // TODO: ProgressRework
+        //const taskHandle = ProgressManager.Get.start('Assigning');
         const voxels = this._voxelMesh.getVoxels();
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
-            ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
+            //ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
             // Convert the voxel into a block
             const voxel = voxels[voxelIndex];
@@ -160,7 +164,7 @@ export class BlockMesh {
         if (grassLikeBlocksBuffer.length > 0) {
             const nonGrassLikeBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.GRASS_LIKE_BLOCKS));
             for (let index=0; index < grassLikeBlocksBuffer.length; index++) {
-                ProgressManager.Get.progress(taskHandle, index / grassLikeBlocksBuffer.length);
+                //ProgressManager.Get.progress(taskHandle, index / grassLikeBlocksBuffer.length);
                 const examined = grassLikeBlocksBuffer[index];
                 const examinedBlock = this._blocks.get(examined.hash);
                 ASSERT(examinedBlock, 'Missing examined block');
@@ -177,7 +181,7 @@ export class BlockMesh {
                 }
             }
         }
-        ProgressManager.Get.end(taskHandle);
+        //ProgressManager.Get.end(taskHandle);
 
         if (blockMeshParams.fallable === 'do-nothing' && countFalling > 0) {
             return { type: 'falling-blocks', count: countFalling }

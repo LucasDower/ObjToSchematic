@@ -1,4 +1,3 @@
-import { AppConfig } from '../editor/config';
 import { TBrand } from './util/type_util';
 
 const hsv_rgb = require('hsv-rgb');
@@ -120,7 +119,7 @@ export namespace RGBAUtil {
         squaredDistance += (a.r - b.r) * (a.r - b.r);
         squaredDistance += (a.g - b.g) * (a.g - b.g);
         squaredDistance += (a.b - b.b) * (a.b - b.b);
-        squaredDistance += (a.a - b.a) * (a.a - b.a) * AppConfig.Get.ALPHA_BIAS;
+        squaredDistance += (a.a - b.a) * (a.a - b.a); // * AppConfig.Get.ALPHA_BIAS; TODO: ConfigRework
         return squaredDistance;
     }
 

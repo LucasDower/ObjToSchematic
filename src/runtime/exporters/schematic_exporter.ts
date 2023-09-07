@@ -1,11 +1,7 @@
-//import { NBT, TagType } from 'prismarine-nbt';
-
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BLOCK_IDS } from '../../../res/block_ids';
 import { BlockMesh } from '../block_mesh';
-import { LOC } from '../../editor/localiser';
-import { StatusHandler } from '../../editor/status';
 import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
@@ -53,10 +49,13 @@ export class Schematic extends IExporter {
             }
         }
 
+        // TODO: StatusRework
+        /*
         if (unsupportedBlocks.size > 0) {
             StatusHandler.warning(LOC('export.schematic_unsupported_blocks', { count: numBlocksUnsupported, unique: unsupportedBlocks.size }));
             LOG_WARN(unsupportedBlocks);
         }
+        */
 
         // TODO Unimplemented
         const nbt: NBT = {
