@@ -1,10 +1,6 @@
-import ATLAS_VANILLA from '../../res/atlases/vanilla.atlas';
-import path from 'path';
-
 import { RGBA } from './colour';
-import { AppTypes, AppUtil, TOptional, UV } from './util';
+import { AppTypes, AppUtil, UV } from './util';
 import { ASSERT } from './util/error_util';
-import { AppPaths } from './util/path_util';
 
 export type TAtlasBlockFace = {
     name: string,
@@ -36,26 +32,28 @@ export class Atlas {
 
     private _blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>;
     private _atlasSize: number;
-    private _atlasName: string;
 
-    private constructor(atlasName: string) {
+    private constructor() {
         this._blocks = new Map<AppTypes.TNamespacedBlockName, TAtlasBlock>();
         this._atlasSize = 0;
-        this._atlasName = atlasName;
     }
 
     public getBlocks() {
         return this._blocks;
     }
 
-    public static load(atlasName: string): TOptional<Atlas> {
-        ASSERT(atlasName === 'vanilla');
+    public getAtlasSize(): number {
+        return this._atlasSize;
+    }
 
-        const atlas = new Atlas(atlasName);
+    public hasBlock(blockName: AppTypes.TNamespacedBlockName): boolean {
+        return this._blocks.has(blockName);
+    }
 
-        const atlasJSON = JSON.parse(ATLAS_VANILLA);
+    public static load(atlasJSON: any): Atlas {
+        ASSERT(atlasJSON.formatVersion === 3, `The loaded atlas file uses an outdated format and needs to be recreated`);
 
-        ASSERT(atlasJSON.formatVersion === 3, `The '${atlasName}' texture atlas uses an outdated format and needs to be recreated`);
+        const atlas = new Atlas();
 
         const atlasData = atlasJSON;
         atlas._atlasSize = atlasData.atlasSize;
@@ -118,35 +116,5 @@ export class Atlas {
         }
 
         return atlas;
-    }
-
-    public getAtlasSize(): number {
-        return this._atlasSize;
-    }
-
-    public getAtlasTexturePath() {
-        return path.join(AppPaths.Get.atlases, `./${this._atlasName}.png`);
-    }
-
-    /*
-    public getBlocks(): TAtlasBlock[] {
-        return Array.from(this._blocks.values());
-    }
-    */
-
-    public hasBlock(blockName: AppTypes.TNamespacedBlockName): boolean {
-        return this._blocks.has(blockName);
-    }
-
-    public static getVanillaAtlas(): TOptional<Atlas> {
-        return Atlas.load('vanilla');
-    }
-
-    private static _isValidAtlasName(atlasName: string): boolean {
-        return atlasName.length > 0 && Atlas.ATLAS_NAME_REGEX.test(atlasName);
-    }
-
-    private static _getAtlasPath(atlasName: string): string {
-        return path.join(AppPaths.Get.atlases, `./${atlasName}.atlas`);
     }
 }

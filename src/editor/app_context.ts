@@ -263,7 +263,6 @@ export class AppContext {
             const resultAssign = await this._workerController.execute({
                 action: 'Assign',
                 params: {
-                    textureAtlas: components.textureAtlas.getValue(),
                     blockPalette: components.blockPalette.getValue().getBlocks(),
                     dithering: components.dithering.getValue(),
                     ditheringMagnitude: components.ditheringMagnitude.getValue(),
@@ -274,6 +273,7 @@ export class AppContext {
                     lightThreshold: components.lightThreshold.getValue(),
                     contextualAveraging: components.contextualAveraging.getValue(),
                     errorWeight: components.errorWeight.getValue() / 10,
+                    atlasJSON: '',
                 },
             });
 

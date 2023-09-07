@@ -1,3 +1,4 @@
+import ATLAS_VANILLA from '../../../res/atlases/vanilla.atlas';
 import * as twgl from 'twgl.js';
 
 import VANILLA_TEXTURE from '../../../res/atlases/vanilla.png';
@@ -120,7 +121,7 @@ export class Renderer {
 
         this._backgroundColour = AppConfig.Get.VIEWPORT_BACKGROUND_COLOUR;
 
-        const atlas = Atlas.load('vanilla');
+        const atlas = Atlas.load(JSON.parse(ATLAS_VANILLA));
         ASSERT(atlas !== undefined);
         this._atlasSize = atlas.getAtlasSize();
 
@@ -305,7 +306,7 @@ export class Renderer {
     }
 
     public initAtlas() {
-        const atlas = Atlas.load('vanilla');
+        const atlas = Atlas.load(JSON.parse(ATLAS_VANILLA));
         ASSERT(atlas !== undefined, 'Could not load atlas');
 
         this._atlasSize = atlas.getAtlasSize();

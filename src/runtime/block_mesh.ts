@@ -37,6 +37,7 @@ export interface BlockMeshParams {
     lightThreshold: number,
     contextualAveraging: boolean,
     errorWeight: number,
+    atlasJSON: any,
 }
 
 export type TAssignBlocksWarning =
@@ -46,11 +47,15 @@ export class BlockMesh {
     private _blocksUsed: Set<string>;
     private _blocks: Map<number, Block>;
     private _voxelMesh: VoxelMesh;
-    private _atlas: Atlas;
     private _lighting: BlockMeshLighting;
+    private _atlas?: Atlas;
 
     public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
+
+        const atlas = Atlas.load(blockMeshParams.atlasJSON);
+        blockMesh.setAtlas(atlas);
+
         const warn = blockMesh._assignBlocks(blockMeshParams);
 
         //blockMesh._calculateLighting(blockMeshParams.lightThreshold);
@@ -69,8 +74,11 @@ export class BlockMesh {
         this._blocksUsed = new Set();
         this._blocks = new Map();
         this._voxelMesh = voxelMesh;
-        this._atlas = Atlas.getVanillaAtlas()!;
         this._lighting = new BlockMeshLighting(this);
+    }
+
+    public setAtlas(atlas: Atlas) {
+        this._atlas = atlas;
     }
 
     /**
@@ -101,14 +109,12 @@ export class BlockMesh {
     }
 
     private _assignBlocks(blockMeshParams: BlockMeshParams): (null | TAssignBlocksWarning) {
-        const atlas = Atlas.load('vanilla'); // TODO: AtlasPaletteRework
-        ASSERT(atlas !== undefined, 'Could not load atlas');
-        this._atlas = atlas;
+        ASSERT(this._atlas !== undefined, 'No atlas loaded');
 
         const palette = Palette.create();
         palette.add(blockMeshParams.blockPalette);
 
-        const atlasPalette = new AtlasPalette(atlas, palette);
+        const atlasPalette = new AtlasPalette(this._atlas, palette);
         const allBlockCollection = atlasPalette.createBlockCollection([]);
         const nonFallableBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.FALLABLE_BLOCKS));
         const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
@@ -204,12 +210,14 @@ export class BlockMesh {
     }
 
     public setEmissiveBlock(pos: Vector3): boolean {
+        ASSERT(this._atlas, 'No atlas loaded');
+
         const voxel = this._voxelMesh.getVoxelAt(pos);
         ASSERT(voxel !== undefined, 'Missing voxel');
         const minError = Infinity;
         let bestBlock: TAtlasBlock | undefined;
         AppRuntimeConstants.Get.EMISSIVE_BLOCKS.forEach((emissiveBlockName) => {
-            const emissiveBlockData = this._atlas.getBlocks().get(emissiveBlockName);
+            const emissiveBlockData = this._atlas!.getBlocks().get(emissiveBlockName);
             if (emissiveBlockData) {
                 const error = RGBAUtil.squaredDistance(emissiveBlockData.colour, voxel.colour);
                 if (error < minError) {
@@ -247,10 +255,6 @@ export class BlockMesh {
     public getVoxelMesh() {
         ASSERT(this._voxelMesh !== undefined, 'Block mesh has no voxel mesh');
         return this._voxelMesh;
-    }
-
-    public getAtlas() {
-        return this._atlas;
     }
 
     public isEmissiveBlock(block: Block) {

@@ -1,4 +1,4 @@
-import { FallableBehaviour } from '../../runtime/block_mesh';
+import { BlockMeshParams, FallableBehaviour } from '../../runtime/block_mesh';
 import { Bounds } from '../../runtime/bounds';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from '../buffer';
 import { RGBAUtil } from '../../runtime/colour';
@@ -114,19 +114,7 @@ export type TAtlasId = string;
 export type TPaletteId = string;
 
 export namespace AssignParams {
-    export type Input = {
-        textureAtlas: TAtlasId,
-        blockPalette: string[],
-        dithering: TDithering,
-        ditheringMagnitude: number,
-        colourSpace: ColourSpace,
-        fallable: FallableBehaviour,
-        resolution: RGBAUtil.TColourAccuracy,
-        calculateLighting: boolean,
-        lightThreshold: number,
-        contextualAveraging: boolean,
-        errorWeight: number,
-    }
+    export type Input = BlockMeshParams;
 
     export type Output = {
 
