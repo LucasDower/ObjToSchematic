@@ -1,8 +1,7 @@
-import { IHashable } from './hash_map';
 import { ASSERT } from './util/error_util';
 import { Vector3Hash } from './util/type_util';
 
-export class Vector3 implements IHashable {
+export class Vector3 {
     public x: number;
     public y: number;
     public z: number;
@@ -236,7 +235,6 @@ export class Vector3 implements IHashable {
         return this;
     }
 
-    // Begin IHashable interface
     public hash(): Vector3Hash {
         return Vector3.Hash(this.x, this.y, this.z) as Vector3Hash;
     }
@@ -248,7 +246,6 @@ export class Vector3 implements IHashable {
     public equals(other: Vector3) {
         return this.x == other.x && this.y == other.y && this.z == other.z;
     }
-    // End IHashable interface
 
     public stringify() {
         return `${this.x}_${this.y}_${this.z}`;
