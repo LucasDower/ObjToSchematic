@@ -1,6 +1,7 @@
 import { Atlas, TAtlasBlock } from './atlas';
 import { RGBA, RGBA_255, RGBAUtil } from './colour';
 import { AppMath } from './math';
+import { OtS_FaceVisibility } from './ots_voxel_mesh_neighbourhood';
 import { Palette } from './palette';
 import { AppTypes, TOptional } from './util';
 import { ASSERT } from './util/error_util';
@@ -11,16 +12,7 @@ export type TBlockCollection = {
 }
 
 /* eslint-disable */
-export enum EFaceVisibility {
-    None = 0,
-    Up = 1 << 0,
-    Down = 1 << 1,
-    North = 1 << 2,
-    East = 1 << 3,
-    South = 1 << 4,
-    West = 1 << 5,
-    Full = Up | Down | North | East | South | West,
-}
+
 /* eslint-enable */
 
 /**
@@ -76,7 +68,7 @@ export class AtlasPalette {
      * @param blockToExclude A list of blocks that should not be used, this should be a subset of the palette blocks.
      * @returns
      */
-    public getBlock(colour: RGBA_255, blockCollection: TBlockCollection, faceVisibility: EFaceVisibility, errorWeight: number) {
+    public getBlock(colour: RGBA_255, blockCollection: TBlockCollection, faceVisibility: OtS_FaceVisibility, errorWeight: number) {
         const colourHash = RGBAUtil.hash255(colour);
         const contextHash: BigInt = (BigInt(colourHash) << BigInt(6)) + BigInt(faceVisibility);
 
@@ -92,8 +84,8 @@ export class AtlasPalette {
         {
             blockCollection.blocks.forEach((blockData) => {
                 const context = AtlasPalette.getContextualFaceAverage(blockData, faceVisibility);
-                const contextualBlockColour = faceVisibility !== EFaceVisibility.None ? context.colour : blockData.colour;
-                const contextualStd = faceVisibility !== EFaceVisibility.None ? context.std : 0.0;
+                const contextualBlockColour = faceVisibility !== OtS_FaceVisibility.None ? context.colour : blockData.colour;
+                const contextualStd = faceVisibility !== OtS_FaceVisibility.None ? context.std : 0.0;
                 const floatColour = RGBAUtil.fromRGBA255(colour);
                 const rgbError = RGBAUtil.squaredDistance(floatColour, contextualBlockColour);
                 const stdError = contextualStd;
@@ -113,36 +105,36 @@ export class AtlasPalette {
         ASSERT(false, 'Unreachable, always at least one possible block');
     }
 
-    public static getContextualFaceAverage(block: TAtlasBlock, faceVisibility: EFaceVisibility) {
+    public static getContextualFaceAverage(block: TAtlasBlock, faceVisibility: OtS_FaceVisibility) {
         const averageColour: RGBA = { r: 0, g: 0, b: 0, a: 0 };
         let averageStd: number = 0.0; // Taking the average of a std is a bit naughty
         let count = 0;
-        if (faceVisibility & EFaceVisibility.Up) {
+        if (faceVisibility & OtS_FaceVisibility.Up) {
             RGBAUtil.add(averageColour, block.faces.up.colour);
             averageStd += block.faces.up.std;
             ++count;
         }
-        if (faceVisibility & EFaceVisibility.Down) {
+        if (faceVisibility & OtS_FaceVisibility.Down) {
             RGBAUtil.add(averageColour, block.faces.down.colour);
             averageStd += block.faces.down.std;
             ++count;
         }
-        if (faceVisibility & EFaceVisibility.North) {
+        if (faceVisibility & OtS_FaceVisibility.North) {
             RGBAUtil.add(averageColour, block.faces.north.colour);
             averageStd += block.faces.north.std;
             ++count;
         }
-        if (faceVisibility & EFaceVisibility.East) {
+        if (faceVisibility & OtS_FaceVisibility.East) {
             RGBAUtil.add(averageColour, block.faces.east.colour);
             averageStd += block.faces.east.std;
             ++count;
         }
-        if (faceVisibility & EFaceVisibility.South) {
+        if (faceVisibility & OtS_FaceVisibility.South) {
             RGBAUtil.add(averageColour, block.faces.south.colour);
             averageStd += block.faces.south.std;
             ++count;
         }
-        if (faceVisibility & EFaceVisibility.West) {
+        if (faceVisibility & OtS_FaceVisibility.West) {
             RGBAUtil.add(averageColour, block.faces.west.colour);
             averageStd += block.faces.west.std;
             ++count;

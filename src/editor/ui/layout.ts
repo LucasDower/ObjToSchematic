@@ -33,7 +33,7 @@ import { AppConsole } from './console';
 import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
-import { OtS_NeighbourhoodMode, OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
+import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
 
 export type Group = {
     id: string,

@@ -7,7 +7,8 @@ import { AttributeData } from "./render_buffer";
 import { AppUtil, TOptional } from "../../runtime/util";
 import { AppConstants } from "../../runtime/constants";
 import { OcclusionManager } from "../../runtime/occlusion";
-import { OtS_Voxel, OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from '../../runtime/ots_voxel_mesh';
+import { OtS_Voxel, OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
+import { OtS_VoxelMesh_Neighbourhood } from '../../runtime/ots_voxel_mesh_neighbourhood';
 
 export type TBuffer_VoxelMesh = TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number };
 

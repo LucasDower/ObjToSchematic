@@ -1,4 +1,4 @@
-import { OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh';
+import { OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 

@@ -1,5 +1,5 @@
 import { Atlas, TAtlasBlock } from '../runtime/atlas';
-import { AtlasPalette, EFaceVisibility } from '../runtime/block_assigner';
+import { AtlasPalette } from '../runtime/block_assigner';
 import { BlockInfo } from './block_atlas';
 import { RGBA_255, RGBAUtil } from '../runtime/colour';
 import { AppRuntimeConstants } from './constants';
@@ -10,7 +10,8 @@ import { ColourSpace, TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { TDithering } from './util/type_util';
-import { OtS_Voxel, OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh';
+import { OtS_Voxel, OtS_VoxelMesh } from './ots_voxel_mesh';
+import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
 
 export interface Block {
     voxel: OtS_Voxel;
@@ -21,7 +22,7 @@ interface GrassLikeBlock {
     hash: number;
     voxelColour: RGBA_255;
     errWeight: number;
-    faceVisibility: EFaceVisibility;
+    faceVisibility: OtS_FaceVisibility;
 }
 
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
@@ -134,7 +135,7 @@ export class BlockMesh {
             const voxelColour = this._getFinalVoxelColour(voxel, blockMeshParams);
             const faceVisibility = blockMeshParams.contextualAveraging
                 ? faceVisibilityCache.getFaceVisibility(voxel.position.x, voxel.position.y, voxel.position.z)
-                : EFaceVisibility.Full;
+                : OtS_FaceVisibility.Full;
             ASSERT(faceVisibility !== null, 'Neighbourhood cache processed with wrong mode');
             let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);
 

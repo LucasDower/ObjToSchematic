@@ -1,6 +1,6 @@
-import { EFaceVisibility } from '../src/runtime/block_assigner';
 import { RGBAColours } from '../src/runtime/colour';
-import { OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from '../src/runtime/ots_voxel_mesh';
+import { OtS_VoxelMesh } from '../src/runtime/ots_voxel_mesh';
+import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from '../src/runtime/ots_voxel_mesh_neighbourhood';
 
 test('VoxelMesh Neighbourhood #1', () => {
     const voxelMesh = new OtS_VoxelMesh();
@@ -9,7 +9,7 @@ test('VoxelMesh Neighbourhood #1', () => {
     const neighbourhood = new OtS_VoxelMesh_Neighbourhood();
     neighbourhood.process(voxelMesh, 'cardinal');
 
-    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(EFaceVisibility.Full);
+    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(OtS_FaceVisibility.Full);
 });
 
 test('VoxelMesh Neighbourhood #2', () => {
@@ -26,8 +26,8 @@ test('VoxelMesh Neighbourhood #3', () => {
     const neighbourhood = new OtS_VoxelMesh_Neighbourhood();
     neighbourhood.process(voxelMesh, 'cardinal');
 
-    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(EFaceVisibility.Down | EFaceVisibility.North | EFaceVisibility.South | EFaceVisibility.East | EFaceVisibility.West);
-    expect(neighbourhood.getFaceVisibility(0, 1, 0)).toBe(EFaceVisibility.Up | EFaceVisibility.North | EFaceVisibility.South | EFaceVisibility.East | EFaceVisibility.West);
+    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(OtS_FaceVisibility.Down | OtS_FaceVisibility.North | OtS_FaceVisibility.South | OtS_FaceVisibility.East | OtS_FaceVisibility.West);
+    expect(neighbourhood.getFaceVisibility(0, 1, 0)).toBe(OtS_FaceVisibility.Up | OtS_FaceVisibility.North | OtS_FaceVisibility.South | OtS_FaceVisibility.East | OtS_FaceVisibility.West);
 
     expect(neighbourhood.hasNeighbour(0, 0, 0, 0, 1, 0)).toBe(true);
     expect(neighbourhood.hasNeighbour(0, 1, 0, 0, -1, 0)).toBe(true);
@@ -43,7 +43,7 @@ test('VoxelMesh Neighbourhood #4', () => {
     const neighbourhood = new OtS_VoxelMesh_Neighbourhood();
     neighbourhood.process(voxelMesh, 'cardinal');
 
-    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(EFaceVisibility.Down | EFaceVisibility.South | EFaceVisibility.West);
+    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(OtS_FaceVisibility.Down | OtS_FaceVisibility.South | OtS_FaceVisibility.West);
 
     expect(neighbourhood.hasNeighbour(0, 0, 0, 1, 0, 0)).toBe(true);
     expect(neighbourhood.hasNeighbour(0, 0, 0, 0, 1, 0)).toBe(true);
@@ -82,7 +82,7 @@ test('VoxelMesh Neighbourhood #6', () => {
     neighbourhood.process(voxelMesh, 'cardinal');
 
     expect(neighbourhood.hasNeighbour(0, 0, 0, 1, 1, 1)).toBe(false);
-    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(EFaceVisibility.Full);
+    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(OtS_FaceVisibility.Full);
 
     // Now use proper mode
     neighbourhood.process(voxelMesh, 'non-cardinal');
@@ -105,5 +105,5 @@ test('VoxelMesh Neighbourhood #6', () => {
     // Now use proper mode
     neighbourhood.process(voxelMesh, 'cardinal');
     expect(neighbourhood.hasNeighbour(0, 0, 0, 1, 0, 0)).toBe(true);
-    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(EFaceVisibility.Up | EFaceVisibility.Down | EFaceVisibility.South | EFaceVisibility.East | EFaceVisibility.West);
+    expect(neighbourhood.getFaceVisibility(0, 0, 0)).toBe(OtS_FaceVisibility.Up | OtS_FaceVisibility.Down | OtS_FaceVisibility.South | OtS_FaceVisibility.East | OtS_FaceVisibility.West);
 });
