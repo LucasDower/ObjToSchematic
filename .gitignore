@@ -13,11 +13,11 @@ ObjToSchematic-darwin-x64
 /tools/blocks
 /tools/models
 /tests/out
+/tests/__mocks__
 /logs/
 /release/
 notes.txt
 *.DS_Store
-.dependency-cruiser.js
 dependencygraph.svg
 .firebase
 /webpack/
