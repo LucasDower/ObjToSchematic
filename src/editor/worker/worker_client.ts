@@ -153,9 +153,6 @@ export class WorkerClient {
         }
         ProgressManager.Get.end(handle);
 
-        //const voxelMeshNeighbourhoodCache = new OtS_VoxelMesh_Neighbourhood();
-        //voxelMeshNeighbourhoodCache.process(this._loadedVoxelMesh, params.enableAmbientOcclusion ? 'full' : 'cardinal');
-
         {
             StatusHandler.info(LOC('voxelise.voxel_count', { count: this._loadedVoxelMesh.getVoxelCount() }));
 

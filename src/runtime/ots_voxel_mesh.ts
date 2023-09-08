@@ -221,7 +221,11 @@ export class OtS_VoxelMesh_Neighbourhood {
     /**
      * Returns whether or not you can see each face on a voxel at a given location
      */
-    public getFaceVisibility(x: number, y: number, z: number): EFaceVisibility {
+    public getFaceVisibility(x: number, y: number, z: number): (EFaceVisibility | null) {
+        if (this._mode !== 'cardinal') {
+            return null;
+        }
+
         let visibility: EFaceVisibility = EFaceVisibility.None;
 
         if (!this.hasNeighbour(x, y, z, 1, 0, 0)) {

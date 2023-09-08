@@ -1,6 +1,7 @@
 import '../../styles.css';
-import { AppAnalytics } from './analytics';
+import ATLAS_VANILLA from '../../res/atlases/vanilla.atlas';
 
+import { AppAnalytics } from './analytics';
 import { FallableBehaviour } from '../runtime/block_mesh';
 import { ArcballCamera } from './renderer/camera';
 import { AppConfig } from './config';
@@ -273,7 +274,7 @@ export class AppContext {
                     lightThreshold: components.lightThreshold.getValue(),
                     contextualAveraging: components.contextualAveraging.getValue(),
                     errorWeight: components.errorWeight.getValue() / 10,
-                    atlasJSON: '',
+                    atlasJSON: JSON.parse(ATLAS_VANILLA),
                 },
             });
 

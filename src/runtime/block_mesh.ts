@@ -135,6 +135,7 @@ export class BlockMesh {
             const faceVisibility = blockMeshParams.contextualAveraging
                 ? faceVisibilityCache.getFaceVisibility(voxel.position.x, voxel.position.y, voxel.position.z)
                 : EFaceVisibility.Full;
+            ASSERT(faceVisibility !== null, 'Neighbourhood cache processed with wrong mode');
             let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);
 
             // Check that this block meets the fallable behaviour, we may need

@@ -32,7 +32,7 @@ export class BufferGenerator_VoxelMesh {
 
         if (this._createAmbientOcclusionBuffer) {
             this._neighbourhood = new OtS_VoxelMesh_Neighbourhood();
-            this._neighbourhood.process(this._voxelMesh, 'cardinal');
+            this._neighbourhood.process(this._voxelMesh, 'non-cardinal');
         } else {
             this._neighbourhood = null;
         }
