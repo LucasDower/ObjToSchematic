@@ -18,11 +18,13 @@ type Ots_Voxel_Internal = OtS_Voxel & {
 
 export class OtS_VoxelMesh {
     private _voxels: Map<number, Ots_Voxel_Internal>;
+    private _isBoundsDirty: boolean;
     private _bounds: Bounds;
 
     public constructor() {
         this._voxels = new Map();
         this._bounds = Bounds.getEmptyBounds();
+        this._isBoundsDirty = false;
     }
 
     public addVoxel(x: number, y: number, z: number, colour: RGBA, replaceMode: OtS_ReplaceMode) {
@@ -57,7 +59,9 @@ export class OtS_VoxelMesh {
      */
     public removeVoxel(x: number, y: number, z: number): boolean {
         const key = Vector3.Hash(x, y, z);
-        return this._voxels.delete(key);
+        const didRemove = this._voxels.delete(key);
+        this._isBoundsDirty ||= didRemove;
+        return didRemove;
     }
 
     /**
@@ -99,6 +103,13 @@ export class OtS_VoxelMesh {
      * Get the bounds/dimensions of the VoxelMesh.
      */
     public getBounds(): Bounds {
+        if (this._isBoundsDirty) {
+            this._bounds = Bounds.getEmptyBounds();
+            this._voxels.forEach((value, key) => {
+                this._bounds.extendByPoint(value.position);
+            });
+            this._isBoundsDirty = false;
+        }
         return this._bounds.copy();
     }
 

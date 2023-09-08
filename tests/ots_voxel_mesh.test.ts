@@ -85,3 +85,31 @@ test('VoxelMesh #8', () => {
 
     expect(voxelMesh.removeVoxel(1, 2, 3)).toBe(false);
 });
+
+test('VoxelMesh #9', () => {
+    const voxelMesh = new OtS_VoxelMesh();
+    voxelMesh.addVoxel(1, 2, 3, { r: 1.0, g: 1.0, b: 1.0, a: 1.0 }, 'average');
+    expect(voxelMesh.getBounds().getCentre().equals(new Vector3(1, 2, 3))).toBe(true);
+    expect(voxelMesh.getBounds().getDimensions().equals(new Vector3(0, 0, 0))).toBe(true);
+
+    voxelMesh.addVoxel(3, 5, 7, { r: 1.0, g: 1.0, b: 1.0, a: 1.0 }, 'average');
+    expect(voxelMesh.getBounds().getDimensions().equals(new Vector3(2, 3, 4))).toBe(true);
+
+    voxelMesh.removeVoxel(3, 5, 7);
+    expect(voxelMesh.getBounds().getDimensions().equals(new Vector3(0, 0, 0))).toBe(true);
+});
+
+test('VoxelMesh #10', () => {
+    const voxelMesh = new OtS_VoxelMesh();
+    voxelMesh.addVoxel(1, 0, 0, { r: 1.0, g: 0.0, b: 0.0, a: 1.0 }, 'replace');
+    voxelMesh.addVoxel(0, 1, 0, { r: 0.0, g: 1.0, b: 0.0, a: 1.0 }, 'replace');
+    voxelMesh.addVoxel(0, 0, 1, { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }, 'replace');
+
+    let voxelsCount = 0;
+    for (const voxel of voxelMesh.getVoxels()) {
+        ++voxelsCount;
+        expect(voxel.position.equals(new Vector3(1, 0, 0)) || voxel.position.equals(new Vector3(0, 1, 0)) || voxel.position.equals(new Vector3(0, 0, 1))).toBe(true);
+    }
+
+    expect(voxelsCount).toBe(3);
+});
