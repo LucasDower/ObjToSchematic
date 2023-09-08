@@ -1,6 +1,5 @@
 import path from 'path';
 
-import { Atlas } from '../../runtime/atlas';
 import { BlockMesh } from '../../runtime/block_mesh';
 import { BufferGenerator } from '../buffer';
 import { EAppEvent, EventManager } from '../event';
@@ -11,7 +10,6 @@ import { LOC, Localiser } from '../localiser';
 import { Mesh } from '../../runtime/mesh';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../runtime/util/error_util';
-import { VoxelMesh } from '../../runtime/voxel_mesh';
 import { IVoxeliser } from '../../runtime/voxelisers/base-voxeliser';
 import { VoxeliserFactory } from '../../runtime/voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
@@ -20,7 +18,7 @@ import { AppConfig } from '../config';
 import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
 import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
 import { AppError } from '../util/editor_util';
-import { ObjImporterError } from '../../runtime/importers/obj_importer';
+import { OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -32,7 +30,7 @@ export class WorkerClient {
     }
 
     private _loadedMesh?: Mesh;
-    private _loadedVoxelMesh?: VoxelMesh;
+    private _loadedVoxelMesh?: OtS_VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
 
     private _voxelMeshProgressHandle?: TTaskHandle;
@@ -149,13 +147,14 @@ export class WorkerClient {
 
         const handle = ProgressManager.Get.start('Voxelising');
         {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params.voxelOverlapRule, params.enableAmbientOcclusion, params.constraintAxis, params.size, params.useMultisampleColouring, (percentage) => {
+            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params.voxelOverlapRule, params.constraintAxis, params.size, params.useMultisampleColouring, (percentage) => {
                 ProgressManager.Get.progress(handle, percentage);
             });
         }
         ProgressManager.Get.end(handle);
 
-        this._loadedVoxelMesh.calculateNeighbours();
+        //const voxelMeshNeighbourhoodCache = new OtS_VoxelMesh_Neighbourhood();
+        //voxelMeshNeighbourhoodCache.process(this._loadedVoxelMesh, params.enableAmbientOcclusion ? 'full' : 'cardinal');
 
         {
             StatusHandler.info(LOC('voxelise.voxel_count', { count: this._loadedVoxelMesh.getVoxelCount() }));

@@ -1,6 +1,6 @@
+import { OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { VoxelMesh } from './voxel_mesh';
 
 export class OcclusionManager {
     private _occlusionNeighboursIndices!: number[]; // Ew
@@ -25,9 +25,9 @@ export class OcclusionManager {
     }
 
     // Assume's buffer is of length 96
-    public getOcclusions(buffer: Float32Array, centre: Vector3, voxelMesh: VoxelMesh): void {
+    public getOcclusions(buffer: Float32Array, centre: Vector3, voxelMeshNeighbourhood: OtS_VoxelMesh_Neighbourhood): void {
         // Cache local neighbours
-        const neighbourData = voxelMesh.getNeighbours(centre);
+        const neighbourData = voxelMeshNeighbourhood.getNeighbours(centre.x, centre.y, centre.z);
         if (neighbourData === undefined) {
             // This voxel has no neighbours within a 1-block radius
             buffer.fill(0.0);

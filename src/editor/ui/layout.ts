@@ -15,7 +15,6 @@ import { ASSERT } from '../../runtime/util/error_util';
 import { TAxis } from '../../runtime/util/type_util';
 import { TDithering } from '../../runtime/util/type_util';
 import { UIUtil } from '../../runtime/util/ui_util';
-import { TVoxelOverlapRule } from '../../runtime/voxel_mesh';
 import { TVoxelisers } from '../../runtime/voxelisers/voxelisers';
 import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from '../ui/components/checkbox';
@@ -34,6 +33,7 @@ import { AppConsole } from './console';
 import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
+import { OtS_NeighbourhoodMode, OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
 
 export type Group = {
     id: string,
@@ -192,14 +192,18 @@ export class UI {
                     .setUncheckedText('voxelise.components.off_faster')
                     .setDefaultValue(true)
                     .setLabel('voxelise.components.multisampling'),
-                'voxelOverlapRule': new ComboboxComponent<TVoxelOverlapRule>()
+                'voxelOverlapRule': new ComboboxComponent<OtS_ReplaceMode>()
                     .addItem({
                         displayLocKey: 'voxelise.components.average_recommended',
                         payload: 'average',
                     })
                     .addItem({
                         displayLocKey: 'voxelise.components.first',
-                        payload: 'first',
+                        payload: 'keep',
+                    })
+                    .addItem({
+                        displayLocKey: 'voxelise.components.repalce',
+                        payload: 'replace',
                     })
                     .setLabel('voxelise.components.voxel_overlap'),
                 'placeholder': new PlaceholderComponent()

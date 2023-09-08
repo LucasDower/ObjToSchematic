@@ -9,11 +9,11 @@ import { Palette } from './palette';
 import { ColourSpace, TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { Voxel, VoxelMesh } from './voxel_mesh';
 import { TDithering } from './util/type_util';
+import { OtS_Voxel, OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh';
 
 export interface Block {
-    voxel: Voxel;
+    voxel: OtS_Voxel;
     blockInfo: BlockInfo;
 }
 
@@ -46,11 +46,11 @@ export type TAssignBlocksWarning =
 export class BlockMesh {
     private _blocksUsed: Set<string>;
     private _blocks: Map<number, Block>;
-    private _voxelMesh: VoxelMesh;
+    private _voxelMesh: OtS_VoxelMesh;
     private _lighting: BlockMeshLighting;
     private _atlas?: Atlas;
 
-    public static createFromVoxelMesh(voxelMesh: VoxelMesh, blockMeshParams: BlockMeshParams) {
+    public static createFromVoxelMesh(voxelMesh: OtS_VoxelMesh, blockMeshParams: BlockMeshParams) {
         const blockMesh = new BlockMesh(voxelMesh);
 
         const atlas = Atlas.load(blockMeshParams.atlasJSON);
@@ -70,7 +70,7 @@ export class BlockMesh {
         return { blockMesh: blockMesh, warnings: warn };
     }
 
-    private constructor(voxelMesh: VoxelMesh) {
+    private constructor(voxelMesh: OtS_VoxelMesh) {
         this._blocksUsed = new Set();
         this._blocks = new Map();
         this._voxelMesh = voxelMesh;
@@ -85,7 +85,7 @@ export class BlockMesh {
      * Before we turn a voxel into a block we have the opportunity to alter the voxel's colour.
      * This is where the colour accuracy bands colours together and where dithering is calculated.
      */
-    private _getFinalVoxelColour(voxel: Voxel, blockMeshParams: BlockMeshParams) {
+    private _getFinalVoxelColour(voxel: OtS_Voxel, blockMeshParams: BlockMeshParams) {
         const voxelColour = RGBAUtil.copy(voxel.colour);
 
         const binnedColour = RGBAUtil.bin(voxelColour, blockMeshParams.resolution);
@@ -119,25 +119,28 @@ export class BlockMesh {
         const nonFallableBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.FALLABLE_BLOCKS));
         const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
 
+        const faceVisibilityCache = new OtS_VoxelMesh_Neighbourhood();
+        faceVisibilityCache.process(this._voxelMesh, 'cardinal');
+
         let countFalling = 0;
         // TODO: ProgressRework
         //const taskHandle = ProgressManager.Get.start('Assigning');
-        const voxels = this._voxelMesh.getVoxels();
+        const voxels = Array.from(this._voxelMesh.getVoxels());
         for (let voxelIndex = 0; voxelIndex < voxels.length; ++voxelIndex) {
             //ProgressManager.Get.progress(taskHandle, voxelIndex / voxels.length);
 
             // Convert the voxel into a block
             const voxel = voxels[voxelIndex];
             const voxelColour = this._getFinalVoxelColour(voxel, blockMeshParams);
-            const faceVisibility = blockMeshParams.contextualAveraging ?
-                this._voxelMesh.getFaceVisibility(voxel.position) :
-                VoxelMesh.getFullFaceVisibility();
+            const faceVisibility = blockMeshParams.contextualAveraging
+                ? faceVisibilityCache.getFaceVisibility(voxel.position.x, voxel.position.y, voxel.position.z)
+                : EFaceVisibility.Full;
             let block = atlasPalette.getBlock(voxelColour, allBlockCollection, faceVisibility, blockMeshParams.errorWeight);
 
             // Check that this block meets the fallable behaviour, we may need
             // to choose a different block if the current one doesn't meet the requirements
             const isBlockFallable = AppRuntimeConstants.Get.FALLABLE_BLOCKS.has(block.name);
-            const isBlockSupported = this._voxelMesh.isVoxelAt(Vector3.add(voxel.position, new Vector3(0, -1, 0)));
+            const isBlockSupported = this._voxelMesh.isVoxelAt(voxel.position.x, voxel.position.y - 1, voxel.position.z);
 
             if (isBlockFallable && !isBlockSupported) {
                 ++countFalling;
@@ -212,8 +215,8 @@ export class BlockMesh {
     public setEmissiveBlock(pos: Vector3): boolean {
         ASSERT(this._atlas, 'No atlas loaded');
 
-        const voxel = this._voxelMesh.getVoxelAt(pos);
-        ASSERT(voxel !== undefined, 'Missing voxel');
+        const voxel = this._voxelMesh.getVoxelAt(pos.x, pos.y, pos.z);
+        ASSERT(voxel !== null, 'Missing voxel');
         const minError = Infinity;
         let bestBlock: TAtlasBlock | undefined;
         AppRuntimeConstants.Get.EMISSIVE_BLOCKS.forEach((emissiveBlockName) => {

@@ -3,9 +3,9 @@ import { Axes, axesToDirection, Ray } from '../ray';
 import { ASSERT } from '../util/error_util';
 import { LOG } from '../util/log_util';
 import { Vector3 } from '../vector';
-import { VoxelMesh } from '../voxel_mesh';
 import { IVoxeliser } from './base-voxeliser';
 import { TAxis } from '../util/type_util';
+import { OtS_ReplaceMode, OtS_VoxelMesh } from '../ots_voxel_mesh';
 
 const bvhtree = require('bvh-tree');
 
@@ -14,7 +14,9 @@ const bvhtree = require('bvh-tree');
  * on each of the principle angles and testing for intersections
  */
 export class BVHRayVoxeliser extends IVoxeliser {
-    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
+    protected override _voxelise(mesh: Mesh, replaceMode: OtS_ReplaceMode, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): OtS_VoxelMesh {
+        const voxelMesh = new OtS_VoxelMesh();
+
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
         let offset = new Vector3(0.0, 0.0, 0.0);
@@ -108,10 +110,12 @@ export class BVHRayVoxeliser extends IVoxeliser {
                     multisampling,
                 );
 
-                outVoxelMesh.addVoxel(position, voxelColour);
+                voxelMesh.addVoxel(position.x, position.y, position.z, voxelColour, replaceMode);
             }
         }
 
         mesh.clearTransform();
+
+        return voxelMesh;
     }
 }

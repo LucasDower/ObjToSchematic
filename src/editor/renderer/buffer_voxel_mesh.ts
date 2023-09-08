@@ -1,5 +1,4 @@
 import { TVoxelMeshBuffer, TVoxelMeshBufferDescription } from '../buffer';
-import { Voxel, VoxelMesh } from '../../runtime/voxel_mesh';
 import { AppConfig } from "../config";
 import { ASSERT } from "../../runtime/util/error_util";
 import { Vector3 } from "../../runtime/vector";
@@ -8,26 +7,35 @@ import { AttributeData } from "./render_buffer";
 import { AppUtil, TOptional } from "../../runtime/util";
 import { AppConstants } from "../../runtime/constants";
 import { OcclusionManager } from "../../runtime/occlusion";
+import { OtS_Voxel, OtS_VoxelMesh, OtS_VoxelMesh_Neighbourhood } from '../../runtime/ots_voxel_mesh';
 
 export type TBuffer_VoxelMesh = TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number };
 
 export class BufferGenerator_VoxelMesh {
-    private _voxelMesh: VoxelMesh;
-    private _voxels: Voxel[];
+    private _voxelMesh: OtS_VoxelMesh;
+    private _voxels: OtS_Voxel[];
 
     private _createAmbientOcclusionBuffer: boolean;
     private _nextChunkIndex: number;
     private _numTotalVoxels: number;
     private _cache: Map<number, TBuffer_VoxelMesh>;
+    private _neighbourhood: OtS_VoxelMesh_Neighbourhood | null;
 
-    public constructor(voxelMesh: VoxelMesh, createAmbientOcclusionBuffer: boolean) {
+    public constructor(voxelMesh: OtS_VoxelMesh, createAmbientOcclusionBuffer: boolean) {
         this._voxelMesh = voxelMesh;
-        this._voxels = voxelMesh.getVoxels();
+        this._voxels = Array.from(voxelMesh.getVoxels());
 
         this._createAmbientOcclusionBuffer = createAmbientOcclusionBuffer;
         this._nextChunkIndex = 0;
         this._numTotalVoxels = voxelMesh.getVoxelCount();
         this._cache = new Map();
+
+        if (this._createAmbientOcclusionBuffer) {
+            this._neighbourhood = new OtS_VoxelMesh_Neighbourhood();
+            this._neighbourhood.process(this._voxelMesh, 'cardinal');
+        } else {
+            this._neighbourhood = null;
+        }
     }
 
     public getNext() {
@@ -94,11 +102,13 @@ export class BufferGenerator_VoxelMesh {
 
         // Build occlusion buffer
         if (this._createAmbientOcclusionBuffer) {
+            ASSERT(this._neighbourhood !== null);
+
             const voxelOcclusionArray = new Float32Array(96);
 
             for (let i = 0; i < numBufferVoxels; ++i) {
                 const voxel = this._voxels[i + voxelsStartIndex];
-                OcclusionManager.Get.getOcclusions(voxelOcclusionArray, voxel.position, this._voxelMesh);
+                OcclusionManager.Get.getOcclusions(voxelOcclusionArray, voxel.position, this._neighbourhood);
 
                 newBuffer.occlusion.data.set(voxelOcclusionArray, i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION);
             }

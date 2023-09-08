@@ -4,9 +4,9 @@ import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { UVTriangle } from '../triangle';
 import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
-import { VoxelMesh } from '../voxel_mesh';
 import { IVoxeliser } from './base-voxeliser';
 import { TAxis } from '../util/type_util';
+import { OtS_ReplaceMode, OtS_VoxelMesh } from '../ots_voxel_mesh';
 
 /**
  * This voxeliser works by projecting rays onto each triangle
@@ -14,13 +14,13 @@ import { TAxis } from '../util/type_util';
  */
 export class NormalCorrectedRayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
-    private _voxelMesh?: VoxelMesh;
+    private _voxelMesh?: OtS_VoxelMesh;
     private _size!: Vector3;
     private _offset!: Vector3;
 
-    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
+    protected override _voxelise(mesh: Mesh, replaceMode: OtS_ReplaceMode, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): OtS_VoxelMesh {
         this._mesh = mesh;
-        this._voxelMesh = outVoxelMesh;
+        this._voxelMesh = new OtS_VoxelMesh();
 
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
@@ -55,13 +55,15 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
             const uvTriangle = mesh.getUVTriangle(triIndex);
             const normals = mesh.getNormals(triIndex);
             const material = mesh.getMaterialByTriangle(triIndex);
-            this._voxeliseTri(uvTriangle, material, normals, multisampling);
+            this._voxeliseTri(uvTriangle, material, normals, multisampling, replaceMode);
         }
 
         mesh.clearTransform();
+
+        return this._voxelMesh;
     }
 
-    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3 }, multisampling: boolean) {
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, normals: { v0: Vector3, v1: Vector3, v2: Vector3 }, multisampling: boolean, replaceMode: OtS_ReplaceMode) {
         const rayList = this._generateRays(triangle.v0, triangle.v1, triangle.v2,
             this._offset,
         );
@@ -99,7 +101,7 @@ export class NormalCorrectedRayVoxeliser extends IVoxeliser {
                     multisampling,
                 );
 
-                this._voxelMesh.addVoxel(voxelPosition, voxelColour);
+                this._voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, replaceMode);
             }
         };
     }

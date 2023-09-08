@@ -19,6 +19,7 @@ export enum EFaceVisibility {
     East = 1 << 3,
     South = 1 << 4,
     West = 1 << 5,
+    Full = Up | Down | North | East | South | West,
 }
 /* eslint-enable */
 

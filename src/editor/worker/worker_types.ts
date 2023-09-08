@@ -10,9 +10,9 @@ import { ColourSpace } from '../../runtime/util';
 import { TAxis } from '../../runtime/util/type_util';
 import { TDithering } from '../../runtime/util/type_util';
 import { Vector3 } from '../../runtime/vector';
-import { TVoxelOverlapRule } from '../../runtime/voxel_mesh';
 import { TVoxelisers } from '../../runtime/voxelisers/voxelisers';
 import { AppError } from '../util/editor_util';
+import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
 
 export namespace InitParams {
     export type Input = {
@@ -73,7 +73,7 @@ export namespace VoxeliseParams {
         size: number,
         useMultisampleColouring: boolean,
         enableAmbientOcclusion: boolean,
-        voxelOverlapRule: TVoxelOverlapRule,
+        voxelOverlapRule: OtS_ReplaceMode,
     }
 
     export type Output = {

@@ -4,19 +4,17 @@ import { Triangle, UVTriangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
 import { Vector3 } from '../vector';
-import { TVoxelOverlapRule, VoxelMesh } from '../voxel_mesh';
 import { TAxis } from '../util/type_util';
+import { OtS_ReplaceMode, OtS_VoxelMesh } from '../ots_voxel_mesh';
 
 export abstract class IVoxeliser {
     private _multisampleCount: number = 16;
 
-    public voxelise(mesh: Mesh, overlapRule: TVoxelOverlapRule, ambientOcclusion: boolean, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): VoxelMesh {
-        const voxelMesh = new VoxelMesh(overlapRule, ambientOcclusion);
-        this._voxelise(mesh, voxelMesh, constraintAxis, size, multisampling, onProgress);
-        return voxelMesh;
+    public voxelise(mesh: Mesh, replaceMode: OtS_ReplaceMode, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): OtS_VoxelMesh {
+        return this._voxelise(mesh, replaceMode, constraintAxis, size, multisampling, onProgress);
     }
 
-    protected abstract _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void;
+    protected abstract _voxelise(mesh: Mesh, replaceMode: OtS_ReplaceMode, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): OtS_VoxelMesh;
 
     /**
      * `Location` should be in block-space.

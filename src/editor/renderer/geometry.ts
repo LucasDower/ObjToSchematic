@@ -7,7 +7,7 @@ import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer
 import { Triangle, UVTriangle } from '../../runtime/triangle';
 import { ASSERT } from '../../runtime/util/error_util';
 import { Vector3 } from '../../runtime/vector';
-import { VoxelMesh } from '../../runtime/voxel_mesh';
+import { OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
@@ -405,7 +405,7 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static voxelMeshWireframe(voxelMesh: VoxelMesh, colour: RGBA, voxelSize: number): RenderBuffer {
+    public static voxelMeshWireframe(voxelMesh: OtS_VoxelMesh, colour: RGBA, voxelSize: number): RenderBuffer {
         const buffer = new RenderBuffer([
             { name: 'position', numComponents: 3 },
             { name: 'colour', numComponents: 4 },

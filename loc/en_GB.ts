@@ -101,6 +101,7 @@ export const en_GB = {
                 ncrb: 'NCRB',
                 average_recommended: 'Average (recommended)',
                 first: 'First',
+                repalce: 'Replace',
                 on_recommended: 'On (recommended)',
                 off_faster: 'Off (faster)',
             },

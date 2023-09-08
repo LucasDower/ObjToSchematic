@@ -1,13 +1,8 @@
-import { TBlockMeshBuffer, TBlockMeshBufferDescription, TVoxelMeshBuffer, TVoxelMeshBufferDescription } from "../buffer";
-import { Voxel, VoxelMesh } from '../../runtime/voxel_mesh';
+import { TBlockMeshBuffer, TBlockMeshBufferDescription, TVoxelMeshBuffer } from "../buffer";
 import { AppConfig } from "../config";
 import { ASSERT } from "../../runtime/util/error_util";
-import { Vector3 } from "../../runtime/vector";
-import { GeometryTemplates } from "./geometry";
-import { AttributeData } from "./render_buffer";
 import { AppUtil } from "../../runtime/util";
 import { AppConstants } from "../../runtime/constants";
-import { OcclusionManager } from "../../runtime/occlusion";
 import { Block, BlockMesh } from "../../runtime/block_mesh";
 import { BufferGenerator_VoxelMesh } from "./buffer_voxel_mesh";
 

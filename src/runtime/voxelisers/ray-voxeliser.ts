@@ -1,12 +1,12 @@
 import { Bounds } from '../bounds';
 import { LinearAllocator } from '../linear_allocator';
 import { Mesh } from '../mesh';
+import { OtS_ReplaceMode, OtS_VoxelMesh } from '../ots_voxel_mesh';
 import { Axes, Ray, rayIntersectTriangle } from '../ray';
 import { UVTriangle } from '../triangle';
 import { ASSERT } from '../util/error_util';
 import { TAxis } from '../util/type_util';
 import { Vector3 } from '../vector';
-import { TVoxelOverlapRule, VoxelMesh } from '../voxel_mesh';
 import { IVoxeliser } from './base-voxeliser';
 
 /**
@@ -14,11 +14,11 @@ import { IVoxeliser } from './base-voxeliser';
  * on each of the principle angles and testing for intersections
  */export class RayVoxeliser extends IVoxeliser {
     private _mesh?: Mesh;
-    private _voxelMesh?: VoxelMesh;
+    private _voxelMesh?: OtS_VoxelMesh;
 
-    protected override _voxelise(mesh: Mesh, outVoxelMesh: VoxelMesh, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): void {
+    protected override _voxelise(mesh: Mesh, replaceMode: OtS_ReplaceMode, constraintAxis: TAxis, size: number, multisampling: boolean, onProgress?: (percentage: number) => void): OtS_VoxelMesh {
         this._mesh = mesh;
-        this._voxelMesh = outVoxelMesh;
+        this._voxelMesh = new OtS_VoxelMesh();
 
         const meshDimensions = mesh.getBounds().getDimensions();
         let scale: number;
@@ -48,17 +48,19 @@ import { IVoxeliser } from './base-voxeliser';
             onProgress?.(triIndex / numTris);
             const uvTriangle = mesh.getUVTriangle(triIndex);
             const material = mesh.getMaterialByTriangle(triIndex);
-            this._voxeliseTri(uvTriangle, material, multisampling);
+            this._voxeliseTri(uvTriangle, material, multisampling, replaceMode);
         }
 
         mesh.clearTransform();
+
+        return this._voxelMesh;
     }
 
     private _rayList = new LinearAllocator<Ray>(() => {
         const ray: Ray = { origin: new Vector3(0, 0, 0), axis: Axes.x };
         return ray;
     });
-    private _voxeliseTri(triangle: UVTriangle, materialName: string, multisampling: boolean) {
+    private _voxeliseTri(triangle: UVTriangle, materialName: string, multisampling: boolean, replaceMode: OtS_ReplaceMode) {
         this._rayList.reset();
         this._generateRays(triangle.v0, triangle.v1, triangle.v2);
 
@@ -98,7 +100,7 @@ import { IVoxeliser } from './base-voxeliser';
                     multisampling,
                 );
 
-                this._voxelMesh.addVoxel(voxelPosition, voxelColour);
+                this._voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, replaceMode);
             }
         };
     }
