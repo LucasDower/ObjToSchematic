@@ -1,14 +1,10 @@
-import { Renderer } from './renderer/renderer';
-
-interface MouseState {
+type MouseState = {
     x: number,
     y: number,
     buttons: number
 }
 
 export class MouseManager {
-    private _gl: WebGLRenderingContext;
-
     private static readonly MOUSE_LEFT = 1;
     private static readonly MOUSE_RIGHT = 2;
 
@@ -18,12 +14,10 @@ export class MouseManager {
     private static _instance: MouseManager;
 
     public static get Get() {
-        return this._instance || (this._instance = new this(Renderer.Get._gl));
+        return this._instance || (this._instance = new this());
     }
 
-    private constructor(gl: WebGLRenderingContext) {
-        this._gl = gl;
-
+    private constructor() {
         this.currMouse = { x: -1, y: -1, buttons: 0 };
         this.prevMouse = { x: -1, y: -1, buttons: 0 };
     }
@@ -54,10 +48,4 @@ export class MouseManager {
         this.prevMouse = this.currMouse;
         return delta;
     };
-
-    public getMousePosNorm() {
-        const normX =   2 * (this.currMouse.x / this._gl.canvas.width ) - 1;
-        const normY = -(2 * (this.currMouse.y / this._gl.canvas.height) - 1);
-        return { x: normX, y: normY };
-    }
 }
