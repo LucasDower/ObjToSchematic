@@ -17,7 +17,6 @@ export const headlessConfig: THeadlessConfig = {
         enableAmbientOcclusion: false, // Only want true if exporting to .obj
     },
     assign: {
-        textureAtlas: 'vanilla', // Must be an atlas name that exists in /resources/atlases
         blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
         ditheringMagnitude: 32,
@@ -28,6 +27,7 @@ export const headlessConfig: THeadlessConfig = {
         lightThreshold: 0,
         contextualAveraging: true,
         errorWeight: 0.0,
+        atlasJSON: undefined,
     },
     export: {
         exporter: 'litematic', // 'schematic' / 'litematic',

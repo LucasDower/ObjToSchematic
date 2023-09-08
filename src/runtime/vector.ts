@@ -238,7 +238,11 @@ export class Vector3 implements IHashable {
 
     // Begin IHashable interface
     public hash(): Vector3Hash {
-        return ((this.x + 10_000_000) << 42) + ((this.y + 10_000_000) << 21) + (this.z + 10_000_000) as Vector3Hash;
+        return Vector3.Hash(this.x, this.y, this.z) as Vector3Hash;
+    }
+
+    public static Hash(x: number, y: number, z: number) {
+        return ((x + 10_000_000) << 42) + ((y + 10_000_000) << 21) + (z + 10_000_000);
     }
 
     public equals(other: Vector3) {

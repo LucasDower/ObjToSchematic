@@ -22,7 +22,7 @@ export class VoxelMesh {
 
     public constructor(overlapRule: TVoxelOverlapRule, ambientOcclusion: boolean) {
         this._voxels = new Map();
-        this._bounds = Bounds.getInfiniteBounds();
+        this._bounds = Bounds.getEmptyBounds();
         this._overlapRule = overlapRule;
         this._ambientOcclusion = ambientOcclusion;
     }
@@ -135,8 +135,8 @@ export class VoxelMesh {
 
         return {
             offset: neighbourOffset,
-            index: OcclusionManager.getNeighbourIndex(neighbourOffset),
-            inverseIndex: OcclusionManager.getNeighbourIndex(inverseOffset),
+            index: OcclusionManager.getNeighbourIndex(neighbourOffset.x, neighbourOffset.y, neighbourOffset.z),
+            inverseIndex: OcclusionManager.getNeighbourIndex(inverseOffset.x, inverseOffset.y, inverseOffset.z),
         };
     });
 
@@ -176,6 +176,6 @@ export class VoxelMesh {
      * Offset must be a vector that exists within this._neighbours defined above
      */
     public hasNeighbour(pos: Vector3, offset: Vector3): boolean {
-        return (this.getNeighbours(pos) & (1 << OcclusionManager.getNeighbourIndex(offset))) > 0;
+        return (this.getNeighbours(pos) & (1 << OcclusionManager.getNeighbourIndex(offset.x, offset.y, offset.z))) > 0;
     }
 }

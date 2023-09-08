@@ -22,8 +22,7 @@ export class Bounds {
         this._max = Vector3.max(this._max, volume._max);
     }
 
-    // TODO: rename to `createInfinitesimalBounds`
-    public static getInfiniteBounds() {
+    public static getEmptyBounds() {
         return new Bounds(
             new Vector3(Infinity, Infinity, Infinity),
             new Vector3(-Infinity, -Infinity, -Infinity),
@@ -47,5 +46,12 @@ export class Bounds {
     // TODO: Rename to `calcDimensions`
     public getDimensions() {
         return Vector3.sub(this._max, this._min);
+    }
+
+    public copy() {
+        return new Bounds(
+            this._min.copy(),
+            this._max.copy(),
+        );
     }
 }

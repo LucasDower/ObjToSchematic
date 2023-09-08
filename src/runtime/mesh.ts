@@ -126,7 +126,7 @@ export class Mesh {
     }
 
     public getBounds() {
-        const bounds = Bounds.getInfiniteBounds();
+        const bounds = Bounds.getEmptyBounds();
         if (this._transform) {
             for (const vertex of this._vertices) {
                 bounds.extendByPoint(this._transform(vertex));

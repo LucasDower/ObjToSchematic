@@ -75,8 +75,9 @@ export class OcclusionManager {
         return;
     }
 
-    public static getNeighbourIndex(neighbour: Vector3) {
-        return 9 * (neighbour.x + 1) + 3 * (neighbour.y + 1) + (neighbour.z + 1);
+
+    public static getNeighbourIndex(x: number, y: number, z: number) {
+        return 9 * (x + 1) + 3 * (y + 1) + (z + 1);
     }
 
     private _setupOcclusions() {
@@ -139,7 +140,8 @@ export class OcclusionManager {
             for (let j = 0; j < 4; ++j) {
                 for (let k = 0; k < 3; ++k) {
                     const index = this._getOcclusionMapIndex(i, j, k);
-                    this._occlusionNeighboursIndices[index] = OcclusionManager.getNeighbourIndex(occlusionNeighbours[i][j][k]);
+                    const neighbour = occlusionNeighbours[i][j][k];
+                    this._occlusionNeighboursIndices[index] = OcclusionManager.getNeighbourIndex(neighbour.x, neighbour.y, neighbour.z);
                 }
             }
         }
