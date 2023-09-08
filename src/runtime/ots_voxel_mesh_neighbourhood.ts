@@ -1,4 +1,3 @@
-import { OcclusionManager } from "./occlusion";
 import { OtS_VoxelMesh } from "./ots_voxel_mesh";
 import { Vector3 } from "./vector";
 
@@ -77,8 +76,8 @@ export class OtS_VoxelMesh_Neighbourhood {
     /*
      * Returns true if a voxel at position has a neighbour with offset 'offset'
      */
-    public hasNeighbour(x: number, y: number, z: number, offsetX: OtS_Offset, offsetY: number, offsetZ: OtS_Offset): boolean {
-        return (this.getNeighbours(x, y, z) & (1 << OcclusionManager.getNeighbourIndex(offsetX, offsetY, offsetZ))) > 0;
+    public hasNeighbour(x: number, y: number, z: number, offsetX: OtS_Offset, offsetY: OtS_Offset, offsetZ: OtS_Offset): boolean {
+        return (this.getNeighbours(x, y, z) & (1 << OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(offsetX, offsetY, offsetZ))) > 0;
     }
 
     /**
@@ -121,6 +120,10 @@ export class OtS_VoxelMesh_Neighbourhood {
         return this._mode;
     }
 
+    public static getNeighbourIndex(x: OtS_Offset, y: OtS_Offset, z: OtS_Offset) {
+        return 9 * (x + 1) + 3 * (y + 1) + (z + 1);
+    }
+
     private static readonly _NEIGHBOURS_NON_CARDINAL = [
         new Vector3(1, 1, -1),
         new Vector3(0, 1, -1),
@@ -147,8 +150,8 @@ export class OtS_VoxelMesh_Neighbourhood {
 
         return {
             offset: neighbourOffset,
-            index: OcclusionManager.getNeighbourIndex(neighbourOffset.x, neighbourOffset.y, neighbourOffset.z),
-            inverseIndex: OcclusionManager.getNeighbourIndex(inverseOffset.x, inverseOffset.y, inverseOffset.z),
+            index: OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(neighbourOffset.x as OtS_Offset, neighbourOffset.y as OtS_Offset, neighbourOffset.z as OtS_Offset),
+            inverseIndex: OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(inverseOffset.x as OtS_Offset, inverseOffset.y as OtS_Offset, inverseOffset.z as OtS_Offset),
         };
     });
 
@@ -164,8 +167,8 @@ export class OtS_VoxelMesh_Neighbourhood {
 
         return {
             offset: neighbourOffset,
-            index: OcclusionManager.getNeighbourIndex(neighbourOffset.x, neighbourOffset.y, neighbourOffset.z),
-            inverseIndex: OcclusionManager.getNeighbourIndex(inverseOffset.x, inverseOffset.y, inverseOffset.z),
+            index: OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(neighbourOffset.x as OtS_Offset, neighbourOffset.y as OtS_Offset, neighbourOffset.z as OtS_Offset),
+            inverseIndex: OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(inverseOffset.x as OtS_Offset, inverseOffset.y as OtS_Offset, inverseOffset.z as OtS_Offset),
         };
     });
 }

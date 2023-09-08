@@ -1,4 +1,4 @@
-import { OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
+import { OtS_Offset, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
@@ -75,11 +75,6 @@ export class OcclusionManager {
         return;
     }
 
-
-    public static getNeighbourIndex(x: number, y: number, z: number) {
-        return 9 * (x + 1) + 3 * (y + 1) + (z + 1);
-    }
-
     private _setupOcclusions() {
         ASSERT(!this._occlusionsSetup);
 
@@ -141,7 +136,7 @@ export class OcclusionManager {
                 for (let k = 0; k < 3; ++k) {
                     const index = this._getOcclusionMapIndex(i, j, k);
                     const neighbour = occlusionNeighbours[i][j][k];
-                    this._occlusionNeighboursIndices[index] = OcclusionManager.getNeighbourIndex(neighbour.x, neighbour.y, neighbour.z);
+                    this._occlusionNeighboursIndices[index] = OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(neighbour.x as OtS_Offset, neighbour.y as OtS_Offset, neighbour.z as OtS_Offset);
                 }
             }
         }
