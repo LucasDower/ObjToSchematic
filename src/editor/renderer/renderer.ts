@@ -305,7 +305,9 @@ export class Renderer {
         this.forceRedraw();
     }
 
-    public initAtlas() {
+    public init() {
+        ShaderManager.Get.init(this._gl);
+
         const atlas = Atlas.load(JSON.parse(ATLAS_VANILLA));
         ASSERT(atlas !== undefined, 'Could not load atlas');
 
@@ -516,7 +518,7 @@ export class Renderer {
             const axes: TAxis[] = ['x', 'y', 'z'];
             axes.forEach((axis) => {
                 if (this._axisHighlightBuffer[axis].enabled) {
-                    this._drawBuffer(this._gl.LINES, this._axisHighlightBuffer[axis].buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                    this._drawBuffer(this._gl.LINES, this._axisHighlightBuffer[axis].buffer.getWebGLBuffer(), ShaderManager.Get.debugProgram!, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
                 }
@@ -529,21 +531,21 @@ export class Renderer {
             if (ArcballCamera.Get.isAlignedWithAxis('x') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
                 const gridBuffer = this._gridBuffers.x[this._meshToUse];
                 if (gridBuffer !== undefined) {
-                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram!, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
                 }
             } else if (ArcballCamera.Get.isAlignedWithAxis('z') && !ArcballCamera.Get.isAlignedWithAxis('y') && !ArcballCamera.Get.isUserRotating) {
                 const gridBuffer = this._gridBuffers.z[this._meshToUse];
                 if (gridBuffer !== undefined) {
-                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram!, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     });
                 }
             } else {
                 const gridBuffer = this._gridBuffers.y[this._meshToUse];
                 if (gridBuffer !== undefined) {
-                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+                    this._drawBuffer(this._gl.LINES, gridBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram!, {
                         u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                         u_worldOffset: [0, this._sliceViewEnabled ? this._sliceHeight * this._voxelSize: 0, 0],
                     });
@@ -554,7 +556,7 @@ export class Renderer {
         // Draw axis
         if (this._axesEnabled) {
             this._gl.disable(this._gl.DEPTH_TEST);
-            this._drawBuffer(this._gl.LINES, this._axisBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram, {
+            this._drawBuffer(this._gl.LINES, this._axisBuffer.getWebGLBuffer(), ShaderManager.Get.debugProgram!, {
                 u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             });
             this._gl.enable(this._gl.DEPTH_TEST);
@@ -564,7 +566,7 @@ export class Renderer {
     private _drawMesh() {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
             if (materialBuffer.material.type === MaterialType.textured) {
-                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram, {
+                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram!, {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
@@ -577,7 +579,7 @@ export class Renderer {
                     u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
                 });
             } else {
-                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram, {
+                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram!, {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
@@ -591,7 +593,7 @@ export class Renderer {
     }
 
     private _drawVoxelMesh() {
-        const shader = ShaderManager.Get.voxelProgram;
+        const shader = ShaderManager.Get.voxelProgram!;
         const uniforms = {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_voxelSize: this._voxelSize,
@@ -608,7 +610,7 @@ export class Renderer {
 
     private _drawBlockMesh() {
         this._gl.enable(this._gl.CULL_FACE);
-        const shader = ShaderManager.Get.blockProgram;
+        const shader = ShaderManager.Get.blockProgram!;
         const uniforms = {
             u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
             u_texture: this._atlasTexture,

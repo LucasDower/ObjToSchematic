@@ -77,7 +77,7 @@ export class AppContext {
             });
         });
 
-        Renderer.Get.initAtlas();
+        Renderer.Get.init();
     }
 
     public getLastAction() {
