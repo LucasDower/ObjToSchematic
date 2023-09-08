@@ -36,6 +36,7 @@ export class OtS_VoxelMesh {
                 colour: RGBAUtil.copy(colour),
                 collisions: 1,
             }
+            this._voxels.set(key, voxel);
             this._bounds.extendByPoint(position);
         } else {
             if (replaceMode === 'average') {
