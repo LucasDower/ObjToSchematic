@@ -1,5 +1,4 @@
 import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
-import { ColourSpace } from '../src/runtime/util';
 import { Vector3 } from '../src/runtime/vector';
 import { THeadlessConfig } from './headless';
 
@@ -20,7 +19,6 @@ export const headlessConfig: THeadlessConfig = {
         blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
         ditheringMagnitude: 32,
-        colourSpace: ColourSpace.RGB,
         fallable: 'replace-falling',
         resolution: 32,
         calculateLighting: false,

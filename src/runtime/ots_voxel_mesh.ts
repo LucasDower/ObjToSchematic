@@ -18,14 +18,22 @@ export class OtS_VoxelMesh {
     private _voxels: Map<number, Ots_Voxel_Internal>;
     private _isBoundsDirty: boolean;
     private _bounds: Bounds;
+    private _replaceMode: OtS_ReplaceMode;
 
     public constructor() {
         this._voxels = new Map();
         this._bounds = Bounds.getEmptyBounds();
         this._isBoundsDirty = false;
+        this._replaceMode = 'average';
     }
 
-    public addVoxel(x: number, y: number, z: number, colour: RGBA, replaceMode: OtS_ReplaceMode) {
+    public setReplaceMode(replaceMode: OtS_ReplaceMode) {
+        this._replaceMode = replaceMode;
+    }
+
+    public addVoxel(x: number, y: number, z: number, colour: RGBA, replaceMode?: OtS_ReplaceMode) {
+        const useReplaceMode = replaceMode ?? this._replaceMode;
+
         const key = Vector3.Hash(x, y, z);
         let voxel: (Ots_Voxel_Internal | undefined) = this._voxels.get(key);
 
@@ -39,13 +47,13 @@ export class OtS_VoxelMesh {
             this._voxels.set(key, voxel);
             this._bounds.extendByPoint(position);
         } else {
-            if (replaceMode === 'average') {
+            if (useReplaceMode === 'average') {
                 voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);
                 voxel.colour.g = ((voxel.colour.g * voxel.collisions) + colour.g) / (voxel.collisions + 1);
                 voxel.colour.b = ((voxel.colour.b * voxel.collisions) + colour.b) / (voxel.collisions + 1);
                 voxel.colour.a = ((voxel.colour.a * voxel.collisions) + colour.a) / (voxel.collisions + 1);
                 ++voxel.collisions;
-            } else if (replaceMode === 'replace') {
+            } else if (useReplaceMode === 'replace') {
                 voxel.colour = RGBAUtil.copy(colour);
                 voxel.collisions = 1;
             }

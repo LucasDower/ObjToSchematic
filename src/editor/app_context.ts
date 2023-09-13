@@ -11,7 +11,7 @@ import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer/renderer';
 import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
-import { ColourSpace, EAction } from '../runtime/util';
+import { EAction } from '../runtime/util';
 import { ASSERT } from '../runtime/util/error_util';
 import { download, downloadAsZip } from '../runtime/util/file_util';
 import { LOG_ERROR, Logger } from '../runtime/util/log_util';
@@ -266,7 +266,6 @@ export class AppContext {
                     blockPalette: components.blockPalette.getValue().getBlocks(),
                     dithering: components.dithering.getValue(),
                     ditheringMagnitude: components.ditheringMagnitude.getValue(),
-                    colourSpace: ColourSpace.RGB,
                     fallable: components.fallable.getValue() as FallableBehaviour,
                     resolution: Math.pow(2, components.colourAccuracy.getValue()),
                     calculateLighting: components.calculateLighting.getValue(),

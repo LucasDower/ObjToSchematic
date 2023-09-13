@@ -71,13 +71,6 @@ export class UV {
     }
 }
 
-/* eslint-disable */
-export enum ColourSpace {
-    RGB,
-    LAB
-}
-/* eslint-enable */
-
 export type TOptional<T> = T | undefined;
 
 export function getRandomID(): string {

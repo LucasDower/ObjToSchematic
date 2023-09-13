@@ -6,7 +6,7 @@ import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
 import { Palette } from './palette';
-import { ColourSpace, TOptional } from './util';
+import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { TDithering } from './util/type_util';
@@ -31,7 +31,6 @@ export interface BlockMeshParams {
     blockPalette: string[],
     dithering: TDithering,
     ditheringMagnitude: number,
-    colourSpace: ColourSpace,
     fallable: FallableBehaviour,
     resolution: RGBAUtil.TColourAccuracy,
     calculateLighting: boolean,
