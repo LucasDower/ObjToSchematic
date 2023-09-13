@@ -1,29 +1,27 @@
 const path = require('path');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: './src/editor/main.ts',
     plugins: [
         new NodePolyfillPlugin(),
         new HtmlWebpackPlugin({
-            template: './template.html',
+            template: 'public/index.html',
             favicon: './res/static/icon.ico',
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+              { from: "public/styles.css", to: "." }
+            ],
         }),
     ],
     module: {
         rules: [
             {
                 test: /\.worker.ts$/,
-                use: [
-                    'worker-loader',
-                    'ts-loader',
-                ],
-            },
-            {
-                test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
-                exclude: /node_modules/,
+                loader: 'worker-loader',
             },
             {
                 test: /\.vs|fs|atlas$/,

@@ -1,4 +1,3 @@
-import '../../styles.css';
 import ATLAS_VANILLA from '../../res/atlases/vanilla.atlas';
 
 import { AppAnalytics } from './analytics';
