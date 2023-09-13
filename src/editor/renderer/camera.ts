@@ -347,6 +347,3 @@ export class ArcballCamera {
         this._aspect = aspect;
     }
 }
-
-
-module.exports.ArcballCamera = ArcballCamera;
