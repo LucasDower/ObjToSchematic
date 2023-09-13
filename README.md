@@ -1,6 +1,6 @@
 <h1>
   <p align="center">
-    <img src="res/static/icon.png" alt="Logo" width="64" height="64"><br>
+    <img src="res/icon.png" alt="Logo" width="64" height="64"><br>
     ObjToSchematic<br>
   </p>
 </h1>

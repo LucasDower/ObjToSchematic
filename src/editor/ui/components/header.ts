@@ -1,4 +1,4 @@
-import IMAGE_LOGO from '../../../../res/static/icon.png';
+import IMAGE_LOGO from '../../../../res/icon.png';
 
 import { AppConfig } from '../../../editor/config';
 import { LOC } from '../../localiser';

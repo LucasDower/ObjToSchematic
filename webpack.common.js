@@ -9,7 +9,7 @@ module.exports = {
         new NodePolyfillPlugin(),
         new HtmlWebpackPlugin({
             template: 'public/index.html',
-            favicon: './res/static/icon.ico',
+            favicon: 'res/icon.ico',
         }),
         new CopyWebpackPlugin({
             patterns: [
