@@ -7,7 +7,6 @@ import { MaterialMap } from '../../runtime/mesh';
 import { TMessage } from '../ui/console';
 import { TAxis } from '../../runtime/util/type_util';
 import { Vector3 } from '../../runtime/vector';
-import { TVoxelisers } from '../../runtime/voxelisers/voxelisers';
 import { AppError } from '../util/editor_util';
 import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
 
@@ -66,7 +65,6 @@ export namespace SetMaterialsParams {
 export namespace VoxeliseParams {
     export type Input = {
         constraintAxis: TAxis,
-        voxeliser: TVoxelisers,
         size: number,
         useMultisampleColouring: boolean,
         enableAmbientOcclusion: boolean,

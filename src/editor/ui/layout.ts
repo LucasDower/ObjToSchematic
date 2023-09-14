@@ -15,7 +15,6 @@ import { ASSERT } from '../../runtime/util/error_util';
 import { TAxis } from '../../runtime/util/type_util';
 import { TDithering } from '../../runtime/util/type_util';
 import { UIUtil } from '../../runtime/util/ui_util';
-import { TVoxelisers } from '../../runtime/voxelisers/voxelisers';
 import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from '../ui/components/checkbox';
 import { ComboboxComponent } from '../ui/components/combobox';
@@ -177,11 +176,6 @@ export class UI {
                     .setDecimals(0)
                     .setStep(1)
                     .setLabel('voxelise.components.size'),
-                'voxeliser': new ComboboxComponent<TVoxelisers>()
-                    .addItem({ payload: 'ray-based', displayLocKey: 'voxelise.components.ray_based' })
-                    .addItem({ payload: 'bvh-ray', displayLocKey: 'voxelise.components.bvh_ray' })
-                    .addItem({ payload: 'ncrb', displayLocKey: 'voxelise.components.ncrb' })
-                    .setLabel('voxelise.components.algorithm'),
                 'ambientOcclusion': new CheckboxComponent()
                     .setCheckedText('voxelise.components.on_recommended')
                     .setUncheckedText('voxelise.components.off_faster')
@@ -213,7 +207,6 @@ export class UI {
                 'constraintAxis',
                 'size',
                 'placeholder',
-                'voxeliser',
                 'ambientOcclusion',
                 'multisampleColouring',
                 'voxelOverlapRule',

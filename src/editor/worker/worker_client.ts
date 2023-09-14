@@ -10,15 +10,13 @@ import { LOC, Localiser } from '../localiser';
 import { Mesh } from '../../runtime/mesh';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../runtime/util/error_util';
-import { IVoxeliser } from '../../runtime/voxelisers/base-voxeliser';
-import { VoxeliserFactory } from '../../runtime/voxelisers/voxelisers';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 import { StatusHandler } from '../status';
-import { AppConfig } from '../config';
 import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
 import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
 import { AppError } from '../util/editor_util';
 import { OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
+import { OtS_VoxelMesh_Converter } from '../../runtime/ots_voxel_mesh_converter';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -142,17 +140,17 @@ export class WorkerClient {
         ASSERT(this._loadedMesh !== undefined);
         this._bufferGenerator_VoxelMesh = undefined;
 
-        const voxeliser: IVoxeliser = VoxeliserFactory.GetVoxeliser(params.voxeliser);
-        voxeliser.setMultisampleCount(AppConfig.Get.MULTISAMPLE_COUNT);
+        const converter = new OtS_VoxelMesh_Converter();
+        converter.setConfig({
+            constraintAxis: params.constraintAxis,
+            size: params.size,
+            multisampling: params.useMultisampleColouring,
+            replaceMode: params.voxelOverlapRule,
+        });
 
-        const handle = ProgressManager.Get.start('Voxelising');
-        {
-            this._loadedVoxelMesh = voxeliser.voxelise(this._loadedMesh, params.voxelOverlapRule, params.constraintAxis, params.size, params.useMultisampleColouring, (percentage) => {
-                ProgressManager.Get.progress(handle, percentage);
-            });
-        }
-        ProgressManager.Get.end(handle);
+        this._loadedVoxelMesh = converter.process(this._loadedMesh);
 
+        // Report stats
         {
             StatusHandler.info(LOC('voxelise.voxel_count', { count: this._loadedVoxelMesh.getVoxelCount() }));
 

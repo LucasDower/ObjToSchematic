@@ -58,6 +58,7 @@ export class MaterialMapManager {
             case MaterialType.solid:
                 ASSERT(currentMaterial.type === MaterialType.textured, 'Old material expect to be texture');
                 this.materials.set(materialName, {
+                    name: materialName,
                     type: MaterialType.solid,
                     colour: RGBAUtil.randomPretty(),
                     canBeTextured: true,
@@ -67,6 +68,7 @@ export class MaterialMapManager {
             case MaterialType.textured:
                 ASSERT(currentMaterial.type === MaterialType.solid, 'Old material expect to be solid');
                 this.materials.set(materialName, {
+                    name: materialName,
                     type: MaterialType.textured,
                     transparency: {
                         type: 'None',

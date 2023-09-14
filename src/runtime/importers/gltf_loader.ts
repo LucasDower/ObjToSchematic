@@ -42,6 +42,7 @@ export class GltfLoader extends IImporter {
         const meshTriangles: Tri[] = [];
         const meshMaterials: MaterialMap = new Map();
         meshMaterials.set('NONE', {
+            name: 'NONE',
             type: MaterialType.solid,
             colour: RGBAUtil.copy(RGBAColours.WHITE),
             needsAttention: false,
@@ -108,6 +109,7 @@ export class GltfLoader extends IImporter {
                                     );
 
                                     meshMaterials.set(materialName, {
+                                        name: materialName,
                                         type: MaterialType.textured,
                                         diffuse: {
                                             filetype: mimeType === 'image/jpeg' ? 'jpg' : 'png',
@@ -120,6 +122,7 @@ export class GltfLoader extends IImporter {
                                     });
                                 } catch {
                                     meshMaterials.set(materialName, {
+                                        name: materialName,
                                         type: MaterialType.solid,
                                         colour: RGBAUtil.copy(RGBAColours.WHITE),
                                         needsAttention: false,
@@ -139,6 +142,7 @@ export class GltfLoader extends IImporter {
 
                                 if (diffuseColour !== undefined) {
                                     meshMaterials.set(materialName, {
+                                        name: materialName,
                                         type: MaterialType.solid,
                                         colour: {
                                             r: diffuseColour[0],
@@ -159,6 +163,7 @@ export class GltfLoader extends IImporter {
                         const emissiveColour: (number[] | undefined) = primitive.material.pbr;
                         if (!materialMade && emissiveColour !== undefined) {
                             meshMaterials.set(materialName, {
+                                name: materialName,
                                 type: MaterialType.solid,
                                 colour: {
                                     r: emissiveColour[0],

@@ -197,7 +197,6 @@ export class AppContext {
                 action: 'Voxelise',
                 params: {
                     constraintAxis: components.constraintAxis.getValue(),
-                    voxeliser: components.voxeliser.getValue(),
                     size: components.size.getValue(),
                     useMultisampleColouring: components.multisampleColouring.getValue(),
                     enableAmbientOcclusion: components.ambientOcclusion.getValue(),
@@ -244,7 +243,6 @@ export class AppContext {
 
         AppAnalytics.Event('voxelise', {
             constraintAxis: components.constraintAxis.getValue(),
-            voxeliser: components.voxeliser.getValue(),
             size: components.size.getValue(),
             useMultisampleColouring: components.multisampleColouring.getValue(),
             enableAmbientOcclusion: components.ambientOcclusion.getValue(),

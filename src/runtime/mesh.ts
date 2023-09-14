@@ -26,6 +26,7 @@ export interface Tri {
 export enum MaterialType { solid, textured }
 /* eslint-enable */
 type BaseMaterial = {
+    name: string,
     needsAttention: boolean, // True if the user should make edits to this material
 }
 
@@ -41,6 +42,9 @@ export type TexturedMaterial = BaseMaterial & {
     extension: TTexelExtension,
     transparency: TTransparencyOptions,
 }
+
+export type Material = SolidMaterial | TexturedMaterial
+
 export type MaterialMap = Map<string, SolidMaterial | TexturedMaterial>;
 
 export type TProcessMeshError =
@@ -213,6 +217,7 @@ export class Mesh {
                 if (tri.texcoordIndices === undefined) {
                     // No texcoords are defined, therefore make a solid material
                     this._materials.set(tri.material, {
+                        name: tri.material,
                         type: MaterialType.solid,
                         colour: RGBAUtil.randomPretty(),
                         canBeTextured: false,
@@ -221,6 +226,7 @@ export class Mesh {
                 } else {
                     // Texcoords exist
                     this._materials.set(tri.material, {
+                        name: tri.material,
                         type: MaterialType.solid,
                         colour: RGBAUtil.randomPretty(),
                         canBeTextured: true,
@@ -405,8 +411,15 @@ export class Mesh {
         );
     }
 
+    // TODO: Rename to getMaterialNameByTriangle
     public getMaterialByTriangle(triIndex: number) {
         return this._tris[triIndex].material;
+    }
+    
+    // TODO: Return default material if for some reason the .get returns undefined
+    public getMaterialInfoByTriangle(triIndex: number): Material {
+        const materialName = this._tris[triIndex].material;
+        return this._materials.get(materialName)!;
     }
 
     public getMaterialByName(materialName: string) {
@@ -420,6 +433,13 @@ export class Mesh {
 
     public getMaterials() {
         return this._materials;
+    }
+
+    public getTexture(material: TexturedMaterial) {
+        const texture = this._loadedTextures.get(material.name);
+        ASSERT(texture !== undefined, 'Sampling texture that is not loaded');
+
+        return texture;
     }
 
     public sampleTextureMaterial(materialName: string, uv: UV): RGBA {

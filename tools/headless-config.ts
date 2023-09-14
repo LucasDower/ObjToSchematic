@@ -9,7 +9,6 @@ export const headlessConfig: THeadlessConfig = {
     },
     voxelise: {
         constraintAxis: 'y',
-        voxeliser: 'bvh-ray',
         size: 80,
         useMultisampleColouring: false,
         voxelOverlapRule: 'average',

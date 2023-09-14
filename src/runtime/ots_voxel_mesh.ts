@@ -10,12 +10,12 @@ export type OtS_Voxel = {
 
 export type OtS_ReplaceMode = 'replace' | 'keep' | 'average';
 
-type Ots_Voxel_Internal = OtS_Voxel & {
+type OtS_Voxel_Internal = OtS_Voxel & {
     collisions: number,
 }
 
 export class OtS_VoxelMesh {
-    private _voxels: Map<number, Ots_Voxel_Internal>;
+    private _voxels: Map<number, OtS_Voxel_Internal>;
     private _isBoundsDirty: boolean;
     private _bounds: Bounds;
     private _replaceMode: OtS_ReplaceMode;
@@ -35,7 +35,7 @@ export class OtS_VoxelMesh {
         const useReplaceMode = replaceMode ?? this._replaceMode;
 
         const key = Vector3.Hash(x, y, z);
-        let voxel: (Ots_Voxel_Internal | undefined) = this._voxels.get(key);
+        let voxel: (OtS_Voxel_Internal | undefined) = this._voxels.get(key);
 
         if (voxel === undefined) {
             const position = new Vector3(x, y, z);
