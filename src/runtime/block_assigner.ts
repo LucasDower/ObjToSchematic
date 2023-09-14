@@ -2,9 +2,9 @@ import { Atlas, TAtlasBlock } from './atlas';
 import { RGBA, RGBA_255, RGBAUtil } from './colour';
 import { AppMath } from './math';
 import { OtS_FaceVisibility } from './ots_voxel_mesh_neighbourhood';
-import { Palette } from './palette';
 import { AppTypes, TOptional } from './util';
 import { ASSERT } from './util/error_util';
+import { BlockPalette } from './util/type_util';
 
 export type TBlockCollection = {
     blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>,
@@ -21,24 +21,21 @@ export type TBlockCollection = {
  */
 export class AtlasPalette {
     private _atlas: Atlas;
-    private _palette: Palette;
+    private _palette: BlockPalette;
 
-    public constructor(atlas: Atlas, palette: Palette) {
+    public constructor(atlas: Atlas, palette: BlockPalette) {
         this._atlas = atlas;
         this._palette = palette;
-
-        this._palette.removeMissingAtlasBlocks(this._atlas);
     }
 
     public createBlockCollection(blocksToExclude: AppTypes.TNamespacedBlockName[]): TBlockCollection {
-        const blocksNamesToUse = this._palette.getBlocks();
-        {
-            // Remove excluded blocks
-            for (const blockToExclude of blocksToExclude) {
-                const index = blocksNamesToUse.indexOf(blockToExclude);
-                if (index != -1) {
-                    blocksNamesToUse.splice(index, 1);
-                }
+        const blocksNamesToUse = Array.from(this._palette);
+        
+        // Remove excluded blocks
+        for (const blockToExclude of blocksToExclude) {
+            const index = blocksNamesToUse.indexOf(blockToExclude);
+            if (index != -1) {
+                blocksNamesToUse.splice(index, 1);
             }
         }
 

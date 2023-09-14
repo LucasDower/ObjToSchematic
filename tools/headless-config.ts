@@ -16,7 +16,7 @@ export const headlessConfig: THeadlessConfig = {
         enableAmbientOcclusion: false, // Only want true if exporting to .obj
     },
     assign: {
-        blockPalette: PALETTE_ALL_RELEASE, // Must be a palette name that exists in /resources/palettes
+        blockPalette: new Set(PALETTE_ALL_RELEASE), // Must be a palette name that exists in /resources/palettes
         dithering: 'ordered',
         ditheringMagnitude: 32,
         fallable: 'replace-falling',

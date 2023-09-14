@@ -263,7 +263,7 @@ export class AppContext {
             const resultAssign = await this._workerController.execute({
                 action: 'Assign',
                 params: {
-                    blockPalette: components.blockPalette.getValue().getBlocks(),
+                    blockPalette: components.blockPalette.getValue(),
                     dithering: components.dithering.getValue(),
                     ditheringMagnitude: components.ditheringMagnitude.getValue(),
                     fallable: components.fallable.getValue() as FallableBehaviour,

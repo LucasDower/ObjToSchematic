@@ -20,3 +20,5 @@ export type WrappedInfo = {}
 
 /** Wrapped simply wraps a payload with a list of warnings/info associated with it */
 export type Wrapped<T> = { payload: T, warnings: WrappedWarnings[], info: WrappedInfo[] };
+
+export type BlockPalette = Set<string>;

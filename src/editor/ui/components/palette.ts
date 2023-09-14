@@ -1,6 +1,5 @@
 import { PALETTE_ALL_RELEASE } from '../../../../res/palettes/all';
 import { LOC } from '../../localiser';
-import { Palette } from '../../../runtime/palette';
 import { AppUtil } from '../../../runtime/util';
 import { ASSERT } from '../../../runtime/util/error_util';
 import { download } from '../../../runtime/util/file_util';
@@ -10,10 +9,11 @@ import { AppIcons } from '../../../editor/ui/icons';
 import { CheckboxComponent } from './checkbox';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
+import { BlockPalette } from 'src/runtime/util/type_util';
 
-export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
+export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivElement> {
     private _checkboxes: { block: string, element: CheckboxComponent }[];
-    private _palette: Palette;
+    private _palette: BlockPalette;
     private _selectAll: ToolbarItemComponent;
     private _deselectAll: ToolbarItemComponent;
     private _importFrom: ToolbarItemComponent;
@@ -22,8 +22,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
     public constructor() {
         super();
 
-        this._palette = Palette.create();
-        this._palette.add(PALETTE_ALL_RELEASE);
+        this._palette = new Set(PALETTE_ALL_RELEASE);
         this._setValue(this._palette);
 
         this._checkboxes = [];
@@ -85,7 +84,7 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
     }
 
     private _onCountSelectedChanged() {
-        const countSelected = this.getValue().count();
+        const countSelected = this.getValue().size;
 
         this._deselectAll.setEnabled(this.enabled && countSelected > 0);
         this._selectAll.setEnabled(this.enabled && countSelected < PALETTE_ALL_RELEASE.length);
@@ -208,9 +207,9 @@ export class PaletteComponent extends ConfigComponent<Palette, HTMLDivElement> {
             checkbox.element.addValueChangedListener(() => {
                 const isTicked = checkbox.element.getValue();
                 if (isTicked) {
-                    this._palette.add([checkbox.block]);
+                    this._palette.add(checkbox.block);
                 } else {
-                    this._palette.remove(checkbox.block);
+                    this._palette.delete(checkbox.block);
                 }
                 this._onCountSelectedChanged();
             });

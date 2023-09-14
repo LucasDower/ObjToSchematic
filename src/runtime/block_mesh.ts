@@ -5,11 +5,10 @@ import { RGBA_255, RGBAUtil } from '../runtime/colour';
 import { AppRuntimeConstants } from './constants';
 import { Ditherer } from './dither';
 import { BlockMeshLighting } from './lighting';
-import { Palette } from './palette';
 import { TOptional } from './util';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
-import { TDithering } from './util/type_util';
+import { BlockPalette, TDithering } from './util/type_util';
 import { OtS_Voxel, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
 
@@ -28,7 +27,7 @@ interface GrassLikeBlock {
 export type FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export interface BlockMeshParams {
-    blockPalette: string[],
+    blockPalette: BlockPalette,
     dithering: TDithering,
     ditheringMagnitude: number,
     fallable: FallableBehaviour,
@@ -111,10 +110,7 @@ export class BlockMesh {
     private _assignBlocks(blockMeshParams: BlockMeshParams): (null | TAssignBlocksWarning) {
         ASSERT(this._atlas !== undefined, 'No atlas loaded');
 
-        const palette = Palette.create();
-        palette.add(blockMeshParams.blockPalette);
-
-        const atlasPalette = new AtlasPalette(this._atlas, palette);
+        const atlasPalette = new AtlasPalette(this._atlas, blockMeshParams.blockPalette);
         const allBlockCollection = atlasPalette.createBlockCollection([]);
         const nonFallableBlockCollection = atlasPalette.createBlockCollection(Array.from(AppRuntimeConstants.Get.FALLABLE_BLOCKS));
         const grassLikeBlocksBuffer: GrassLikeBlock[] = [];
