@@ -21,7 +21,7 @@ export class GltfImporterError extends Error {
 }
 
 export class GltfLoader extends IImporter {
-    public override async import(file: File): Promise<Mesh> {
+    public override async import(file: ArrayBuffer): Promise<Mesh> {
         // TODO: StatusRework
         //StatusHandler.warning(LOC('import.gltf_experimental'));
 

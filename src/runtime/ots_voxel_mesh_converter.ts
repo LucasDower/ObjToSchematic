@@ -7,7 +7,6 @@ import { LinearAllocator } from './linear_allocator';
 import { Axes, Ray, rayIntersectTriangle } from './ray';
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
-import { UV } from './util';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,

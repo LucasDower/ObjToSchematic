@@ -45,7 +45,8 @@ export class OtS_VoxelMesh {
                 collisions: 1,
             }
             this._voxels.set(key, voxel);
-            this._bounds.extendByPoint(position);
+            //this._bounds.extendByPoint(position);
+            this._isBoundsDirty = true;
         } else {
             if (useReplaceMode === 'average') {
                 voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);

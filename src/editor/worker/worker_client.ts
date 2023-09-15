@@ -92,7 +92,9 @@ export class WorkerClient {
 
         const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
 
-        this._loadedMesh = await importer.import(params.file);
+        const fileBuffer = await params.file.arrayBuffer();
+
+        this._loadedMesh = await importer.import(fileBuffer);
 
         const err = this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
         if (err !== null) {

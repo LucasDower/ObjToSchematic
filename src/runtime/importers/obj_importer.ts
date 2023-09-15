@@ -222,8 +222,9 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    public override async import(file: File): Promise<Mesh> {
-        const fileSource = await file.text();
+    public override async import(file: ArrayBuffer): Promise<Mesh> {
+        const decoder = new TextDecoder(); //utf8
+        const fileSource = decoder.decode(file);
 
         if (fileSource.includes('�')) {
             throw new ObjImporterError({ type: 'invalid-encoding' });
