@@ -17,12 +17,16 @@ export class Triangle {
         return Vector3.divScalar(Vector3.add(Vector3.add(this.v0, this.v1), this.v2), 3.0);
     }
 
-    public getArea(): number {
-        const a = Vector3.sub(this.v0, this.v1).magnitude();
-        const b = Vector3.sub(this.v1, this.v2).magnitude();
-        const c = Vector3.sub(this.v2, this.v0).magnitude();
+    public static GetArea(v0: Vector3, v1: Vector3, v2: Vector3) {
+        const a = Vector3.Distance(v0, v1);
+        const b = Vector3.Distance(v1, v2);
+        const c = Vector3.Distance(v2, v0);
         const p = (a + b + c) / 2;
         return Math.sqrt(p * (p - a) * (p - b) * (p - c));
+    }
+
+    public getArea(): number {
+        return Triangle.GetArea(this.v0, this.v1, this.v2);
     }
 
     public getNormal(): Vector3 {

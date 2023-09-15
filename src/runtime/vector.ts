@@ -189,6 +189,10 @@ export class Vector3 {
         return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
     }
 
+    public static Distance(v0: Vector3, v1: Vector3): number {
+        return Math.sqrt((v0.x - v1.x)*(v0.x - v1.x) + (v0.y - v1.y)*(v0.y - v1.y) + (v0.z - v1.z)*(v0.z - v1.z));
+    }
+
     normalise() {
         const mag = this.magnitude();
         this.x /= mag;

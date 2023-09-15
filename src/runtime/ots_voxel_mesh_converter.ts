@@ -1,6 +1,6 @@
 import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
-import { Material, MaterialType, Mesh, TexturedMaterial } from './mesh';
+import { Material, MaterialType, Mesh, TexturedMaterial, Tri } from './mesh';
 import { Vector3 } from './vector';
 import { Triangle, UVTriangle } from './triangle';
 import { LinearAllocator } from './linear_allocator';
@@ -137,9 +137,9 @@ export class OtS_VoxelMesh_Converter {
     }
 
     private _internalGetVoxelColour(mesh: Mesh, triangle: UVTriangle, material: TexturedMaterial, location: Vector3) {
-        const area01 = new Triangle(triangle.v0, triangle.v1, location).getArea();
-        const area12 = new Triangle(triangle.v1, triangle.v2, location).getArea();
-        const area20 = new Triangle(triangle.v2, triangle.v0, location).getArea();
+        const area01 = Triangle.GetArea(triangle.v0, triangle.v1, location);
+        const area12 = Triangle.GetArea(triangle.v1, triangle.v2, location);
+        const area20 = Triangle.GetArea(triangle.v2, triangle.v0, location);
         const total = area01 + area12 + area20;
 
         const w0 = area12 / total;

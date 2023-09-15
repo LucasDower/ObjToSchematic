@@ -143,12 +143,12 @@ export class Texture {
             return RGBAColours.MAGENTA;
         }
 
-        const A = Texture._sampleImage(xLeft, yUp, this._image);
-        const B = Texture._sampleImage(xRight, yUp, this._image);
+        const A = Texture._sampleImage(xLeft, yUp, image);
+        const B = Texture._sampleImage(xRight, yUp, image);
         const AB = RGBAUtil.lerp(A, B, u);
 
-        const C = Texture._sampleImage(xLeft, yDown, this._image);
-        const D = Texture._sampleImage(xRight, yDown, this._image);
+        const C = Texture._sampleImage(xLeft, yDown, image);
+        const D = Texture._sampleImage(xRight, yDown, image);
         const CD = RGBAUtil.lerp(C, D, u);
 
         return RGBAUtil.lerp(AB, CD, v);
@@ -196,22 +196,17 @@ export class Texture {
         return false;
     }
 
-    private static _sampleImage(x: number, y: number, image?: ImageData) {
-        if (image === undefined) {
-            return RGBAColours.MAGENTA;
-        }
+    private static _sampleImage(x: number, y: number, image: ImageData) {
+        const cx = clamp(x, 0, image.width - 1);
+        const cy = clamp(y, 0, image.height - 1);
 
-        x = clamp(x, 0, image.width - 1);
-        y = clamp(y, 0, image.height - 1);
-
-        const index = 4 * (image.width * y + x);
-        const rgba = image.data.slice(index, index + 4);
+        const index = 4 * (image.width * cy + cx);
 
         return {
-            r: rgba[0] / 255,
-            g: rgba[1] / 255,
-            b: rgba[2] / 255,
-            a: rgba[3] / 255,
+            r: image.data[index + 0] / 255,
+            g: image.data[index + 1] / 255,
+            b: image.data[index + 2] / 255,
+            a: image.data[index + 3] / 255,
         };
     }
 }
