@@ -2,7 +2,6 @@ import * as twgl from 'twgl.js';
 
 import { Bounds } from '../../runtime/bounds';
 import { RGBA } from '../../runtime/colour';
-import { Mesh } from '../../runtime/mesh';
 import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
 import { Triangle, UVTriangle } from '../../runtime/triangle';
 import { ASSERT } from '../../runtime/util/error_util';
@@ -380,30 +379,30 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static meshWireframe(mesh: Mesh, colour: RGBA): RenderBuffer {
-        const buffer = new RenderBuffer([
-            { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 4 },
-        ]);
+    // public static meshWireframe(mesh: Mesh, colour: RGBA): RenderBuffer {
+    //     const buffer = new RenderBuffer([
+    //         { name: 'position', numComponents: 3 },
+    //         { name: 'colour', numComponents: 4 },
+    //     ]);
 
-        let v0: Vector3 = new Vector3(0, 0, 0);
-        let v1: Vector3 = new Vector3(0, 0, 0);
-        let v2: Vector3 = new Vector3(0, 0, 0);
-        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-            ({ v0, v1, v2 } = mesh.getVertices(triIndex));
-            buffer.add(DebugGeometryTemplates.line(
-                v0, v1, colour,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                v1, v2, colour,
-            ));
-            buffer.add(DebugGeometryTemplates.line(
-                v2, v0, colour,
-            ));
-        }
+    //     let v0: Vector3 = new Vector3(0, 0, 0);
+    //     let v1: Vector3 = new Vector3(0, 0, 0);
+    //     let v2: Vector3 = new Vector3(0, 0, 0);
+    //     for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+    //         ({ v0, v1, v2 } = mesh.getVertices(triIndex));
+    //         buffer.add(DebugGeometryTemplates.line(
+    //             v0, v1, colour,
+    //         ));
+    //         buffer.add(DebugGeometryTemplates.line(
+    //             v1, v2, colour,
+    //         ));
+    //         buffer.add(DebugGeometryTemplates.line(
+    //             v2, v0, colour,
+    //         ));
+    //     }
 
-        return buffer;
-    }
+    //     return buffer;
+    // }
 
     public static voxelMeshWireframe(voxelMesh: OtS_VoxelMesh, colour: RGBA, voxelSize: number): RenderBuffer {
         const buffer = new RenderBuffer([
@@ -426,29 +425,29 @@ export class DebugGeometryTemplates {
         return buffer;
     }
 
-    public static meshNormals(mesh: Mesh, colour: RGBA): RenderBuffer {
-        const buffer = new RenderBuffer([
-            { name: 'position', numComponents: 3 },
-            { name: 'colour', numComponents: 4 },
-        ]);
+    // public static meshNormals(mesh: Mesh, colour: RGBA): RenderBuffer {
+    //     const buffer = new RenderBuffer([
+    //         { name: 'position', numComponents: 3 },
+    //         { name: 'colour', numComponents: 4 },
+    //     ]);
 
-        for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
-            const normalLength = 0.5;
-            const vertices = mesh.getVertices(triIndex);
-            const normals = mesh.getNormals(triIndex);
-            const avgNormal = Vector3.add(normals.v0, normals.v1).add(normals.v2).divScalar(3.0);
-            const tri = new Triangle(vertices.v0, vertices.v1, vertices.v2);
-            const start = tri.getCentre();
-            const end = Vector3.add(start, Vector3.mulScalar(avgNormal, normalLength));
-            buffer.add(DebugGeometryTemplates.arrow(
-                start,
-                end,
-                colour,
-            ));
-        }
+    //     for (let triIndex = 0; triIndex < mesh.getTriangleCount(); ++triIndex) {
+    //         const normalLength = 0.5;
+    //         const vertices = mesh.getVertices(triIndex);
+    //         const normals = mesh.getNormals(triIndex);
+    //         const avgNormal = Vector3.add(normals.v0, normals.v1).add(normals.v2).divScalar(3.0);
+    //         const tri = new Triangle(vertices.v0, vertices.v1, vertices.v2);
+    //         const start = tri.getCentre();
+    //         const end = Vector3.add(start, Vector3.mulScalar(avgNormal, normalLength));
+    //         buffer.add(DebugGeometryTemplates.arrow(
+    //             start,
+    //             end,
+    //             colour,
+    //         ));
+    //     }
 
-        return buffer;
-    }
+    //     return buffer;
+    // }
 
     static _generateCirclePoints(centre: Vector3, normal: Vector3, radius: number, steps: number): Vector3[] {
         normal = normal.copy().normalise();

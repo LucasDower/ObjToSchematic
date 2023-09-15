@@ -3,12 +3,12 @@ import { Bounds } from '../../runtime/bounds';
 import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from '../buffer';
 import { TStructureExport } from '../../runtime/exporters/base_exporter';
 import { TExporters } from '../../runtime/exporters/exporters';
-import { MaterialMap } from '../../runtime/mesh';
 import { TMessage } from '../ui/console';
 import { TAxis } from '../../runtime/util/type_util';
 import { Vector3 } from '../../runtime/vector';
 import { AppError } from '../util/editor_util';
 import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
+import { Material } from 'src/runtime/materials';
 
 export namespace InitParams {
     export type Input = {
@@ -36,7 +36,7 @@ export namespace ImportParams {
     export type Output = {
         triangleCount: number,
         dimensions: Vector3,
-        materials: MaterialMap
+        materials: Material[]
     }
 }
 
@@ -53,11 +53,11 @@ export namespace RenderMeshParams {
 
 export namespace SetMaterialsParams {
     export type Input = {
-        materials: MaterialMap
+        materials: Material[]
     }
 
     export type Output = {
-        materials: MaterialMap,
+        materials: Material[],
         materialsChanged: string[],
     }
 }

@@ -7,7 +7,6 @@ import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from '../../runtime/colour';
 import { AppConfig } from '../config';
 import { DebugGeometryTemplates } from './geometry';
-import { MaterialType, SolidMaterial, TexturedMaterial } from '../../runtime/mesh';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
 import { EImageChannel } from '../../runtime/texture';
@@ -17,6 +16,7 @@ import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshCh
 import { UIUtil } from '../../runtime/util/ui_util';
 import { TAxis } from '../../runtime/util/type_util';
 import { Atlas } from '../../runtime/atlas';
+import { Material, MaterialType } from '../../runtime/materials';
 
 /* eslint-disable */
 export enum MeshType {
@@ -327,7 +327,7 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    private _createInternalMaterial(material: SolidMaterial | TexturedMaterial): (InternalSolidMaterial | InternalTextureMaterial) {
+    private _createInternalMaterial(material: Material): (InternalSolidMaterial | InternalTextureMaterial) {
         if (material.type === MaterialType.solid) {
             return {
                 type: MaterialType.solid,
@@ -398,7 +398,7 @@ export class Renderer {
         }
     }
 
-    public recreateMaterialBuffer(materialName: string, material: SolidMaterial | TexturedMaterial) {
+    public recreateMaterialBuffer(materialName: string, material: Material) {
         const oldBuffer = this._materialBuffers.get(materialName);
         ASSERT(oldBuffer !== undefined);
 

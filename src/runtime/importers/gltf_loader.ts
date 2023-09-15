@@ -2,10 +2,11 @@ import { parse } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
 import { RGBAColours, RGBAUtil } from '../colour';
-import { MaterialMap, MaterialType, Mesh, Tri } from '../mesh';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
+import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
+import { Material, MaterialType } from '../materials';
 
 export type TGltfImporterError =
     | { type: 'failed-to-parse' }
@@ -21,7 +22,7 @@ export class GltfImporterError extends Error {
 }
 
 export class GltfLoader extends IImporter {
-    public override async import(file: ArrayBuffer): Promise<Mesh> {
+    public override async import(file: ReadableStream<Uint8Array>): Promise<OtS_Mesh> {
         // TODO: StatusRework
         //StatusHandler.warning(LOC('import.gltf_experimental'));
 
@@ -35,12 +36,12 @@ export class GltfLoader extends IImporter {
         return this._handleGLTF(gltf);
     }
 
-    private _handleGLTF(gltf: any): Mesh {
+    private _handleGLTF(gltf: any): OtS_Mesh {
         const meshVertices: Vector3[] = [];
         const meshNormals: Vector3[] = [];
         const meshTexcoords: UV[] = [];
         const meshTriangles: Tri[] = [];
-        const meshMaterials: MaterialMap = new Map();
+        const meshMaterials: Map<string, Material> = new Map();
         meshMaterials.set('NONE', {
             name: 'NONE',
             type: MaterialType.solid,
@@ -209,14 +210,6 @@ export class GltfLoader extends IImporter {
             });
         });
 
-        const mesh = new Mesh(
-            meshVertices,
-            meshNormals,
-            meshTexcoords,
-            meshTriangles,
-            meshMaterials,
-        );
-
-        return mesh;
+        return TEMP_CONVERT_MESH(meshVertices, meshTexcoords, meshTriangles);
     }
 }

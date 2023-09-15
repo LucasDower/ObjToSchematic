@@ -1,5 +1,6 @@
+import { RGBAColours, RGBAUtil } from '../colour';
 import { anyNaN } from '../math';
-import { Mesh, Tri } from '../mesh';
+import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
 import { RegExpBuilder } from '../util/regex_util';
@@ -222,29 +223,51 @@ export class ObjImporter extends IImporter {
         },
     ];
 
-    public override async import(file: ArrayBuffer): Promise<Mesh> {
-        const decoder = new TextDecoder(); //utf8
-        const fileSource = decoder.decode(file);
+    private _linesToParse: string[] = [];
 
-        if (fileSource.includes('�')) {
-            throw new ObjImporterError({ type: 'invalid-encoding' });
-        }
-
-        const fileLines = fileSource.split(/\r?\n/);
-        const numLines = fileLines.length;
-
-        // TODO: ProgressRework
-        //const progressHandle = ProgressManager.Get.start('VoxelMeshBuffer');
-        fileLines.forEach((line, index) => {
+    private _consumeLoadedLines(includeLast: boolean) {
+        const size = includeLast ? this._linesToParse.length : this._linesToParse.length - 1;
+        
+        for (let i = 0; i < size; ++i) {
+            const line = this._linesToParse[i];
             const { err } = this.parseOBJLine(line);
             if (err !== null) {
                 throw new ObjImporterError(err);
             }
-            //ProgressManager.Get.progress(progressHandle, index / numLines);
-        });
-        // BUG: Maybe end the progress??? Regression?
+        }
 
-        return new Mesh(this._vertices, this._normals, this._uvs, this._tris, new Map());
+        this._linesToParse.splice(0, size);
+    }
+
+    public override async import(file: ReadableStream<Uint8Array>): Promise<OtS_Mesh> {
+        const reader = file.getReader();
+        const decoder = new TextDecoder(); //utf8
+        
+        let lastChunkEndedWithNewline = false;
+        let result: ReadableStreamReadResult<Uint8Array>;
+        do {
+            result = await reader.read();
+            const string = decoder.decode(result.value);
+
+            const newLines = string.split(/\r?\n/);
+            if (newLines.length > 0) {
+                if (this._linesToParse.length === 0 || lastChunkEndedWithNewline) {
+                    this._linesToParse = this._linesToParse.concat(newLines);
+                } else {
+                    const lastIndex = this._linesToParse.length - 1;
+                    const last = this._linesToParse[lastIndex];
+                    this._linesToParse[lastIndex] = last + newLines[0];
+                    this._linesToParse = this._linesToParse.concat(newLines.slice(1));
+                }
+            }
+
+            this._consumeLoadedLines(result.done);
+
+            const lastChar = string[string.length - 1];
+            lastChunkEndedWithNewline = lastChar === '\n' || lastChar === '\r\n';
+        } while (!result.done);
+
+        return TEMP_CONVERT_MESH(this._vertices, this._uvs, this._tris);
     }
 
     /**

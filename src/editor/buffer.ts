@@ -1,6 +1,7 @@
-import { Mesh, SolidMaterial, TexturedMaterial } from '../runtime/mesh';
-import { ProgressManager } from './progress';
 import { ASSERT } from '../runtime/util/error_util';
+import { OtS_Mesh } from '../runtime/ots_mesh';
+import { Triangle } from '../runtime/triangle';
+import { Material } from 'src/runtime/materials';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
@@ -10,7 +11,7 @@ export type TMeshBuffer = {
 };
 
 export type TMeshBufferDescription = {
-    material: SolidMaterial | (TexturedMaterial)
+    material: Material,
     buffer: TMeshBuffer,
     numElements: number,
     materialName: string,
@@ -50,14 +51,17 @@ export type TBlockMeshBufferDescription = {
 type TMaterialID = string;
 
 export class BufferGenerator {
-    public static fromMesh(mesh: Mesh): TMeshBufferDescription[] {
+    public static fromMesh(mesh: OtS_Mesh): TMeshBufferDescription[] {
         const numTris = mesh.getTriangleCount();
+
+        const triangles = Array.from(mesh.getTriangles());
+        const materials = mesh.getMaterials();
 
         // Count the number of triangles that use each material
         const materialTriangleCount = new Map<TMaterialID, number>();
         {
-            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
-                const materialName = mesh.getMaterialByTriangle(triIndex);
+            for (const triangle of triangles) {
+                const materialName = triangle.material.name;
                 const triangleCount = materialTriangleCount.get(materialName) ?? 0;
                 materialTriangleCount.set(materialName, triangleCount + 1);
             }
@@ -65,42 +69,35 @@ export class BufferGenerator {
 
         const materialBuffers: TMeshBufferDescription[] = [];
 
-        let trianglesHandled = 0;
-        const taskHandle = ProgressManager.Get.start('MeshBuffer');
-
         // Create the buffers for each material and fill with data from the triangles
         materialTriangleCount.forEach((triangleCount: number, materialName: string) => {
             const materialBuffer: TMeshBuffer = BufferGenerator.createMaterialBuffer(triangleCount);
 
             let insertIndex = 0;
             for (let triIndex = 0; triIndex < numTris; ++triIndex) {
-                ProgressManager.Get.progress(taskHandle, trianglesHandled / numTris);
+                const triangle = triangles[triIndex];
 
-                const material = mesh.getMaterialByTriangle(triIndex);
-                if (material === materialName) {
-                    ++trianglesHandled;
-
-                    const uiTriangle = mesh.getUVTriangle(triIndex);
-
+                if (triangle.material.name === materialName) {
                     // Position
                     {
-                        materialBuffer.position.data.set(uiTriangle.v0.toArray(), insertIndex * 9 + 0);
-                        materialBuffer.position.data.set(uiTriangle.v1.toArray(), insertIndex * 9 + 3);
-                        materialBuffer.position.data.set(uiTriangle.v2.toArray(), insertIndex * 9 + 6);
+                        materialBuffer.position.data.set(triangle.v0.position.toArray(), insertIndex * 9 + 0);
+                        materialBuffer.position.data.set(triangle.v1.position.toArray(), insertIndex * 9 + 3);
+                        materialBuffer.position.data.set(triangle.v2.position.toArray(), insertIndex * 9 + 6);
                     }
 
                     // Texcoord
                     {
-                        materialBuffer.texcoord.data.set([uiTriangle.uv0.u, uiTriangle.uv0.v], insertIndex * 6 + 0);
-                        materialBuffer.texcoord.data.set([uiTriangle.uv1.u, uiTriangle.uv1.v], insertIndex * 6 + 2);
-                        materialBuffer.texcoord.data.set([uiTriangle.uv2.u, uiTriangle.uv2.v], insertIndex * 6 + 4);
+                        materialBuffer.texcoord.data.set([triangle.v0.texcoord.u, triangle.v0.texcoord.v], insertIndex * 6 + 0);
+                        materialBuffer.texcoord.data.set([triangle.v1.texcoord.u, triangle.v1.texcoord.v], insertIndex * 6 + 2);
+                        materialBuffer.texcoord.data.set([triangle.v2.texcoord.u, triangle.v2.texcoord.v], insertIndex * 6 + 4);
                     }
 
                     // Normal
+                    const normalArray = Triangle.GetNormal(triangle.v0.position, triangle.v1.position, triangle.v2.position).toArray();
                     {
-                        materialBuffer.normal.data.set(uiTriangle.n0.toArray(), insertIndex * 9 + 0);
-                        materialBuffer.normal.data.set(uiTriangle.n1.toArray(), insertIndex * 9 + 3);
-                        materialBuffer.normal.data.set(uiTriangle.n2.toArray(), insertIndex * 9 + 6);
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);
+                        materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 6);
                     }
 
                     // Indices
@@ -116,8 +113,8 @@ export class BufferGenerator {
                 }
             }
 
-            const material = mesh.getMaterialByName(materialName);
-            ASSERT(material !== undefined);
+            const material = materials.find((someMaterial) => someMaterial.name === materialName);
+            ASSERT(material !== undefined, 'Unknown material');
 
             materialBuffers.push({
                 buffer: materialBuffer,
@@ -126,8 +123,6 @@ export class BufferGenerator {
                 materialName: materialName,
             });
         });
-
-        ProgressManager.Get.end(taskHandle);
 
         return materialBuffers;
     }

@@ -8,13 +8,33 @@ import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
 
 (async () => {
     const p = path.join(__dirname, '../res/samples/skull.obj');
-    //console.log(p);
-    const file = fs.readFileSync(p);
+    
+    const readableStream = new ReadableStream({
+        async start(controller) {
+            try {
+                const readStream = fs.createReadStream(p);
+                
+                readStream.on('data', (chunk) => {
+                    controller.enqueue(chunk);
+                });
+
+                readStream.on('end', () => {
+                    controller.close();
+                });
+
+                readStream.on('error', (err) => {
+                    throw err;
+                });
+            } catch (error) {
+                controller.error(error); // Signal an error if something goes wrong
+            }
+        },
+    });
+
 
     const loader = new ObjImporter();
     console.time('Mesh');
-    const mesh = await loader.import(file);
-    mesh.processMesh(0, 0, 0);
+    const mesh = await loader.import(readableStream);
     console.timeEnd('Mesh');
 
     const converter = new OtS_VoxelMesh_Converter();

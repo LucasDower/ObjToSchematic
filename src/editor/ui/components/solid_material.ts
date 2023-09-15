@@ -1,4 +1,4 @@
-import { SolidMaterial } from '../../../runtime/mesh';
+import { SolidMaterial } from 'src/runtime/materials';
 import { ColourComponent } from './colour';
 import { ConfigComponent } from './config';
 import { MaterialTypeComponent } from './material_type';

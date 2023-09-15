@@ -7,8 +7,7 @@ import { ArcballCamera } from '../renderer/camera';
 import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../../runtime/exporters/exporters';
 import { LOC, Localiser, TLocalisedString } from '../localiser';
-import { MaterialMapManager } from '../../runtime/material-map';
-import { MaterialType } from '../../runtime/mesh';
+import { MaterialMapManager, MaterialType } from '../../runtime/materials';
 import { MeshType, Renderer } from '../renderer/renderer';
 import { EAction } from '../../runtime/util';
 import { ASSERT } from '../../runtime/util/error_util';
@@ -867,33 +866,33 @@ export class UI {
         this.layout.materials.components = {};
         this.layout.materials.componentOrder = [];
 
-        if (materialManager.materials.size == 0) {
+        if (materialManager.getCount() == 0) {
             this.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent()
                 .setPlaceholderText('materials.components.no_materials_loaded');
             this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
-            materialManager.materials.forEach((material, materialName) => {
+            materialManager.toMaterialArray().forEach((material) => {
                 if (material.type === MaterialType.solid) {
-                    this.layoutDull['materials'].components[`mat_${materialName}`] = new SolidMaterialComponent(materialName, material)
-                        .setUnlocalisedLabel(materialName)
+                    this.layoutDull['materials'].components[`mat_${material.name}`] = new SolidMaterialComponent(material.name, material)
+                        .setUnlocalisedLabel(material.name)
                         .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(materialName, MaterialType.textured);
+                            materialManager.changeMaterialType(material.name, MaterialType.textured);
                             this.updateMaterialsAction(materialManager);
                         });
                 } else {
-                    this.layoutDull['materials'].components[`mat_${materialName}`] = new TexturedMaterialComponent(materialName, material)
-                        .setUnlocalisedLabel(materialName)
+                    this.layoutDull['materials'].components[`mat_${material.name}`] = new TexturedMaterialComponent(material.name, material)
+                        .setUnlocalisedLabel(material.name)
                         .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(materialName, MaterialType.solid);
+                            materialManager.changeMaterialType(material.name, MaterialType.solid);
                             this.updateMaterialsAction(materialManager);
                         })
                         .onChangeTransparencyTypeDelegate((newTransparency) => {
-                            materialManager.changeTransparencyType(materialName, newTransparency);
+                            materialManager.changeTransparencyType(material.name, newTransparency);
                             this.updateMaterialsAction(materialManager);
                         });
                 }
 
-                this.layoutDull['materials'].componentOrder.push(`mat_${materialName}`);
+                this.layoutDull['materials'].componentOrder.push(`mat_${material.name}`);
             });
         }
 

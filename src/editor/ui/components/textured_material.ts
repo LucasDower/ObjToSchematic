@@ -1,4 +1,3 @@
-import { TexturedMaterial } from '../../../runtime/mesh';
 import { EImageChannel, TTransparencyTypes } from '../../../runtime/texture';
 import { ASSERT } from '../../../runtime/util/error_util';
 import { TTexelInterpolation } from '../../../runtime/util/type_util';
@@ -8,6 +7,7 @@ import { ConfigComponent } from './config';
 import { ImageComponent } from './image';
 import { MaterialTypeComponent } from './material_type';
 import { SliderComponent } from './slider';
+import { TexturedMaterial } from 'src/runtime/materials';
 
 export class TexturedMaterialComponent extends ConfigComponent<TexturedMaterial, HTMLDivElement> {
     private _typeElement: MaterialTypeComponent;

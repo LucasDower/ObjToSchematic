@@ -29,6 +29,12 @@ export class Triangle {
         return Triangle.GetArea(this.v0, this.v1, this.v2);
     }
 
+    public static GetNormal(v0: Vector3, v1: Vector3, v2: Vector3) {
+        const u = Vector3.sub(v0, v1);
+        const v = Vector3.sub(v0, v2);
+        return Vector3.cross(u, v).normalise();
+    }
+
     public getNormal(): Vector3 {
         const u = Vector3.sub(this.v0, this.v1);
         const v = Vector3.sub(this.v0, this.v2);

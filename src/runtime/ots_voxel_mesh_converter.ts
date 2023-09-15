@@ -1,12 +1,15 @@
 import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
-import { Material, MaterialType, Mesh, TexturedMaterial, Tri } from './mesh';
 import { Vector3 } from './vector';
 import { Triangle, UVTriangle } from './triangle';
 import { LinearAllocator } from './linear_allocator';
 import { Axes, Ray, rayIntersectTriangle } from './ray';
 import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
+import { ASSERT } from './util/error_util';
+import { OtS_Mesh_TextureLoader } from './ots_mesh_texture_loader';
+import { MaterialType } from './materials';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -18,6 +21,7 @@ export type OtS_VoxelMesh_ConverterConfig = {
 export class OtS_VoxelMesh_Converter {
     private _config: OtS_VoxelMesh_ConverterConfig;
     private _rays: LinearAllocator<Ray>;
+    private _textureLoader: OtS_Mesh_TextureLoader;
 
     // Reused Bounds object in calculations to avoid GC
     private _tmpBounds: Bounds;
@@ -35,6 +39,8 @@ export class OtS_VoxelMesh_Converter {
             return ray;
         });
 
+        this._textureLoader = new OtS_Mesh_TextureLoader();
+
         this._tmpBounds = Bounds.getEmptyBounds();
     }
 
@@ -51,40 +57,33 @@ export class OtS_VoxelMesh_Converter {
         return true;
     }
 
-    public process(mesh: Mesh): OtS_VoxelMesh {
+    public process(mesh: OtS_Mesh): OtS_VoxelMesh {
         const voxelMesh = new OtS_VoxelMesh();
+        this._textureLoader.load(mesh);
 
-        const numTris = mesh.getTriangleCount();
         const { scale, offset } = this._calcScaleOffset(mesh);
 
-        const vertexTransform = (vertex: Vector3) => {
-            return vertex.copy().mulScalar(scale).add(offset);
-        }
+        const normalisedMesh = mesh.copy();
+        normalisedMesh.scale(scale);
+        normalisedMesh.translate(offset.x, offset.y, offset.z);
 
-        mesh.setTransform(vertexTransform);
-        {
-            for (let triIndex = 0; triIndex < numTris; ++triIndex) {
-                const uvTriangle = mesh.getUVTriangle(triIndex);
-                const material = mesh.getMaterialInfoByTriangle(triIndex);
-
-                this._voxeliseTri(mesh, voxelMesh, uvTriangle, material);
-            }
+        for (const triangle of normalisedMesh.getTriangles()) {
+            this._voxeliseTri(mesh, voxelMesh, triangle);
         }
-        mesh.clearTransform();
 
         return voxelMesh;
     }
 
-    private _voxeliseTri(mesh: Mesh, voxelMesh: OtS_VoxelMesh, triangle: UVTriangle, material: Material) {
+    private _voxeliseTri(mesh: OtS_Mesh, voxelMesh: OtS_VoxelMesh, triangle: OtS_Triangle) {
         this._rays.reset();
-        this._generateRays(triangle.v0, triangle.v1, triangle.v2);
+        this._generateRays(triangle.v0.position, triangle.v1.position, triangle.v2.position);
 
         const voxelPosition = new Vector3(0, 0, 0);
         const size = this._rays.size();
         for (let i = 0; i < size; ++i) {
             const ray = this._rays.get(i)!;
 
-            const intersection = rayIntersectTriangle(ray, triangle.v0, triangle.v1, triangle.v2);
+            const intersection = rayIntersectTriangle(ray, triangle.v0.position, triangle.v1.position, triangle.v2.position);
             if (intersection) {
                 switch (ray.axis) {
                     case Axes.x:
@@ -104,41 +103,38 @@ export class OtS_VoxelMesh_Converter {
                         break;
                 }
 
-                const voxelColour = this._getVoxelColour(
-                    mesh,
-                    triangle,
-                    material,
-                    voxelPosition,
-                );
+                let voxelColour: RGBA;
+                if (this._config.multisampling) {
+                    const samples: RGBA[] = [];
+                    for (let i = 0; i < 8; ++i) {
+                        samples.push(this._getVoxelColour(
+                            mesh,
+                            triangle,
+                            Vector3.random().divScalar(2.0).add(voxelPosition),
+                        ))
+                    }
+                    voxelColour = RGBAUtil.average(...samples);
+                } else {
+                    voxelColour = this._getVoxelColour(
+                        mesh,
+                        triangle,
+                        voxelPosition,
+                    );
+                }
 
                 voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, this._config.replaceMode);
             }
         };
     }
 
-    private _getVoxelColour(mesh: Mesh, triangle: UVTriangle, material: Material, location: Vector3): RGBA {
-        if (material.type === MaterialType.solid) {
-            return RGBAUtil.copy(material.colour);
+    private _getVoxelColour(mesh: OtS_Mesh, triangle: OtS_Triangle, location: Vector3): RGBA {
+        if (triangle.material.type === MaterialType.solid) {
+            return RGBAUtil.copy(triangle.material.colour);
         }
 
-        const samples: RGBA[] = [];
-        for (let i = 0; i < (this._config.multisampling ? 8 : 1); ++i) {
-            const offset = Vector3.random().sub(0.5);
-            samples.push(this._internalGetVoxelColour(
-                mesh,
-                triangle,
-                material,
-                offset.add(location),
-            ));
-        }
-
-        return RGBAUtil.average(...samples);
-    }
-
-    private _internalGetVoxelColour(mesh: Mesh, triangle: UVTriangle, material: TexturedMaterial, location: Vector3) {
-        const area01 = Triangle.GetArea(triangle.v0, triangle.v1, location);
-        const area12 = Triangle.GetArea(triangle.v1, triangle.v2, location);
-        const area20 = Triangle.GetArea(triangle.v2, triangle.v0, location);
+        const area01 = Triangle.GetArea(triangle.v0.position, triangle.v1.position, location);
+        const area12 = Triangle.GetArea(triangle.v1.position, triangle.v2.position, location);
+        const area20 = Triangle.GetArea(triangle.v2.position, triangle.v0.position, location);
         const total = area01 + area12 + area20;
 
         const w0 = area12 / total;
@@ -146,16 +142,21 @@ export class OtS_VoxelMesh_Converter {
         const w2 = area01 / total;
 
         const uv = {
-            u: triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
-            v: triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
+            u: triangle.v0.texcoord.u * w0 + triangle.v1.texcoord.u * w1 + triangle.v2.texcoord.u * w2,
+            v: triangle.v0.texcoord.v * w0 + triangle.v1.texcoord.v * w1 + triangle.v2.texcoord.v * w2,
         };
 
         if (isNaN(uv.u) || isNaN(uv.v)) {
             RGBAUtil.copy(RGBAColours.MAGENTA);
         }
 
-        const texture = mesh.getTexture(material);
-        return texture.getRGBA(uv, material.interpolation, material.extension);
+        ASSERT(triangle.material.type === MaterialType.textured);
+        const texture = this._textureLoader.getTexture(triangle.material.name);
+        if (texture !== undefined) {
+            return texture.getRGBA(uv, triangle.material.interpolation, triangle.material.extension);
+        } else {
+            return RGBAUtil.copy(RGBAColours.MAGENTA);
+        }
     }
 
     private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3) {
@@ -210,8 +211,8 @@ export class OtS_VoxelMesh_Converter {
         }
     }
 
-    private _calcScaleOffset(mesh: Mesh) {
-        const dimensions = mesh.getBounds().getDimensions();
+    private _calcScaleOffset(mesh: OtS_Mesh) {
+        const dimensions = mesh.calcBounds().getDimensions();
 
         switch (this._config.constraintAxis) {
             case 'x':

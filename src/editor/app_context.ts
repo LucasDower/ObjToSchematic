@@ -6,7 +6,7 @@ import { ArcballCamera } from './renderer/camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { LOC, Localiser, TLocalisedString } from './localiser';
-import { MaterialMapManager } from '../runtime/material-map';
+import { MaterialMapManager } from '../runtime/materials';
 import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer/renderer';
 import { AppConsole, TMessage } from './ui/console';
@@ -35,7 +35,7 @@ export class AppContext {
 
     private constructor() {
         this._workerController = new WorkerController();
-        this._materialManager = new MaterialMapManager(new Map());
+        this._materialManager = new MaterialMapManager([]);
         this._loadedFilename = null;
     }
 
@@ -161,7 +161,7 @@ export class AppContext {
             const resultMaterials = await this._workerController.execute({
                 action: 'SetMaterials',
                 params: {
-                    materials: this._materialManager.materials,
+                    materials: this._materialManager.toMaterialArray(),
                 },
             });
 
@@ -172,7 +172,7 @@ export class AppContext {
             ASSERT(resultMaterials.action === 'SetMaterials');
 
             resultMaterials.result.materialsChanged.forEach((materialName) => {
-                const material = this._materialManager.materials.get(materialName);
+                const material = this._materialManager.getMaterial(materialName);
                 ASSERT(material !== undefined);
                 Renderer.Get.recreateMaterialBuffer(materialName, material);
                 Renderer.Get.setModelToUse(MeshType.TriangleMesh);

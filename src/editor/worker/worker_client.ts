@@ -7,7 +7,6 @@ import { IExporter } from '../../runtime/exporters/base_exporter';
 import { ExporterFactory } from '../../runtime/exporters/exporters';
 import { ImporterFactor } from '../../runtime/importers/importers';
 import { LOC, Localiser } from '../localiser';
-import { Mesh } from '../../runtime/mesh';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../runtime/util/error_util';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
@@ -17,6 +16,7 @@ import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
 import { AppError } from '../util/editor_util';
 import { OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
 import { OtS_VoxelMesh_Converter } from '../../runtime/ots_voxel_mesh_converter';
+import { OtS_Mesh } from 'src/runtime/ots_mesh';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -27,7 +27,7 @@ export class WorkerClient {
     private constructor() {
     }
 
-    private _loadedMesh?: Mesh;
+    private _loadedMesh?: OtS_Mesh;
     private _loadedVoxelMesh?: OtS_VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
 
@@ -91,28 +91,15 @@ export class WorkerClient {
         const parsed = path.parse(params.file.name);
 
         const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
+        this._loadedMesh = await importer.import(params.file.stream());
 
-        const fileBuffer = await params.file.arrayBuffer();
-
-        this._loadedMesh = await importer.import(fileBuffer);
-
-        const err = this._loadedMesh.processMesh(params.rotation.y, params.rotation.x, params.rotation.z);
-        if (err !== null) {
-            switch (err) {
-                case 'could-not-normalise':
-                    throw new AppError(LOC('import.could_not_scale_mesh'));
-                case 'no-triangles-loaded':
-                    throw new AppError(LOC('import.no_triangles_loaded'));
-                case 'no-vertices-loaded':
-                    throw new AppError(LOC('import.no_vertices_loaded'));
-                default:
-                    throw new AppError(LOC('import.could_not_parse'));
-            }
-        }
+        this._loadedMesh.centre();
+        this._loadedMesh.rotate(params.rotation.y, params.rotation.x, params.rotation.z);
+        this._loadedMesh.normalise();
 
         return {
             triangleCount: this._loadedMesh.getTriangleCount(),
-            dimensions: this._loadedMesh.getBounds().getDimensions(),
+            dimensions: this._loadedMesh.calcBounds().getDimensions(),
             materials: this._loadedMesh.getMaterials(),
         };
     }
@@ -120,11 +107,14 @@ export class WorkerClient {
     public setMaterials(params: SetMaterialsParams.Input): SetMaterialsParams.Output {
         ASSERT(this._loadedMesh !== undefined);
 
-        this._loadedMesh.setMaterials(params.materials);
+        for (const material of params.materials) {
+            const success = this._loadedMesh.setMaterial(material);
+            // TODO: Do something with success
+        }
 
         return {
             materials: this._loadedMesh.getMaterials(),
-            materialsChanged: Array.from(params.materials.keys()), // TODO: Change to actual materials changed
+            materialsChanged: params.materials.map((material) => material.name), // TODO: Change to actual materials changed
         };
     }
 
@@ -133,7 +123,7 @@ export class WorkerClient {
 
         return {
             buffers: BufferGenerator.fromMesh(this._loadedMesh),
-            dimensions: this._loadedMesh.getBounds().getDimensions(),
+            dimensions: this._loadedMesh.calcBounds().getDimensions(),
         };
     }
 

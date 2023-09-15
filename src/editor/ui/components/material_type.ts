@@ -1,15 +1,15 @@
 import { LOC } from '../../localiser';
-import { MaterialType, SolidMaterial, TexturedMaterial } from '../../../runtime/mesh';
 import { AppIcons } from '../../../editor/ui/icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
+import { Material, MaterialType } from '../../../runtime/materials';
 
 export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDivElement> {
     private _solidButton: ToolbarItemComponent;
     private _texturedButton: ToolbarItemComponent;
-    private _material: SolidMaterial | TexturedMaterial;
+    private _material: Material;
 
-    public constructor(material: SolidMaterial | TexturedMaterial) {
+    public constructor(material: Material) {
         super(material.type);
         this._material = material;
 
