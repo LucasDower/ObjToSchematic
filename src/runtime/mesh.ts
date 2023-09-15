@@ -364,15 +364,15 @@ export class Mesh {
         const tri = this._tris[triIndex];
         if (tri.texcoordIndices) {
             return {
-                uv0: this._uvs[tri.texcoordIndices.x] || new UV(0.0, 0.0),
-                uv1: this._uvs[tri.texcoordIndices.y] || new UV(0.0, 0.0),
-                uv2: this._uvs[tri.texcoordIndices.z] || new UV(0.0, 0.0),
+                uv0: this._uvs[tri.texcoordIndices.x] || { u: 0.0, v: 0.0 },
+                uv1: this._uvs[tri.texcoordIndices.y] || { u: 0.0, v: 0.0 },
+                uv2: this._uvs[tri.texcoordIndices.z] || { u: 0.0, v: 0.0 },
             };
         }
         return {
-            uv0: new UV(0.0, 0.0),
-            uv1: new UV(0.0, 0.0),
-            uv2: new UV(0.0, 0.0),
+            uv0: { u: 0.0, v: 0.0 },
+            uv1: { u: 0.0, v: 0.0 },
+            uv2: { u: 0.0, v: 0.0 },
         };
     }
 

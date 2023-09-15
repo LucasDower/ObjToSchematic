@@ -76,10 +76,10 @@ export class GltfLoader extends IImporter {
                 if (attributes.TEXCOORD_0 !== undefined) {
                     const texcoords = attributes.TEXCOORD_0.value as Float32Array;
                     for (let i = 0; i < texcoords.length; i += 2) {
-                        meshTexcoords.push(new UV(
-                            texcoords[i + 0],
-                            1.0 - texcoords[i + 1],
-                        ));
+                        meshTexcoords.push({
+                            u: texcoords[i + 0],
+                            v: 1.0 - texcoords[i + 1],
+                        });
                     }
                 }
                 // Material

@@ -60,10 +60,10 @@ export class Atlas {
 
         const getTextureUV = (name: string) => {
             const tex = atlasData.textures[name];
-            return new UV(
-                (3 * tex.atlasColumn + 1) / (atlas._atlasSize * 3),
-                (3 * tex.atlasRow + 1) / (atlas._atlasSize * 3),
-            );
+            return {
+                u: (3 * tex.atlasColumn + 1) / (atlas._atlasSize * 3),
+                v: (3 * tex.atlasRow + 1) / (atlas._atlasSize * 3),
+            };
         };
 
         for (const block of atlasData.blocks) {

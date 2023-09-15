@@ -1,4 +1,5 @@
 import { AppMath } from "./math";
+import { TBrand } from "./util/type_util";
 
 export namespace AppUtil {
     export namespace Text {
@@ -57,19 +58,7 @@ export namespace AppTypes {
     export type TNamespacedBlockName = string;
 }
 
-export class UV {
-    public u: number;
-    public v: number;
-
-    constructor(u: number, v: number) {
-        this.u = u;
-        this.v = v;
-    }
-
-    public copy() {
-        return new UV(this.u, this.v);
-    }
-}
+export type UV = { u: number, v: number };
 
 export type TOptional<T> = T | undefined;
 

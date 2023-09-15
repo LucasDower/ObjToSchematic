@@ -95,7 +95,7 @@ export class Texture {
      * UV can be in any range and is not limited to [0, 1]
      */
     public getRGBA(inUV: UV, interpolation: TTexelInterpolation, extension: TTexelExtension): RGBA {
-        const uv = new UV(0.0, 0.0);
+        const uv = { u: 0.0, v: 0.0 };
 
         if (extension === 'clamp') {
             uv.u = clamp(inUV.u, 0.0, 1.0);

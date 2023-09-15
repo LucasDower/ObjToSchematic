@@ -119,7 +119,7 @@ export class ObjImporter extends IImporter {
                     return err;
                 }
 
-                this._uvs.push(new UV(u, v));
+                this._uvs.push({ u: u, v: v });
                 return null;
             },
         },

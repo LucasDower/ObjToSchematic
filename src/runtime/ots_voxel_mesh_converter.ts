@@ -146,10 +146,10 @@ export class OtS_VoxelMesh_Converter {
         const w1 = area20 / total;
         const w2 = area01 / total;
 
-        const uv = new UV(
-            triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
-            triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
-        );
+        const uv = {
+            u: triangle.uv0.u * w0 + triangle.uv1.u * w1 + triangle.uv2.u * w2,
+            v: triangle.uv0.v * w0 + triangle.uv1.v * w1 + triangle.uv2.v * w2,
+        };
 
         if (isNaN(uv.u) || isNaN(uv.v)) {
             RGBAUtil.copy(RGBAColours.MAGENTA);
