@@ -88,11 +88,12 @@ export namespace RGBAUtil {
     }
 
     export function lerp(a: RGBA, b: RGBA, alpha: number) {
+        const invAlpha = 1 - alpha;
         return {
-            r: a.r * (1 - alpha) + b.r * alpha,
-            g: a.g * (1 - alpha) + b.g * alpha,
-            b: a.b * (1 - alpha) + b.b * alpha,
-            a: a.a * (1 - alpha) + b.a * alpha,
+            r: a.r * invAlpha + b.r * alpha,
+            g: a.g * invAlpha + b.g * alpha,
+            b: a.b * invAlpha + b.b * alpha,
+            a: a.a * invAlpha + b.a * alpha,
         };
     }
 

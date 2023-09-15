@@ -143,13 +143,15 @@ export class Texture {
             return RGBAColours.MAGENTA;
         }
 
-        const A = Texture._sampleImage(xLeft, yUp, image);
-        const B = Texture._sampleImage(xRight, yUp, image);
-        const AB = RGBAUtil.lerp(A, B, u);
+        const top = Texture._sampleImagePair(xLeft, yUp, image);
+        //const A = Texture._sampleImage(xLeft, yUp, image);
+        //const B = Texture._sampleImage(xRight, yUp, image);
+        const AB = RGBAUtil.lerp(top.left, top.right, u);
 
-        const C = Texture._sampleImage(xLeft, yDown, image);
-        const D = Texture._sampleImage(xRight, yDown, image);
-        const CD = RGBAUtil.lerp(C, D, u);
+        const bottom = Texture._sampleImagePair(xLeft, yDown, image);
+        //const C = Texture._sampleImage(xLeft, yDown, image);
+        //const D = Texture._sampleImage(xRight, yDown, image);
+        const CD = RGBAUtil.lerp(bottom.left, bottom.right, u);
 
         return RGBAUtil.lerp(AB, CD, v);
     }
@@ -207,6 +209,30 @@ export class Texture {
             g: image.data[index + 1] / 255,
             b: image.data[index + 2] / 255,
             a: image.data[index + 3] / 255,
+        };
+    }
+
+    private static _sampleImagePair(x: number, y: number, image: ImageData) {
+        const cx1 = clamp(x, 0, image.width - 1);
+        const cx2 = clamp(x + 1, 0, image.width - 1);
+        const cy = clamp(y, 0, image.height - 1);
+
+        const index1 = 4 * (image.width * cy + cx1);
+        const index2 = 4 * (image.width * cy + cx2);
+
+        return {
+            left: {
+                r: image.data[index1 + 0] / 255,
+                g: image.data[index1 + 1] / 255,
+                b: image.data[index1 + 2] / 255,
+                a: image.data[index1 + 3] / 255,
+            },
+            right: {
+                r: image.data[index2 + 0] / 255,
+                g: image.data[index2 + 1] / 255,
+                b: image.data[index2 + 2] / 255,
+                a: image.data[index2 + 3] / 255,
+            }
         };
     }
 }
