@@ -1,6 +1,6 @@
 import { Bounds } from './bounds';
 import { RGBAColours, RGBAUtil } from './colour';
-import { Material, MaterialMapManager, MaterialType, SolidMaterial } from './materials';
+import { Material, MaterialMapManager, SolidMaterial } from './materials';
 import { degreesToRadians } from './math';
 import { UV } from "./util";
 import { Vector3 } from "./vector";
@@ -121,7 +121,7 @@ export class OtS_Mesh {
         for (let i = 0; i < this._materials.length; ++i) {
             const oldMaterial = this._materials[i];
             if (oldMaterial.name === newMaterial.name) {
-                if (oldMaterial.type === MaterialType.solid && newMaterial.type === MaterialType.textured && !oldMaterial.canBeTextured) {
+                if (oldMaterial.type === 'solid' && newMaterial.type === 'textured' && !oldMaterial.canBeTextured) {
                     return false; // Assigning a texture material to a non-textureable material
                 }
 
@@ -255,8 +255,7 @@ export function TEMP_CONVERT_MESH(vertices: Vector3[], uvs: UV[], tris: Tri[]): 
                 name: materialName,
                 canBeTextured: hasTexcoords,
                 colour: RGBAUtil.copy(RGBAColours.WHITE),
-                needsAttention: false,
-                type: MaterialType.solid,
+                type: 'solid',
             }
 
             materials.push(material);

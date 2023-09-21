@@ -1,4 +1,3 @@
-import { MaterialType } from "./materials";
 import { OtS_Mesh } from "./ots_mesh";
 import { Texture } from "./texture";
 
@@ -13,7 +12,7 @@ export class OtS_Mesh_TextureLoader {
         this._textures.clear();
 
         mesh.getMaterials().forEach((material) => {
-            if (material.type === MaterialType.textured) {
+            if (material.type === 'textured') {
                 this._textures.set(
                     material.name,
                     new Texture({ 

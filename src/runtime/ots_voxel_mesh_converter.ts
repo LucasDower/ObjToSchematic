@@ -9,7 +9,6 @@ import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { ASSERT } from './util/error_util';
 import { OtS_Mesh_TextureLoader } from './ots_mesh_texture_loader';
-import { MaterialType } from './materials';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -128,7 +127,7 @@ export class OtS_VoxelMesh_Converter {
     }
 
     private _getVoxelColour(mesh: OtS_Mesh, triangle: OtS_Triangle, location: Vector3): RGBA {
-        if (triangle.material.type === MaterialType.solid) {
+        if (triangle.material.type === 'solid') {
             return RGBAUtil.copy(triangle.material.colour);
         }
 
@@ -150,7 +149,7 @@ export class OtS_VoxelMesh_Converter {
             RGBAUtil.copy(RGBAColours.MAGENTA);
         }
 
-        ASSERT(triangle.material.type === MaterialType.textured);
+        ASSERT(triangle.material.type === 'textured');
         const texture = this._textureLoader.getTexture(triangle.material.name);
         if (texture !== undefined) {
             return texture.getRGBA(uv, triangle.material.interpolation, triangle.material.extension);

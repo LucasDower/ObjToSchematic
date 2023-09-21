@@ -2,9 +2,9 @@ import { LOC } from '../../localiser';
 import { AppIcons } from '../../../editor/ui/icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
-import { Material, MaterialType } from '../../../runtime/materials';
+import { Material, OtS_MaterialType } from '../../../runtime/materials';
 
-export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDivElement> {
+export class MaterialTypeComponent extends ConfigComponent<OtS_MaterialType, HTMLDivElement> {
     private _solidButton: ToolbarItemComponent;
     private _texturedButton: ToolbarItemComponent;
     private _material: Material;
@@ -17,7 +17,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
             .setLabel(LOC('materials.components.solid'))
             .setGrow()
             .onClick(() => {
-                if (this._material.type === MaterialType.textured) {
+                if (this._material.type === 'textured') {
                     this._onClickChangeTypeDelegate?.();
                 }
             });
@@ -26,7 +26,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
             .setLabel(LOC('materials.components.textured'))
             .setGrow()
             .onClick(() => {
-                if (this._material.type === MaterialType.solid) {
+                if (this._material.type === 'solid') {
                     this._onClickChangeTypeDelegate?.();
                 }
             });
@@ -45,8 +45,8 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
         this._solidButton.finalise();
         this._texturedButton.finalise();
 
-        this._solidButton.setActive(this._material.type === MaterialType.solid);
-        this._texturedButton.setActive(this._material.type === MaterialType.textured);
+        this._solidButton.setActive(this._material.type === 'solid');
+        this._texturedButton.setActive(this._material.type === 'textured');
     }
 
     public override registerEvents(): void {
@@ -58,7 +58,7 @@ export class MaterialTypeComponent extends ConfigComponent<MaterialType, HTMLDiv
         super._onEnabledChanged();
 
         this._solidButton.setEnabled(this.enabled);
-        this._texturedButton.setEnabled(this.enabled && (this._material.type === MaterialType.textured || this._material.canBeTextured));
+        this._texturedButton.setEnabled(this.enabled && (this._material.type === 'textured' || this._material.canBeTextured));
     }
 
     protected override _onValueChanged(): void {

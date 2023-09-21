@@ -7,7 +7,7 @@ import { ArcballCamera } from '../renderer/camera';
 import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../../runtime/exporters/exporters';
 import { LOC, Localiser, TLocalisedString } from '../localiser';
-import { MaterialMapManager, MaterialType } from '../../runtime/materials';
+import { MaterialMapManager } from '../../runtime/materials';
 import { MeshType, Renderer } from '../renderer/renderer';
 import { EAction } from '../../runtime/util';
 import { ASSERT } from '../../runtime/util/error_util';
@@ -872,18 +872,18 @@ export class UI {
             this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
             materialManager.toMaterialArray().forEach((material) => {
-                if (material.type === MaterialType.solid) {
+                if (material.type === 'solid') {
                     this.layoutDull['materials'].components[`mat_${material.name}`] = new SolidMaterialComponent(material.name, material)
                         .setUnlocalisedLabel(material.name)
                         .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(material.name, MaterialType.textured);
+                            materialManager.changeMaterialType(material.name, 'textured');
                             this.updateMaterialsAction(materialManager);
                         });
                 } else {
                     this.layoutDull['materials'].components[`mat_${material.name}`] = new TexturedMaterialComponent(material.name, material)
                         .setUnlocalisedLabel(material.name)
                         .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(material.name, MaterialType.solid);
+                            materialManager.changeMaterialType(material.name, 'solid');
                             this.updateMaterialsAction(materialManager);
                         })
                         .onChangeTransparencyTypeDelegate((newTransparency) => {

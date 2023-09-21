@@ -16,7 +16,7 @@ import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshCh
 import { UIUtil } from '../../runtime/util/ui_util';
 import { TAxis } from '../../runtime/util/type_util';
 import { Atlas } from '../../runtime/atlas';
-import { Material, MaterialType } from '../../runtime/materials';
+import { Material } from '../../runtime/materials';
 
 /* eslint-disable */
 export enum MeshType {
@@ -41,7 +41,7 @@ enum EDebugBufferComponents {
  * Dedicated type for passing to shaders for solid materials
  */
 type InternalSolidMaterial = {
-    type: MaterialType.solid,
+    type: 'solid',
     colourArray: number[],
 }
 
@@ -49,7 +49,7 @@ type InternalSolidMaterial = {
  * Dedicated type for passing to shaders for textured materials
  */
 type InternalTextureMaterial = {
-    type: MaterialType.textured,
+    type: 'textured',
     diffuseTexture: WebGLTexture,
     // The texture to sample alpha values from (if is using a texture map)
     alphaTexture: WebGLTexture,
@@ -328,9 +328,9 @@ export class Renderer {
     }
 
     private _createInternalMaterial(material: Material): (InternalSolidMaterial | InternalTextureMaterial) {
-        if (material.type === MaterialType.solid) {
+        if (material.type === 'solid') {
             return {
-                type: MaterialType.solid,
+                type: 'solid',
                 colourArray: RGBAUtil.toArray(material.colour),
             };
         } else {
@@ -389,7 +389,7 @@ export class Renderer {
             }
 
             return {
-                type: MaterialType.textured,
+                type: 'textured',
                 diffuseTexture: diffuseTexture,
                 alphaTexture: alphaTexture,
                 alphaValue: alphaValue,
@@ -565,7 +565,7 @@ export class Renderer {
 
     private _drawMesh() {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
-            if (materialBuffer.material.type === MaterialType.textured) {
+            if (materialBuffer.material.type === 'textured') {
                 this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram!, {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),

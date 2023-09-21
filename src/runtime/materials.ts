@@ -3,20 +3,19 @@ import { EImageChannel, TImageRawWrap, TTransparencyOptions, TTransparencyTypes 
 import { ASSERT } from './util/error_util';
 import { TTexelExtension, TTexelInterpolation } from './util/type_util';
 
-export enum MaterialType { solid, textured }
+export type OtS_MaterialType = 'solid' | 'textured';
 
 type BaseMaterial = {
     name: string,
-    needsAttention: boolean, // True if the user should make edits to this material
 }
 
 export type SolidMaterial = BaseMaterial & {
-    type: MaterialType.solid,
+    type: 'solid'
     colour: RGBA,
     canBeTextured: boolean,
 }
 export type TexturedMaterial = BaseMaterial & {
-    type: MaterialType.textured,
+    type: 'textured',
     diffuse?: TImageRawWrap,
     interpolation: TTexelInterpolation,
     extension: TTexelExtension,
@@ -57,7 +56,7 @@ export class MaterialMapManager {
     public changeTransparencyType(materialName: string, newTransparencyType: TTransparencyTypes) {
         const currentMaterial = this.getMaterial(materialName);
         ASSERT(currentMaterial !== undefined, 'Cannot change transparency type of non-existent material');
-        ASSERT(currentMaterial.type === MaterialType.textured);
+        ASSERT(currentMaterial.type === 'textured');
 
         switch (newTransparencyType) {
             case 'None':
@@ -90,7 +89,7 @@ export class MaterialMapManager {
      * Convert a material to a new type, i.e. textured to solid.
      * Will return if the material is already the given type.
      */
-    public changeMaterialType(materialName: string, newMaterialType: MaterialType) {
+    public changeMaterialType(materialName: string, newMaterialType: OtS_MaterialType) {
         const currentMaterial = this.getMaterial(materialName);
         ASSERT(currentMaterial !== undefined, 'Cannot change material type of non-existent material');
 
@@ -99,27 +98,25 @@ export class MaterialMapManager {
         }
 
         switch (newMaterialType) {
-            case MaterialType.solid:
-                ASSERT(currentMaterial.type === MaterialType.textured, 'Old material expect to be texture');
+            case 'solid':
+                ASSERT(currentMaterial.type === 'textured', 'Old material expect to be texture');
                 this._setMaterial(materialName, {
                     name: materialName,
-                    type: MaterialType.solid,
+                    type: 'solid',
                     colour: RGBAUtil.randomPretty(),
                     canBeTextured: true,
-                    needsAttention: true,
                 });
                 break;
-            case MaterialType.textured:
-                ASSERT(currentMaterial.type === MaterialType.solid, 'Old material expect to be solid');
+            case 'textured':
+                ASSERT(currentMaterial.type === 'solid', 'Old material expect to be solid');
                 this._setMaterial(materialName, {
                     name: materialName,
-                    type: MaterialType.textured,
+                    type: 'textured',
                     transparency: {
                         type: 'None',
                     },
                     extension: 'repeat',
                     interpolation: 'linear',
-                    needsAttention: true,
                     diffuse: undefined,
                 });
                 break;

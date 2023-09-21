@@ -6,7 +6,7 @@ import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
-import { Material, MaterialType } from '../materials';
+import { Material } from '../materials';
 
 export type TGltfImporterError =
     | { type: 'failed-to-parse' }
@@ -44,9 +44,8 @@ export class GltfLoader extends IImporter {
         const meshMaterials: Map<string, Material> = new Map();
         meshMaterials.set('NONE', {
             name: 'NONE',
-            type: MaterialType.solid,
+            type: 'solid',
             colour: RGBAUtil.copy(RGBAColours.WHITE),
-            needsAttention: false,
             canBeTextured: false,
         });
         let maxIndex = 0;
@@ -111,22 +110,20 @@ export class GltfLoader extends IImporter {
 
                                     meshMaterials.set(materialName, {
                                         name: materialName,
-                                        type: MaterialType.textured,
+                                        type: 'textured',
                                         diffuse: {
                                             filetype: mimeType === 'image/jpeg' ? 'jpg' : 'png',
                                             raw: (mimeType === 'image/jpeg' ? 'data:image/jpeg;base64,' : 'data:image/png;base64,') + base64,
                                         },
                                         extension: 'clamp',
                                         interpolation: 'linear',
-                                        needsAttention: false,
                                         transparency: { type: 'None' },
                                     });
                                 } catch {
                                     meshMaterials.set(materialName, {
                                         name: materialName,
-                                        type: MaterialType.solid,
+                                        type: 'solid',
                                         colour: RGBAUtil.copy(RGBAColours.WHITE),
-                                        needsAttention: false,
                                         canBeTextured: true,
                                     });
                                 }
@@ -144,14 +141,13 @@ export class GltfLoader extends IImporter {
                                 if (diffuseColour !== undefined) {
                                     meshMaterials.set(materialName, {
                                         name: materialName,
-                                        type: MaterialType.solid,
+                                        type: 'solid',
                                         colour: {
                                             r: diffuseColour[0],
                                             g: diffuseColour[1],
                                             b: diffuseColour[2],
                                             a: diffuseColour[3],
                                         },
-                                        needsAttention: false,
                                         canBeTextured: false,
                                     });
                                 }
@@ -165,14 +161,13 @@ export class GltfLoader extends IImporter {
                         if (!materialMade && emissiveColour !== undefined) {
                             meshMaterials.set(materialName, {
                                 name: materialName,
-                                type: MaterialType.solid,
+                                type: 'solid',
                                 colour: {
                                     r: emissiveColour[0],
                                     g: emissiveColour[1],
                                     b: emissiveColour[2],
                                     a: 1.0,
                                 },
-                                needsAttention: false,
                                 canBeTextured: false,
                             });
 
