@@ -8,7 +8,6 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { ASSERT } from './util/error_util';
-import { OtS_Mesh_TextureLoader } from './ots_mesh_texture_loader';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -20,7 +19,6 @@ export type OtS_VoxelMesh_ConverterConfig = {
 export class OtS_VoxelMesh_Converter {
     private _config: OtS_VoxelMesh_ConverterConfig;
     private _rays: LinearAllocator<Ray>;
-    private _textureLoader: OtS_Mesh_TextureLoader;
 
     // Reused Bounds object in calculations to avoid GC
     private _tmpBounds: Bounds;
@@ -37,8 +35,6 @@ export class OtS_VoxelMesh_Converter {
             const ray: Ray = { origin: new Vector3(0, 0, 0), axis: Axes.x };
             return ray;
         });
-
-        this._textureLoader = new OtS_Mesh_TextureLoader();
 
         this._tmpBounds = Bounds.getEmptyBounds();
     }
@@ -58,7 +54,6 @@ export class OtS_VoxelMesh_Converter {
 
     public process(mesh: OtS_Mesh): OtS_VoxelMesh {
         const voxelMesh = new OtS_VoxelMesh();
-        this._textureLoader.load(mesh);
 
         const { scale, offset } = this._calcScaleOffset(mesh);
 
@@ -150,12 +145,8 @@ export class OtS_VoxelMesh_Converter {
         }
 
         ASSERT(triangle.material.type === 'textured');
-        const texture = this._textureLoader.getTexture(triangle.material.name);
-        if (texture !== undefined) {
-            return texture.getRGBA(uv, triangle.material.interpolation, triangle.material.extension);
-        } else {
-            return RGBAUtil.copy(RGBAColours.MAGENTA);
-        }
+        const texture = triangle.material.texture;
+        return texture.sample(uv.u, uv.v);
     }
 
     private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3) {

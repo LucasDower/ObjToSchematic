@@ -31,23 +31,41 @@ import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
         },
     });
 
-
     const loader = new ObjImporter();
     console.time('Mesh');
     const mesh = await loader.import(readableStream);
     console.timeEnd('Mesh');
 
-    const converter = new OtS_VoxelMesh_Converter();
-    converter.setConfig({
+    console.log(mesh.getTriangleCount().toLocaleString(), 'triangles');
+    console.log(mesh.getMaterials());
+
+    const converterSlow = new OtS_VoxelMesh_Converter();
+    converterSlow.setConfig({
         constraintAxis: 'y',
         size: 380,
         multisampling: true,
         replaceMode: 'average',
     });
 
-    console.time('VoxelMesh');
-    const voxelMesh = converter.process(mesh);
-    console.timeEnd('VoxelMesh');
+    console.time('VoxelMesh Slow');
+    const voxelMesh = converterSlow.process(mesh);
+    console.timeEnd('VoxelMesh Slow');
+
+    {
+        const converterFast = new OtS_VoxelMesh_Converter();
+        converterFast.setConfig({
+            constraintAxis: 'y',
+            size: 380,
+            multisampling: false,
+            replaceMode: 'keep',
+        });
+    
+        console.time('VoxelMesh Fast');
+        const voxelMesh = converterFast.process(mesh);
+        console.timeEnd('VoxelMesh Fast');
+    }
+
+    console.log(voxelMesh.getVoxelCount().toLocaleString(), 'voxels');
 
     console.time('BlockMesh');
     const blockMesh = BlockMesh.createFromVoxelMesh(voxelMesh, {

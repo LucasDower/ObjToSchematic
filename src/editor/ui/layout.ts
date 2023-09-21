@@ -7,7 +7,6 @@ import { ArcballCamera } from '../renderer/camera';
 import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../../runtime/exporters/exporters';
 import { LOC, Localiser, TLocalisedString } from '../localiser';
-import { MaterialMapManager } from '../../runtime/materials';
 import { MeshType, Renderer } from '../renderer/renderer';
 import { EAction } from '../../runtime/util';
 import { ASSERT } from '../../runtime/util/error_util';
@@ -32,6 +31,7 @@ import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
 import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
+import { Material } from 'src/runtime/materials';
 
 export type Group = {
     id: string,
@@ -862,34 +862,45 @@ export class UI {
         return this._uiDull[key];
     }
 
-    public updateMaterialsAction(materialManager: MaterialMapManager) {
+    // TODO: Remove
+    private _materialComponents: ({ type: 'solid', component: SolidMaterialComponent } | { type: 'textured', component: TexturedMaterialComponent })[] = [];
+    public async getMaterials(): Promise<Material[]> {
+        const materials: Material[] = [];
+
+        this._materialComponents.forEach(async (component) => {
+            if (component.type === 'solid') {
+                materials.push(component.component.getValue());
+            } else {
+                const material = await component.component.getValue();
+                materials.push(material);
+            }
+        });
+
+        return materials;
+    }
+
+    public updateMaterialsAction(materials: Material[]) {
+        this._materialComponents = [];
+
         this.layout.materials.components = {};
         this.layout.materials.componentOrder = [];
 
-        if (materialManager.getCount() == 0) {
+        if (materials.length === 0) {
             this.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent()
                 .setPlaceholderText('materials.components.no_materials_loaded');
             this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
-            materialManager.toMaterialArray().forEach((material) => {
+            materials.forEach((material) => {
                 if (material.type === 'solid') {
-                    this.layoutDull['materials'].components[`mat_${material.name}`] = new SolidMaterialComponent(material.name, material)
-                        .setUnlocalisedLabel(material.name)
-                        .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(material.name, 'textured');
-                            this.updateMaterialsAction(materialManager);
-                        });
+                    const component = new SolidMaterialComponent(material)
+                        .setUnlocalisedLabel(material.name);
+                    this._materialComponents.push({ type: 'solid', component: component });
+                    this.layoutDull['materials'].components[`mat_${material.name}`] = component;
                 } else {
-                    this.layoutDull['materials'].components[`mat_${material.name}`] = new TexturedMaterialComponent(material.name, material)
-                        .setUnlocalisedLabel(material.name)
-                        .onChangeTypeDelegate(() => {
-                            materialManager.changeMaterialType(material.name, 'solid');
-                            this.updateMaterialsAction(materialManager);
-                        })
-                        .onChangeTransparencyTypeDelegate((newTransparency) => {
-                            materialManager.changeTransparencyType(material.name, newTransparency);
-                            this.updateMaterialsAction(materialManager);
-                        });
+                    const component = new TexturedMaterialComponent(material)
+                        .setUnlocalisedLabel(material.name);
+                    this._materialComponents.push({ type: 'textured', component: component });
+                    this.layoutDull['materials'].components[`mat_${material.name}`] = component;
                 }
 
                 this.layoutDull['materials'].componentOrder.push(`mat_${material.name}`);

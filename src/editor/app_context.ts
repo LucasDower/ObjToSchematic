@@ -6,7 +6,6 @@ import { ArcballCamera } from './renderer/camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { LOC, Localiser, TLocalisedString } from './localiser';
-import { MaterialMapManager } from '../runtime/materials';
 import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer/renderer';
 import { AppConsole, TMessage } from './ui/console';
@@ -30,12 +29,10 @@ export class AppContext {
     private _lastAction?: EAction;
     public minConstraint?: { x: number, z: number };
     public maxConstraint?: { x: number, z: number };
-    private _materialManager: MaterialMapManager;
     private _loadedFilename: string | null;
 
     private constructor() {
         this._workerController = new WorkerController();
-        this._materialManager = new MaterialMapManager([]);
         this._loadedFilename = null;
     }
 
@@ -56,7 +53,7 @@ export class AppContext {
         UI.Get.bindToContext(this.Get);
         UI.Get.build();
         UI.Get.registerEvents();
-        UI.Get.updateMaterialsAction(this.Get._materialManager);
+        UI.Get.updateMaterialsAction([]);
         UI.Get.disableAll();
 
         ArcballCamera.Get.init();
@@ -122,8 +119,7 @@ export class AppContext {
             UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(0, this.minConstraint.x > 0 && this.minConstraint.x <= this.maxConstraint.x);
             UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(2, this.minConstraint.z > 0 && this.minConstraint.z <= this.maxConstraint.z);
 
-            this._materialManager = new MaterialMapManager(resultImport.result.materials);
-            UI.Get.updateMaterialsAction(this._materialManager);
+            UI.Get.updateMaterialsAction(resultImport.result.materials);
 
             this._loadedFilename = file.name.split('.')[0] ?? 'result';
         }
@@ -155,13 +151,16 @@ export class AppContext {
 
 
     private async _materials(): Promise<boolean> {
+        // Gather data from the UI to send to the worker
+        const materials = await UI.Get.getMaterials();        
+
         AppConsole.info(LOC('materials.updating_materials'));
         {
             // Instruct the worker to perform the job and await the result
             const resultMaterials = await this._workerController.execute({
                 action: 'SetMaterials',
                 params: {
-                    materials: this._materialManager.toMaterialArray(),
+                    materials: materials,
                 },
             });
 
@@ -171,10 +170,8 @@ export class AppContext {
             }
             ASSERT(resultMaterials.action === 'SetMaterials');
 
-            resultMaterials.result.materialsChanged.forEach((materialName) => {
-                const material = this._materialManager.getMaterial(materialName);
-                ASSERT(material !== undefined);
-                Renderer.Get.recreateMaterialBuffer(materialName, material);
+            materials.forEach((material) => {
+                Renderer.Get.recreateMaterialBuffer(material);
                 Renderer.Get.setModelToUse(MeshType.TriangleMesh);
             });
 

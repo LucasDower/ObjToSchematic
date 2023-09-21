@@ -1,11 +1,11 @@
 import { LOC } from '../../localiser';
-import { TImageRawWrap } from '../../../runtime/texture';
 import { getRandomID } from '../../../runtime/util';
 import { ASSERT } from '../../../runtime/util/error_util';
 import { UIUtil } from '../../../runtime/util/ui_util';
 import { AppIcons } from '../../../editor/ui/icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
+import { TImageRawWrap } from 'src/editor/texture_reader';
 
 export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTMLImageElement> {
     private _switchElement: ToolbarItemComponent;
@@ -13,7 +13,10 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
     private _imageId: string;
 
     public constructor(param?: TImageRawWrap) {
-        super(Promise.resolve(param ?? { raw: '', filetype: 'png' }));
+        super(param !== undefined
+            ? Promise.resolve(param ?? { raw: '', filetype: 'png' })
+            : Promise.reject('No image'),
+        );
 
         this._switchElement = new ToolbarItemComponent({ id: 'sw', iconSVG: AppIcons.UPLOAD })
             .setLabel(LOC('materials.components.choose'))

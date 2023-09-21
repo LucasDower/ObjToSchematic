@@ -1,6 +1,6 @@
 import { Bounds } from './bounds';
 import { RGBAColours, RGBAUtil } from './colour';
-import { Material, MaterialMapManager, SolidMaterial } from './materials';
+import { Material, OtS_Util, SolidMaterial } from './materials';
 import { degreesToRadians } from './math';
 import { UV } from "./util";
 import { Vector3 } from "./vector";
@@ -192,7 +192,7 @@ export class OtS_Mesh {
             this._texcoordData.slice(0),
             this._triangleData.slice(0),
             this._materials.map((material) => {
-                return MaterialMapManager.CopyMaterial(material);
+                return OtS_Util.copyMaterial(material);
             }),
         );
     }
@@ -215,7 +215,7 @@ export class OtS_Mesh {
 
     public getMaterials() {
         return this._materials.map((material) => {
-            return MaterialMapManager.CopyMaterial(material);
+            return OtS_Util.copyMaterial(material);
         });
     }
 

@@ -7,6 +7,7 @@ import { Vector3 } from '../vector';
 import { IImporter } from './base_importer';
 import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
 import { Material } from '../materials';
+import { OtS_Texture } from '../ots_texture';
 
 export type TGltfImporterError =
     | { type: 'failed-to-parse' }
@@ -111,13 +112,7 @@ export class GltfLoader extends IImporter {
                                     meshMaterials.set(materialName, {
                                         name: materialName,
                                         type: 'textured',
-                                        diffuse: {
-                                            filetype: mimeType === 'image/jpeg' ? 'jpg' : 'png',
-                                            raw: (mimeType === 'image/jpeg' ? 'data:image/jpeg;base64,' : 'data:image/png;base64,') + base64,
-                                        },
-                                        extension: 'clamp',
-                                        interpolation: 'linear',
-                                        transparency: { type: 'None' },
+                                        texture: OtS_Texture.CreateDebugTexture(),
                                     });
                                 } catch {
                                     meshMaterials.set(materialName, {

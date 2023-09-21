@@ -5,17 +5,23 @@ import { MaterialTypeComponent } from './material_type';
 import { SliderComponent } from './slider';
 
 export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLDivElement> {
+    private _materialName: string;
+    private _canBeTextured: boolean;
+
     private _typeElement: MaterialTypeComponent;
-    private _ColourComponent: ColourComponent;
+    private _colourComponent: ColourComponent;
     private _alphaElement: SliderComponent;
 
-    public constructor(materialName: string, material: SolidMaterial) {
-        super(material);
+    public constructor(material: SolidMaterial) {
+        super();
+
+        this._materialName = material.name;
+        this._canBeTextured = material.canBeTextured;
 
         this._typeElement = new MaterialTypeComponent(material)
             .setLabel('materials.components.material_type');
 
-        this._ColourComponent = new ColourComponent(material.colour)
+        this._colourComponent = new ColourComponent(material.colour)
             .setLabel('voxelise.components.colour');
 
         this._alphaElement = new SliderComponent()
@@ -33,20 +39,20 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         super.refresh();
 
         this._typeElement.refresh();
-        this._ColourComponent.refresh();
+        this._colourComponent.refresh();
         this._alphaElement.refresh();
     }
 
     public override registerEvents(): void {
         this._typeElement.registerEvents();
-        this._ColourComponent.registerEvents();
+        this._colourComponent.registerEvents();
         this._alphaElement.registerEvents();
 
         this._typeElement.onClickChangeTypeDelegate(() => {
             this._onChangeTypeDelegate?.();
         });
 
-        this._ColourComponent.addValueChangedListener((newColour) => {
+        this._colourComponent.addValueChangedListener((newColour) => {
             this.getValue().colour.r = newColour.r;
             this.getValue().colour.g = newColour.g;
             this.getValue().colour.b = newColour.b;
@@ -61,7 +67,7 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         super.finalise();
 
         this._typeElement.finalise();
-        this._ColourComponent.finalise();
+        this._colourComponent.finalise();
         this._alphaElement.finalise();
     }
 
@@ -69,7 +75,7 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         return `
             <div class="component-group">
                 ${this._typeElement.generateHTML()}
-                ${this._ColourComponent.generateHTML()}
+                ${this._colourComponent.generateHTML()}
                 ${this._alphaElement.generateHTML()}
             </div>
         `;
@@ -82,7 +88,7 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         super._onEnabledChanged();
 
         this._typeElement.setEnabled(this.enabled);
-        this._ColourComponent.setEnabled(this.enabled);
+        this._colourComponent.setEnabled(this.enabled);
         this._alphaElement.setEnabled(this.enabled);
     }
 
@@ -90,5 +96,14 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
     public onChangeTypeDelegate(delegate: () => void) {
         this._onChangeTypeDelegate = delegate;
         return this;
+    }
+
+    public override getValue(): SolidMaterial {
+        return {
+            type: 'solid',
+            name: this._materialName,
+            colour: this._colourComponent.getValue(),
+            canBeTextured: this._canBeTextured,
+        };
     }
 }

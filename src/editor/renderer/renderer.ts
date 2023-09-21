@@ -9,7 +9,6 @@ import { AppConfig } from '../config';
 import { DebugGeometryTemplates } from './geometry';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { EImageChannel } from '../../runtime/texture';
 import { ASSERT } from '../../runtime/util/error_util';
 import { Vector3 } from '../../runtime/vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
@@ -50,13 +49,7 @@ type InternalSolidMaterial = {
  */
 type InternalTextureMaterial = {
     type: 'textured',
-    diffuseTexture: WebGLTexture,
-    // The texture to sample alpha values from (if is using a texture map)
-    alphaTexture: WebGLTexture,
-    // What texture channel to sample the alpha value from
-    alphaChannel: EImageChannel,
-    // What alpha value to use (only used if using constant transparency mode)
-    alphaValue: number,
+    texture: WebGLTexture,
 };
 
 export class Renderer {
@@ -334,80 +327,35 @@ export class Renderer {
                 colourArray: RGBAUtil.toArray(material.colour),
             };
         } else {
-            const blankTexture = twgl.createTexture(this._gl, {
-                min: this._gl.NEAREST,
-                mag: this._gl.NEAREST,
-                src: [
-                    255, 0, 255, 255,
-                ],
+            const minMag = material.texture.getInterpolation() === 'linear'
+                ? this._gl.LINEAR
+                : this._gl.NEAREST;
+
+            const texture = twgl.createTexture(this._gl, {
+                min: minMag,
+                mag: minMag,
+                src: material.texture.getData(),
             }, () => {
                 this.forceRedraw();
             });
 
-            let diffuseTexture = blankTexture;
-            let alphaTexture = diffuseTexture;
-
-            if (material.diffuse !== undefined && material.diffuse.raw !== '') {
-                diffuseTexture = twgl.createTexture(this._gl, {
-                    src: material.diffuse?.raw, // TODO Unimplemented
-                    min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                    mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                    wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                }, () => {
-                    this.forceRedraw();
-                });
-            }
-
-            if (material.transparency.type === 'UseAlphaMap') {
-                alphaTexture = blankTexture;
-                if (material.transparency.alpha !== undefined && material.transparency.alpha.raw !== '') {
-                    alphaTexture = twgl.createTexture(this._gl, {
-                        src: material.transparency.alpha.raw, // TODO Unimplemented
-                        min: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        mag: material.interpolation === 'linear' ? this._gl.LINEAR : this._gl.NEAREST,
-                        wrap: material.extension === 'clamp' ? this._gl.CLAMP_TO_EDGE : this._gl.REPEAT,
-                    }, () => {
-                        this.forceRedraw();
-                    });
-                }
-            }
-
-            const alphaValue = material.transparency.type === 'UseAlphaValue' ?
-                material.transparency.alpha : 1.0;
-
-            let alphaChannel: EImageChannel = EImageChannel.MAX;
-            switch (material.transparency.type) {
-                case 'UseAlphaValue':
-                    alphaChannel = EImageChannel.MAX;
-                    break;
-                case 'UseDiffuseMapAlphaChannel':
-                    alphaChannel = EImageChannel.A;
-                    break;
-                case 'UseAlphaMap':
-                    alphaChannel = material.transparency.channel;
-                    break;
-            }
-
             return {
                 type: 'textured',
-                diffuseTexture: diffuseTexture,
-                alphaTexture: alphaTexture,
-                alphaValue: alphaValue,
-                alphaChannel: alphaChannel,
+                texture: texture,
             };
         }
     }
 
-    public recreateMaterialBuffer(materialName: string, material: Material) {
-        const oldBuffer = this._materialBuffers.get(materialName);
+    public recreateMaterialBuffer(material: Material) {
+        const oldBuffer = this._materialBuffers.get(material.name);
         ASSERT(oldBuffer !== undefined);
 
         const internalMaterial = this._createInternalMaterial(material);
-        this._materialBuffers.set(materialName, {
+        this._materialBuffers.set(material.name, {
             buffer: oldBuffer.buffer,
             material: internalMaterial,
             numElements: oldBuffer.numElements,
-            materialName: materialName,
+            materialName: material.name,
         });
     }
 
@@ -570,10 +518,7 @@ export class Renderer {
                     u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
                     u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
                     u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_texture: materialBuffer.material.diffuseTexture,
-                    u_alpha: materialBuffer.material.alphaTexture ?? materialBuffer.material.diffuseTexture,
-                    u_alphaChannel: materialBuffer.material.alphaChannel,
-                    u_alphaFactor: materialBuffer.material.alphaValue,
+                    u_texture: materialBuffer.material.texture,
                     u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
                     u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
                     u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
