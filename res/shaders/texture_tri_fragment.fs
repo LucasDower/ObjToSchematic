@@ -112,7 +112,7 @@ void main() {
   float lighting = abs(dot(v_normal, normalize(u_lightWorldPos)));
   lighting = (clamp(lighting, 0.0, 1.0) * 0.66) + 0.33;
 
-  vec3 preFresnelColour = diffuse.rgb * lighting;
+  vec3 preFresnelColour = sample.rgb * lighting;
   float fresnel = 1.0 - abs(dot(u_cameraDir, v_normal));
   float fresnelFactor = pow(fresnel, u_fresnelExponent) * u_fresnelMix;
 

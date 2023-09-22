@@ -13,10 +13,10 @@ import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams,
 import { StatusHandler } from '../status';
 import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
 import { BufferGenerator_BlockMesh } from '../renderer/buffer_block_mesh';
-import { AppError } from '../util/editor_util';
 import { OtS_VoxelMesh } from '../../runtime/ots_voxel_mesh';
 import { OtS_VoxelMesh_Converter } from '../../runtime/ots_voxel_mesh_converter';
-import { OtS_Mesh } from 'src/runtime/ots_mesh';
+import { OtS_Mesh } from '../../runtime/ots_mesh';
+import { OtS_Texture } from '../../runtime/ots_texture';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -107,7 +107,12 @@ export class WorkerClient {
     public setMaterials(params: SetMaterialsParams.Input): SetMaterialsParams.Output {
         ASSERT(this._loadedMesh !== undefined);
 
+
+
         for (const material of params.materials) {
+            if (material.type === 'textured') {
+                Object.setPrototypeOf(material.texture, OtS_Texture.prototype);
+            }
             const success = this._loadedMesh.setMaterial(material);
             // TODO: Do something with success
         }

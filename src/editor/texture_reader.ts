@@ -1,31 +1,42 @@
-import { OtS_Texture } from "src/runtime/ots_texture";
-import { TTexelExtension, TTexelInterpolation } from "src/runtime/util/type_util";
+import { decode as jpegDecode } from 'jpeg-js';
+import { PNG } from 'pngjs';
+
+import { OtS_Texture } from "../runtime/ots_texture";
+import { TTexelExtension, TTexelInterpolation } from "../runtime/util/type_util";
 
 export type OtSE_TextureFormat = 'png' | 'jpg';
-
-export enum OtSE_ImageChannel {
-    R = 0,
-    G = 1,
-    B = 2,
-    A = 3,
-    MAX = 4,
-}
 
 export type TImageRawWrap = {
     raw: string,
     filetype: OtSE_TextureFormat,
 }
 
-export type TTransparencyTypes = 'None' | 'UseDiffuseMapAlphaChannel' | 'UseAlphaValue' | 'UseAlphaMap';
-
-export type TTransparencyOptions =
-    | { type: 'None' }
-    | { type: 'UseDiffuseMapAlphaChannel' }
-    | { type: 'UseAlphaValue', alpha: number }
-    | { type: 'UseAlphaMap', alpha?: TImageRawWrap, channel: OtSE_ImageChannel };
-
 export class OtSE_TextureReader {
     public static CreateFromImage(source: string, filetype: OtSE_TextureFormat, interpolation: TTexelInterpolation, extension: TTexelExtension): OtS_Texture {
-        throw 'Unimplemented';
+        const buffer = Buffer.from(source.split(',')[1], 'base64');
+
+        switch (filetype) {
+            case 'jpg':
+                const jpeg = jpegDecode(buffer, {
+                    formatAsRGBA: true,
+                    maxMemoryUsageInMB: undefined,
+                });
+                return new OtS_Texture(
+                    Uint8ClampedArray.from(jpeg.data),
+                    jpeg.width,
+                    jpeg.height,
+                    interpolation,
+                    extension,
+                );
+            case 'png':
+                const png = PNG.sync.read(buffer);
+                return new OtS_Texture(
+                    Uint8ClampedArray.from(png.data),
+                    png.width,
+                    png.height,
+                    interpolation,
+                    extension,
+                );
+        }
     }
 }

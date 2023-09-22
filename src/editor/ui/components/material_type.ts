@@ -5,20 +5,22 @@ import { ToolbarItemComponent } from './toolbar_item';
 import { Material, OtS_MaterialType } from '../../../runtime/materials';
 
 export class MaterialTypeComponent extends ConfigComponent<OtS_MaterialType, HTMLDivElement> {
+    private _canBeTextured: boolean;
+
     private _solidButton: ToolbarItemComponent;
     private _texturedButton: ToolbarItemComponent;
-    private _material: Material;
 
-    public constructor(material: Material) {
-        super(material.type);
-        this._material = material;
+    public constructor(materialType: OtS_MaterialType, canBeTextured: boolean) {
+        super(materialType);
+
+        this._canBeTextured = canBeTextured;
 
         this._solidButton = new ToolbarItemComponent({ id: 'sw1', iconSVG: AppIcons.COLOUR_SWATCH })
             .setLabel(LOC('materials.components.solid'))
             .setGrow()
             .onClick(() => {
-                if (this._material.type === 'textured') {
-                    this._onClickChangeTypeDelegate?.();
+                if (this.getValue() === 'textured') {
+                    this._setValue('solid');
                 }
             });
 
@@ -26,8 +28,8 @@ export class MaterialTypeComponent extends ConfigComponent<OtS_MaterialType, HTM
             .setLabel(LOC('materials.components.textured'))
             .setGrow()
             .onClick(() => {
-                if (this._material.type === 'solid') {
-                    this._onClickChangeTypeDelegate?.();
+                if (this.getValue() === 'solid') {
+                    this._setValue('textured');
                 }
             });
     }
@@ -45,8 +47,8 @@ export class MaterialTypeComponent extends ConfigComponent<OtS_MaterialType, HTM
         this._solidButton.finalise();
         this._texturedButton.finalise();
 
-        this._solidButton.setActive(this._material.type === 'solid');
-        this._texturedButton.setActive(this._material.type === 'textured');
+        this._solidButton.setActive(this.getValue() === 'solid');
+        this._texturedButton.setActive(this.getValue() === 'textured');
     }
 
     public override registerEvents(): void {
@@ -58,15 +60,9 @@ export class MaterialTypeComponent extends ConfigComponent<OtS_MaterialType, HTM
         super._onEnabledChanged();
 
         this._solidButton.setEnabled(this.enabled);
-        this._texturedButton.setEnabled(this.enabled && (this._material.type === 'textured' || this._material.canBeTextured));
+        this._texturedButton.setEnabled(this.enabled && (this.getValue() === 'textured' || this._canBeTextured));
     }
 
     protected override _onValueChanged(): void {
-    }
-
-    private _onClickChangeTypeDelegate?: () => void;
-    public onClickChangeTypeDelegate(delegate: () => void) {
-        this._onClickChangeTypeDelegate = delegate;
-        return this;
     }
 }

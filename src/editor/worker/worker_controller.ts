@@ -47,7 +47,7 @@ export class WorkerController {
     public addJob(newJob: TWorkerJob): boolean {
         const isJobAlreadyQueued = this._jobQueue.some((queuedJob) => { return queuedJob.id === newJob.id; });
         if (isJobAlreadyQueued) {
-            LOG('[WorkerController]: Job already queued with ID', newJob.id);
+            //LOG('[WorkerController]: Job already queued with ID', newJob.id);
             return false;
         }
 
@@ -115,8 +115,8 @@ export class WorkerController {
         }
 
         if (!this._timerOn) {
-            LOG(`[WorkerController]: Starting Job '${this._jobPending.id}' (${this._jobQueue.length} remaining)`);
-            LOG(`[WorkerController]: ${JSON.stringify(this._jobPending.payload, null, 4)}`);
+            LOG(`[WorkerController]: Starting Job '${this._jobPending.id}'`);
+            //LOG(`[WorkerController]: ${JSON.stringify(this._jobPending.payload, null, 4)}`);
             this._jobStartTime = Date.now();
             this._timerOn = true;
         }

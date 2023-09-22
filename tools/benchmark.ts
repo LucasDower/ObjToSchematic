@@ -5,67 +5,43 @@ import { ObjImporter } from "../src/runtime/importers/obj_importer";
 import { OtS_VoxelMesh_Converter } from '../src/runtime/ots_voxel_mesh_converter';
 import { BlockMesh } from '../src/runtime/block_mesh';
 import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
+import { createReadableStream, createOtSTexture } from './util';
+import { TexturedMaterial } from 'src/runtime/materials';
+import { ASSERT } from 'src/runtime/util/error_util';
 
 (async () => {
-    const p = path.join(__dirname, '../res/samples/skull.obj');
-    
-    const readableStream = new ReadableStream({
-        async start(controller) {
-            try {
-                const readStream = fs.createReadStream(p);
-                
-                readStream.on('data', (chunk) => {
-                    controller.enqueue(chunk);
-                });
+    const pathModel = path.join(__dirname, '../res/samples/skull.obj');
+    const readableStream = createReadableStream(pathModel);
 
-                readStream.on('end', () => {
-                    controller.close();
-                });
-
-                readStream.on('error', (err) => {
-                    throw err;
-                });
-            } catch (error) {
-                controller.error(error); // Signal an error if something goes wrong
-            }
-        },
-    });
-
-    const loader = new ObjImporter();
     console.time('Mesh');
+    const loader = new ObjImporter();
     const mesh = await loader.import(readableStream);
     console.timeEnd('Mesh');
 
-    console.log(mesh.getTriangleCount().toLocaleString(), 'triangles');
-    console.log(mesh.getMaterials());
+    const pathTexture = path.join(__dirname, '../res/samples/skull.jpg');
+    const texture = createOtSTexture(pathTexture);
+    ASSERT(texture !== undefined, `Could not parse ${pathTexture}`);
 
-    const converterSlow = new OtS_VoxelMesh_Converter();
-    converterSlow.setConfig({
+    // Update the 'skull' material
+    const success = mesh.setMaterial({
+        type: 'textured',
+        name: 'skull',
+        texture: texture,
+    });
+    ASSERT(success, 'Could not update skull material');
+
+    console.time('VoxelMesh');
+    const converter = new OtS_VoxelMesh_Converter();
+    converter.setConfig({
         constraintAxis: 'y',
         size: 380,
-        multisampling: true,
-        replaceMode: 'average',
+        multisampling: false,
+        replaceMode: 'keep',
     });
 
-    console.time('VoxelMesh Slow');
-    const voxelMesh = converterSlow.process(mesh);
-    console.timeEnd('VoxelMesh Slow');
+    const voxelMesh = converter.process(mesh);
+    console.timeEnd('VoxelMesh');
 
-    {
-        const converterFast = new OtS_VoxelMesh_Converter();
-        converterFast.setConfig({
-            constraintAxis: 'y',
-            size: 380,
-            multisampling: false,
-            replaceMode: 'keep',
-        });
-    
-        console.time('VoxelMesh Fast');
-        const voxelMesh = converterFast.process(mesh);
-        console.timeEnd('VoxelMesh Fast');
-    }
-
-    console.log(voxelMesh.getVoxelCount().toLocaleString(), 'voxels');
 
     console.time('BlockMesh');
     const blockMesh = BlockMesh.createFromVoxelMesh(voxelMesh, {
@@ -81,4 +57,8 @@ import { PALETTE_ALL_RELEASE } from '../res/palettes/all';
         lightThreshold: 0,
     });
     console.timeEnd('BlockMesh');
+
+    //console.log(mesh.getTriangleCount().toLocaleString(), 'triangles');
+    //console.log(mesh.getMaterials());
+    //console.log(voxelMesh.getVoxelCount().toLocaleString(), 'voxels');
 })();

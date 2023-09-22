@@ -31,7 +31,9 @@ import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
 import { OtS_ReplaceMode } from '../../runtime/ots_voxel_mesh';
-import { Material } from 'src/runtime/materials';
+import { Material, TexturedMaterial } from 'src/runtime/materials';
+import { OtS_Texture } from 'src/runtime/ots_texture';
+import { MaterialComponent } from './components/material';
 
 export type Group = {
     id: string,
@@ -863,19 +865,15 @@ export class UI {
     }
 
     // TODO: Remove
-    private _materialComponents: ({ type: 'solid', component: SolidMaterialComponent } | { type: 'textured', component: TexturedMaterialComponent })[] = [];
+    private _materialComponents: ({ name: string, component: MaterialComponent })[] = [];
     public async getMaterials(): Promise<Material[]> {
         const materials: Material[] = [];
 
-        this._materialComponents.forEach(async (component) => {
-            if (component.type === 'solid') {
-                materials.push(component.component.getValue());
-            } else {
-                const material = await component.component.getValue();
-                materials.push(material);
-            }
-        });
-
+        for (const component of this._materialComponents) {
+            const material = await component.component.getValue();
+            materials.push(material);
+        }
+        
         return materials;
     }
 
@@ -891,18 +889,10 @@ export class UI {
             this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
             materials.forEach((material) => {
-                if (material.type === 'solid') {
-                    const component = new SolidMaterialComponent(material)
-                        .setUnlocalisedLabel(material.name);
-                    this._materialComponents.push({ type: 'solid', component: component });
-                    this.layoutDull['materials'].components[`mat_${material.name}`] = component;
-                } else {
-                    const component = new TexturedMaterialComponent(material)
-                        .setUnlocalisedLabel(material.name);
-                    this._materialComponents.push({ type: 'textured', component: component });
-                    this.layoutDull['materials'].components[`mat_${material.name}`] = component;
-                }
-
+                const component = new MaterialComponent(material)
+                    .setUnlocalisedLabel(material.name);
+                this._materialComponents.push({ name: material.name, component: component });
+                this.layoutDull['materials'].components[`mat_${material.name}`] = component;
                 this.layoutDull['materials'].componentOrder.push(`mat_${material.name}`);
             });
         }
