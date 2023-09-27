@@ -11,7 +11,7 @@ export namespace AppUtil {
          * For example `namespaceBlock('stone')` returns `'minecraft:stone'`
          */
         export function namespaceBlock(blockName: string): AppTypes.TNamespacedBlockName {
-            // https://minecraft.fandom.com/wiki/Resource_location#Namespaces
+            // https://minecraft.wiki/w/Resource_location#Namespaces
             return isNamespacedBlock(blockName) ? blockName : ('minecraft:' + blockName);
         }
 
