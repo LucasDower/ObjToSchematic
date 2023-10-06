@@ -1,7 +1,7 @@
 import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
 import { Vector3 } from './vector';
-import { Triangle, UVTriangle } from './triangle';
+import { Triangle } from './triangle';
 import { LinearAllocator } from './linear_allocator';
 import { Axes, Ray, rayIntersectTriangle } from './ray';
 import { Bounds } from './bounds';
@@ -126,9 +126,9 @@ export class OtS_VoxelMesh_Converter {
             return RGBAUtil.copy(triangle.material.colour);
         }
 
-        const area01 = Triangle.GetArea(triangle.v0.position, triangle.v1.position, location);
-        const area12 = Triangle.GetArea(triangle.v1.position, triangle.v2.position, location);
-        const area20 = Triangle.GetArea(triangle.v2.position, triangle.v0.position, location);
+        const area01 = Triangle.CalcArea(triangle.v0.position, triangle.v1.position, location);
+        const area12 = Triangle.CalcArea(triangle.v1.position, triangle.v2.position, location);
+        const area20 = Triangle.CalcArea(triangle.v2.position, triangle.v0.position, location);
         const total = area01 + area12 + area20;
 
         const w0 = area12 / total;

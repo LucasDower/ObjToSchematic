@@ -1,23 +1,12 @@
 import { Bounds } from './bounds';
-import { UV } from './util';
 import { Vector3 } from './vector';
 
 export class Triangle {
-    public v0: Vector3;
-    public v1: Vector3;
-    public v2: Vector3;
-
-    constructor(v0: Vector3, v1: Vector3, v2: Vector3) {
-        this.v0 = v0;
-        this.v1 = v1;
-        this.v2 = v2;
+    public static CalcCentre(v0: Vector3, v1: Vector3, v2: Vector3): Vector3 {
+        return Vector3.divScalar(Vector3.add(Vector3.add(v0, v1), v2), 3.0);
     }
 
-    public getCentre(): Vector3 {
-        return Vector3.divScalar(Vector3.add(Vector3.add(this.v0, this.v1), this.v2), 3.0);
-    }
-
-    public static GetArea(v0: Vector3, v1: Vector3, v2: Vector3) {
+    public static CalcArea(v0: Vector3, v1: Vector3, v2: Vector3) {
         const a = Vector3.Distance(v0, v1);
         const b = Vector3.Distance(v1, v2);
         const c = Vector3.Distance(v2, v0);
@@ -25,56 +14,24 @@ export class Triangle {
         return Math.sqrt(p * (p - a) * (p - b) * (p - c));
     }
 
-    public getArea(): number {
-        return Triangle.GetArea(this.v0, this.v1, this.v2);
-    }
-
-    public static GetNormal(v0: Vector3, v1: Vector3, v2: Vector3) {
+    public static CalcNormal(v0: Vector3, v1: Vector3, v2: Vector3) {
         const u = Vector3.sub(v0, v1);
         const v = Vector3.sub(v0, v2);
         return Vector3.cross(u, v).normalise();
     }
 
-    public getNormal(): Vector3 {
-        const u = Vector3.sub(this.v0, this.v1);
-        const v = Vector3.sub(this.v0, this.v2);
-        return Vector3.cross(u, v).normalise();
-    }
-
-    public getBounds(): Bounds {
+    public static CalcBounds(v0: Vector3, v1: Vector3, v2: Vector3): Bounds {
         return new Bounds(
             new Vector3(
-                Math.min(this.v0.x, this.v1.x, this.v2.x),
-                Math.min(this.v0.y, this.v1.y, this.v2.y),
-                Math.min(this.v0.z, this.v1.z, this.v2.z),
+                Math.min(v0.x, v1.x, v2.x),
+                Math.min(v0.y, v1.y, v2.y),
+                Math.min(v0.z, v1.z, v2.z),
             ),
             new Vector3(
-                Math.max(this.v0.x, this.v1.x, this.v2.x),
-                Math.max(this.v0.y, this.v1.y, this.v2.y),
-                Math.max(this.v0.z, this.v1.z, this.v2.z),
+                Math.max(v0.x, v1.x, v2.x),
+                Math.max(v0.y, v1.y, v2.y),
+                Math.max(v0.z, v1.z, v2.z),
             ),
         );
-    }
-}
-
-export class UVTriangle extends Triangle {
-    public uv0: UV;
-    public uv1: UV;
-    public uv2: UV;
-
-    public n0: Vector3;
-    public n1: Vector3;
-    public n2: Vector3;
-
-    constructor(v0: Vector3, v1: Vector3, v2: Vector3, n0: Vector3, n1: Vector3, n2: Vector3, uv0: UV, uv1: UV, uv2: UV) {
-        super(v0, v1, v2);
-
-        this.n0 = n0;
-        this.n1 = n1;
-        this.n2 = n2;
-
-        this.uv0 = uv0;
-        this.uv1 = uv1;
-        this.uv2 = uv2;
     }
 }
