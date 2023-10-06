@@ -16,7 +16,7 @@ export class NBTExporter extends IExporter {
         };
     }
 
-    private _processChunk(blockMesh: BlockMesh, min: Vector3, blockNameToIndex: Map<string, number>, palette: any): ArrayBuffer {
+    private _processChunk(blockMesh: BlockMesh, min: Vector3, blockNameToIndex: Map<string, number>, palette: any): Uint8Array {
         const blocks: any[] = [];
         for (const block of blockMesh.getBlocks()) {
             const pos = block.voxel.position;
