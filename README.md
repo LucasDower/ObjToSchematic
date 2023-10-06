@@ -1,6 +1,6 @@
 <h1>
   <p align="center">
-    <img src="res/icon.png" alt="Logo" width="64" height="64"><br>
+    <img src="Editor/res/icon.png" alt="Logo" width="64" height="64"><br>
     ObjToSchematic<br>
   </p>
 </h1>
@@ -18,13 +18,17 @@
   <a href="#documentation">Documentation</a>
 </p>
 <p align="center">
-  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build.js.yml/badge.svg" alt="Logo">
-  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests.js.yml/badge.svg" alt="Logo">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build_core.js.yml/badge.svg" alt="Logo">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests_core.js.yml/badge.svg" alt="Logo">
+  <br>
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build_editor.js.yml/badge.svg" alt="Logo">
+  <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests_editor.js.yml/badge.svg" alt="Logo">
+  <br>
   <img src="https://img.shields.io/github/downloads/LucasDower/ObjToSchematic/total.svg" alt="Logo">
 </p>
 
 <p align="center">
-  <img src="res/samples/noodles.png" alt="Noodles">
+  <img src="Editor/res/samples/noodles.png" alt="Noodles">
   <sub>"Noodle Bowl - 3DDecember Day9" (https://skfb.ly/orI9z) by Batuhan13<br>is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
 </p>
 
@@ -41,7 +45,7 @@ The Desktop version is no longer updated but can still be downloaded [here](http
 * Run `npm start`.
 
 <p align="center">
-  <img src="res/samples/editor.png">
+  <img src="Editor/res/samples/editor.png">
   <sub>"Cut Fish" (https://skfb.ly/orWLC) by Suushimi<br>is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
 </p>
 
