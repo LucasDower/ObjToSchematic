@@ -1,0 +1,13 @@
+name: Build-Editor
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      working-directory: ./Editor
+      run: npm ci
+    - name: Run build
+      working-directory: ./Editor
+      run: npm run build

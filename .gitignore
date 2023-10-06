@@ -1,25 +1,13 @@
-/node_modules
-ObjToSchematic-win32-x64
-ObjToSchematic-linux-x64
-ObjToSchematic-darwin-x64
-/res/atlases/*.atlas
-/res/atlases/*.png
-!/res/atlases/vanilla.atlas
-!/res/atlases/vanilla.png
-/res/palettes/empty.palette
-/dist
-/dev
-/gen
-/tools/blocks
-/tools/models
-/tests/out
-/tests/__mocks__
-/logs/
-/release/
-notes.txt
+# Common
 *.DS_Store
-dependencygraph.svg
-.firebase
-/webpack/
-.firebaserc
-dependencies.jpg
+
+# Core
+/Core/node_modules
+/Core/tests/out
+/Core/lib
+
+# Editor
+/Editor/node_modules
+/Editor/.firebase
+/Editor/.firebaserc
+/Editor/webpack/

@@ -1,0 +1,13 @@
+name: Tests-Core
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      working-directory: ./Core
+      run: npm ci
+    - name: Run tests
+      working-directory: ./Core
+      run: npm test

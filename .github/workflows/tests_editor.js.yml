@@ -1,0 +1,13 @@
+name: Tests-Editor
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      working-directory: ./Editor
+      run: npm ci
+    - name: Run tests
+      working-directory: ./Editor
+      run: npm test
