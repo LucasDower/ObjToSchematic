@@ -6,7 +6,7 @@ import { GeometryTemplates } from "./geometry";
 import { AttributeData } from "./render_buffer";
 import { AppUtil, TOptional } from "../../../Core/src/util";
 import { AppConstants } from "../../../Core/src/constants";
-import { OcclusionManager } from "../../../Core/src/occlusion";
+import { OtSE_AmbientOcclusion } from "./ambient_occlusion";
 import { OtS_Voxel, OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
 import { OtS_VoxelMesh_Neighbourhood } from '../../../Core/src/ots_voxel_mesh_neighbourhood';
 
@@ -109,7 +109,7 @@ export class BufferGenerator_VoxelMesh {
 
             for (let i = 0; i < numBufferVoxels; ++i) {
                 const voxel = this._voxels[i + voxelsStartIndex];
-                OcclusionManager.Get.getOcclusions(voxelOcclusionArray, voxel.position, this._neighbourhood);
+                OtSE_AmbientOcclusion.GetOcclusions(voxelOcclusionArray, voxel.position, this._neighbourhood);
 
                 newBuffer.occlusion.data.set(voxelOcclusionArray, i * AppConstants.VoxelMeshBufferComponentOffsets.OCCLUSION);
             }

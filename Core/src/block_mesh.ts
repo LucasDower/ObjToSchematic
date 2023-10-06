@@ -1,4 +1,4 @@
-import { Atlas, TAtlasBlock } from './atlas';
+import { Atlas, TAtlasBlock } from '../../Editor/src/atlas';
 import { AtlasPalette } from './block_assigner';
 import { BlockInfo } from './block_atlas';
 import { RGBA_255, RGBAUtil } from './colour';

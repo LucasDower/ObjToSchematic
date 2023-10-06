@@ -1,6 +1,6 @@
-import { RGBA } from './colour';
-import { AppTypes, AppUtil, UV } from './util';
-import { ASSERT } from './util/error_util';
+import { RGBA } from '../../Core/src/colour';
+import { AppTypes, AppUtil, UV } from '../../Core/src/util';
+import { ASSERT } from '../../Core/src/util/error_util';
 
 export type TAtlasBlockFace = {
     name: string,

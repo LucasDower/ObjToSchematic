@@ -1,31 +1,23 @@
-import { OtS_Offset, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
-import { ASSERT } from './util/error_util';
-import { Vector3 } from './vector';
+import { OtS_Offset, OtS_VoxelMesh_Neighbourhood } from '../../../Core/src/ots_voxel_mesh_neighbourhood';
+import { ASSERT } from '../../../Core/src/util/error_util';
+import { Vector3 } from '../../../Core/src/vector';
 
-export class OcclusionManager {
+export class OtSE_AmbientOcclusion {
     private _occlusionNeighboursIndices!: number[]; // Ew
-    private _occlusions: number[];
-    private _localNeighbourhoodCache: number[];
     private _occlusionsSetup: boolean;
 
-    private static _instance: OcclusionManager;
-    public static get Get() {
+    private static _instance: OtSE_AmbientOcclusion;
+    private static get _Get() {
         return this._instance || (this._instance = new this());
     }
 
     private constructor() {
         this._occlusionsSetup = false;
         this._setupOcclusions();
-        this._occlusions = new Array<number>(6 * 4 * 4);
-        this._localNeighbourhoodCache = Array<number>(27);
-    }
-
-    public getBlankOcclusions() {
-        return new Array<number>(96).fill(1.0);
     }
 
     // Assume's buffer is of length 96
-    public getOcclusions(buffer: Float32Array, centre: Vector3, voxelMeshNeighbourhood: OtS_VoxelMesh_Neighbourhood): void {
+    public static GetOcclusions(buffer: Float32Array, centre: Vector3, voxelMeshNeighbourhood: OtS_VoxelMesh_Neighbourhood): void {
         // Cache local neighbours
         const neighbourData = voxelMeshNeighbourhood.getNeighbours(centre.x, centre.y, centre.z);
         if (neighbourData === undefined) {
@@ -34,8 +26,9 @@ export class OcclusionManager {
             return;
         }
 
+        const localNeighbourhoodCache = new Array<number>(27);
         for (let i = 0; i < 27; ++i) {
-            this._localNeighbourhoodCache[i] = (neighbourData & (1 << i)) > 0 ? 1 : 0;
+            localNeighbourhoodCache[i] = (neighbourData & (1 << i)) > 0 ? 1 : 0;
         }
 
         // For each face
@@ -44,8 +37,8 @@ export class OcclusionManager {
                 let numNeighbours = 0;
                 let occlusionValue = 1.0;
                 for (let i = 0; i < 2; ++i) {
-                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, i)];
-                    numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
+                    const neighbourIndex = this._Get._occlusionNeighboursIndices[this._GetOcclusionMapIndex(f, v, i)];
+                    numNeighbours += localNeighbourhoodCache[neighbourIndex];
                 }
                 // If both edge blocks along this vertex exist,
                 // assume corner exists (even if it doesnt)
@@ -54,25 +47,21 @@ export class OcclusionManager {
                 if (numNeighbours == 2) {
                     ++numNeighbours;
                 } else {
-                    const neighbourIndex = this._occlusionNeighboursIndices[this._getOcclusionMapIndex(f, v, 2)];
-                    numNeighbours += this._localNeighbourhoodCache[neighbourIndex];
+                    const neighbourIndex = this._Get._occlusionNeighboursIndices[this._GetOcclusionMapIndex(f, v, 2)];
+                    numNeighbours += localNeighbourhoodCache[neighbourIndex];
                 }
 
                 // Convert from occlusion denoting the occlusion factor to the
                 // attenuation in light value: 0 -> 1.0, 1 -> 0.8, 2 -> 0.6, 3 -> 0.4
                 occlusionValue = 1.0 - 0.2 * numNeighbours;
 
-
                 const baseIndex = f * 16 + v;
-                this._occlusions[baseIndex + 0] = occlusionValue;
-                this._occlusions[baseIndex + 4] = occlusionValue;
-                this._occlusions[baseIndex + 8] = occlusionValue;
-                this._occlusions[baseIndex + 12] = occlusionValue;
+                buffer[baseIndex + 0] = occlusionValue;
+                buffer[baseIndex + 4] = occlusionValue;
+                buffer[baseIndex + 8] = occlusionValue;
+                buffer[baseIndex + 12] = occlusionValue;
             }
         }
-
-        buffer.set(this._occlusions, 0);
-        return;
     }
 
     private _setupOcclusions() {
@@ -134,7 +123,7 @@ export class OcclusionManager {
         for (let i = 0; i < 6; ++i) {
             for (let j = 0; j < 4; ++j) {
                 for (let k = 0; k < 3; ++k) {
-                    const index = this._getOcclusionMapIndex(i, j, k);
+                    const index = OtSE_AmbientOcclusion._GetOcclusionMapIndex(i, j, k);
                     const neighbour = occlusionNeighbours[i][j][k];
                     this._occlusionNeighboursIndices[index] = OtS_VoxelMesh_Neighbourhood.getNeighbourIndex(neighbour.x as OtS_Offset, neighbour.y as OtS_Offset, neighbour.z as OtS_Offset);
                 }
@@ -144,7 +133,7 @@ export class OcclusionManager {
         this._occlusionsSetup = true;
     }
 
-    private _getOcclusionMapIndex(faceIndex: number, vertexIndex: number, offsetIndex: number): number {
+    private static _GetOcclusionMapIndex(faceIndex: number, vertexIndex: number, offsetIndex: number): number {
         return (12 * faceIndex) + (3 * vertexIndex) + offsetIndex;
     }
 }

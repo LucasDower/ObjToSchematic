@@ -14,7 +14,7 @@ import { Vector3 } from '../../../Core/src/vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
 import { UIUtil } from '../util/ui_util';
 import { TAxis } from '../../../Core/src/util/type_util';
-import { Atlas } from '../../../Core/src/atlas';
+import { Atlas } from '../atlas';
 import { Material } from '../../../Core/src/materials';
 
 /* eslint-disable */

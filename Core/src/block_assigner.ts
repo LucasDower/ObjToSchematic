@@ -1,4 +1,4 @@
-import { Atlas, TAtlasBlock } from './atlas';
+import { Atlas, TAtlasBlock } from '../../Editor/src/atlas';
 import { RGBA, RGBA_255, RGBAUtil } from './colour';
 import { AppMath } from './math';
 import { OtS_FaceVisibility } from './ots_voxel_mesh_neighbourhood';
