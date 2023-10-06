@@ -1,7 +1,7 @@
 import { LOC } from '../../localiser';
 import { getRandomID } from '../../../../Core/src/util';
 import { ASSERT } from '../../../../Core/src/util/error_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';

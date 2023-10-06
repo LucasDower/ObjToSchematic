@@ -33,6 +33,9 @@ export class UncompressedJSONExporter extends IExporter {
 
         const json = lines.join('');
 
-        return { type: 'single', extension: '.json', content: Buffer.from(json) };
+        const encoder = new TextEncoder();
+        const buffer = encoder.encode(json);
+
+        return { type: 'single', extension: '.json', content: buffer };
     }
 }

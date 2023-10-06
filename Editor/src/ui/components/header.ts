@@ -2,7 +2,7 @@ import IMAGE_LOGO from '../../../../res/icon.png';
 
 import { AppConfig } from '../../config';
 import { LOC } from '../../localiser';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { BaseComponent } from './base';
 import { ToolbarItemComponent } from './toolbar_item';

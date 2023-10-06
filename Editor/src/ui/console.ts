@@ -1,6 +1,6 @@
 import { TLocalisedString } from '../localiser';
 import { LOG, LOG_ERROR, LOG_WARN } from '../../../Core/src/util/log_util';
-import { UIUtil } from '../../../Core/src/util/ui_util';
+import { UIUtil } from '../util/ui_util';
 import { HTMLBuilder } from './misc';
 
 export type TMessage = { text: TLocalisedString, type: 'success' | 'info' | 'warning' | 'error' };

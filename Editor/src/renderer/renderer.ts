@@ -12,7 +12,7 @@ import { ShaderManager } from './shaders';
 import { ASSERT } from '../../../Core/src/util/error_util';
 import { Vector3 } from '../../../Core/src/vector';
 import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
-import { UIUtil } from '../../../Core/src/util/ui_util';
+import { UIUtil } from '../util/ui_util';
 import { TAxis } from '../../../Core/src/util/type_util';
 import { Atlas } from '../../../Core/src/atlas';
 import { Material } from '../../../Core/src/materials';

@@ -12,7 +12,7 @@ import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
 import { EAction } from '../../Core/src/util';
 import { ASSERT } from '../../Core/src/util/error_util';
-import { download, downloadAsZip } from '../../Core/src/util/file_util';
+import { download, downloadAsZip } from './util/file_util';
 import { LOG_ERROR, Logger } from '../../Core/src/util/log_util';
 import { Vector3 } from '../../Core/src/vector';
 import { WorkerController } from './worker/worker_controller';

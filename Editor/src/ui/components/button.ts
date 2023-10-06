@@ -1,5 +1,5 @@
 import { TLocalisedString } from '../../localiser';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
 
 export class ButtonComponent extends BaseComponent<HTMLDivElement> {

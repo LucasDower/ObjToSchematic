@@ -1,7 +1,7 @@
 import { NBT, writeUncompressed } from 'prismarine-nbt';
-import zlib from 'zlib';
+import pako from 'pako';
 
 export function saveNBT(nbt: NBT) {
     const uncompressedBuffer = writeUncompressed(nbt, 'big');
-    return zlib.gzipSync(uncompressedBuffer);
+    return pako.deflate(uncompressedBuffer);
 }

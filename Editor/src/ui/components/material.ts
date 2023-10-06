@@ -3,7 +3,7 @@ import { ConfigComponent } from "./config";
 import { MaterialTypeComponent } from "./material_type";
 import { SolidMaterialComponent } from './solid_material';
 import { TexturedMaterialComponent } from "./textured_material";
-import { UIUtil } from "../../../../Core/src/util/ui_util";
+import { UIUtil } from "../../util/ui_util";
 import { RGBAColours, RGBAUtil } from "../../../../Core/src/colour";
 import { OtS_Texture } from "../../../../Core/src/ots_texture";
 

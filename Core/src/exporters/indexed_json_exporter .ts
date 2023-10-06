@@ -34,6 +34,9 @@ export class IndexedJSONExporter extends IExporter {
             xyzi: blockArray,
         });
 
-        return { type: 'single', extension: '.json', content: Buffer.from(json) };
+        const encoder = new TextEncoder();
+        const buffer = encoder.encode(json);
+
+        return { type: 'single', extension: '.json', content: buffer };
     }
 }

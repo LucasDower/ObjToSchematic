@@ -1,7 +1,7 @@
 import { TTranslationMap } from '../../../loc/base';
 import { DeepLeafKeys, LOC, TLocalisedString } from '../../localiser';
 import { ASSERT } from '../../../../Core/src/util/error_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { BaseComponent } from './base';
 

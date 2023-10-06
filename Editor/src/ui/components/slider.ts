@@ -1,6 +1,6 @@
 import { clamp, mapRange, wayThrough } from '../../../../Core/src/math';
 import { ASSERT } from '../../../../Core/src/util/error_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 
 export type TSliderParams = {

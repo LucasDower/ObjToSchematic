@@ -1,9 +1,9 @@
 import { BlockMesh } from '../block_mesh';
 
-export type TStructureRegion = { name: string, content: Buffer };
+export type TStructureRegion = { name: string, content: ArrayBuffer };
 
 export type TStructureExport =
-    | { type: 'single', extension: string, content: Buffer }
+    | { type: 'single', extension: string, content: ArrayBuffer }
     | { type: 'multiple', extension: string, regions: TStructureRegion[] }
 
 export abstract class IExporter {

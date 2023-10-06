@@ -108,7 +108,7 @@ export class Litematic extends IExporter {
         const startOffsetBits = requiredLengthBits - expectedLengthBits;
 
         const requiredLengthBytes = requiredLengthBits / 8;
-        const buffer = Buffer.alloc(requiredLengthBytes);
+        const buffer = new Uint8Array(requiredLengthBytes / 8);
 
         // Write first few offset bits
         const fullBytesToWrite = Math.floor(startOffsetBits / 8);

@@ -1,5 +1,5 @@
 import { getRandomID } from '../../../../Core/src/util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 
 export interface IInterfaceItem {
     generateHTML: () => string;

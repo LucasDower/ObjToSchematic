@@ -1,5 +1,5 @@
 import { TAxis } from '../../../../Core/src/util/type_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { Vector3 } from '../../../../Core/src/vector';
 import { ConfigComponent } from './config';
 

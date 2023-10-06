@@ -1,4 +1,4 @@
-import { ASSERT } from './error_util';
+import { ASSERT } from '../../../Core/src/util/error_util';
 
 export type TStyleParams = {
     isHovered: boolean,

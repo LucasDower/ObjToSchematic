@@ -1,5 +1,5 @@
 import { ASSERT } from '../../../../Core/src/util/error_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
 import { LOC, TLocalisedKey } from '../../localiser';
 

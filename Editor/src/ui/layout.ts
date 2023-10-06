@@ -12,7 +12,7 @@ import { EAction } from '../../../Core/src/util';
 import { ASSERT } from '../../../Core/src/util/error_util';
 import { TAxis } from '../../../Core/src/util/type_util';
 import { TDithering } from '../../../Core/src/util/type_util';
-import { UIUtil } from '../../../Core/src/util/ui_util';
+import { UIUtil } from '../util/ui_util';
 import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from './components/checkbox';
 import { ComboboxComponent } from './components/combobox';

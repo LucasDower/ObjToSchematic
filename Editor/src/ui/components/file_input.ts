@@ -1,7 +1,7 @@
 import * as path from 'path';
 
 import { ASSERT } from '../../../../Core/src/util/error_util';
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 import { AppIcons } from '../icons';
 import { LOC } from '../../localiser';

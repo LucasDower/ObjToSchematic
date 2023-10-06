@@ -1,10 +1,7 @@
 import { LinearAllocator } from '../src/linear_allocator';
 import { Vector3 } from '../src/vector';
-import { TEST_PREAMBLE } from './preamble';
 
 test('RegExpBuilder', () => {
-    TEST_PREAMBLE();
-
     const vec = new LinearAllocator<Vector3>(() => {
         return new Vector3(0, 0, 0);
     });

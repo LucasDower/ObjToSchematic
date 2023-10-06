@@ -2,11 +2,8 @@ import { Axes, Ray, rayIntersectTriangle } from '../src/ray';
 import { Triangle } from '../src/triangle';
 import { ASSERT } from '../src/util/error_util';
 import { Vector3 } from '../src/vector';
-import { TEST_PREAMBLE } from './preamble';
 
 test('rayIntersectTriangle x-axis #1', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(-1, 0, 0),
         axis: Axes.x,
@@ -23,8 +20,6 @@ test('rayIntersectTriangle x-axis #1', () => {
 });
 
 test('rayIntersectTriangle x-axis #2', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(1, 0, 0),
         axis: Axes.x,
@@ -39,8 +34,6 @@ test('rayIntersectTriangle x-axis #2', () => {
 });
 
 test('rayIntersectTriangle y-axis #1', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(0, -1, 0),
         axis: Axes.y,
@@ -57,8 +50,6 @@ test('rayIntersectTriangle y-axis #1', () => {
 });
 
 test('rayIntersectTriangle y-axis #2', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(0, 1, 0),
         axis: Axes.y,
@@ -73,8 +64,6 @@ test('rayIntersectTriangle y-axis #2', () => {
 });
 
 test('rayIntersectTriangle z-axis #1', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(0, 0, -1),
         axis: Axes.z,
@@ -91,8 +80,6 @@ test('rayIntersectTriangle z-axis #1', () => {
 });
 
 test('rayIntersectTriangle z-axis #2', () => {
-    TEST_PREAMBLE();
-
     const ray: Ray = {
         origin: new Vector3(0, 0, 1),
         axis: Axes.z,
