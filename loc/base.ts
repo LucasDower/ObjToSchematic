@@ -4,6 +4,7 @@ import { en_US } from './en_US';
 import { fr_FR } from './fr_FR';
 import { ru_RU } from './ru_RU';
 import { zh_CN } from './zh_CN';
+import { ja_JP } from './ja_JP';
 
 export type TTranslationMap = typeof en_GB.translations;
 
@@ -19,4 +20,5 @@ export const locales = [
     ru_RU,
     zh_CN,
     fr_FR,
+    ja_JP,
 ];
