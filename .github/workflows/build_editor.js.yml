@@ -5,7 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install modules
+    - name: Install Core
+      working-directory: ./Core
+      run: npm ci
+    - name: Install Editor
       working-directory: ./Editor
       run: npm ci
     - name: Run build
