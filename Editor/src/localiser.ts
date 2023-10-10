@@ -4,7 +4,8 @@ import { locales, TTranslationMap } from '../loc/base';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
 import { ASSERT } from '../../Core/src/util/error_util';
-import { DeepPartial, TBrand } from '../../Core/src/util/type_util';
+import { TBrand } from '../../Core/src/util/type_util';
+import { DeepPartial } from './util/type_util';
 
 
 // https://stackoverflow.com/questions/58277973/how-to-type-check-i18n-dictionaries-with-typescript
