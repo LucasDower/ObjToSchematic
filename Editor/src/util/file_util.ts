@@ -17,7 +17,7 @@ export function downloadAsZip(zipFilename: string, files: { content: any, filena
         zip.file(file.filename, file.content);
     });
 
-    zip.generateAsync({type:"blob"}).then(function(content) {
+    zip.generateAsync({type:"blob"}).then(function(content: any) {
         download(content, zipFilename);
     });
 }

@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-    entry: './src/editor/main.ts',
+    entry: './src/main.ts',
     plugins: [
         new NodePolyfillPlugin(),
         new HtmlWebpackPlugin({
@@ -46,6 +46,6 @@ module.exports = {
     },
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, './webpack'),
+        path: path.resolve(__dirname, './build'),
     },
 };

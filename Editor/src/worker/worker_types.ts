@@ -8,7 +8,7 @@ import { TAxis } from '../../../Core/src/util/type_util';
 import { Vector3 } from '../../../Core/src/vector';
 import { AppError } from '../util/editor_util';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
-import { Material } from 'Core/src/materials';
+import { Material } from '../../../Core/src/materials';
 
 export namespace InitParams {
     export type Input = {

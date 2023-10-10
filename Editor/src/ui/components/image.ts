@@ -5,7 +5,7 @@ import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
-import { TImageRawWrap } from 'Editor/src/texture_reader';
+import { TImageRawWrap } from 'src/texture_reader';
 
 export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTMLImageElement> {
     private _switchElement: ToolbarItemComponent;

@@ -3,28 +3,30 @@ import * as twgl from 'twgl.js';
 import { Bounds } from '../../../Core/src/bounds';
 import { RGBA } from '../../../Core/src/colour';
 import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
-import { Triangle, UVTriangle } from '../../../Core/src/triangle';
+import { Triangle } from '../../../Core/src/triangle';
 import { ASSERT } from '../../../Core/src/util/error_util';
 import { Vector3 } from '../../../Core/src/vector';
 import { OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
+import { OtS_Triangle } from 'ots-core/src/ots_mesh';
+import { OtS_Texture } from 'ots-core/src/ots_texture';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
 
-    static getTriangleBufferData(triangle: UVTriangle): AttributeData {
-        const n = triangle.getNormal();
+    static getTriangleBufferData(triangle: OtS_Triangle): AttributeData {
+        const n = Triangle.CalcNormal(triangle.v0.position, triangle.v1.position, triangle.v2.position);
 
         return {
             custom: {
                 position: [
-                    triangle.v0.x, triangle.v0.y, triangle.v0.z,
-                    triangle.v1.x, triangle.v1.y, triangle.v1.z,
-                    triangle.v2.x, triangle.v2.y, triangle.v2.z,
+                    triangle.v0.position.x, triangle.v0.position.y, triangle.v0.position.z,
+                    triangle.v1.position.x, triangle.v1.position.y, triangle.v1.position.z,
+                    triangle.v2.position.x, triangle.v2.position.y, triangle.v2.position.z,
                 ],
                 texcoord: [
-                    triangle.uv0.u, triangle.uv0.v,
-                    triangle.uv1.u, triangle.uv1.v,
-                    triangle.uv2.u, triangle.uv2.v,
+                    triangle.v0.texcoord.u, triangle.v0.texcoord.v,
+                    triangle.v1.texcoord.u, triangle.v1.texcoord.v,
+                    triangle.v2.texcoord.u, triangle.v2.texcoord.v,
                 ],
                 normal: [
                     n.x, n.y, n.z,

@@ -9,7 +9,7 @@ import { AppIcons } from '../icons';
 import { CheckboxComponent } from './checkbox';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
-import { BlockPalette } from 'Core/src/util/type_util';
+import { BlockPalette } from '../../../../Core/src/util/type_util';
 
 export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivElement> {
     private _checkboxes: { block: string, element: CheckboxComponent }[];

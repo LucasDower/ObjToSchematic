@@ -1,4 +1,4 @@
-import { UIUtil } from '../../../../Core/src/util/ui_util';
+import { UIUtil } from 'src/util/ui_util';
 import { ConfigComponent } from './config';
 
 export class NumberComponent extends ConfigComponent<number, HTMLInputElement> {

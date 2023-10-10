@@ -1,7 +1,7 @@
-import ATLAS_VANILLA from '../../../res/atlases/vanilla.atlas';
+import ATLAS_VANILLA from '../../res/atlases/vanilla.atlas';
 import * as twgl from 'twgl.js';
 
-import VANILLA_TEXTURE from '../../../res/atlases/vanilla.png';
+import VANILLA_TEXTURE from '../../res/atlases/vanilla.png';
 import { Bounds } from '../../../Core/src/bounds';
 import { ArcballCamera } from './camera';
 import { RGBA, RGBAUtil } from '../../../Core/src/colour';

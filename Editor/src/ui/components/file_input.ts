@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import { ASSERT } from '../../../../Core/src/util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
@@ -65,8 +63,9 @@ export class FileComponent extends ConfigComponent<File, HTMLDivElement> {
 
     protected override _updateStyles() {
         if (this._loadedFilePath) {
-            const parsedPath = path.parse(this._loadedFilePath);
-            this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
+            //const parsedPath = path.parse(this._loadedFilePath);
+            //this._getElement().innerHTML = parsedPath.name + parsedPath.ext;
+            this._getElement().innerHTML = this._loadedFilePath
         } else {
             this._getElement().innerHTML = `<i>${LOC('import.components.no_file_chosen')}</i>`;
         }

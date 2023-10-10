@@ -1,11 +1,9 @@
-import path from 'path';
-
 import { BlockMesh } from '../../../Core/src/block_mesh';
 import { BufferGenerator } from '../buffer';
 import { EAppEvent, EventManager } from '../event';
 import { IExporter } from '../../../Core/src/exporters/base_exporter';
 import { ExporterFactory } from '../../../Core/src/exporters/exporters';
-import { ImporterFactor } from '../../../Core/src/importers/importers';
+import { ImporterFactory } from '../../../Core/src/importers/importers';
 import { LOC, Localiser } from '../localiser';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../../Core/src/util/error_util';
@@ -88,9 +86,10 @@ export class WorkerClient {
     }
 
     public async import(params: ImportParams.Input): Promise<ImportParams.Output> {
-        const parsed = path.parse(params.file.name);
+        //const parsed = path.parse(params.file.name);
+        const extension = params.file.name.split('.').findLast(() => true);
 
-        const importer = ImporterFactor.GetImporter(parsed.ext === '.obj' ? 'obj' : 'gltf');
+        const importer = ImporterFactory.GetImporter(extension === '.obj' ? 'obj' : 'gltf');
         this._loadedMesh = await importer.import(params.file.stream());
 
         this._loadedMesh.centre();

@@ -4,11 +4,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
   "scripts": {
-    "build": "echo \"Nothing to build\" && exit 0",
+    "start": "webpack serve --config ./webpack.dev.js",
+    "build": "webpack --config ./webpack.prod.js",
     "test": "echo \"No tests\" && exit 0"
   },
   "keywords": [],
@@ -16,5 +14,26 @@
   "license": "ISC",
   "dependencies": {
     "ots-core": "file:../Core"
+  },
+  "devDependencies": {
+    "@types/pngjs": "^6.0.2",
+    "copy-webpack-plugin": "^11.0.0",
+    "file-loader": "^6.2.0",
+    "ga-gtag": "^1.1.7",
+    "html-webpack-plugin": "^5.5.3",
+    "i18next": "^23.5.1",
+    "jpeg-js": "^0.4.4",
+    "jszip": "^3.10.1",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "pngjs": "^7.0.0",
+    "raw-loader": "^4.0.2",
+    "split.js": "^1.6.5",
+    "ts-loader": "^9.5.0",
+    "twgl.js": "^5.5.3",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "webpack-merge": "^5.9.0",
+    "worker-loader": "^3.0.8"
   }
 }

@@ -1,7 +1,7 @@
 import { ASSERT } from '../../Core/src/util/error_util';
 import { OtS_Mesh } from '../../Core/src/ots_mesh';
 import { Triangle } from '../../Core/src/triangle';
-import { Material } from 'Core/src/materials';
+import { Material } from 'ots-core/src/materials';
 
 export type TMeshBuffer = {
     position: { numComponents: 3, data: Float32Array },
@@ -93,7 +93,7 @@ export class BufferGenerator {
                     }
 
                     // Normal
-                    const normalArray = Triangle.GetNormal(triangle.v0.position, triangle.v1.position, triangle.v2.position).toArray();
+                    const normalArray = Triangle.CalcNormal(triangle.v0.position, triangle.v1.position, triangle.v2.position).toArray();
                     {
                         materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 0);
                         materialBuffer.normal.data.set(normalArray, insertIndex * 9 + 3);

@@ -22,8 +22,6 @@ import { HeaderComponent } from './components/header';
 import { PaletteComponent } from './components/palette';
 import { PlaceholderComponent } from './components/placeholder';
 import { SliderComponent } from './components/slider';
-import { SolidMaterialComponent } from './components/solid_material';
-import { TexturedMaterialComponent } from './components/textured_material';
 import { ToolbarItemComponent } from './components/toolbar_item';
 import { VectorComponent } from './components/vector';
 import { AppConsole } from './console';
@@ -31,9 +29,8 @@ import { AppIcons } from './icons';
 import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
-import { Material, TexturedMaterial } from 'Core/src/materials';
-import { OtS_Texture } from 'Core/src/ots_texture';
 import { MaterialComponent } from './components/material';
+import { Material } from 'ots-core/src/materials';
 
 export type Group = {
     id: string,
