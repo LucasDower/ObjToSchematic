@@ -11,3 +11,6 @@
 /Editor/.firebase
 /Editor/.firebaserc
 /Editor/webpack/
+
+# Sandbox
+/Sandbox/node_modules
