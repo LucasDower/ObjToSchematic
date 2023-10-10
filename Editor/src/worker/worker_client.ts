@@ -89,7 +89,7 @@ export class WorkerClient {
         //const parsed = path.parse(params.file.name);
         const extension = params.file.name.split('.').findLast(() => true);
 
-        const importer = ImporterFactory.GetImporter(extension === '.obj' ? 'obj' : 'gltf');
+        const importer = ImporterFactory.GetImporter(extension === 'obj' ? 'obj' : 'gltf');
         this._loadedMesh = await importer.import(params.file.stream());
 
         this._loadedMesh.centre();
