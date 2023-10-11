@@ -1,29 +1,58 @@
-import { strict as assert } from 'node:assert';
-import path from 'node:path';
-import OTS from 'ots-core';
-
-import { createOtSTexture, createReadableStream } from './src/util';
+import { RGBAColours, RGBAUtil } from 'ots-core/src/colour';
+import { OtS_Mesh } from 'ots-core/src/ots_mesh';
+import { OtS_Texture } from 'ots-core/src/ots_texture';
 
 (async () => {
-    // 1. Import a mesh
-    const pathModel = path.join(__dirname, '../res/samples/skull.obj');
-    const readableStream = createReadableStream(pathModel);
+    const mesh = OtS_Mesh.create();
+    {
+        mesh.addSection({
+            type: 'solid',
+            colour: RGBAUtil.copy(RGBAColours.WHITE),
+            positionData: Float32Array.from([
+                0.0, 0.0, 0.0,
+                1.0, 2.0, 3.0,
+                4.0, 5.0, 6.0,
+            ]),
+            indexData: Uint32Array.from([
+                0, 1, 2
+            ]),
+        });
 
-    const importer = OTS.getImporter('obj');
-    const mesh = await importer.import(readableStream);
+        mesh.addSection({
+            type: 'colour',
+            positionData: Float32Array.from([
+                0.0, 10.0, 0.0,
+                1.0, 12.0, 3.0,
+                4.0, 15.0, 6.0,
+            ]),
+            colourData: Float32Array.from([
+                1.0, 0.0, 0.0, 1.0,  
+                1.0, 0.0, 0.0, 1.0,  
+                1.0, 0.0, 0.0, 1.0,    
+            ]),
+            indexData: Uint32Array.from([
+                0, 1, 2
+            ]),
+        });
 
-    // 2. Assign materials
-    const pathTexture = path.join(__dirname, '../res/samples/skull.jpg');
-    const texture = createOtSTexture(pathTexture);
-    assert(texture !== undefined, `Could not parse ${pathTexture}`);
-
-    // Update the 'skull' material
-    const success = mesh.setMaterial({
-        type: 'textured',
-        name: 'skull',
-        texture: texture,
-    });
-    assert(success, 'Could not update skull material');
+        mesh.addSection({
+            type: 'textured',
+            texture: new OtS_Texture(new Uint8ClampedArray(), 0, 0, 'nearest', 'repeat'),
+            positionData: Float32Array.from([
+                0.0, 20.0, 0.0,
+                1.0, 22.0, 3.0,
+                4.0, 25.0, 6.0,
+            ]),
+            texcoordData: Float32Array.from([
+                0.0, 0.0,
+                1.0, 0.0,
+                0.0, 1.0,
+            ]),
+            indexData: Uint32Array.from([
+                0, 1, 2
+            ]),
+        });
+    }
 
     // 3. Construct a voxel mesh from the mesh
     const converter = new OTS.voxelMeshConverter();

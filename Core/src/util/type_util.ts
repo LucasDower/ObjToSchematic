@@ -18,3 +18,7 @@ export type WrappedInfo = {}
 export type Wrapped<T> = { payload: T, warnings: WrappedWarnings[], info: WrappedInfo[] };
 
 export type BlockPalette = Set<string>;
+
+export type Result<T, E = Error> =
+  | { ok: true, value: T }
+  | { ok: false, error: { code: E, message?: string } };

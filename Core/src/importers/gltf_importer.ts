@@ -4,25 +4,27 @@ import { GLTFLoader } from '@loaders.gl/gltf';
 import { RGBAColours, RGBAUtil } from '../colour';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
-import { IImporter } from './base_importer';
-import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
-import { Material } from '../materials';
+import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
+import { OtS_Importer } from './base_importer';
 
-export type TGltfImporterError =
+export type OtS_GltfImporterError =
     | { type: 'failed-to-parse' }
     | { type: 'unsupported-image-format' };
 
-export class GltfImporterError extends Error {
-    public error: TGltfImporterError;
+interface VertexIndices {
+    v0: number;
+    v1: number;
+    v2: number;
+};
 
-    constructor(error: TGltfImporterError) {
-        super();
-        this.error = error;
-    }
-}
+export interface Tri {
+    positionIndices: VertexIndices;
+    texcoordIndices?: VertexIndices;
+    material: string;
+};
 
-export class GltfLoader extends IImporter {
+export class OtS_Importer_Gltf extends OtS_Importer {
     public override async import(file: ReadableStream<Uint8Array>): Promise<OtS_Mesh> {
         // TODO: StatusRework
         //StatusHandler.warning(LOC('import.gltf_experimental'));
@@ -31,7 +33,8 @@ export class GltfLoader extends IImporter {
         try {
             gltf = await parse(file, GLTFLoader, { loadImages: true });
         } catch (err) {
-            throw new GltfImporterError({ type: 'failed-to-parse' });
+            // TODO:
+            //throw new GltfImporterError({ type: 'failed-to-parse' });
         }
 
         return this._handleGLTF(gltf);
@@ -39,12 +42,11 @@ export class GltfLoader extends IImporter {
 
     private _handleGLTF(gltf: any): OtS_Mesh {
         const meshVertices: Vector3[] = [];
-        const meshNormals: Vector3[] = [];
+        //const meshNormals: Vector3[] = [];
         const meshTexcoords: UV[] = [];
         const meshTriangles: Tri[] = [];
-        const meshMaterials: Map<string, Material> = new Map();
+        const meshMaterials: Map<string, {  }> = new Map();
         meshMaterials.set('NONE', {
-            name: 'NONE',
             type: 'solid',
             colour: RGBAUtil.copy(RGBAColours.WHITE),
             canBeTextured: false,
@@ -64,6 +66,7 @@ export class GltfLoader extends IImporter {
                         ));
                     }
                 }
+                /*
                 if (attributes.NORMAL !== undefined) {
                     const normals = attributes.NORMAL.value as Float32Array;
                     for (let i = 0; i < normals.length; i += 3) {
@@ -74,6 +77,7 @@ export class GltfLoader extends IImporter {
                         ));
                     }
                 }
+                */
                 if (attributes.TEXCOORD_0 !== undefined) {
                     const texcoords = attributes.TEXCOORD_0.value as Float32Array;
                     for (let i = 0; i < texcoords.length; i += 2) {
@@ -102,7 +106,7 @@ export class GltfLoader extends IImporter {
                                     if (mimeType !== 'image/png' && mimeType !== 'image/jpeg') {
                                         // TODO: StatusRework
                                         //StatusHandler.warning(LOC('import.unsupported_image_type', { file_name: diffuseTexture.texture.source.id, file_type: mimeType }));
-                                        throw new GltfImporterError({ type: 'unsupported-image-format' })
+                                        //throw new GltfImporterError({ type: 'unsupported-image-format' })
                                     }
 
                                     const base64 = btoa(
@@ -178,14 +182,14 @@ export class GltfLoader extends IImporter {
                         meshTriangles.push({
                             material: materialNameToUse,
                             positionIndices: {
-                                x: maxIndex + indices[i * 3 + 0],
-                                y: maxIndex + indices[i * 3 + 1],
-                                z: maxIndex + indices[i * 3 + 2],
+                                v0: maxIndex + indices[i * 3 + 0],
+                                v1: maxIndex + indices[i * 3 + 1],
+                                v2: maxIndex + indices[i * 3 + 2],
                             },
                             texcoordIndices: {
-                                x: maxIndex + indices[i * 3 + 0],
-                                y: maxIndex + indices[i * 3 + 1],
-                                z: maxIndex + indices[i * 3 + 2],
+                                v0: maxIndex + indices[i * 3 + 0],
+                                v1: maxIndex + indices[i * 3 + 1],
+                                v2: maxIndex + indices[i * 3 + 2],
                             },
                         });
                     }
@@ -200,6 +204,10 @@ export class GltfLoader extends IImporter {
             });
         });
 
-        return TEMP_CONVERT_MESH(meshVertices, meshTexcoords, meshTriangles);
+        const mesh = OtS_Mesh.create();
+
+        // TODO: Fix
+
+        return mesh;
     }
 }

@@ -8,6 +8,8 @@ import { Bounds } from './bounds';
 import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { ASSERT } from './util/error_util';
+import { OtS_Texture } from './ots_texture';
+import { UV } from './util';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -70,14 +72,14 @@ export class OtS_VoxelMesh_Converter {
 
     private _voxeliseTri(mesh: OtS_Mesh, voxelMesh: OtS_VoxelMesh, triangle: OtS_Triangle) {
         this._rays.reset();
-        this._generateRays(triangle.v0.position, triangle.v1.position, triangle.v2.position);
+        this._generateRays(triangle.data.v0.position, triangle.data.v1.position, triangle.data.v2.position);
 
         const voxelPosition = new Vector3(0, 0, 0);
         const size = this._rays.size();
         for (let i = 0; i < size; ++i) {
             const ray = this._rays.get(i)!;
 
-            const intersection = rayIntersectTriangle(ray, triangle.v0.position, triangle.v1.position, triangle.v2.position);
+            const intersection = rayIntersectTriangle(ray, triangle.data.v0.position, triangle.data.v1.position, triangle.data.v2.position);
             if (intersection) {
                 switch (ray.axis) {
                     case Axes.x:
@@ -122,31 +124,38 @@ export class OtS_VoxelMesh_Converter {
     }
 
     private _getVoxelColour(mesh: OtS_Mesh, triangle: OtS_Triangle, location: Vector3): RGBA {
-        if (triangle.material.type === 'solid') {
-            return RGBAUtil.copy(triangle.material.colour);
+        if (triangle.type === 'solid') {
+            return triangle.colour;
         }
 
-        const area01 = Triangle.CalcArea(triangle.v0.position, triangle.v1.position, location);
-        const area12 = Triangle.CalcArea(triangle.v1.position, triangle.v2.position, location);
-        const area20 = Triangle.CalcArea(triangle.v2.position, triangle.v0.position, location);
+        const area01 = Triangle.CalcArea(triangle.data.v0.position, triangle.data.v1.position, location);
+        const area12 = Triangle.CalcArea(triangle.data.v1.position, triangle.data.v2.position, location);
+        const area20 = Triangle.CalcArea(triangle.data.v2.position, triangle.data.v0.position, location);
         const total = area01 + area12 + area20;
 
         const w0 = area12 / total;
         const w1 = area20 / total;
         const w2 = area01 / total;
 
-        const uv = {
-            u: triangle.v0.texcoord.u * w0 + triangle.v1.texcoord.u * w1 + triangle.v2.texcoord.u * w2,
-            v: triangle.v0.texcoord.v * w0 + triangle.v1.texcoord.v * w1 + triangle.v2.texcoord.v * w2,
+        if (triangle.type === 'coloured') {
+            return {
+                r: triangle.data.v0.colour.r * w0 + triangle.data.v1.colour.r * w1 * triangle.data.v2.colour.r * w2,
+                g: triangle.data.v0.colour.g * w0 + triangle.data.v1.colour.g * w1 * triangle.data.v2.colour.g * w2,
+                b: triangle.data.v0.colour.b * w0 + triangle.data.v1.colour.b * w1 * triangle.data.v2.colour.b * w2,
+                a: triangle.data.v0.colour.a * w0 + triangle.data.v1.colour.a * w1 * triangle.data.v2.colour.a * w2,
+            };
+        }
+
+        const texcoord: UV = {
+            u: triangle.data.v0.texcoord.u * w0 + triangle.data.v1.texcoord.u * w1 + triangle.data.v2.texcoord.u * w2,
+            v: triangle.data.v0.texcoord.v * w0 + triangle.data.v1.texcoord.v * w1 + triangle.data.v2.texcoord.v * w2,
         };
 
-        if (isNaN(uv.u) || isNaN(uv.v)) {
+        if (isNaN(texcoord.u) || isNaN(texcoord.v)) {
             RGBAUtil.copy(RGBAColours.MAGENTA);
         }
 
-        ASSERT(triangle.material.type === 'textured');
-        const texture = triangle.material.texture;
-        return texture.sample(uv.u, uv.v);
+        return triangle.texture.sample(texcoord.u, texcoord.v);
     }
 
     private _generateRays(v0: Vector3, v1: Vector3, v2: Vector3) {

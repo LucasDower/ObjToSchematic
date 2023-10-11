@@ -1,238 +1,80 @@
 import { RGBAColours, RGBAUtil } from '../colour';
-import { anyNaN } from '../math';
-import { OtS_Mesh, TEMP_CONVERT_MESH, Tri } from '../ots_mesh';
+import { OtS_Mesh } from '../ots_mesh';
+import { OtS_Texture } from '../ots_texture';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
 import { RegExpBuilder } from '../util/regex_util';
 import { REGEX_NZ_ANY } from '../util/regex_util';
 import { REGEX_NUMBER } from '../util/regex_util';
 import { Vector3 } from '../vector';
-import { IImporter } from './base_importer';
+import { OtS_Importer } from './base_importer';
 
-type TObjImporterParser = {
-    regex: RegExp,
-    delegate: (match: { [key: string]: string }) => (null | TObjImporterError),
-}
-
-export type TObjImporterError =
+export type OtS_ObjImporterError =
     | { type: 'invalid-encoding' }
     | { type: 'invalid-material-name', name: string }
     | { type: 'invalid-data' }
     | { type: 'failed-to-parse', line: string }
-    | { type: 'failed-to-parse-essential-token', line: string }
+    | { type: 'failed-to-parse-essential-token', line: string };
 
-export class ObjImporterError extends Error {
-    public error: TObjImporterError;
-
-    constructor(error: TObjImporterError) {
-        super();
-        this.error = error;
-    }
+interface VertexIndices {
+    v0: number;
+    v1: number;
+    v2: number;
 }
 
-export class ObjImporter extends IImporter {
+export interface Tri {
+    positionIndices: VertexIndices;
+    texcoordIndices?: VertexIndices;
+    material: string;
+}
+
+export class OtS_Importer_Obj extends OtS_Importer {
     private _vertices: Vector3[] = [];
-    private _normals: Vector3[] = [];
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
-
-    private _objParsers: TObjImporterParser[] = [
-        {
-            // e.g. 'usemtl my_material'
-            regex: new RegExpBuilder().add(/^usemtl/).add(/ /).add(REGEX_NZ_ANY, 'name').toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                this._currentMaterialName = match.name.trim();
-
-                if (this._currentMaterialName.length === 0) {
-                    const err: TObjImporterError = { type: 'invalid-material-name', name: match.name };
-                    return err;
-                }
-
-                return null;
-            },
-        },
-        {
-            // e.g. 'v 0.123 0.456 0.789'
-            regex: new RegExpBuilder()
-                .add(/^v/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'x')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'y')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'z')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const x = parseFloat(match.x);
-                const y = parseFloat(match.y);
-                const z = parseFloat(match.z);
-
-                if (anyNaN(x, y, z)) {
-                    const err: TObjImporterError = { type: 'invalid-data' };
-                    return err;
-                }
-
-                this._vertices.push(new Vector3(x, y, z));
-                return null;
-            },
-        },
-        {
-            // e.g. 'vn 0.123 0.456 0.789'
-            regex: new RegExpBuilder()
-                .add(/^vn/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'x')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'y')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'z')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const x = parseFloat(match.x);
-                const y = parseFloat(match.y);
-                const z = parseFloat(match.z);
-
-                if (anyNaN(x, y, z)) {
-                    const err: TObjImporterError = { type: 'invalid-data' };
-                    return err;
-                }
-
-                this._normals.push(new Vector3(x, y, z));
-                return null;
-            },
-        },
-        {
-            // e.g. 'vt 0.123 0.456'
-            regex: new RegExpBuilder()
-                .add(/^vt/)
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'u')
-                .addNonzeroWhitespace()
-                .add(REGEX_NUMBER, 'v')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const u = parseFloat(match.u);
-                const v = parseFloat(match.v);
-
-                if (anyNaN(u, v)) {
-                    const err: TObjImporterError = { type: 'invalid-data' };
-                    return err;
-                }
-
-                this._uvs.push({ u: u, v: v });
-                return null;
-            },
-        },
-        {
-            // e.g. 'f 1/2/3 ...' or 'f 1/2 ...' or 'f 1 ...'
-            regex: new RegExpBuilder()
-                .add(/^f/)
-                .addNonzeroWhitespace()
-                .add(/.*/, 'line')
-                .toRegExp(),
-            delegate: (match: { [key: string]: string }) => {
-                const line = match.line.trim();
-
-                const vertices = line.split(' ').filter((x) => {
-                    return x.length !== 0;
-                });
-
-                if (vertices.length < 3) {
-                    const err: TObjImporterError = { type: 'invalid-data' };
-                    return err;
-                }
-
-                const points: {
-                    positionIndex: number;
-                    texcoordIndex?: number;
-                    normalIndex?: number;
-                }[] = [];
-
-                for (const vertex of vertices) {
-                    const vertexData = vertex.split('/');
-                    switch (vertexData.length) {
-                        case 1: {
-                            const index = parseInt(vertexData[0]);
-                            points.push({
-                                positionIndex: index,
-                                texcoordIndex: index,
-                                normalIndex: index,
-                            });
-                            break;
-                        }
-                        case 2: {
-                            const positionIndex = parseInt(vertexData[0]);
-                            const texcoordIndex = parseInt(vertexData[1]);
-                            points.push({
-                                positionIndex: positionIndex,
-                                texcoordIndex: texcoordIndex,
-                            });
-                            break;
-                        }
-                        case 3: {
-                            const positionIndex = parseInt(vertexData[0]);
-                            const texcoordIndex = parseInt(vertexData[1]);
-                            const normalIndex = parseInt(vertexData[2]);
-                            points.push({
-                                positionIndex: positionIndex,
-                                texcoordIndex: texcoordIndex,
-                                normalIndex: normalIndex,
-                            });
-                            break;
-                        }
-                        default:
-                            const err: TObjImporterError = { type: 'invalid-data' };
-                            return err;
-                    }
-                }
-
-                const pointBase = points[0];
-                for (let i = 1; i < points.length - 1; ++i) {
-                    const pointA = points[i];
-                    const pointB = points[i + 1];
-                    const tri: Tri = {
-                        positionIndices: {
-                            x: pointBase.positionIndex - 1,
-                            y: pointA.positionIndex - 1,
-                            z: pointB.positionIndex - 1,
-                        },
-                        material: this._currentMaterialName,
-                    };
-                    if (pointBase.normalIndex || pointA.normalIndex || pointB.normalIndex) {
-                        ASSERT(pointBase.normalIndex && pointA.normalIndex && pointB.normalIndex);
-                        tri.normalIndices = {
-                            x: pointBase.normalIndex - 1,
-                            y: pointA.normalIndex - 1,
-                            z: pointB.normalIndex - 1,
-                        };
-                    }
-                    if (pointBase.texcoordIndex || pointA.texcoordIndex || pointB.texcoordIndex) {
-                        ASSERT(pointBase.texcoordIndex && pointA.texcoordIndex && pointB.texcoordIndex);
-                        tri.texcoordIndices = {
-                            x: pointBase.texcoordIndex - 1,
-                            y: pointA.texcoordIndex - 1,
-                            z: pointB.texcoordIndex - 1,
-                        };
-                    }
-                    this._tris.push(tri);
-                }
-
-                return null;
-            },
-        },
-    ];
-
+    // Parser context
     private _linesToParse: string[] = [];
+
+    private static _REGEX_USEMTL = new RegExpBuilder()
+        .add(/^usemtl/)
+        .add(/ /)
+        .add(REGEX_NZ_ANY, 'name')
+        .toRegExp();
+
+    private static _REGEX_VERTEX = new RegExpBuilder()
+        .add(/^v/)
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'x')
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'y')
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'z')
+        .toRegExp();
+
+    private static _REGEX_TEXCOORD = new RegExpBuilder()
+        .add(/^vt/)
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'u')
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'v')
+        .toRegExp();
+
+    private static _REGEX_FACE = new RegExpBuilder()
+        .add(/^f/)
+        .addNonzeroWhitespace()
+        .add(/.*/, 'line')
+        .toRegExp();
 
     private _consumeLoadedLines(includeLast: boolean) {
         const size = includeLast ? this._linesToParse.length : this._linesToParse.length - 1;
-        
+
         for (let i = 0; i < size; ++i) {
             const line = this._linesToParse[i];
             const { err } = this.parseOBJLine(line);
             if (err !== null) {
-                throw new ObjImporterError(err);
+                // TODO:
+                //throw new ObjImporterError(err);
             }
         }
 
@@ -242,7 +84,7 @@ export class ObjImporter extends IImporter {
     public override async import(file: ReadableStream<Uint8Array>): Promise<OtS_Mesh> {
         const reader = file.getReader();
         const decoder = new TextDecoder(); //utf8
-        
+
         let lastChunkEndedWithNewline = false;
         let result: ReadableStreamReadResult<Uint8Array>;
         do {
@@ -267,32 +109,232 @@ export class ObjImporter extends IImporter {
             lastChunkEndedWithNewline = lastChar === '\n' || lastChar === '\r\n';
         } while (!result.done);
 
-        return TEMP_CONVERT_MESH(this._vertices, this._uvs, this._tris);
+        const materials = new Map<string, boolean>();
+        this._tris.forEach((tri) => {
+            if (!materials.has(tri.material)) {
+                materials.set(tri.material, tri.texcoordIndices !== undefined);
+            }
+        });
+
+        const mesh = OtS_Mesh.create();
+        for (const [material, isTextureMaterial]  of materials) {
+            if (isTextureMaterial) {
+                const positionData: number[] = [];
+                const texcoordData: number[] = [];
+                const indexData: number[] = [];
+                let ni = 0;
+
+                this._tris.forEach((tri) => {
+                    if (tri.material === material) {
+                        const p0 = this._vertices[tri.positionIndices.v0];
+                        const p1 = this._vertices[tri.positionIndices.v1];
+                        const p2 = this._vertices[tri.positionIndices.v2];
+
+                        ASSERT(tri.texcoordIndices !== undefined);
+                        const t0 = this._uvs[tri.texcoordIndices.v0];
+                        const t1 = this._uvs[tri.texcoordIndices.v1];
+                        const t2 = this._uvs[tri.texcoordIndices.v2];
+
+                        positionData.push(p0.x, p0.y, p0.z);
+                        texcoordData.push(t0.u, t0.v);
+                        indexData.push(ni++);
+                        positionData.push(p1.x, p1.y, p1.z);
+                        texcoordData.push(t1.u, t1.v);
+                        indexData.push(ni++);
+                        positionData.push(p2.x, p2.y, p2.z);
+                        texcoordData.push(t2.u, t2.v);
+                        indexData.push(ni++);
+                    }
+                });
+
+                mesh.addSection({
+                    type: 'textured',
+                    texture: OtS_Texture.CreateDebugTexture(),
+                    positionData: Float32Array.from(positionData),
+                    texcoordData: Float32Array.from(texcoordData),
+                    indexData: Uint32Array.from(indexData),
+                });
+            } else {
+                const positionData: number[] = [];
+                const indexData: number[] = [];
+                let ni = 0;
+
+                this._tris.forEach((tri) => {
+                    if (tri.material === material) {
+                        const p0 = this._vertices[tri.positionIndices.v0];
+                        const p1 = this._vertices[tri.positionIndices.v1];
+                        const p2 = this._vertices[tri.positionIndices.v2];
+
+                        positionData.push(p0.x, p0.y, p0.z);
+                        indexData.push(ni++);
+                        positionData.push(p1.x, p1.y, p1.z);
+                        indexData.push(ni++);
+                        positionData.push(p2.x, p2.y, p2.z);
+                        indexData.push(ni++);
+                    }
+                });
+
+                mesh.addSection({
+                    type: 'solid',
+                    colour: RGBAUtil.copy(RGBAColours.WHITE),
+                    positionData: Float32Array.from(positionData),
+                    indexData: Uint32Array.from(indexData),
+                });
+            }
+        }
+
+        return mesh;
     }
 
     /**
      * Attempts to parse the given line of an OBJ file.
      * Potentially returns an error if failed to do so.
      */
-    public parseOBJLine(line: string): { err: null | TObjImporterError} {
-        const essentialTokens = ['usemtl ', 'v ', 'vt ', 'f ', 'vn '];
+    public parseOBJLine(line: string): { err: null | OtS_ObjImporterError } {
+        false
+            || this._tryParseAsUsemtl(line)
+            || this._tryParseAsVertex(line)
+            || this._tryParseAsTexcoord(line)
+            || this._tryParseAsFace(line);
 
-        for (const parser of this._objParsers) {
-            const match = parser.regex.exec(line);
-            if (match && match.groups) {
-                const err = parser.delegate(match.groups);
-                return { err: err };
+        return { err: null };
+    }
+
+    // e.g. 'usemtl my_material'
+    private _tryParseAsUsemtl(line: string): boolean {
+        const match = OtS_Importer_Obj._REGEX_USEMTL.exec(line);
+        if (match === null) {
+            return false;
+        }
+
+        const materialName = match.groups?.name.trim();
+
+        if (materialName === undefined || materialName.length === 0) {
+            throw 'Invalid material name'; // TODO: Error type
+        }
+
+        this._currentMaterialName = materialName;
+        return true;
+    }
+
+    // e.g. 'v 0.123 0.456 0.789'
+    private _tryParseAsVertex(line: string): boolean {
+        const match = OtS_Importer_Obj._REGEX_VERTEX.exec(line);
+        if (match === null) {
+            return false;
+        }
+
+        const x = parseFloat(match.groups?.x ?? '');
+        const y = parseFloat(match.groups?.y ?? '');
+        const z = parseFloat(match.groups?.z ?? '');
+
+        if (isNaN(x) || isNaN(y) || isNaN(z)) {
+            throw 'Invalid data'; // TODO: Error type
+        }
+
+        this._vertices.push(new Vector3(x, y, z));
+        return true;
+    }
+
+    // e.g. 'vt 0.123 0.456'
+    private _tryParseAsTexcoord(line: string): boolean {
+        const match = OtS_Importer_Obj._REGEX_TEXCOORD.exec(line);
+        if (match === null) {
+            return false;
+        }
+
+        const u = parseFloat(match.groups?.u ?? '');
+        const v = parseFloat(match.groups?.v ?? '');
+
+        if (isNaN(u) || isNaN(v)) {
+            throw 'Invalid data';
+        }
+
+        this._uvs.push({ u: u, v: v });
+        return true;
+    }
+
+    private _tryParseAsFace(line: string): boolean {
+        const match = OtS_Importer_Obj._REGEX_FACE.exec(line);
+        if (match === null) {
+            return false;
+        }
+
+        const data = match.groups?.line.trim();
+        if (data === undefined) {
+            throw 'Invalid data';
+        }
+
+        const vertices = data.split(' ').filter((x) => {
+            return x.length !== 0;
+        });
+
+        if (vertices.length < 3) {
+            throw 'Invalid data';
+        }
+
+        const points: {
+            positionIndex: number;
+            texcoordIndex?: number;
+        }[] = [];
+
+        for (const vertex of vertices) {
+            const vertexData = vertex.split('/');
+            switch (vertexData.length) {
+                case 1: {
+                    const index = parseInt(vertexData[0]);
+                    points.push({
+                        positionIndex: index,
+                        texcoordIndex: index,
+                    });
+                    break;
+                }
+                case 2: {
+                    const positionIndex = parseInt(vertexData[0]);
+                    const texcoordIndex = parseInt(vertexData[1]);
+                    points.push({
+                        positionIndex: positionIndex,
+                        texcoordIndex: texcoordIndex,
+                    });
+                    break;
+                }
+                case 3: {
+                    const positionIndex = parseInt(vertexData[0]);
+                    const texcoordIndex = parseInt(vertexData[1]);
+                    points.push({
+                        positionIndex: positionIndex,
+                        texcoordIndex: texcoordIndex,
+                    });
+                    break;
+                }
+                default:
+                    throw 'Invalid data';
             }
         }
 
-        const beginsWithEssentialToken = essentialTokens.some((token) => {
-            return line.startsWith(token);
-        });
-
-        if (beginsWithEssentialToken) {
-            return { err: { type: 'failed-to-parse-essential-token', line: line } }
+        const pointBase = points[0];
+        for (let i = 1; i < points.length - 1; ++i) {
+            const pointA = points[i];
+            const pointB = points[i + 1];
+            const tri: Tri = {
+                positionIndices: {
+                    v0: pointBase.positionIndex - 1,
+                    v1: pointA.positionIndex - 1,
+                    v2: pointB.positionIndex - 1,
+                },
+                material: this._currentMaterialName,
+            };
+            if (pointBase.texcoordIndex || pointA.texcoordIndex || pointB.texcoordIndex) {
+                ASSERT(pointBase.texcoordIndex && pointA.texcoordIndex && pointB.texcoordIndex);
+                tri.texcoordIndices = {
+                    v0: pointBase.texcoordIndex - 1,
+                    v1: pointA.texcoordIndex - 1,
+                    v2: pointB.texcoordIndex - 1,
+                };
+            }
+            this._tris.push(tri);
         }
 
-        return { err: null };
+        return true;
     }
 }
