@@ -1,4 +1,4 @@
-import { BlockMesh } from '../block_mesh';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 import { IExporter, TStructureExport } from './base_exporter';
 
 export class UncompressedJSONExporter extends IExporter {
@@ -9,26 +9,24 @@ export class UncompressedJSONExporter extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): TStructureExport {
+    public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const blocks = blockMesh.getBlocks();
 
         const lines = new Array<string>();
         lines.push('[');
-
-        // Serialise all block except for the last one.
-        for (let i = 0; i < blocks.length - 1; ++i) {
-            const block = blocks[i];
-            const pos = block.voxel.position;
-            lines.push(`{ "x": ${pos.x}, "y": ${pos.y}, "z": ${pos.z}, "block_name": "${block.blockInfo.name}" },`);
-        }
-
-        // Serialise the last block but don't include the comma at the end.
         {
-            const block = blocks[blocks.length - 1];
-            const pos = block.voxel.position;
-            lines.push(`{ "x": ${pos.x}, "y": ${pos.y}, "z": ${pos.z}, "block_name": "${block.blockInfo.name}" }`);
-        }
+            // Serialise all block except for the last one.
+            for (const { name, position } of blockMesh.getBlocks()) {
+                lines.push(`{ "x": ${position.x}, "y": ${position.y}, "z": ${position.z}, "block_name": "${name}" },`);
+            }
 
+            // Update the last block to not include the comma at the end.
+            {
+                const lastIndex = lines.length - 1;
+                const lastEntry = lines[lastIndex];
+                lines[lastIndex] = lastEntry.slice(0, -1);
+            }
+        }
         lines.push(']');
 
         const json = lines.join('');

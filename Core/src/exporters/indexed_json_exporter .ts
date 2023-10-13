@@ -1,4 +1,5 @@
 import { BlockMesh } from '../block_mesh';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 import { IExporter, TStructureExport } from './base_exporter';
 
 export class IndexedJSONExporter extends IExporter {
@@ -9,10 +10,10 @@ export class IndexedJSONExporter extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): TStructureExport {
+    public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const blocks = blockMesh.getBlocks();
 
-        const blocksUsed = blockMesh.getBlockPalette();
+        const blocksUsed = Array.from(blockMesh.calcBlocksUsed());
         const blockToIndex = new Map<string, number>();
         const indexToBlock = new Map<number, string>();
         for (let i = 0; i < blocksUsed.length; ++i) {
@@ -23,10 +24,8 @@ export class IndexedJSONExporter extends IExporter {
         const blockArray = new Array<Array<number>>();
 
         // Serialise all block except for the last one.
-        for (let i = 0; i < blocks.length; ++i) {
-            const block = blocks[i];
-            const pos = block.voxel.position;
-            blockArray.push([pos.x, pos.y, pos.z, blockToIndex.get(block.blockInfo.name)!]);
+        for (const { position, name } of blockMesh.getBlocks()) {
+            blockArray.push([position.x, position.y, position.z, blockToIndex.get(name)!]);
         }
 
         const json = JSON.stringify({

@@ -1,4 +1,5 @@
 import { BlockMesh } from '../block_mesh';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 
 export type TStructureRegion = { name: string, content: Uint8Array };
 
@@ -20,5 +21,5 @@ export abstract class IExporter {
      * @param blockMesh The block mesh to export.
      * @param filePath The location to save the file to.
      */
-    public abstract export(blockMesh: BlockMesh): TStructureExport;
+    public abstract export(blockMesh: OtS_BlockMesh): TStructureExport;
 }

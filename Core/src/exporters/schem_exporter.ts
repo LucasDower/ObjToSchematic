@@ -8,6 +8,7 @@ import { MathUtil } from '../util/math_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter, TStructureExport } from './base_exporter';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 
 export class SchemExporter extends IExporter {
     private static SCHEMA_VERSION = 2;
@@ -19,8 +20,8 @@ export class SchemExporter extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): TStructureExport {
-        const bounds = blockMesh.getVoxelMesh().getBounds();
+    public override export(blockMesh: OtS_BlockMesh): TStructureExport {
+        const bounds = blockMesh.getBounds();
         const sizeVector = bounds.getDimensions().add(1);
 
         // https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-3.md#paletteObject
@@ -30,7 +31,7 @@ export class SchemExporter extends IExporter {
         };
 
         let blockIndex = 1;
-        for (const blockName of blockMesh.getBlockPalette()) {
+        for (const blockName of blockMesh.calcBlocksUsed()) {
             const namespacedBlockName = AppUtil.Text.namespaceBlock(blockName);
 
             blockMapping[namespacedBlockName] = { type: TagType.Int, value: blockIndex };
@@ -40,10 +41,10 @@ export class SchemExporter extends IExporter {
 
         // const paletteObject = SchemExporter._createBlockStatePalette(blockMapping);
         const blockData = new Array<number>(sizeVector.x * sizeVector.y * sizeVector.z).fill(0);
-        for (const block of blockMesh.getBlocks()) {
-            const indexVector = Vector3.sub(block.voxel.position, bounds.min);
+        for (const { position, name } of blockMesh.getBlocks()) {
+            const indexVector = Vector3.sub(position, bounds.min);
             const bufferIndex = SchemExporter._getBufferIndex(sizeVector, indexVector);
-            const namespacedBlockName = AppUtil.Text.namespaceBlock(block.blockInfo.name);
+            const namespacedBlockName = AppUtil.Text.namespaceBlock(name);
             blockData[bufferIndex] = blockMapping[namespacedBlockName].value;
         }
 

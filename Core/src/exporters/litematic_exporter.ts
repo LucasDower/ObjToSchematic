@@ -8,6 +8,7 @@ import { ASSERT } from '../util/error_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter, TStructureExport } from './base_exporter';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 
 type BlockID = number;
 type long = [number, number];
@@ -21,7 +22,7 @@ export class Litematic extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): TStructureExport {
+    public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
         return { type: 'single', extension: '.litematic', content: saveNBT(nbt) };
     }
@@ -29,12 +30,14 @@ export class Litematic extends IExporter {
     /**
      * Create a mapping from block names to their respecitve index in the block state palette.
      */
-    private _createBlockMapping(blockMesh: BlockMesh): BlockMapping {
+    private _createBlockMapping(blockMesh: OtS_BlockMesh): BlockMapping {
         const blockMapping: BlockMapping = new Map();
         blockMapping.set('minecraft:air', 0);
 
-        blockMesh.getBlockPalette().forEach((blockName, index) => {
-            blockMapping.set(blockName, index + 1);
+        let index = 1;
+        blockMesh.calcBlocksUsed().forEach((blockName) => {
+            blockMapping.set(blockName, index);
+            ++index;
         });
 
         return blockMapping;
@@ -43,26 +46,26 @@ export class Litematic extends IExporter {
     /**
      * Pack the blocks into a buffer that's the dimensions of the block mesh.
      */
-    private _createBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping): Uint32Array {
-        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+    private _createBlockBuffer(blockMesh: OtS_BlockMesh, blockMapping: BlockMapping): Uint32Array {
+        const bounds = blockMesh.getBounds();
         const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const buffer = new Uint32Array(sizeVector.x * sizeVector.y * sizeVector.z);
 
-        blockMesh.getBlocks().forEach((block) => {
-            const indexVector = Vector3.sub(block.voxel.position, bounds.min);
+        for (const { position, name } of blockMesh.getBlocks()) {
+            const indexVector = Vector3.sub(position, bounds.min);
             const bufferIndex = (sizeVector.z * sizeVector.x * indexVector.y) + (sizeVector.x * indexVector.z) + indexVector.x; // XZY ordering
 
-            const mappingIndex = blockMapping.get(block.blockInfo.name);
+            const mappingIndex = blockMapping.get(name);
             ASSERT(mappingIndex !== undefined, 'Invalid mapping index');
 
             buffer[bufferIndex] = mappingIndex;
-        });
+        };
 
         return buffer;
     }
 
-    private _createBlockStates(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+    private _createBlockStates(blockMesh: OtS_BlockMesh, blockMapping: BlockMapping) {
         const buffer = this._encodeBlockBuffer(blockMesh, blockMapping);
 
         const numBytes = buffer.length;
@@ -96,7 +99,7 @@ export class Litematic extends IExporter {
         return blockStates;
     }
 
-    private _encodeBlockBuffer(blockMesh: BlockMesh, blockMapping: BlockMapping) {
+    private _encodeBlockBuffer(blockMesh: OtS_BlockMesh, blockMapping: BlockMapping) {
         const blockBuffer = this._createBlockBuffer(blockMesh, blockMapping);
 
         const paletteSize = blockMapping.size;
@@ -156,8 +159,8 @@ export class Litematic extends IExporter {
         return blockStatePalette;
     }
 
-    private _convertToNBT(blockMesh: BlockMesh) {
-        const bounds = blockMesh.getVoxelMesh()?.getBounds();
+    private _convertToNBT(blockMesh: OtS_BlockMesh) {
+        const bounds = blockMesh.getBounds();
         const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const bufferSize = sizeVector.x * sizeVector.y * sizeVector.z;
@@ -165,7 +168,7 @@ export class Litematic extends IExporter {
 
         const blockStates = this._createBlockStates(blockMesh, blockMapping);
         const blockStatePalette = this._createBlockStatePalette(blockMapping);
-        const numBlocks = blockMesh.getBlocks().length;
+        const numBlocks = blockMesh.getBlockCount();
 
         const nbt: NBT = {
             type: TagType.Compound,

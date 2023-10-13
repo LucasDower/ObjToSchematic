@@ -7,6 +7,7 @@ import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter, TStructureExport, TStructureRegion } from './base_exporter';
 import { ASSERT } from '../util/error_util';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 
 export class NBTExporter extends IExporter {
     public override getFormatFilter() {
@@ -16,15 +17,14 @@ export class NBTExporter extends IExporter {
         };
     }
 
-    private _processChunk(blockMesh: BlockMesh, min: Vector3, blockNameToIndex: Map<string, number>, palette: any): Uint8Array {
+    private _processChunk(blockMesh: OtS_BlockMesh, min: Vector3, blockNameToIndex: Map<string, number>, palette: any): Uint8Array {
         const blocks: any[] = [];
-        for (const block of blockMesh.getBlocks()) {
-            const pos = block.voxel.position;
-            const blockIndex = blockNameToIndex.get(block.blockInfo.name);
+        for (const { position, name } of blockMesh.getBlocks()) {
+            const blockIndex = blockNameToIndex.get(name);
 
             if (blockIndex !== undefined) {
-                if (pos.x >= min.x && pos.x < min.x + 48 && pos.y >= min.y && pos.y < min.y + 48 && pos.z >= min.z && pos.z < min.z + 48) {
-                    const translatedPos = Vector3.sub(block.voxel.position, min);
+                if (position.x >= min.x && position.x < min.x + 48 && position.y >= min.y && position.y < min.y + 48 && position.z >= min.z && position.z < min.z + 48) {
+                    const translatedPos = Vector3.sub(position, min);
                     ASSERT(translatedPos.x >= 0 && translatedPos.x < 48);
                     ASSERT(translatedPos.y >= 0 && translatedPos.y < 48);
                     ASSERT(translatedPos.z >= 0 && translatedPos.z < 48);
@@ -82,8 +82,8 @@ export class NBTExporter extends IExporter {
         return saveNBT(nbt);
     }
 
-    public override export(blockMesh: BlockMesh) {
-        const bounds = blockMesh.getVoxelMesh().getBounds();
+    public override export(blockMesh: OtS_BlockMesh) {
+        const bounds = blockMesh.getBounds();
         /*
         const sizeVector = bounds.getDimensions().add(1);
 
@@ -95,7 +95,7 @@ export class NBTExporter extends IExporter {
 
         const blockNameToIndex = new Map<string, number>();
         const palette: any = [];
-        for (const blockName of blockMesh.getBlockPalette()) {
+        for (const blockName of blockMesh.calcBlocksUsed()) {
             palette.push({
                 Name: {
                     type: TagType.String,

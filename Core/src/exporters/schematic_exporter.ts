@@ -6,6 +6,7 @@ import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter, TStructureExport } from './base_exporter';
+import { OtS_BlockMesh } from '../ots_block_mesh';
 
 export class Schematic extends IExporter {
     public override getFormatFilter() {
@@ -15,13 +16,13 @@ export class Schematic extends IExporter {
         };
     }
 
-    public override export(blockMesh: BlockMesh): TStructureExport {
+    public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
         return { type: 'single', extension: '.schematic', content: saveNBT(nbt) };
     }
 
-    private _convertToNBT(blockMesh: BlockMesh): NBT {
-        const bounds = blockMesh.getVoxelMesh().getBounds();
+    private _convertToNBT(blockMesh: OtS_BlockMesh): NBT {
+        const bounds = blockMesh.getBounds();
         const sizeVector = Vector3.sub(bounds.max, bounds.min).add(1);
 
         const bufferSize = sizeVector.x * sizeVector.y * sizeVector.z;
@@ -31,20 +32,19 @@ export class Schematic extends IExporter {
         // TODO Unimplemented
         const schematicBlocks: { [blockName: string]: { id: number, meta: number, name: string } } = BLOCK_IDS;
 
-        const blocks = blockMesh.getBlocks();
         const unsupportedBlocks = new Set<string>();
         let numBlocksUnsupported = 0;
-        for (const block of blocks) {
-            const indexVector = Vector3.sub(block.voxel.position, bounds.min);
+        for (const { position, name } of blockMesh.getBlocks()) {
+            const indexVector = Vector3.sub(position, bounds.min);
             const index = this._getBufferIndex(indexVector, sizeVector);
-            if (block.blockInfo.name in schematicBlocks) {
-                const schematicBlock = schematicBlocks[block.blockInfo.name];
+            if (name in schematicBlocks) {
+                const schematicBlock = schematicBlocks[name];
                 blocksData[index] = new Int8Array([schematicBlock.id])[0];
                 metaData[index] = new Int8Array([schematicBlock.meta])[0];
             } else {
                 blocksData[index] = 1; // Default to a Stone block
                 metaData[index] = 0;
-                unsupportedBlocks.add(block.blockInfo.name);
+                unsupportedBlocks.add(name);
                 ++numBlocksUnsupported;
             }
         }
