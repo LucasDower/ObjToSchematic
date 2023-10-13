@@ -1,7 +1,7 @@
 import { Bounds } from './bounds';
 import { RGBA } from './colour';
 import { degreesToRadians } from './math';
-import { OtS_MeshSection } from './ots_materials';
+import { OtS_MeshSection, OtS_MeshUtil } from './ots_materials';
 import { OtS_Texture } from './ots_texture';
 import { UV } from "./util";
 import { ASSERT } from './util/error_util';
@@ -357,10 +357,10 @@ export class OtS_Mesh {
     public copy() {
         const clone = OtS_Mesh.create();
 
-        for (const section of this._sections) {
+        this.getSectionData().forEach((section) => {
             const success = clone.addSection(section).ok;
             ASSERT(success);
-        }
+        })
 
         return clone;
     }
@@ -391,9 +391,10 @@ export class OtS_Mesh {
             .reduce((total, count) => total + count, 0);
     }
 
-    // TODO: Return copy
     public getSectionData(): OtS_MeshSection[] {
-        return this._sections;
+        return this._sections.map((section) => {
+            return OtS_MeshUtil.copySection(section);
+        })
     }
 
     public getSectionMetadata(): OtS_MeshSectionMetadata[] {
