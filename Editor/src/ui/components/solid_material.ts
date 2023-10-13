@@ -1,20 +1,22 @@
-import { OtS_Util, SolidMaterial } from '../../../../Core/src/materials';
+import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
 import { ColourComponent } from './colour';
 import { ConfigComponent } from './config';
 import { SliderComponent } from './slider';
+import { ASSERT } from 'ots-core/src/util/error_util';
+import { RGBAUtil } from 'ots-core/src/colour';
 
-export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLDivElement> {
-    private _materialName: string;
-    private _canBeTextured: boolean;
-
+export class SolidMaterialComponent extends ConfigComponent<OtS_MeshSectionMetadata, HTMLDivElement> {
     private _colourComponent: ColourComponent;
     private _alphaElement: SliderComponent;
 
-    public constructor(material: SolidMaterial) {
-        super(OtS_Util.copySolidMaterial(material));
+    public constructor(material: OtS_MeshSectionMetadata) {
+        ASSERT(material.type === 'solid');
 
-        this._materialName = material.name;
-        this._canBeTextured = material.canBeTextured;
+        super({
+            type: material.type,
+            name: material.name,
+            colour: RGBAUtil.copy(material.colour),
+        });
 
         this._colourComponent = new ColourComponent(material.colour)
             .setLabel('voxelise.components.colour');
@@ -42,13 +44,17 @@ export class SolidMaterialComponent extends ConfigComponent<SolidMaterial, HTMLD
         this._alphaElement.registerEvents();
 
         this._colourComponent.addValueChangedListener((newColour) => {
-            this.getValue().colour.r = newColour.r;
-            this.getValue().colour.g = newColour.g;
-            this.getValue().colour.b = newColour.b;
+            const value = this.getValue();
+            ASSERT(value.type === 'solid');
+            value.colour.r = newColour.r;
+            value.colour.g = newColour.g;
+            value.colour.b = newColour.b;
         });
 
         this._alphaElement.addValueChangedListener((newAlpha) => {
-            this.getValue().colour.a = newAlpha;
+            const value = this.getValue();
+            ASSERT(value.type === 'solid');
+            value.colour.a = newAlpha;
         });
     }
 

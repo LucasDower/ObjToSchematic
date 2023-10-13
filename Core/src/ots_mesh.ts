@@ -15,28 +15,20 @@ type OtS_VertexData<T> = {
 }
 
 export type OtS_Triangle =
-    | { type: 'solid', colour: RGBA, data: OtS_VertexData<{ position: Vector3 }> }
-    | { type: 'coloured', data: OtS_VertexData<{ position: Vector3, colour: RGBA }> }
-    | { type: 'textured', texture: OtS_Texture, data: OtS_VertexData<{ position: Vector3, texcoord: UV }> }
+    | { type: 'solid', colour: RGBA, data: OtS_VertexData<{ position: Vector3, normal: Vector3 }> }
+    | { type: 'coloured', data: OtS_VertexData<{ position: Vector3, normal: Vector3, colour: RGBA }> }
+    | { type: 'textured', texture: OtS_Texture, data: OtS_VertexData<{ position: Vector3, normal: Vector3, texcoord: UV }> }
 
 type OtS_MeshError = 'bad-height' | 'bad-material-match' | 'bad-geometry';
 
+export type OtS_MeshSectionMetadata = { name: string } & (
+    | { type: 'solid', colour: RGBA }
+    | { type: 'colour' }
+    | { type: 'textured', texture: OtS_Texture }
+);
+
 export class OtS_Mesh {
     private _sections: OtS_MeshSection[];
-    //private _geometry: OtS_Geometry;
-    //private _materials: OtS_MaterialSlots;
-    // [p0, p1, p2]
-    //private _positionData: Float32Array;
-    private static _POSITION_STRIDE = 3;
-    // [u, v]
-    //private _texcoordData: Float32Array;
-    private static _TEXCOORD_STRIDE = 2;
-    private static _COLOUR_STRIDE = 2;
-
-    //private static _MATERIAL_STRIDE = 4;
-    // [position_index * 3, texcoord_index * 3, material_index]
-    //private _triangleData: Uint32Array;
-    private static _TRIANGLE_STRIDE = 7;
 
     private constructor() {
         this._sections = [];
@@ -78,6 +70,9 @@ export class OtS_Mesh {
 
     public addSection(section: OtS_MeshSection): Result<void, OtS_MeshError> {
         // TODO: Validation
+
+        // TODO: Ensure section names do not clash
+
         this._sections.push(section);
         return { ok: true, value: undefined };
     }
@@ -197,6 +192,11 @@ export class OtS_Mesh {
                                             section.positionData[index0 * 3 + 1],
                                             section.positionData[index0 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index0 * 3 + 0],
+                                            section.normalData[index0 * 3 + 1],
+                                            section.normalData[index0 * 3 + 2],
+                                        ),
                                     },
                                     v1: {
                                         position: new Vector3(
@@ -204,12 +204,22 @@ export class OtS_Mesh {
                                             section.positionData[index1 * 3 + 1],
                                             section.positionData[index1 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index1 * 3 + 0],
+                                            section.normalData[index1 * 3 + 1],
+                                            section.normalData[index1 * 3 + 2],
+                                        ),
                                     },
                                     v2: {
                                         position: new Vector3(
                                             section.positionData[index2 * 3 + 0],
                                             section.positionData[index2 * 3 + 1],
                                             section.positionData[index2 * 3 + 2],
+                                        ),
+                                        normal: new Vector3(
+                                            section.normalData[index2 * 3 + 0],
+                                            section.normalData[index2 * 3 + 1],
+                                            section.normalData[index2 * 3 + 2],
                                         ),
                                     },
                                 },
@@ -226,6 +236,11 @@ export class OtS_Mesh {
                                             section.positionData[index0 * 3 + 1],
                                             section.positionData[index0 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index0 * 3 + 0],
+                                            section.normalData[index0 * 3 + 1],
+                                            section.normalData[index0 * 3 + 2],
+                                        ),
                                         colour: {
                                             r: section.colourData[index0 * 4 + 0],
                                             g: section.colourData[index0 * 4 + 1],
@@ -239,6 +254,11 @@ export class OtS_Mesh {
                                             section.positionData[index1 * 3 + 1],
                                             section.positionData[index1 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index1 * 3 + 0],
+                                            section.normalData[index1 * 3 + 1],
+                                            section.normalData[index1 * 3 + 2],
+                                        ),
                                         colour: {
                                             r: section.colourData[index1 * 4 + 0],
                                             g: section.colourData[index1 * 4 + 1],
@@ -251,6 +271,11 @@ export class OtS_Mesh {
                                             section.positionData[index2 * 3 + 0],
                                             section.positionData[index2 * 3 + 1],
                                             section.positionData[index2 * 3 + 2],
+                                        ),
+                                        normal: new Vector3(
+                                            section.normalData[index2 * 3 + 0],
+                                            section.normalData[index2 * 3 + 1],
+                                            section.normalData[index2 * 3 + 2],
                                         ),
                                         colour: {
                                             r: section.colourData[index2 * 4 + 0],
@@ -274,6 +299,11 @@ export class OtS_Mesh {
                                             section.positionData[index0 * 3 + 1],
                                             section.positionData[index0 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index0 * 3 + 0],
+                                            section.normalData[index0 * 3 + 1],
+                                            section.normalData[index0 * 3 + 2],
+                                        ),
                                         texcoord: {
                                             u: section.texcoordData[index0 * 2 + 0],
                                             v: section.texcoordData[index0 * 2 + 1],
@@ -285,6 +315,11 @@ export class OtS_Mesh {
                                             section.positionData[index1 * 3 + 1],
                                             section.positionData[index1 * 3 + 2],
                                         ),
+                                        normal: new Vector3(
+                                            section.normalData[index1 * 3 + 0],
+                                            section.normalData[index1 * 3 + 1],
+                                            section.normalData[index1 * 3 + 2],
+                                        ),
                                         texcoord: {
                                             u: section.texcoordData[index1 * 2 + 0],
                                             v: section.texcoordData[index1 * 2 + 1],
@@ -295,6 +330,11 @@ export class OtS_Mesh {
                                             section.positionData[index2 * 3 + 0],
                                             section.positionData[index2 * 3 + 1],
                                             section.positionData[index2 * 3 + 2],
+                                        ),
+                                        normal: new Vector3(
+                                            section.normalData[index2 * 3 + 0],
+                                            section.normalData[index2 * 3 + 1],
+                                            section.normalData[index2 * 3 + 2],
                                         ),
                                         texcoord: {
                                             u: section.texcoordData[index2 * 2 + 0],
@@ -340,5 +380,51 @@ export class OtS_Mesh {
         });
 
         return bounds;
+    }
+
+    public calcTriangleCount() {
+        return this._sections
+            .map((section) => {
+                return section.indexData.length / 3;
+            })
+            .reduce((total, count) => total + count, 0);
+    }
+
+    // TODO: Return copy
+    public getSectionData(): OtS_MeshSection[] {
+        return this._sections;
+    }
+
+    public getSectionMetadata(): OtS_MeshSectionMetadata[] {
+        const metadata: OtS_MeshSectionMetadata[] = [];
+
+        this._sections.forEach((section) => {
+            let entry: OtS_MeshSectionMetadata;
+            switch (section.type) {
+                case 'solid':
+                    entry = {
+                        type: 'solid',
+                        name: section.name,
+                        colour: section.colour,
+                    };
+                    break;
+                case 'colour': {
+                    entry = {
+                        type: 'colour',
+                        name: section.name,
+                    };
+                    break;
+                }
+                case 'textured':
+                    entry = {
+                        type: 'textured',
+                        name: section.name,
+                        texture: section.texture,
+                    }
+            }
+            metadata.push(entry);
+        });
+
+        return metadata;
     }
 }

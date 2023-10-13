@@ -3,14 +3,12 @@ import { HTMLBuilder } from '../misc';
 import { ComboboxComponent } from './combobox';
 import { ConfigComponent } from './config';
 import { ImageComponent } from './image';
-import { TexturedMaterial } from '../../../../Core/src/materials';
 import { OtSE_TextureReader } from '../../texture_reader';
 import { OtS_Texture } from '../../../../Core/src/ots_texture';
+import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
+import { ASSERT } from 'ots-core/src/util/error_util';
 
-export class TexturedMaterialComponent extends ConfigComponent<Promise<TexturedMaterial>, HTMLDivElement> {
-    //private _localMaterial: TexturedMaterial;
-
-    private _materialName: string;
+export class TexturedMaterialComponent extends ConfigComponent<Promise<OtS_MeshSectionMetadata>, HTMLDivElement> {
     private _interpolation: TTexelInterpolation;
     private _extension: TTexelExtension;
 
@@ -18,11 +16,15 @@ export class TexturedMaterialComponent extends ConfigComponent<Promise<TexturedM
     private _wrapElement: ComboboxComponent<'clamp' | 'repeat'>;
     private _imageComponent: ImageComponent;
 
-    public constructor(material: TexturedMaterial) {
-        super();
+    public constructor(material: OtS_MeshSectionMetadata) {
+        ASSERT(material.type === 'textured');
+
+        super(Promise.resolve({
+            type: 'textured',
+            name: material.name,
+            texture: material.texture.copy(),
+        }));
         
-        this._materialName = material.name;
-        //this._localMaterial = OtS_Util.copyTexturedMaterial(material);
         this._interpolation = material.texture.getInterpolation();
         this._extension = material.texture.getExtension();
 
@@ -101,7 +103,7 @@ export class TexturedMaterialComponent extends ConfigComponent<Promise<TexturedM
         this._wrapElement.finalise();
     }
 
-    public override getValue(): Promise<TexturedMaterial> {
+    public override getValue(): Promise<OtS_MeshSectionMetadata> {
         return new Promise(async (res, rej) => {
             let texture: OtS_Texture;
             try {
@@ -114,7 +116,7 @@ export class TexturedMaterialComponent extends ConfigComponent<Promise<TexturedM
 
             res({
                 type: 'textured',
-                name: this._materialName,
+                name: (await this.getValue()).name,
                 texture: texture,
             });
         });

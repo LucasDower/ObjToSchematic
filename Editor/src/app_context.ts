@@ -53,7 +53,7 @@ export class AppContext {
         UI.Get.bindToContext(this.Get);
         UI.Get.build();
         UI.Get.registerEvents();
-        UI.Get.updateMaterialsAction([]);
+        UI.Get.updateMaterialsAction([], []);
         UI.Get.disableAll();
 
         ArcballCamera.Get.init();
@@ -119,7 +119,7 @@ export class AppContext {
             UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(0, this.minConstraint.x > 0 && this.minConstraint.x <= this.maxConstraint.x);
             UI.Get._ui.voxelise.components.constraintAxis.setOptionEnabled(2, this.minConstraint.z > 0 && this.minConstraint.z <= this.maxConstraint.z);
 
-            UI.Get.updateMaterialsAction(resultImport.result.materials);
+            UI.Get.updateMaterialsAction(resultImport.result.originalMetadata, resultImport.result.sectionMetadata);
 
             this._loadedFilename = file.name.split('.')[0] ?? 'result';
         }
@@ -139,7 +139,7 @@ export class AppContext {
             ASSERT(resultRender.action === 'RenderMesh');
 
             this._addWorkerMessagesToConsole(resultRender.messages);
-            Renderer.Get.useMesh(resultRender.result);
+            Renderer.Get.useMesh(resultRender.result.buffers);
         }
         AppConsole.success(LOC('import.rendered_mesh'));
 
@@ -160,7 +160,7 @@ export class AppContext {
             const resultMaterials = await this._workerController.execute({
                 action: 'SetMaterials',
                 params: {
-                    materials: materials,
+                    sectionMetadata: materials,
                 },
             });
 
@@ -170,10 +170,12 @@ export class AppContext {
             }
             ASSERT(resultMaterials.action === 'SetMaterials');
 
+            /*
             materials.forEach((material) => {
                 Renderer.Get.recreateMaterialBuffer(material);
                 Renderer.Get.setModelToUse(MeshType.TriangleMesh);
             });
+            */
 
             this._addWorkerMessagesToConsole(resultMaterials.messages);
         }

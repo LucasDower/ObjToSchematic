@@ -13,33 +13,6 @@ import { OtS_Texture } from 'ots-core/src/ots_texture';
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);
 
-    static getTriangleBufferData(triangle: OtS_Triangle): AttributeData {
-        const n = Triangle.CalcNormal(triangle.v0.position, triangle.v1.position, triangle.v2.position);
-
-        return {
-            custom: {
-                position: [
-                    triangle.v0.position.x, triangle.v0.position.y, triangle.v0.position.z,
-                    triangle.v1.position.x, triangle.v1.position.y, triangle.v1.position.z,
-                    triangle.v2.position.x, triangle.v2.position.y, triangle.v2.position.z,
-                ],
-                texcoord: [
-                    triangle.v0.texcoord.u, triangle.v0.texcoord.v,
-                    triangle.v1.texcoord.u, triangle.v1.texcoord.v,
-                    triangle.v2.texcoord.u, triangle.v2.texcoord.v,
-                ],
-                normal: [
-                    n.x, n.y, n.z,
-                    n.x, n.y, n.z,
-                    n.x, n.y, n.z,
-                ],
-            },
-            indices: new Uint32Array([
-                0, 1, 2,
-            ]),
-        };
-    }
-
     static getBoxBufferData(centre: Vector3): AttributeData {
         const cube: AttributeData = {
             custom: {

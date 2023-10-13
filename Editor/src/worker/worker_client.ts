@@ -1,9 +1,9 @@
 import { BlockMesh } from '../../../Core/src/block_mesh';
-import { BufferGenerator } from '../buffer';
+import { BufferGenerator } from '../renderer/buffer_mesh';
 import { EAppEvent, EventManager } from '../event';
 import { IExporter } from '../../../Core/src/exporters/base_exporter';
 import { ExporterFactory } from '../../../Core/src/exporters/exporters';
-import { ImporterFactory } from '../../../Core/src/importers/importers';
+import { OtS_ImporterFactory } from '../../../Core/src/importers/importers';
 import { LOC, Localiser } from '../localiser';
 import { ProgressManager, TTaskHandle } from '../progress';
 import { ASSERT } from '../../../Core/src/util/error_util';
@@ -25,6 +25,7 @@ export class WorkerClient {
     private constructor() {
     }
 
+    private _originalLoadedMesh?: OtS_Mesh;
     private _loadedMesh?: OtS_Mesh;
     private _loadedVoxelMesh?: OtS_VoxelMesh;
     private _loadedBlockMesh?: BlockMesh;
@@ -89,25 +90,89 @@ export class WorkerClient {
         //const parsed = path.parse(params.file.name);
         const extension = params.file.name.split('.').findLast(() => true);
 
-        const importer = ImporterFactory.GetImporter(extension === 'obj' ? 'obj' : 'gltf');
+        const importer = OtS_ImporterFactory.GetImporter(extension === 'obj' ? 'obj' : 'gltf');
         this._loadedMesh = await importer.import(params.file.stream());
 
         this._loadedMesh.centre();
         this._loadedMesh.rotate(params.rotation.y, params.rotation.x, params.rotation.z);
         this._loadedMesh.normalise();
 
+        this._originalLoadedMesh = this._loadedMesh.copy();
+
         return {
-            triangleCount: this._loadedMesh.getTriangleCount(),
+            triangleCount: this._loadedMesh.calcTriangleCount(),
             dimensions: this._loadedMesh.calcBounds().getDimensions(),
-            materials: this._loadedMesh.getMaterials(),
+            //materials: this._loadedMesh.getMaterials(),
+            originalMetadata: this._originalLoadedMesh.getSectionMetadata(),
+            sectionMetadata: this._loadedMesh.getSectionMetadata(),
         };
     }
 
     public setMaterials(params: SetMaterialsParams.Input): SetMaterialsParams.Output {
-        ASSERT(this._loadedMesh !== undefined);
+        ASSERT(this._originalLoadedMesh !== undefined);
+
+        // Updating materials will now be handled by creating a new empty mesh
+        // and adding the mesh sections from the original imported mesh
+        const newMesh = OtS_Mesh.create();
+
+        this._originalLoadedMesh.getSectionData().forEach((originalSection) => {
+            const index = params.sectionMetadata.findIndex((entry) => { return entry.name === originalSection.name });
+            if (index === -1) {
+                // This section has no metadata assigned to it, remove the section from the mesh (don't add it)
+                return;
+            }
+
+            const newMetadata = params.sectionMetadata[index];
+
+            // Sanity check the new metadata is compatible with the original mesh with ASSERTs
+            // This should already have been verified by the UI before the data was sent to the worker
+            switch (newMetadata.type) {
+                case 'solid':
+                    // The solid material can be assigned to any mesh section
+                    newMesh.addSection({
+                        name: originalSection.name,
+                        type: 'solid',
+                        indexData: originalSection.indexData,
+                        positionData: originalSection.positionData,
+                        normalData: originalSection.normalData,
+                        colour: newMetadata.colour,
+                    });
+                    break;
+                case 'colour':
+                    // The colour material can only be used if the original mesh used the colour material
+                    // i.e. there exists per-vertex colour data
+                    ASSERT(originalSection.type === 'colour');
+                    newMesh.addSection({
+                        name: originalSection.name,
+                        type: 'colour',
+                        indexData: originalSection.indexData,
+                        positionData: originalSection.positionData,
+                        normalData: originalSection.normalData,
+                        colourData: originalSection.colourData,
+                    });
+                    break;
+                case 'textured':
+                    // The textured material can only be used if the original mesh used the textured material
+                    // i.e. there exists per-vertex texcoord data
+                    ASSERT(originalSection.type === 'textured');
+                    newMesh.addSection({
+                        name: originalSection.name,
+                        type: 'textured',
+                        indexData: originalSection.indexData,
+                        positionData: originalSection.positionData,
+                        texcoordData: originalSection.texcoordData,
+                        normalData: originalSection.normalData,
+                        texture: newMetadata.texture,
+                    });
+                    break;
+            }
+        });
+
+        this._loadedMesh = newMesh;
 
 
 
+        /*
         for (const material of params.materials) {
             if (material.type === 'textured') {
                 Object.setPrototypeOf(material.texture, OtS_Texture.prototype);
@@ -115,10 +180,12 @@ export class WorkerClient {
             const success = this._loadedMesh.setMaterial(material);
             // TODO: Do something with success
         }
+        */
 
         return {
-            materials: this._loadedMesh.getMaterials(),
-            materialsChanged: params.materials.map((material) => material.name), // TODO: Change to actual materials changed
+            materials: this._loadedMesh.getSectionMetadata(),
+            //materials: this._loadedMesh.getMaterials(),
+            //materialsChanged: params.materials.map((material) => material.name), // TODO: Change to actual materials changed
         };
     }
 

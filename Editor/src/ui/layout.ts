@@ -30,7 +30,8 @@ import { HTMLBuilder, MiscComponents } from './misc';
 import { AppConfig } from '../config';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
 import { MaterialComponent } from './components/material';
-import { Material } from 'ots-core/src/materials';
+import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
+import { OtS_MeshSection } from '../../../Core/src/ots_materials';
 
 export type Group = {
     id: string,
@@ -863,8 +864,8 @@ export class UI {
 
     // TODO: Remove
     private _materialComponents: ({ name: string, component: MaterialComponent })[] = [];
-    public async getMaterials(): Promise<Material[]> {
-        const materials: Material[] = [];
+    public async getMaterials(): Promise<OtS_MeshSectionMetadata[]> {
+        const materials: OtS_MeshSectionMetadata[] = [];
 
         for (const component of this._materialComponents) {
             const material = await component.component.getValue();
@@ -874,23 +875,25 @@ export class UI {
         return materials;
     }
 
-    public updateMaterialsAction(materials: Material[]) {
+    public updateMaterialsAction(original: OtS_MeshSectionMetadata[], materials: OtS_MeshSectionMetadata[]) {
         this._materialComponents = [];
 
         this.layout.materials.components = {};
         this.layout.materials.componentOrder = [];
 
-        if (materials.length === 0) {
+        if (original.length === 0) {
             this.layoutDull['materials'].components[`placeholder_element`] = new PlaceholderComponent()
                 .setPlaceholderText('materials.components.no_materials_loaded');
             this.layoutDull['materials'].componentOrder.push(`placeholder_element`);
         } else {
-            materials.forEach((material) => {
-                const component = new MaterialComponent(material)
-                    .setUnlocalisedLabel(material.name);
-                this._materialComponents.push({ name: material.name, component: component });
-                this.layoutDull['materials'].components[`mat_${material.name}`] = component;
-                this.layoutDull['materials'].componentOrder.push(`mat_${material.name}`);
+            original.forEach((originalMaterial) => {
+                const current = materials.find((entry) => entry.name === originalMaterial.name);
+
+                const component = new MaterialComponent(originalMaterial, current)
+                    .setUnlocalisedLabel(originalMaterial.name);
+                this._materialComponents.push({ name: originalMaterial.name, component: component });
+                this.layoutDull['materials'].components[`mat_${originalMaterial.name}`] = component;
+                this.layoutDull['materials'].componentOrder.push(`mat_${originalMaterial.name}`);
             });
         }
 

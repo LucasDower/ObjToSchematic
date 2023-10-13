@@ -1,10 +1,26 @@
-import { TBlockMeshBuffer, TBlockMeshBufferDescription, TVoxelMeshBuffer } from "../buffer";
 import { AppConfig } from "../config";
 import { ASSERT } from "../../../Core/src/util/error_util";
 import { AppUtil } from "../../../Core/src/util";
 import { AppConstants } from "../../../Core/src/constants";
 import { Block, BlockMesh } from "../../../Core/src/block_mesh";
-import { BufferGenerator_VoxelMesh } from "./buffer_voxel_mesh";
+import { BufferGenerator_VoxelMesh, TVoxelMeshBuffer } from "./buffer_voxel_mesh";
+
+export type TBlockMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    blockTexcoord: { numComponents: 2, data: Float32Array },
+    blockPosition: { numComponents: 3, data: Float32Array, },
+    lighting: { numComponents: 1, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TBlockMeshBufferDescription = {
+    buffer: TBlockMeshBuffer,
+    numElements: number,
+}
 
 export type TBuffer_BlockMesh = TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number };
 

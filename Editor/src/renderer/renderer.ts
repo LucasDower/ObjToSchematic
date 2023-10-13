@@ -15,7 +15,10 @@ import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshCh
 import { UIUtil } from '../util/ui_util';
 import { TAxis } from '../../../Core/src/util/type_util';
 import { Atlas } from '../atlas';
-import { Material } from '../../../Core/src/materials';
+import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
+import { OtS_MeshSection } from 'ots-core/src/ots_materials';
+import { OtS_MeshBuffer } from './buffer_mesh';
+import { OtS_Texture } from 'ots-core/src/ots_texture';
 
 /* eslint-disable */
 export enum MeshType {
@@ -36,21 +39,11 @@ enum EDebugBufferComponents {
 }
 /* eslint-enable */
 
-/**
- * Dedicated type for passing to shaders for solid materials
- */
-type InternalSolidMaterial = {
-    type: 'solid',
-    colourArray: number[],
-}
-
-/**
- * Dedicated type for passing to shaders for textured materials
- */
-type InternalTextureMaterial = {
-    type: 'textured',
-    texture: WebGLTexture,
-};
+type OtSE_InternalMeshBuffer = { buffer: twgl.BufferInfo, numElements: number } & (
+    | { type: 'solid', colourArray: number[] }
+    | { type: 'colour' }
+    | { type: 'textured', texture: WebGLTexture }
+);
 
 export class Renderer {
     public _gl: WebGL2RenderingContext;
@@ -66,12 +59,7 @@ export class Renderer {
 
     private _modelsAvailable: number;
 
-    private _materialBuffers: Map<string, {
-        material: InternalSolidMaterial | InternalTextureMaterial,
-        buffer: twgl.BufferInfo,
-        numElements: number,
-        materialName: string,
-    }>;
+    private _materialBuffers: Map<string, OtSE_InternalMeshBuffer>;
     public _voxelBuffer?: twgl.BufferInfo[];
     private _blockBuffer?: twgl.BufferInfo[];
     private _blockBounds: Bounds;
@@ -320,61 +308,59 @@ export class Renderer {
         this.setModelToUse(MeshType.None);
     }
 
-    private _createInternalMaterial(material: Material): (InternalSolidMaterial | InternalTextureMaterial) {
-        if (material.type === 'solid') {
-            return {
-                type: 'solid',
-                colourArray: RGBAUtil.toArray(material.colour),
-            };
-        } else {
-            const minMag = material.texture.getInterpolation() === 'linear'
-                ? this._gl.LINEAR
-                : this._gl.NEAREST;
+    public recreateMaterialBuffer(buffer: OtS_MeshBuffer) {
+        switch (buffer.type) {
+            case 'solid': {
+                this._materialBuffers.set(buffer.name, {
+                    type: 'solid',
+                    colourArray: RGBAUtil.toArray(buffer.colour),
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer.data),
+                    numElements: buffer.numElements,
+                });
+                break;
+            }
+            case 'colour': {
+                this._materialBuffers.set(buffer.name, {
+                    type: 'colour',
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer.data),
+                    numElements: buffer.numElements,
+                });
+                break;
+            }
+            case 'textured': {
+                Object.setPrototypeOf(buffer.texture, OtS_Texture.prototype);
 
-            const texture = twgl.createTexture(this._gl, {
-                min: minMag,
-                mag: minMag,
-                src: material.texture.getData(),
-            }, () => {
-                this.forceRedraw();
-            });
+                const minMag = buffer.texture.getInterpolation() === 'linear'
+                    ? this._gl.LINEAR
+                    : this._gl.NEAREST;
 
-            return {
-                type: 'textured',
-                texture: texture,
-            };
+                const texture = twgl.createTexture(this._gl, {
+                    min: minMag,
+                    mag: minMag,
+                    src: buffer.texture.getData(),
+                }, () => {
+                    this.forceRedraw();
+                });
+
+                this._materialBuffers.set(buffer.name, {
+                    type: 'textured',
+                    texture: texture,
+                    buffer: twgl.createBufferInfoFromArrays(this._gl, buffer.data),
+                    numElements: buffer.numElements,
+                });
+                break;
+            }
         }
     }
 
-    public recreateMaterialBuffer(material: Material) {
-        const oldBuffer = this._materialBuffers.get(material.name);
-        ASSERT(oldBuffer !== undefined);
-
-        const internalMaterial = this._createInternalMaterial(material);
-        this._materialBuffers.set(material.name, {
-            buffer: oldBuffer.buffer,
-            material: internalMaterial,
-            numElements: oldBuffer.numElements,
-            materialName: material.name,
+    public useMesh(buffers: OtS_MeshBuffer[]) {
+        buffers.forEach((buffer) => {
+            this.recreateMaterialBuffer(buffer);            
         });
-    }
 
-    public useMesh(params: RenderMeshParams.Output) {
-        this._materialBuffers = new Map();
-
-        for (const { material, buffer, numElements, materialName } of params.buffers) {
-            const internalMaterial = this._createInternalMaterial(material);
-            this._materialBuffers.set(materialName, {
-                buffer: twgl.createBufferInfoFromArrays(this._gl, buffer),
-                material: internalMaterial,
-                numElements: numElements,
-                materialName: materialName,
-            });
-        }
-
-        this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(params.dimensions);
-        this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(params.dimensions);
-        this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(params.dimensions);
+        //this._gridBuffers.x[MeshType.TriangleMesh] = DebugGeometryTemplates.gridX(params.dimensions);
+        //this._gridBuffers.y[MeshType.TriangleMesh] = DebugGeometryTemplates.gridY(params.dimensions);
+        //this._gridBuffers.z[MeshType.TriangleMesh] = DebugGeometryTemplates.gridZ(params.dimensions);
 
         this._modelsAvailable = 1;
         this.setModelToUse(MeshType.TriangleMesh);
@@ -513,26 +499,34 @@ export class Renderer {
 
     private _drawMesh() {
         this._materialBuffers.forEach((materialBuffer, materialName) => {
-            if (materialBuffer.material.type === 'textured') {
-                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram!, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
-                    u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-                    u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_texture: materialBuffer.material.texture,
-                    u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
-                    u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
-                    u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
-                });
-            } else {
-                this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram!, {
-                    u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
-                    u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
-                    u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
-                    u_fillColour: materialBuffer.material.colourArray,
-                    u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
-                    u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
-                    u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
-                });
+            switch (materialBuffer.type) {
+                case 'solid': {
+                    this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.solidTriProgram!, {
+                        u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                        u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
+                        u_fillColour: materialBuffer.colourArray,
+                        u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
+                        u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
+                        u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
+                    });
+                    break;
+                }
+                case 'colour': {
+                    ASSERT(false);
+                    break;
+                }
+                case 'textured': {
+                    this._drawMeshBuffer(materialBuffer.buffer, materialBuffer.numElements, ShaderManager.Get.textureTriProgram!, {
+                        u_lightWorldPos: ArcballCamera.Get.getCameraPosition(-Math.PI/4, 0.0).toArray(),
+                        u_worldViewProjection: ArcballCamera.Get.getWorldViewProjection(),
+                        u_worldInverseTranspose: ArcballCamera.Get.getWorldInverseTranspose(),
+                        u_texture: materialBuffer.texture,
+                        u_cameraDir: ArcballCamera.Get.getCameraDirection().toArray(),
+                        u_fresnelExponent: AppConfig.Get.FRESNEL_EXPONENT,
+                        u_fresnelMix: AppConfig.Get.FRESNEL_MIX,
+                    });
+                }
             }
         });
     }

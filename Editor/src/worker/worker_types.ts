@@ -1,6 +1,6 @@
 import { BlockMeshParams } from '../../../Core/src/block_mesh';
 import { Bounds } from '../../../Core/src/bounds';
-import { TBlockMeshBufferDescription, TMeshBufferDescription, TVoxelMeshBufferDescription } from '../buffer';
+import { OtS_MeshBuffer } from '../renderer/buffer_mesh';
 import { TStructureExport } from '../../../Core/src/exporters/base_exporter';
 import { TExporters } from '../../../Core/src/exporters/exporters';
 import { TMessage } from '../ui/console';
@@ -8,7 +8,9 @@ import { TAxis } from '../../../Core/src/util/type_util';
 import { Vector3 } from '../../../Core/src/vector';
 import { AppError } from '../util/editor_util';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
-import { Material } from '../../../Core/src/materials';
+import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
+import { TVoxelMeshBufferDescription } from 'src/renderer/buffer_voxel_mesh';
+import { TBlockMeshBufferDescription } from 'src/renderer/buffer_block_mesh';
 
 export namespace InitParams {
     export type Input = {
@@ -36,7 +38,8 @@ export namespace ImportParams {
     export type Output = {
         triangleCount: number,
         dimensions: Vector3,
-        materials: Material[]
+        originalMetadata: OtS_MeshSectionMetadata[],
+        sectionMetadata: OtS_MeshSectionMetadata[],
     }
 }
 
@@ -46,19 +49,18 @@ export namespace RenderMeshParams {
     }
 
     export type Output = {
-        buffers: TMeshBufferDescription[],
-        dimensions: Vector3
+        buffers: OtS_MeshBuffer[],
+        dimensions: Vector3,
     }
 }
 
 export namespace SetMaterialsParams {
     export type Input = {
-        materials: Material[]
+        sectionMetadata: OtS_MeshSectionMetadata[],
     }
 
     export type Output = {
-        materials: Material[],
-        materialsChanged: string[],
+        materials: OtS_MeshSectionMetadata[],
     }
 }
 
@@ -74,21 +76,6 @@ export namespace VoxeliseParams {
     export type Output = {
     }
 }
-
-/*
-export namespace RenderVoxelMeshParams {
-    export type Input = {
-        desiredHeight: number,
-        enableAmbientOcclusion: boolean,
-    }
-
-    export type Output = {
-        buffer: TVoxelMeshBufferDescription,
-        dimensions: Vector3,
-        voxelSize: number,
-    }
-}
-*/
 
 export namespace RenderNextVoxelMeshChunkParams {
     export type Input = {
@@ -128,21 +115,6 @@ export namespace RenderNextBlockMeshChunkParams {
     }
 }
 
-/*
-export namespace RenderBlockMeshParams {
-    export type Input = {
-        textureAtlas: TAtlasId,
-    }
-
-    export type Output = {
-        buffer: TBlockMeshBufferDescription,
-        dimensions: Vector3,
-        atlasTexturePath: string,
-        atlasSize: number,
-    }
-}
-*/
-
 export namespace ExportParams {
     export type Input = {
         exporter: TExporters,
@@ -165,10 +137,8 @@ export type TToWorkerMessage =
     | { action: 'SetMaterials', params: SetMaterialsParams.Input }
     | { action: 'RenderMesh', params: RenderMeshParams.Input }
     | { action: 'Voxelise', params: VoxeliseParams.Input }
-    //| { action: 'RenderVoxelMesh', params: RenderVoxelMeshParams.Input }
     | { action: 'RenderNextVoxelMeshChunk', params: RenderNextVoxelMeshChunkParams.Input }
     | { action: 'Assign', params: AssignParams.Input }
-    //| { action: 'RenderBlockMesh', params: RenderBlockMeshParams.Input }
     | { action: 'RenderNextBlockMeshChunk', params: RenderNextBlockMeshChunkParams.Input }
     | { action: 'Export', params: ExportParams.Input }
 
@@ -183,9 +153,7 @@ export type TFromWorkerMessage =
         | { action: 'SetMaterials', result: SetMaterialsParams.Output }
         | { action: 'RenderMesh', result: RenderMeshParams.Output }
         | { action: 'Voxelise', result: VoxeliseParams.Output }
-        //| { action: 'RenderVoxelMesh', result: RenderVoxelMeshParams.Output }
         | { action: 'RenderNextVoxelMeshChunk', result: RenderNextVoxelMeshChunkParams.Output }
         | { action: 'Assign', result: AssignParams.Output }
-        //| { action: 'RenderBlockMesh', result: RenderBlockMeshParams.Output }
         | { action: 'RenderNextBlockMeshChunk', result: RenderNextBlockMeshChunkParams.Output }
         | { action: 'Export', result: ExportParams.Output }));

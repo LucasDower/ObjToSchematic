@@ -1,6 +1,7 @@
 import { RGBAColours, RGBAUtil } from '../colour';
 import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
+import { Triangle } from '../triangle';
 import { UV } from '../util';
 import { ASSERT } from '../util/error_util';
 import { RegExpBuilder } from '../util/regex_util';
@@ -24,12 +25,14 @@ interface VertexIndices {
 
 export interface Tri {
     positionIndices: VertexIndices;
+    normalIndices?: VertexIndices;
     texcoordIndices?: VertexIndices;
     material: string;
 }
 
 export class OtS_Importer_Obj extends OtS_Importer {
     private _vertices: Vector3[] = [];
+    private _normals: Vector3[] = [];
     private _uvs: UV[] = [];
     private _tris: Tri[] = [];
     private _currentMaterialName: string = 'DEFAULT_UNASSIGNED';
@@ -44,6 +47,16 @@ export class OtS_Importer_Obj extends OtS_Importer {
 
     private static _REGEX_VERTEX = new RegExpBuilder()
         .add(/^v/)
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'x')
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'y')
+        .addNonzeroWhitespace()
+        .add(REGEX_NUMBER, 'z')
+        .toRegExp();
+
+    private static _REGEX_NORMAL = new RegExpBuilder()
+        .add(/^vn/)
         .addNonzeroWhitespace()
         .add(REGEX_NUMBER, 'x')
         .addNonzeroWhitespace()
@@ -120,6 +133,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
         for (const [material, isTextureMaterial]  of materials) {
             if (isTextureMaterial) {
                 const positionData: number[] = [];
+                const normalData: number[] = [];
                 const texcoordData: number[] = [];
                 const indexData: number[] = [];
                 let ni = 0;
@@ -130,32 +144,51 @@ export class OtS_Importer_Obj extends OtS_Importer {
                         const p1 = this._vertices[tri.positionIndices.v1];
                         const p2 = this._vertices[tri.positionIndices.v2];
 
+                        let n0: Vector3;
+                        let n1: Vector3;
+                        let n2: Vector3;
+                        if (tri.normalIndices) {
+                            n0 = this._normals[tri.normalIndices.v0];
+                            n1 = this._normals[tri.normalIndices.v1];
+                            n2 = this._normals[tri.normalIndices.v2];
+                        } else {
+                            n0 = Triangle.CalcNormal(p0, p1, p2);
+                            n1 = n0.copy();
+                            n2 = n0.copy();
+                        }
+
                         ASSERT(tri.texcoordIndices !== undefined);
                         const t0 = this._uvs[tri.texcoordIndices.v0];
                         const t1 = this._uvs[tri.texcoordIndices.v1];
                         const t2 = this._uvs[tri.texcoordIndices.v2];
 
                         positionData.push(p0.x, p0.y, p0.z);
+                        normalData.push(n0.x, n0.y, n0.z);
                         texcoordData.push(t0.u, t0.v);
                         indexData.push(ni++);
                         positionData.push(p1.x, p1.y, p1.z);
+                        normalData.push(n1.x, n1.y, n1.z);
                         texcoordData.push(t1.u, t1.v);
                         indexData.push(ni++);
                         positionData.push(p2.x, p2.y, p2.z);
+                        normalData.push(n2.x, n2.y, n2.z);
                         texcoordData.push(t2.u, t2.v);
                         indexData.push(ni++);
                     }
                 });
 
                 mesh.addSection({
+                    name: material,
                     type: 'textured',
                     texture: OtS_Texture.CreateDebugTexture(),
                     positionData: Float32Array.from(positionData),
                     texcoordData: Float32Array.from(texcoordData),
+                    normalData: Float32Array.from(normalData),
                     indexData: Uint32Array.from(indexData),
                 });
             } else {
                 const positionData: number[] = [];
+                const normalData: number[] = [];
                 const indexData: number[] = [];
                 let ni = 0;
 
@@ -165,19 +198,37 @@ export class OtS_Importer_Obj extends OtS_Importer {
                         const p1 = this._vertices[tri.positionIndices.v1];
                         const p2 = this._vertices[tri.positionIndices.v2];
 
+                        let n0: Vector3;
+                        let n1: Vector3;
+                        let n2: Vector3;
+                        if (tri.normalIndices) {
+                            n0 = this._normals[tri.normalIndices.v0];
+                            n1 = this._normals[tri.normalIndices.v1];
+                            n2 = this._normals[tri.normalIndices.v2];
+                        } else {
+                            n0 = Triangle.CalcNormal(p0, p1, p2);
+                            n1 = n0.copy();
+                            n2 = n0.copy();
+                        }
+
                         positionData.push(p0.x, p0.y, p0.z);
+                        normalData.push(n0.x, n0.y, n0.z);
                         indexData.push(ni++);
                         positionData.push(p1.x, p1.y, p1.z);
+                        normalData.push(n1.x, n1.y, n1.z);
                         indexData.push(ni++);
                         positionData.push(p2.x, p2.y, p2.z);
+                        normalData.push(n2.x, n2.y, n2.z);
                         indexData.push(ni++);
                     }
                 });
 
                 mesh.addSection({
+                    name: material,
                     type: 'solid',
                     colour: RGBAUtil.copy(RGBAColours.WHITE),
                     positionData: Float32Array.from(positionData),
+                    normalData: Float32Array.from(normalData),
                     indexData: Uint32Array.from(indexData),
                 });
             }
@@ -194,6 +245,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
         false
             || this._tryParseAsUsemtl(line)
             || this._tryParseAsVertex(line)
+            || this._tryParseAsNormal(line)
             || this._tryParseAsTexcoord(line)
             || this._tryParseAsFace(line);
 
@@ -236,6 +288,25 @@ export class OtS_Importer_Obj extends OtS_Importer {
         return true;
     }
 
+    // e.g. 'vn 0.123 0.456 0.789'
+    private _tryParseAsNormal(line: string): boolean {
+        const match = OtS_Importer_Obj._REGEX_NORMAL.exec(line);
+        if (match === null) {
+            return false;
+        }
+
+        const x = parseFloat(match.groups?.x ?? '');
+        const y = parseFloat(match.groups?.y ?? '');
+        const z = parseFloat(match.groups?.z ?? '');
+
+        if (isNaN(x) || isNaN(y) || isNaN(z)) {
+            throw 'Invalid data'; // TODO: Error type
+        }
+
+        this._normals.push(new Vector3(x, y, z));
+        return true;
+    }
+
     // e.g. 'vt 0.123 0.456'
     private _tryParseAsTexcoord(line: string): boolean {
         const match = OtS_Importer_Obj._REGEX_TEXCOORD.exec(line);
@@ -275,6 +346,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
 
         const points: {
             positionIndex: number;
+            normalIndex?: number;
             texcoordIndex?: number;
         }[] = [];
 
@@ -285,6 +357,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
                     const index = parseInt(vertexData[0]);
                     points.push({
                         positionIndex: index,
+                        normalIndex: index,
                         texcoordIndex: index,
                     });
                     break;
@@ -301,6 +374,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
                 case 3: {
                     const positionIndex = parseInt(vertexData[0]);
                     const texcoordIndex = parseInt(vertexData[1]);
+                    const normalIndex = parseInt(vertexData[2]);
                     points.push({
                         positionIndex: positionIndex,
                         texcoordIndex: texcoordIndex,
@@ -324,6 +398,14 @@ export class OtS_Importer_Obj extends OtS_Importer {
                 },
                 material: this._currentMaterialName,
             };
+            if (pointBase.normalIndex || pointA.normalIndex || pointB.normalIndex) {
+                ASSERT(pointBase.normalIndex && pointA.normalIndex && pointB.normalIndex);
+                tri.normalIndices = {
+                    v0: pointBase.normalIndex - 1,
+                    v1: pointA.normalIndex - 1,
+                    v2: pointB.normalIndex - 1,
+                };
+            }
             if (pointBase.texcoordIndex || pointA.texcoordIndex || pointB.texcoordIndex) {
                 ASSERT(pointBase.texcoordIndex && pointA.texcoordIndex && pointB.texcoordIndex);
                 tri.texcoordIndices = {

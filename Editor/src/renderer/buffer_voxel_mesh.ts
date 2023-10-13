@@ -1,4 +1,3 @@
-import { TVoxelMeshBuffer, TVoxelMeshBufferDescription } from '../buffer';
 import { AppConfig } from "../config";
 import { ASSERT } from "../../../Core/src/util/error_util";
 import { Vector3 } from "../../../Core/src/vector";
@@ -9,6 +8,20 @@ import { AppConstants } from "../../../Core/src/constants";
 import { OtSE_AmbientOcclusion } from "./ambient_occlusion";
 import { OtS_Voxel, OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
 import { OtS_VoxelMesh_Neighbourhood } from '../../../Core/src/ots_voxel_mesh_neighbourhood';
+
+export type TVoxelMeshBuffer = {
+    position: { numComponents: 3, data: Float32Array, },
+    colour: { numComponents: 4, data: Float32Array },
+    occlusion: { numComponents: 4, data: Float32Array },
+    texcoord: { numComponents: 2, data: Float32Array },
+    normal: { numComponents: 3, data: Float32Array },
+    indices: { numComponents: 3, data: Uint32Array },
+};
+
+export type TVoxelMeshBufferDescription = {
+    buffer: TVoxelMeshBuffer,
+    numElements: number,
+}
 
 export type TBuffer_VoxelMesh = TVoxelMeshBufferDescription & { moreVoxelsToBuffer: boolean, progress: number };
 
