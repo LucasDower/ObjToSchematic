@@ -104,7 +104,6 @@ export class OtS_VoxelMesh_Converter {
                     const samples: RGBA[] = [];
                     for (let i = 0; i < 8; ++i) {
                         samples.push(this._getVoxelColour(
-                            mesh,
                             triangle,
                             Vector3.random().divScalar(2.0).add(voxelPosition),
                         ))
@@ -112,7 +111,6 @@ export class OtS_VoxelMesh_Converter {
                     voxelColour = RGBAUtil.average(...samples);
                 } else {
                     voxelColour = this._getVoxelColour(
-                        mesh,
                         triangle,
                         voxelPosition,
                     );
@@ -123,7 +121,7 @@ export class OtS_VoxelMesh_Converter {
         };
     }
 
-    private _getVoxelColour(mesh: OtS_Mesh, triangle: OtS_Triangle, location: Vector3): RGBA {
+    private _getVoxelColour(triangle: OtS_Triangle, location: Vector3): RGBA {
         if (triangle.type === 'solid') {
             return triangle.colour;
         }

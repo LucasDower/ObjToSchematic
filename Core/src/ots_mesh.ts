@@ -158,7 +158,7 @@ export class OtS_Mesh {
         ASSERT(sectionCount > 0); // TODO: Don't assert,
         
         let sectionIndex = 0;
-        let triangleCount = this._sections[0].positionData.length / 3;
+        let triangleCount = this._sections[0].indexData.length / 3;
         let triangleIndex = 0;
 
         return {
@@ -166,9 +166,10 @@ export class OtS_Mesh {
                 return this;
             },
             next: () => {
-                if (triangleIndex >= triangleCount && sectionIndex < sectionCount) {
+                if (triangleIndex >= triangleCount && sectionIndex < sectionCount - 1) {
                     ++sectionIndex;
-                    triangleCount = this._sections[sectionIndex].positionData.length / 3;
+                    triangleCount = this._sections[sectionIndex].indexData.length / 3;
+                    triangleIndex = 0;
                 }
 
                 if (triangleIndex < triangleCount) {
