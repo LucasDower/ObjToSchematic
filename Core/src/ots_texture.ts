@@ -92,8 +92,8 @@ export class OtS_Texture {
 
     // Assumes `u` and `v` are in the range [0, 1]
     private _sampleNearest(u: number, v: number): RGBA {
-        const x = Math.floor(u * (this._width - 1));
-        const y = Math.floor(v * (this._height - 1));
+        const x = Math.round(u * (this._width - 1));
+        const y = Math.round(v * (this._height - 1));
 
         return this._samplePixel(x, y);
     }
