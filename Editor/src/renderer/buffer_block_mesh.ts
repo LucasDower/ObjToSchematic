@@ -4,6 +4,7 @@ import { AppUtil } from "../../../Core/src/util";
 import { AppConstants } from "../../../Core/src/constants";
 import { Block, BlockMesh } from "../../../Core/src/block_mesh";
 import { BufferGenerator_VoxelMesh, TVoxelMeshBuffer } from "./buffer_voxel_mesh";
+import { OtS_Block, OtS_BlockMesh } from "ots-core/src/ots_block_mesh";
 
 export type TBlockMeshBuffer = {
     position: { numComponents: 3, data: Float32Array, },
@@ -25,17 +26,17 @@ export type TBlockMeshBufferDescription = {
 export type TBuffer_BlockMesh = TBlockMeshBufferDescription & { moreBlocksToBuffer: boolean, progress: number };
 
 export class BufferGenerator_BlockMesh {
-    private _blockMesh: BlockMesh;
-    private _blocks: Block[];
+    private _blockMesh: OtS_BlockMesh;
+    private _blocks: OtS_Block[];
 
     private _bufferGenerator_VoxelMesh: BufferGenerator_VoxelMesh;
     private _nextChunkIndex: number;
     private _lightingRamp: Map<number, number>;
     private _numTotalBlocks: number;
 
-    public constructor(blockMesh: BlockMesh, bufferGenerator_VoxelMesh: BufferGenerator_VoxelMesh) {
+    public constructor(blockMesh: OtS_BlockMesh, bufferGenerator_VoxelMesh: BufferGenerator_VoxelMesh) {
         this._blockMesh = blockMesh;
-        this._blocks = blockMesh.getBlocks();
+        this._blocks = Array.from(blockMesh.getBlocks());
 
         this._bufferGenerator_VoxelMesh = bufferGenerator_VoxelMesh;
         this._nextChunkIndex = 0;
@@ -82,15 +83,20 @@ export class BufferGenerator_BlockMesh {
         let insertIndex = 0;
         let lightingInsertIndex = 0;
 
+        // TODO: Build lighting extension
+        // TODO: Add atlas data
+
         for (let i = 0; i < numBufferBlocks; ++i) {
             const blockIndex = i + blocksStartIndex;
-            const blockLighting = this._blockMesh.getBlockLighting(this._blocks[blockIndex].voxel.position);
+            //const blockLighting = this._blockMesh.getBlockLighting(this._blocks[blockIndex].voxel.position);
 
             for (let f = 0; f < AppConstants.FACES_PER_VOXEL; ++f) {
                 const faceName = faceOrder[f];
-                const faceLighting = this._lightingRamp.get(blockLighting[f] ?? 15) ?? 1.0;
+                //const faceLighting = this._lightingRamp.get(blockLighting[f] ?? 15) ?? 1.0;
+                const faceLighting = 1.0;
 
-                const texcoord = this._blocks[blockIndex].blockInfo.faces[faceName].texcoord;
+                const texcoord = { u: 0.0, v: 0.0 };
+                //const texcoord = this._blocks[blockIndex].blockInfo.faces[faceName].texcoord;
                 for (let v = 0; v < AppConstants.VERTICES_PER_FACE; ++v) {
                     newBuffer.blockTexcoord.data[insertIndex++] = texcoord.u;
                     newBuffer.blockTexcoord.data[insertIndex++] = texcoord.v;
@@ -99,9 +105,9 @@ export class BufferGenerator_BlockMesh {
                 }
             }
 
-            newBuffer.blockPosition.data[i * 72 + 0] = this._blocks[blockIndex].voxel.position.x;
-            newBuffer.blockPosition.data[i * 72 + 1] = this._blocks[blockIndex].voxel.position.y;
-            newBuffer.blockPosition.data[i * 72 + 2] = this._blocks[blockIndex].voxel.position.z;
+            newBuffer.blockPosition.data[i * 72 + 0] = this._blocks[blockIndex].position.x;
+            newBuffer.blockPosition.data[i * 72 + 1] = this._blocks[blockIndex].position.y;
+            newBuffer.blockPosition.data[i * 72 + 2] = this._blocks[blockIndex].position.z;
             AppUtil.Array.repeatedFill(newBuffer.blockPosition.data, i * 72, 3, 24);
         }
 

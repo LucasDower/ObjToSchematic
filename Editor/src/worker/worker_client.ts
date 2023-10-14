@@ -15,6 +15,8 @@ import { OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
 import { OtS_VoxelMesh_Converter } from '../../../Core/src/ots_voxel_mesh_converter';
 import { OtS_Mesh } from '../../../Core/src/ots_mesh';
 import { OtS_Texture } from '../../../Core/src/ots_texture';
+import { OtS_BlockMesh } from 'ots-core/src/ots_block_mesh';
+import { OtS_BlockMesh_Converter } from '../../../Core/src/ots_block_mesh_converter';
 
 export class WorkerClient {
     private static _instance: WorkerClient;
@@ -28,7 +30,7 @@ export class WorkerClient {
     private _originalLoadedMesh?: OtS_Mesh;
     private _loadedMesh?: OtS_Mesh;
     private _loadedVoxelMesh?: OtS_VoxelMesh;
-    private _loadedBlockMesh?: BlockMesh;
+    private _loadedBlockMesh?: OtS_BlockMesh;
 
     private _voxelMeshProgressHandle?: TTaskHandle;
     private _bufferGenerator_VoxelMesh?: BufferGenerator_VoxelMesh;
@@ -259,16 +261,11 @@ export class WorkerClient {
         ASSERT(this._loadedVoxelMesh !== undefined);
         this._bufferGenerator_BlockMesh = undefined;
 
-        const result = BlockMesh.createFromVoxelMesh(this._loadedVoxelMesh, params);
-        this._loadedBlockMesh = result.blockMesh;
+        const converter = new OtS_BlockMesh_Converter();
+        converter.setConfig({
+        });
 
-        if (result.warnings) {
-            switch (result.warnings.type) {
-                case 'falling-blocks':
-                    StatusHandler.warning(LOC('assign.falling_blocks', result.warnings.count));
-                    break;
-            }
-        }
+        this._loadedBlockMesh = converter.process(this._loadedVoxelMesh);        
 
         return {
         };
@@ -298,7 +295,7 @@ export class WorkerClient {
 
         return {
             buffer: buffer,
-            bounds: this._loadedBlockMesh.getVoxelMesh().getBounds(),
+            bounds: this._loadedBlockMesh.getBounds(),
             moreBlocksToBuffer: buffer.moreBlocksToBuffer,
             isFirstChunk: isFirstChunk,
         };
