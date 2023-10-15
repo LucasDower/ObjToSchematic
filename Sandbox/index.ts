@@ -1,7 +1,12 @@
+import fs from 'fs';
+
 import { RGBAColours, RGBAUtil } from 'ots-core/src/colour';
 import { OtS_Mesh } from 'ots-core/src/ots_mesh';
 import { OtS_Texture } from 'ots-core/src/ots_texture';
 import { OtS_VoxelMesh_Converter } from '../Core/src/ots_voxel_mesh_converter';
+import { OtS_BlockMesh_Converter } from '../Core/src/ots_block_mesh_converter';
+import { ExporterFactory } from '../Core/src/exporters/exporters';
+import { ASSERT } from 'ots-core/src/util/error_util';
 
 (async () => {
     const mesh = OtS_Mesh.create();
@@ -74,19 +79,32 @@ import { OtS_VoxelMesh_Converter } from '../Core/src/ots_voxel_mesh_converter';
     }
 
     // 3. Construct a voxel mesh from the mesh
-    const converter = new OtS_VoxelMesh_Converter();
-    converter.setConfig({
+    const voxelMeshConverter = new OtS_VoxelMesh_Converter();
+    voxelMeshConverter.setConfig({
         constraintAxis: 'y',
         size: 380,
         multisampling: false,
         replaceMode: 'keep',
     });
 
-    const voxelMesh = converter.process(mesh);
+    const voxelMesh = voxelMeshConverter.process(mesh);
 
     // 4. Construct a block mesh from the block
-    // TODO
+    const blockMeshConverter = new OtS_BlockMesh_Converter();
+    blockMeshConverter.setConfig({
+        mode: {
+            type: 'per-block', data: [
+                { name: 'minecraft:stone', colour: RGBAUtil.copy(RGBAColours.WHITE) },
+            ]
+        },
+    });
+
+    const blockMesh = blockMeshConverter.process(voxelMesh);
 
     // 5. Export the block mesh to a file
-    // TODO
+    const exporter = ExporterFactory.GetExporter('uncompressed_json');
+    const structure = exporter.export(blockMesh);
+    ASSERT(structure.type === 'single');
+
+    fs.writeFileSync('output.json', structure.content);
 })();

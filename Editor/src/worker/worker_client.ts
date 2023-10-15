@@ -262,8 +262,10 @@ export class WorkerClient {
         this._bufferGenerator_BlockMesh = undefined;
 
         const converter = new OtS_BlockMesh_Converter();
+        /*
         converter.setConfig({
         });
+        */
 
         this._loadedBlockMesh = converter.process(this._loadedVoxelMesh);        
 

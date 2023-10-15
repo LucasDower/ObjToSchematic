@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import OTS from 'ots-core';
 
-import { PNG } from 'pngjs';
 import { decode as jpegDecode } from 'jpeg-js';
 
 export function createReadableStream(p: fs.PathLike) {

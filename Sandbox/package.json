@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "echo \"Nothing to build\" && exit 0",
+    "build": "tsc",
     "test": "echo \"No tests\" && exit 0"
   },
   "keywords": [],
@@ -14,6 +14,7 @@
   "dependencies": {
     "jpeg-js": "^0.4.4",
     "ots-core": "file:../Core",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "ts-node": "^10.9.1"
   }
 }
