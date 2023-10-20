@@ -14,58 +14,53 @@
   <a href="#usage">Usage</a> •
   <a href="https://discord.gg/McS2VrBZPD">Discord</a> •
   <a href="#contributing">Contributing</a> •
-  <a href="#gallery">Gallery</a> •
-  <a href="#documentation">Documentation</a>
+  <a href="#gallery">Gallery</a>
 </p>
 <p align="center">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build_core.js.yml/badge.svg" alt="Logo">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests_core.js.yml/badge.svg" alt="Logo">
-  <br>
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/build_editor.js.yml/badge.svg" alt="Logo">
   <img src="https://github.com/LucasDower/ObjToSchematic/actions/workflows/tests_editor.js.yml/badge.svg" alt="Logo">
-  <br>
-  <img src="https://img.shields.io/github/downloads/LucasDower/ObjToSchematic/total.svg" alt="Logo">
 </p>
 
 <p align="center">
-  <img src="Editor/res/samples/noodles.png" alt="Noodles">
+  <img src="Editor/res/samples/noodles.png" alt="Noodles" width="75%"><br>
   <sub>"Noodle Bowl - 3DDecember Day9" (https://skfb.ly/orI9z) by Batuhan13<br>is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
 </p>
 
 ## Usage
-:warning: **ObjToSchematic is now primarily a website, visit https://objtoschematic.com for the latest version.**
 
-#### Desktop Version
-The Desktop version is no longer updated but can still be downloaded [here](https://github.com/LucasDower/ObjToSchematic/releases/latest) for Windows, macOS, or Linux*. If you want to use a non-release build, use the following steps to run it: 
+> [!IMPORTANT]  
+> This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
 
+**ObjToSchematic** is live at https://objtoschematic.com!
+
+If you want make changes to the repo and run the editor locally then you must:
 * Download and install [Node.js](https://nodejs.org/en/).
 * Run `git clone https://github.com/LucasDower/ObjToSchematic.git` in your command line.
-* Navigate to `/ObjToSchematic-main`.
+* Navigate to `/ObjToSchematic/Editor`.
 * Run `npm install`.
 * Run `npm start`.
+* Open `localhost:8080` in a web browser.
 
 <p align="center">
-  <img src="Editor/res/samples/editor.png">
-  <sub>"Cut Fish" (https://skfb.ly/orWLC) by Suushimi<br>is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).</sub>
+  <img src="https://i.imgur.com/uT1QZcm.png">
 </p>
 
-## Progress
-The progress tracker and remaining to-dos are now maintained in the [Discord](https://discord.gg/McS2VrBZPD) server's #to-do channel.
-
-## Disclaimer
-This is an non-commercial **unofficial** tool that is neither approved, endorsed, associated, nor connected to Mojang Studios. Block textures used are from Minecraft and usage complies with the [Mojang Studios Brand And Assets Guidelines](https://account.mojang.com/terms#brand).
-
-![MinecraftPreview](https://i.imgur.com/LhTZ4G9.png)
-
 ## Contributing
-Any contributions are welcome, just fork and submit a PR! Just make sure the code style follows the rulings in the `.eslintrc.json` by running `npm run lint` and the tests all pass by running `npm test`.
+Any contributions are welcome, just fork and submit a PR!
 
-Currently there's not much docs but if you're looking for where to get started, look at `app_context.ts` and follow `_import()`, `_voxelise()`, `_assign()`, and `_export()`. If you're looking to add elements to the UI, look at `ui/layout.ts`, I'm not using a UI framework because I'm a nutter. Adding more file formats to import from and export to would be nice. Adding new default block palettes would be great also.
+ObjToSchematic is split into three packages, `Core`, `Editor`, and `Sandbox`:
+* `Core` contains the main functionality of OtS and exposes an API to load 3D models, convert them into voxel meshes and block meshes and finally export them to various file formats. The API also offers classes for programatically building custom meshes, voxel meshes, and block meshes. Notable classes include:
+  * `OtS_Mesh`, `OtS_VoxelMesh`, `OtS_BlockMesh`, `OtS_VoxelMeshConverter`, `OtS_BlockMeshConverter`.
+* `Editor` contains the source for the web interface. Calls to `OtS-Core` are performed in a separate worker to avoid blocking the UI. The editor comes with localisation support and, regretfully, makes use of a custom UI framework. Notable files include:
+  * `app_context.ts` 
+* `Sandbox` contains example uses of `OtS-Core`.
 
 If you have any questions or need help getting started then feel free to join the [Discord](https://discord.gg/McS2VrBZPD) or message me **SinJi#4165**.
 
-#### Translations
-Translations files are stored in `/loc/`. To add a new language, duplicate the `en_GB.ts` file, rename it to the language code you are adding. The `en-GB.ts` file is the main language file. All the possible translation keys that you can override exist in `en-GB.ts`. Your translation file does not need to override every key, missing translations will fallback to the British English translation. Translation files are checked at compile-time for invalid keys. Once your translation file is complete, modify `/loc/base.ts` to include your new language. And that's it! Visit the [i18next](https://www.i18next.com/) documentation if your language requires special attention such as plurals or visit the Discord for help or if the current implementation isn't sufficient for your language.
+### Translations
+Translations files are stored in `/ObjToSchematic/Editor/loc/`. To add a new language, duplicate the `en_GB.ts` file, rename it to the language code you are adding. The `en_GB.ts` file is the main language file. All the possible translation keys that you can override exist in `en_GB.ts`. Your translation file does not need to override every key, missing translations will fallback to the British English translation. Translation files are checked at compile-time for invalid keys. Once your translation file is complete, modify `/loc/base.ts` to include your new language. And that's it! Visit the [i18next](https://www.i18next.com/) documentation if your language requires special attention such as plurals or visit the Discord for help or if the current implementation isn't sufficient for your language.
 
 ## Gallery
 <p align="center">
@@ -79,7 +74,7 @@ Translations files are stored in `/loc/`. To add a new language, duplicate the `
   <sub>"Handpainted Pancake" (https://skfb.ly/6T7yN) by Marvi is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).</sub>
 </p>
 
-## Documentation
+## Editor Documentation
 Below is a detailed explanation into what each configurable setting does divided into each step in the program.
 
 ### Import
