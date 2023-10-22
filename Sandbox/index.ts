@@ -90,7 +90,6 @@ import { OtS_Colours } from 'ots-core/src/colour';
     voxelMeshConverter.setConfig({
         constraintAxis: 'y',
         size: 380,
-        multisampling: false,
         replaceMode: 'keep',
     });
 

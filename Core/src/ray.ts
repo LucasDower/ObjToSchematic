@@ -1,3 +1,4 @@
+import { OtS_Triangle } from './ots_mesh';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 
@@ -27,12 +28,13 @@ export interface Ray {
     axis: Axes
 }
 
-export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vector3): (Vector3 | undefined) {
-    const edge1 = Vector3.sub(v1, v0);
-    const edge2 = Vector3.sub(v2, v0);
+export type RayIntersect = (origin: Vector3, v0: Vector3, v1: Vector3, v2: Vector3) => (Vector3 | undefined);
 
-    const rayDirection = axesToDirection(ray.axis);
-    const h = Vector3.cross(rayDirection, edge2);
+export function rayIntersectTriangleFastX(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
+    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
+    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
+
+    const h = new Vector3(0, -edge2.z, edge2.y); // Vector3.cross(rayDirection, edge2);
     const a = Vector3.dot(edge1, h);
 
     if (a > -EPSILON && a < EPSILON) {
@@ -40,7 +42,7 @@ export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vec
     }
 
     const f = 1.0 / a;
-    const s = Vector3.sub(ray.origin, v0);
+    const s = Vector3.sub(origin, triangle.data.v0.position);
     const u = f * Vector3.dot(s, h);
 
     if (u < 0.0 || u > 1.0) {
@@ -48,7 +50,7 @@ export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vec
     }
 
     const q = Vector3.cross(s, edge1);
-    const v = f * Vector3.dot(rayDirection, q);
+    const v = f * q.x; // f * Vector3.dot(rayDirection, q);
 
     if (v < 0.0 || u + v > 1.0) {
         return;
@@ -57,6 +59,81 @@ export function rayIntersectTriangle(ray: Ray, v0: Vector3, v1: Vector3, v2: Vec
     const t = f * Vector3.dot(edge2, q);
 
     if (t > EPSILON) {
-        return Vector3.add(ray.origin, Vector3.mulScalar(rayDirection, t));
+        const result = Vector3.copy(origin);
+        result.x += t;
+        return result;
+        //return Vector3.add(origin,  Vector3.mulScalar(rayDirection, t));
+    }
+}
+
+export function rayIntersectTriangleFastY(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
+    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
+    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
+
+    const h = new Vector3(edge2.z, 0, -edge2.x); // Vector3.cross(rayDirection, edge2);
+    const a = Vector3.dot(edge1, h);
+
+    if (a > -EPSILON && a < EPSILON) {
+        return; // Ray is parallel to triangle
+    }
+
+    const f = 1.0 / a;
+    const s = Vector3.sub(origin, triangle.data.v0.position);
+    const u = f * Vector3.dot(s, h);
+
+    if (u < 0.0 || u > 1.0) {
+        return;
+    }
+
+    const q = Vector3.cross(s, edge1);
+    const v = f * q.y; // f * Vector3.dot(rayDirection, q);
+
+    if (v < 0.0 || u + v > 1.0) {
+        return;
+    }
+
+    const t = f * Vector3.dot(edge2, q);
+
+    if (t > EPSILON) {
+        const result = Vector3.copy(origin);
+        result.y += t;
+        return result;
+        //return Vector3.add(origin,  Vector3.mulScalar(rayDirection, t));
+    }
+}
+
+export function rayIntersectTriangleFastZ(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
+    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
+    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
+
+    const h = new Vector3(-edge2.y, edge2.x, 0); // Vector3.cross(rayDirection, edge2);
+    const a = Vector3.dot(edge1, h);
+
+    if (a > -EPSILON && a < EPSILON) {
+        return; // Ray is parallel to triangle
+    }
+
+    const f = 1.0 / a;
+    const s = Vector3.sub(origin, triangle.data.v0.position);
+    const u = f * Vector3.dot(s, h);
+
+    if (u < 0.0 || u > 1.0) {
+        return;
+    }
+
+    const q = Vector3.cross(s, edge1);
+    const v = f * q.z; // f * Vector3.dot(rayDirection, q);
+
+    if (v < 0.0 || u + v > 1.0) {
+        return;
+    }
+
+    const t = f * Vector3.dot(edge2, q);
+
+    if (t > EPSILON) {
+        const result = Vector3.copy(origin);
+        result.z += t;
+        return result;
+        //return Vector3.add(origin,  Vector3.mulScalar(rayDirection, t));
     }
 }

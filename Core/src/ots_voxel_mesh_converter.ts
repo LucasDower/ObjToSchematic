@@ -2,7 +2,7 @@ import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
 import { Vector3 } from './vector';
 import { Triangle } from './triangle';
-import { Axes, Ray, rayIntersectTriangle } from './ray';
+import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ } from './ray';
 import { OtS_Colours, RGBA, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { UV } from './util';
@@ -10,7 +10,7 @@ import { UV } from './util';
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
     size: number,
-    multisampling: boolean,
+    multisampling?: number,
     replaceMode: OtS_ReplaceMode,
 }
 
@@ -21,7 +21,7 @@ export class OtS_VoxelMesh_Converter {
         this._config = {
             constraintAxis: 'y',
             size: 80,
-            multisampling: true,
+            multisampling: 8,
             replaceMode: 'average',
         };
     }
@@ -60,68 +60,70 @@ export class OtS_VoxelMesh_Converter {
         bounds.min.floor();
         bounds.max.ceil();
 
-        const ray: Ray = { axis: Axes.x, origin: new Vector3(0, 0, 0) };
+        const rayOrigin = new Vector3(0, 0, 0);
 
-        ray.origin.x = bounds.min.x - 1;
-        ray.axis = Axes.x;
+        rayOrigin.x = bounds.min.x - 1;
         for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
-            ray.origin.y = y;
+            rayOrigin.y = y;
             for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
-                ray.origin.z = z;
-                this._handleRay(ray, triangle, voxelMesh);
+                rayOrigin.z = z;
+                const intersection = rayIntersectTriangleFastX(rayOrigin, triangle);
+                if (intersection) {
+                    this._handleRayHit(intersection, triangle, voxelMesh);
+                }
             }
         }
 
-        ray.origin.y = bounds.min.y - 1;
-        ray.axis = Axes.y;
+        rayOrigin.y = bounds.min.y - 1;
         for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
-            ray.origin.z = z;
+            rayOrigin.z = z;
             for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-            ray.origin.x = x;
-                this._handleRay(ray, triangle, voxelMesh);
+                rayOrigin.x = x;
+                const intersection = rayIntersectTriangleFastY(rayOrigin, triangle);
+                if (intersection) {
+                    this._handleRayHit(intersection, triangle, voxelMesh);
+                }
             }
         }
 
-        ray.origin.z = bounds.min.z - 1;
-        ray.axis = Axes.z;
+        rayOrigin.z = bounds.min.z - 1;
         for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-            ray.origin.x = x;
+            rayOrigin.x = x;
             for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
-                ray.origin.y = y;
-                this._handleRay(ray, triangle, voxelMesh);
+                rayOrigin.y = y;
+                const intersection = rayIntersectTriangleFastZ(rayOrigin, triangle);
+                if (intersection) {
+                    this._handleRayHit(intersection, triangle, voxelMesh);
+                }
             }
         }
     }
 
-    private _handleRay(ray: Ray, triangle: OtS_Triangle, voxelMesh: OtS_VoxelMesh) {
-        const intersection = rayIntersectTriangle(ray, triangle.data.v0.position, triangle.data.v1.position, triangle.data.v2.position);
-        
-        if (intersection) {
-            const voxelPosition = new Vector3(
-                intersection.x,
-                intersection.y,
-                intersection.z,
-            ).round();
+    private _handleRayHit(intersection: Vector3, triangle: OtS_Triangle, voxelMesh: OtS_VoxelMesh) {
+        const voxelPosition = new Vector3(
+            intersection.x,
+            intersection.y,
+            intersection.z,
+        ).round();
 
-            let voxelColour: RGBA;
-            if (this._config.multisampling) {
-                const samples: RGBA[] = [];
-                for (let i = 0; i < 8; ++i) {
-                    samples.push(this._getVoxelColour(
-                        triangle,
-                        Vector3.random().divScalar(2.0).add(voxelPosition),
-                    ))
-                }
-                voxelColour = RGBAUtil.average(...samples);
-            } else {
-                voxelColour = this._getVoxelColour(
+        let voxelColour: RGBA;
+        if (this._config.multisampling !== undefined) {
+            const samples: RGBA[] = [];
+            for (let i = 0; i < this._config.multisampling; ++i) {
+                samples.push(this._getVoxelColour(
                     triangle,
-                    voxelPosition,
-                );
+                    Vector3.random().divScalar(2.0).add(voxelPosition),
+                ))
             }
-
-            voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, this._config.replaceMode);
+            voxelColour = RGBAUtil.average(...samples);
+        } else {
+            voxelColour = this._getVoxelColour(
+                triangle,
+                voxelPosition,
+            );
         }
+
+        voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, this._config.replaceMode);
     }
 
     private _getVoxelColour(triangle: OtS_Triangle, location: Vector3): RGBA {
