@@ -1,12 +1,12 @@
 import { parse } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
-import { RGBAColours, RGBAUtil } from '../colour';
 import { UV } from '../util';
 import { Vector3 } from '../vector';
 import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
 import { OtS_Importer } from './base_importer';
+import { OtS_Colours } from '../colour';
 
 export type OtS_GltfImporterError =
     | { type: 'failed-to-parse' }
@@ -48,7 +48,7 @@ export class OtS_Importer_Gltf extends OtS_Importer {
         const meshMaterials: Map<string, {  }> = new Map();
         meshMaterials.set('NONE', {
             type: 'solid',
-            colour: RGBAUtil.copy(RGBAColours.WHITE),
+            colour: OtS_Colours.WHITE,
             canBeTextured: false,
         });
         let maxIndex = 0;
@@ -122,7 +122,7 @@ export class OtS_Importer_Gltf extends OtS_Importer {
                                     meshMaterials.set(materialName, {
                                         name: materialName,
                                         type: 'solid',
-                                        colour: RGBAUtil.copy(RGBAColours.WHITE),
+                                        colour: OtS_Colours.WHITE,
                                         canBeTextured: true,
                                     });
                                 }

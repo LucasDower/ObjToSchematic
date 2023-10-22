@@ -2,10 +2,8 @@ import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
 import { Vector3 } from './vector';
 import { Triangle } from './triangle';
-import { LinearAllocator } from './linear_allocator';
 import { Axes, Ray, rayIntersectTriangle } from './ray';
-import { Bounds } from './bounds';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
+import { OtS_Colours, RGBA, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { UV } from './util';
 
@@ -155,7 +153,7 @@ export class OtS_VoxelMesh_Converter {
         };
 
         if (isNaN(texcoord.u) || isNaN(texcoord.v)) {
-            RGBAUtil.copy(RGBAColours.MAGENTA);
+            return OtS_Colours.MAGENTA;
         }
 
         return triangle.texture.sample(texcoord.u, texcoord.v);

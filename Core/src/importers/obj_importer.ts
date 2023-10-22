@@ -1,4 +1,4 @@
-import { RGBAColours, RGBAUtil } from '../colour';
+import { OtS_Colours, RGBAUtil } from '../colour';
 import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
 import { Triangle } from '../triangle';
@@ -226,7 +226,7 @@ export class OtS_Importer_Obj extends OtS_Importer {
                 mesh.addSection({
                     name: material,
                     type: 'solid',
-                    colour: RGBAUtil.copy(RGBAColours.WHITE),
+                    colour: OtS_Colours.WHITE,
                     positionData: Float32Array.from(positionData),
                     normalData: Float32Array.from(normalData),
                     indexData: Uint32Array.from(indexData),

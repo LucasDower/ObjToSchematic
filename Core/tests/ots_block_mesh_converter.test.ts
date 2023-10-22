@@ -1,21 +1,20 @@
-import { RGBAColours } from '../src/colour';
 import { OtS_VoxelMesh } from '../src/ots_voxel_mesh';
-import { RGBAUtil } from '../src/colour';
+import { OtS_Colours, RGBAUtil } from '../src/colour';
 import { OtS_BlockMesh_Converter } from '../src/ots_block_mesh_converter';
 
 test('Per-block', () => {
     const voxelMesh = new OtS_VoxelMesh();
-    voxelMesh.addVoxel(0, 0, 0, RGBAUtil.copy(RGBAColours.RED));
-    voxelMesh.addVoxel(1, 0, 0, RGBAUtil.copy(RGBAColours.GREEN));
-    voxelMesh.addVoxel(2, 0, 0, RGBAUtil.copy(RGBAColours.BLUE));
+    voxelMesh.addVoxel(0, 0, 0, OtS_Colours.RED);
+    voxelMesh.addVoxel(1, 0, 0, OtS_Colours.GREEN);
+    voxelMesh.addVoxel(2, 0, 0, OtS_Colours.BLUE);
 
     const converter = new OtS_BlockMesh_Converter();
     converter.setConfig({
         mode: {
             type: 'per-block', data: [
-                { name: 'RED-BLOCK', colour: RGBAUtil.copy(RGBAColours.RED) },
-                { name: 'GREEN-BLOCK', colour: RGBAUtil.copy(RGBAColours.GREEN) },
-                { name: 'BLUE-BLOCK', colour: RGBAUtil.copy(RGBAColours.BLUE) }
+                { name: 'RED-BLOCK', colour: OtS_Colours.RED },
+                { name: 'GREEN-BLOCK', colour: OtS_Colours.GREEN },
+                { name: 'BLUE-BLOCK', colour: OtS_Colours.BLUE }
             ]
         },
     });

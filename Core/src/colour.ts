@@ -21,7 +21,7 @@ export namespace RGBAUtil {
         const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
         const m = v - c;
 
-        let output = RGBAUtil.copy(RGBAColours.BLACK);
+        let output = OtS_Colours.BLACK;
         if (h < 60) {
             output.r = c;
             output.g = x;
@@ -220,15 +220,36 @@ export namespace RGBAUtil {
     export type TColourAccuracy = number;
 }
 
-export namespace RGBAColours {
-    export const RED: RGBA = { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
-    export const GREEN: RGBA = { r: 0.0, g: 1.0, b: 0.0, a: 1.0 };
-    export const BLUE: RGBA = { r: 0.0, g: 0.0, b: 1.0, a: 1.0 };
+export class OtS_Colours {
+    public static get BLACK() {
+        return { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+    }
 
-    export const YELLOW: RGBA = { r: 1.0, g: 1.0, b: 0.0, a: 1.0 };
-    export const CYAN: RGBA = { r: 0.0, g: 1.0, b: 1.0, a: 1.0 };
-    export const MAGENTA: RGBA = { r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
+    public static get WHITE() {
+        return { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
+    }
+    
+    public static get RED() {
+        return { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
+    }
 
-    export const WHITE: RGBA = { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
-    export const BLACK: RGBA = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+    public static get GREEN() {
+        return { r: 0.0, g: 1.0, b: 0.0, a: 1.0 };
+    }
+
+    public static get BLUE() {
+        return { r: 0.0, g: 0.0, b: 1.0, a: 1.0 };
+    }
+
+    public static get YELLOW() {
+        return { r: 1.0, g: 1.0, b: 0.0, a: 1.0 };
+    }
+
+    public static get CYAN() {
+        return { r: 0.0, g: 1.0, b: 1.0, a: 1.0 };
+    }
+
+    public static get MAGENTA() {
+        return { r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
+    }
 }

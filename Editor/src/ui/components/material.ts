@@ -3,8 +3,6 @@ import { MaterialTypeComponent } from "./material_type";
 import { SolidMaterialComponent } from './solid_material';
 import { TexturedMaterialComponent } from "./textured_material";
 import { UIUtil } from "../../util/ui_util";
-import { RGBAColours, RGBAUtil } from "../../../../Core/src/colour";
-import { OtS_Texture } from "../../../../Core/src/ots_texture";
 import { OtS_MeshSectionMetadata } from "ots-core/src/ots_mesh";
 
 export class MaterialComponent extends ConfigComponent<Promise<OtS_MeshSectionMetadata>, HTMLDivElement> {

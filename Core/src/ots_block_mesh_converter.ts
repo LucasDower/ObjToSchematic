@@ -1,9 +1,9 @@
 import { OtS_VoxelMesh } from './ots_voxel_mesh';
 import { OtS_BlockMesh } from './ots_block_mesh';
-import { RGBA, RGBAColours, RGBAUtil } from './colour';
 import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
+import { RGBA, OtS_Colours, RGBAUtil } from './colour';
 
 export type OtS_BlockData_PerBlock<T> = { name: string, colour: T }[];
 
@@ -45,7 +45,7 @@ export class OtS_BlockMesh_Converter {
         this._config = {
             mode: {
                 type: 'per-block', data: [
-                    { name: 'minecraft:stone', colour: RGBAUtil.copy(RGBAColours.WHITE) }
+                    { name: 'minecraft:stone', colour: OtS_Colours.WHITE }
                 ]
             }
         };

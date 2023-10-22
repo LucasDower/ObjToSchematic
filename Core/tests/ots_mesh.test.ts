@@ -1,5 +1,5 @@
-import { RGBAColours, RGBAUtil } from "../src/colour";
 import { OtS_Mesh } from "../src/ots_mesh";
+import { OtS_Colours } from '../src/colour';
 
 test('Mesh Triangles', () => {
     const mesh = OtS_Mesh.create();
@@ -7,7 +7,7 @@ test('Mesh Triangles', () => {
     mesh.addSection({
         name: 'Test Section 1',
         type: 'solid',
-        colour: RGBAUtil.copy(RGBAColours.WHITE),
+        colour: OtS_Colours.WHITE,
         positionData: Float32Array.from([
             0.0, 0.0, 0.0,
             1.0, 2.0, 3.0,
@@ -33,7 +33,7 @@ test('Mesh Triangles', () => {
     mesh.addSection({
         name: 'Test Section 2',
         type: 'solid',
-        colour: RGBAUtil.copy(RGBAColours.WHITE),
+        colour: OtS_Colours.WHITE,
         positionData: Float32Array.from([
             0.0, 0.0, 0.0,
             1.0, 2.0, 3.0,
