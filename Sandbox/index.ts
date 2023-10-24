@@ -96,6 +96,8 @@ import { OtS_Colours } from 'ots-core/src/colour';
     const voxelMesh = voxelMeshConverter.process(mesh);
     console.timeEnd('Voxel Mesh');
 
+    console.log('Voxel Count =', voxelMesh.getVoxelCount());
+
     // 4. Construct a block mesh from the block
     console.time('Block Mesh');
     const blockMeshConverter = new OtS_BlockMesh_Converter();

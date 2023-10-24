@@ -197,7 +197,7 @@ export class AppContext {
                 params: {
                     constraintAxis: components.constraintAxis.getValue(),
                     size: components.size.getValue(),
-                    useMultisampleColouring: components.multisampleColouring.getValue(),
+                    //useMultisampleColouring: components.multisampleColouring.getValue(),
                     enableAmbientOcclusion: components.ambientOcclusion.getValue(),
                     voxelOverlapRule: components.voxelOverlapRule.getValue(),
                 },

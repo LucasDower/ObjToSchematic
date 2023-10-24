@@ -68,7 +68,7 @@ export namespace VoxeliseParams {
     export type Input = {
         constraintAxis: TAxis,
         size: number,
-        useMultisampleColouring: boolean,
+        useMultisampleColouring?: number,
         enableAmbientOcclusion: boolean,
         voxelOverlapRule: OtS_ReplaceMode,
     }

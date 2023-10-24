@@ -2,10 +2,11 @@ import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
 import { TAxis } from './util/type_util';
 import { Vector3 } from './vector';
 import { Triangle } from './triangle';
-import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ } from './ray';
 import { OtS_Colours, RGBA, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { UV } from './util';
+import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ, RayIntersect } from './ray';
+import { findFirstTrueIndex } from './util/array_util';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -62,41 +63,35 @@ export class OtS_VoxelMesh_Converter {
 
         const rayOrigin = new Vector3(0, 0, 0);
 
-        rayOrigin.x = bounds.min.x - 1;
-        for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
-            rayOrigin.y = y;
-            for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
-                rayOrigin.z = z;
-                const intersection = rayIntersectTriangleFastX(rayOrigin, triangle);
-                if (intersection) {
-                    this._handleRayHit(intersection, triangle, voxelMesh);
+        const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
+        const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
+
+        const rasterisePlane = (a0: 'x' | 'y' | 'z', a1: 'x' | 'y' | 'z', a2: 'x' | 'y' | 'z', intersect: RayIntersect) => {
+            rayOrigin[a0] = bounds.min[a0] - 1;
+            for (let y = bounds.min[a1]; y <= bounds.max[a1]; ++y) {
+                rayOrigin[a1] = y; // 2
+                let hasHit = false;
+
+                const start = findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
+                    rayOrigin[a2] = bounds.min[a2] + index;
+                    return intersect(rayOrigin, triangle, edge1, edge2) !== undefined;
+                });
+
+                for (let z = bounds.min[a2] + start; z <= bounds.max[a2]; ++z) {
+                    rayOrigin[a2] = z; // 3
+                    const intersection = intersect(rayOrigin, triangle, edge1, edge2);
+                    if (intersection) {
+                        this._handleRayHit(intersection, triangle, voxelMesh);
+                    } else if (hasHit) {
+                        break;
+                    }
                 }
             }
         }
 
-        rayOrigin.y = bounds.min.y - 1;
-        for (let z = bounds.min.z; z <= bounds.max.z; ++z) {
-            rayOrigin.z = z;
-            for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-                rayOrigin.x = x;
-                const intersection = rayIntersectTriangleFastY(rayOrigin, triangle);
-                if (intersection) {
-                    this._handleRayHit(intersection, triangle, voxelMesh);
-                }
-            }
-        }
-
-        rayOrigin.z = bounds.min.z - 1;
-        for (let x = bounds.min.x; x <= bounds.max.x; ++x) {
-            rayOrigin.x = x;
-            for (let y = bounds.min.y; y <= bounds.max.y; ++y) {
-                rayOrigin.y = y;
-                const intersection = rayIntersectTriangleFastZ(rayOrigin, triangle);
-                if (intersection) {
-                    this._handleRayHit(intersection, triangle, voxelMesh);
-                }
-            }
-        }
+        rasterisePlane('x', 'y', 'z', rayIntersectTriangleFastX);
+        rasterisePlane('y', 'z', 'x', rayIntersectTriangleFastY);
+        rasterisePlane('x', 'x', 'y', rayIntersectTriangleFastZ);
     }
 
     private _handleRayHit(intersection: Vector3, triangle: OtS_Triangle, voxelMesh: OtS_VoxelMesh) {

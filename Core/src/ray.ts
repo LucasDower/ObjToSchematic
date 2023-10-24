@@ -28,12 +28,9 @@ export interface Ray {
     axis: Axes
 }
 
-export type RayIntersect = (origin: Vector3, v0: Vector3, v1: Vector3, v2: Vector3) => (Vector3 | undefined);
+export type RayIntersect = (origin: Vector3, triangle: OtS_Triangle, edge1: Vector3, edge2: Vector3) => (Vector3 | undefined);
 
-export function rayIntersectTriangleFastX(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
-    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
-    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
-
+export function rayIntersectTriangleFastX(origin: Vector3, triangle: OtS_Triangle, edge1: Vector3, edge2: Vector3): (Vector3 | undefined) {
     const h = new Vector3(0, -edge2.z, edge2.y); // Vector3.cross(rayDirection, edge2);
     const a = Vector3.dot(edge1, h);
 
@@ -66,10 +63,7 @@ export function rayIntersectTriangleFastX(origin: Vector3, triangle: OtS_Triangl
     }
 }
 
-export function rayIntersectTriangleFastY(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
-    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
-    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
-
+export function rayIntersectTriangleFastY(origin: Vector3, triangle: OtS_Triangle, edge1: Vector3, edge2: Vector3): (Vector3 | undefined) {
     const h = new Vector3(edge2.z, 0, -edge2.x); // Vector3.cross(rayDirection, edge2);
     const a = Vector3.dot(edge1, h);
 
@@ -102,10 +96,7 @@ export function rayIntersectTriangleFastY(origin: Vector3, triangle: OtS_Triangl
     }
 }
 
-export function rayIntersectTriangleFastZ(origin: Vector3, triangle: OtS_Triangle): (Vector3 | undefined) {
-    const edge1 = Vector3.sub(triangle.data.v1.position, triangle.data.v0.position);
-    const edge2 = Vector3.sub(triangle.data.v2.position, triangle.data.v0.position);
-
+export function rayIntersectTriangleFastZ(origin: Vector3, triangle: OtS_Triangle, edge1: Vector3, edge2: Vector3): (Vector3 | undefined) {
     const h = new Vector3(-edge2.y, edge2.x, 0); // Vector3.cross(rayDirection, edge2);
     const a = Vector3.dot(edge1, h);
 
