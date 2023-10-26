@@ -71,7 +71,6 @@ export class OtS_BlockMesh_Converter {
 
         // TODO: Fallable
         // TODO: Smoothness
-        // TODO: Resolution
         // TODO: Dithering
 
         let neighbourhood: OtS_VoxelMesh_Neighbourhood | undefined;
@@ -80,7 +79,33 @@ export class OtS_BlockMesh_Converter {
             neighbourhood.process(voxelMesh, 'cardinal');
         }
 
+        let caches: Array<Map<number, string>>;
+        if (this._config.mode.type === 'per-face') {
+            caches = new Array<Map<number, string>>(64);
+            for (let i = 0; i < caches.length; ++i) {
+                caches[i] = new Map();
+            }
+        } else {
+            caches = new Array(1);
+            caches[0] = new Map();
+        }
+
         for (const { position, colour } of voxelMesh.getVoxels()) {
+            const binnedColour = RGBAUtil.bin(colour, this._config.resolution ?? 255);
+            const binnedHash = RGBAUtil.hash255(binnedColour);
+
+            let cache = caches[0];
+            if (neighbourhood) {
+                const visibility = neighbourhood.getFaceVisibility(position.x, position.y, position.z);
+                ASSERT(visibility !== null);
+                cache = caches[visibility];
+            }
+            const cachedBlock = cache.get(binnedHash);
+            if (cachedBlock !== undefined) {
+                blockMesh.addBlock(position.x, position.y, position.z, cachedBlock, true);
+                continue;
+            }
+
             let block: (string | null) = null;
             if (this._config.mode.type === 'per-block') {
                 block = this._findClosestBlock_PerBlock(colour);
@@ -92,9 +117,11 @@ export class OtS_BlockMesh_Converter {
                 continue;
             }
 
+            cache.set(binnedHash, block);
+
             blockMesh.addBlock(position.x, position.y, position.z, block, true);
         }
-
+        
         return blockMesh;
     }
 
