@@ -69,7 +69,7 @@ export class OtS_VoxelMesh_Converter {
         const rasterisePlane = (a0: 'x' | 'y' | 'z', a1: 'x' | 'y' | 'z', a2: 'x' | 'y' | 'z', intersect: RayIntersect) => {
             rayOrigin[a0] = bounds.min[a0] - 1;
             for (let y = bounds.min[a1]; y <= bounds.max[a1]; ++y) {
-                rayOrigin[a1] = y; // 2
+                rayOrigin[a1] = y;
                 let hasHit = false;
 
                 const start = findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
@@ -78,7 +78,7 @@ export class OtS_VoxelMesh_Converter {
                 });
 
                 for (let z = bounds.min[a2] + start; z <= bounds.max[a2]; ++z) {
-                    rayOrigin[a2] = z; // 3
+                    rayOrigin[a2] = z;
                     const intersection = intersect(rayOrigin, triangle, edge1, edge2);
                     if (intersection) {
                         this._handleRayHit(intersection, triangle, voxelMesh);
@@ -91,7 +91,7 @@ export class OtS_VoxelMesh_Converter {
 
         rasterisePlane('x', 'y', 'z', rayIntersectTriangleFastX);
         rasterisePlane('y', 'z', 'x', rayIntersectTriangleFastY);
-        rasterisePlane('x', 'x', 'y', rayIntersectTriangleFastZ);
+        rasterisePlane('z', 'x', 'y', rayIntersectTriangleFastZ);
     }
 
     private _handleRayHit(intersection: Vector3, triangle: OtS_Triangle, voxelMesh: OtS_VoxelMesh) {
