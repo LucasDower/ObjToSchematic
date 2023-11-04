@@ -103,15 +103,17 @@ export class Litematic extends IExporter {
         const blockBuffer = this._createBlockBuffer(blockMesh, blockMapping);
 
         const paletteSize = blockMapping.size;
-        const stride = Math.ceil(Math.log2(paletteSize - 1));
-        ASSERT(stride >= 1, `Stride too small: ${stride}`);
+        ASSERT(paletteSize >= 2, `Palette too small`);
+
+        let stride = Math.ceil(Math.log2(paletteSize));
+        stride = Math.max(2, stride);
 
         const expectedLengthBits = blockBuffer.length * stride;
         const requiredLengthBits = ceilToNearest(expectedLengthBits, 64);
         const startOffsetBits = requiredLengthBits - expectedLengthBits;
 
         const requiredLengthBytes = requiredLengthBits / 8;
-        const buffer = new Uint8Array(requiredLengthBytes / 8);
+        const buffer = new Uint8Array(requiredLengthBytes);
 
         // Write first few offset bits
         const fullBytesToWrite = Math.floor(startOffsetBits / 8);
