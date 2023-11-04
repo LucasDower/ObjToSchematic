@@ -3,5 +3,5 @@ import pako from 'pako';
 
 export function saveNBT(nbt: NBT) {
     const uncompressedBuffer = writeUncompressed(nbt, 'big');
-    return pako.deflate(uncompressedBuffer);
+    return pako.gzip(uncompressedBuffer);
 }
