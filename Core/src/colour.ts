@@ -221,35 +221,35 @@ export namespace RGBAUtil {
 }
 
 export class OtS_Colours {
-    public static get BLACK() {
+    public static get BLACK(): RGBA {
         return { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
     }
 
-    public static get WHITE() {
+    public static get WHITE(): RGBA {
         return { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
     }
     
-    public static get RED() {
+    public static get RED(): RGBA {
         return { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
     }
 
-    public static get GREEN() {
+    public static get GREEN(): RGBA {
         return { r: 0.0, g: 1.0, b: 0.0, a: 1.0 };
     }
 
-    public static get BLUE() {
+    public static get BLUE(): RGBA {
         return { r: 0.0, g: 0.0, b: 1.0, a: 1.0 };
     }
 
-    public static get YELLOW() {
+    public static get YELLOW(): RGBA {
         return { r: 1.0, g: 1.0, b: 0.0, a: 1.0 };
     }
 
-    public static get CYAN() {
+    public static get CYAN(): RGBA {
         return { r: 0.0, g: 1.0, b: 1.0, a: 1.0 };
     }
 
-    public static get MAGENTA() {
+    public static get MAGENTA(): RGBA {
         return { r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
     }
 }

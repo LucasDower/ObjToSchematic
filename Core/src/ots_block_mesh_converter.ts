@@ -156,11 +156,13 @@ export class OtS_BlockMesh_Converter {
         let bestDistance = Infinity;
         let bestCandidate: (string | null) = null;
 
+        const visibility = neighbourhood.getFaceVisibility(position.x, position.y, position.z);
+        if (visibility === null) {
+            return null;
+        }
+
         for (const block of this._config.mode.data.blocks) {
-            const visibility = neighbourhood.getFaceVisibility(position.x, position.y, position.z);
-            if (visibility === null) {
-                return null;
-            }
+            
 
             const averageColour: RGBA = { r: 0, g: 0, b: 0, a: 0 };
             {
