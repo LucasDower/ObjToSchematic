@@ -1,12 +1,11 @@
 import { OtS_ReplaceMode, OtS_VoxelMesh } from './ots_voxel_mesh';
-import { TAxis } from './util/type_util';
-import { Vector3 } from './vector';
-import { Triangle } from './triangle';
-import { OtS_Colours, RGBA, RGBAUtil } from './colour';
+import { TAxis, UV } from './util/types';
+import { Vector3 } from './util/vector';
+import { Triangle } from './util/triangle';
+import { OtS_Colours, RGBA, RGBAUtil } from './util/colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
-import { UV } from './util';
-import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ, RayIntersect } from './ray';
-import { OtS_ArrayUtil } from './util/array_util';
+import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ, RayIntersect } from './util/ray';
+import { OtS_Util } from './util/util';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -72,7 +71,7 @@ export class OtS_VoxelMesh_Converter {
                 rayOrigin[a1] = y;
                 let hasHit = false;
 
-                const start = OtS_ArrayUtil.findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
+                const start = OtS_Util.Array.findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
                     rayOrigin[a2] = bounds.min[a2] + index;
                     return intersect(rayOrigin, triangle, edge1, edge2) !== undefined;
                 });

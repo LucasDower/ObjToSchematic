@@ -1,5 +1,5 @@
-import { OtS_Triangle } from './ots_mesh';
-import { ASSERT } from './util/error_util';
+import { OtS_Triangle } from '../ots_mesh';
+import { ASSERT } from './util';
 import { Vector3 } from './vector';
 
 const EPSILON = 0.0000001;

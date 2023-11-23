@@ -1,5 +1,5 @@
 import { RGBA_255 } from './colour';
-import { ASSERT } from './util/error_util';
+import { ASSERT } from './util';
 import { Vector3 } from './vector';
 
 export class Ditherer {

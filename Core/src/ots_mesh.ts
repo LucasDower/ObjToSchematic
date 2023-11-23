@@ -1,12 +1,10 @@
-import { Bounds } from './bounds';
-import { RGBA } from './colour';
-import { degreesToRadians } from './math';
+import { Bounds } from './util/bounds';
+import { RGBA } from './util/colour';
 import { OtS_MeshSection, OtS_MeshUtil } from './ots_materials';
 import { OtS_Texture } from './ots_texture';
-import { UV } from "./util";
-import { ASSERT } from './util/error_util';
-import { Result } from './util/type_util';
-import { Vector3 } from "./vector";
+import { Result, UV } from './util/types';
+import { Vector3 } from "./util/vector";
+import { ASSERT, OtS_Util } from './util/util';
 
 type OtS_VertexData<T> = {
     v0: T,
@@ -116,14 +114,14 @@ export class OtS_Mesh {
     }
 
     public rotate(pitch: number, roll: number, yaw: number) {
-        const cosa = Math.cos(yaw * degreesToRadians);
-        const sina = Math.sin(yaw * degreesToRadians);
+        const cosa = Math.cos(OtS_Util.Numeric.degreesToRadians(yaw));
+        const sina = Math.sin(OtS_Util.Numeric.degreesToRadians(yaw));
 
-        const cosb = Math.cos(pitch * degreesToRadians);
-        const sinb = Math.sin(pitch * degreesToRadians);
+        const cosb = Math.cos(OtS_Util.Numeric.degreesToRadians(pitch));
+        const sinb = Math.sin(OtS_Util.Numeric.degreesToRadians(pitch));
 
-        const cosc = Math.cos(roll * degreesToRadians);
-        const sinc = Math.sin(roll * degreesToRadians);
+        const cosc = Math.cos(OtS_Util.Numeric.degreesToRadians(roll));
+        const sinc = Math.sin(OtS_Util.Numeric.degreesToRadians(roll));
 
         const Axx = cosa*cosb;
         const Axy = cosa*sinb*sinc - sina*cosc;

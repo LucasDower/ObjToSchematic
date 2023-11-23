@@ -1,12 +1,12 @@
 import { parse } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
-import { UV } from '../util';
-import { Vector3 } from '../vector';
+import { Vector3 } from '../util/vector';
 import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
 import { OtS_Importer } from './base_importer';
-import { OtS_Colours } from '../colour';
+import { OtS_Colours } from '../util/colour';
+import { UV } from '../util/types';
 
 export type OtS_GltfImporterError =
     | { type: 'failed-to-parse' }

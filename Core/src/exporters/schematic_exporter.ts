@@ -1,10 +1,10 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BLOCK_IDS } from '../../../Editor/res/block_ids';
-import { saveNBT } from '../util/nbt_util';
-import { Vector3 } from '../vector';
+import { Vector3 } from '../util/vector';
 import { IExporter, TStructureExport } from './base_exporter';
 import { OtS_BlockMesh } from '../ots_block_mesh';
+import { OtS_Util } from '../util/util';
 
 export class Schematic extends IExporter {
     public override getFormatFilter() {
@@ -16,7 +16,7 @@ export class Schematic extends IExporter {
 
     public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
-        return { type: 'single', extension: '.schematic', content: saveNBT(nbt) };
+        return { type: 'single', extension: '.schematic', content: OtS_Util.NBT.saveNBT(nbt) };
     }
 
     private _convertToNBT(blockMesh: OtS_BlockMesh): NBT {

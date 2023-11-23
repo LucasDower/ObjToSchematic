@@ -1,14 +1,11 @@
-import { OtS_Colours, RGBAUtil } from '../colour';
+import { OtS_Colours, RGBAUtil } from '../util/colour';
 import { OtS_Mesh } from '../ots_mesh';
 import { OtS_Texture } from '../ots_texture';
-import { Triangle } from '../triangle';
-import { UV } from '../util';
-import { ASSERT } from '../util/error_util';
-import { RegExpBuilder } from '../util/regex_util';
-import { REGEX_NZ_ANY } from '../util/regex_util';
-import { REGEX_NUMBER } from '../util/regex_util';
-import { Vector3 } from '../vector';
+import { Triangle } from '../util/triangle';
+import { Vector3 } from '../util/vector';
 import { OtS_Importer } from './base_importer';
+import { UV } from '../util/types';
+import { ASSERT, OtS_Util } from '../util/util';
 
 export type OtS_ObjImporterError =
     | { type: 'invalid-encoding' }
@@ -39,41 +36,41 @@ export class OtS_Importer_Obj extends OtS_Importer {
     // Parser context
     private _linesToParse: string[] = [];
 
-    private static _REGEX_USEMTL = new RegExpBuilder()
+    private static _REGEX_USEMTL = new OtS_Util.Regex.RegExpBuilder()
         .add(/^usemtl/)
         .add(/ /)
-        .add(REGEX_NZ_ANY, 'name')
+        .add(OtS_Util.Regex.REGEX_NZ_ANY, 'name')
         .toRegExp();
 
-    private static _REGEX_VERTEX = new RegExpBuilder()
+    private static _REGEX_VERTEX = new OtS_Util.Regex.RegExpBuilder()
         .add(/^v/)
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'x')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'x')
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'y')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'y')
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'z')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'z')
         .toRegExp();
 
-    private static _REGEX_NORMAL = new RegExpBuilder()
+    private static _REGEX_NORMAL = new OtS_Util.Regex.RegExpBuilder()
         .add(/^vn/)
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'x')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'x')
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'y')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'y')
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'z')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'z')
         .toRegExp();
 
-    private static _REGEX_TEXCOORD = new RegExpBuilder()
+    private static _REGEX_TEXCOORD = new OtS_Util.Regex.RegExpBuilder()
         .add(/^vt/)
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'u')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'u')
         .addNonzeroWhitespace()
-        .add(REGEX_NUMBER, 'v')
+        .add(OtS_Util.Regex.REGEX_NUMBER, 'v')
         .toRegExp();
 
-    private static _REGEX_FACE = new RegExpBuilder()
+    private static _REGEX_FACE = new OtS_Util.Regex.RegExpBuilder()
         .add(/^f/)
         .addNonzeroWhitespace()
         .add(/.*/, 'line')

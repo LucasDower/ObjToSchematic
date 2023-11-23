@@ -1,12 +1,10 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
-import { AppConstants } from '../constants';
-import { AppUtil } from '../util';
-import { saveNBT } from '../util/nbt_util';
-import { Vector3 } from '../vector';
+import { AppConstants } from '../util/constants';
+import { Vector3 } from '../util/vector';
 import { IExporter, TStructureExport, TStructureRegion } from './base_exporter';
-import { ASSERT } from '../util/error_util';
 import { OtS_BlockMesh } from '../ots_block_mesh';
+import { ASSERT, OtS_Util } from '../util/util';
 
 export class NBTExporter extends IExporter {
     public override getFormatFilter() {
@@ -78,7 +76,7 @@ export class NBTExporter extends IExporter {
             },
         };
 
-        return saveNBT(nbt);
+        return OtS_Util.NBT.saveNBT(nbt);
     }
 
     public override export(blockMesh: OtS_BlockMesh) {
@@ -98,7 +96,7 @@ export class NBTExporter extends IExporter {
             palette.push({
                 Name: {
                     type: TagType.String,
-                    value: AppUtil.Text.namespaceBlock(blockName),
+                    value: OtS_Util.Text.namespaceBlock(blockName),
                 },
             });
             blockNameToIndex.set(blockName, palette.length - 1);

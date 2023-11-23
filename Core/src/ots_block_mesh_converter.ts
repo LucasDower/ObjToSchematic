@@ -1,10 +1,10 @@
 import { OtS_VoxelMesh } from './ots_voxel_mesh';
 import { OtS_BlockMesh } from './ots_block_mesh';
 import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mesh_neighbourhood';
-import { ASSERT } from './util/error_util';
-import { Vector3 } from './vector';
-import { RGBA, OtS_Colours, RGBAUtil } from './colour';
+import { Vector3 } from './util/vector';
+import { RGBA, RGBAUtil } from './util/colour';
 import { BLOCK_DATA_DEFAULT } from './ots_block_data_default';
+import { ASSERT } from './util/util';
 
 export type OtS_FaceData<T> = {
     up: T,

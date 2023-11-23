@@ -1,17 +1,14 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
-import { AppConstants } from '../constants';
-import { ceilToNearest } from '../math';
-import { AppTypes } from '../util';
-import { ASSERT } from '../util/error_util';
-import { saveNBT } from '../util/nbt_util';
-import { Vector3 } from '../vector';
+import { AppConstants } from '../util/constants';
+import { Vector3 } from '../util/vector';
 import { IExporter, TStructureExport } from './base_exporter';
 import { OtS_BlockMesh } from '../ots_block_mesh';
+import { ASSERT, OtS_Util } from '../util/util';
 
 type BlockID = number;
 type long = [number, number];
-type BlockMapping = Map<AppTypes.TNamespacedBlockName, BlockID>;
+type BlockMapping = Map<string, BlockID>;
 
 export class Litematic extends IExporter {
     public override getFormatFilter() {
@@ -23,7 +20,7 @@ export class Litematic extends IExporter {
 
     public override export(blockMesh: OtS_BlockMesh): TStructureExport {
         const nbt = this._convertToNBT(blockMesh);
-        return { type: 'single', extension: '.litematic', content: saveNBT(nbt) };
+        return { type: 'single', extension: '.litematic', content: OtS_Util.NBT.saveNBT(nbt) };
     }
 
     /**
@@ -108,7 +105,7 @@ export class Litematic extends IExporter {
         stride = Math.max(2, stride);
 
         const expectedLengthBits = blockBuffer.length * stride;
-        const requiredLengthBits = ceilToNearest(expectedLengthBits, 64);
+        const requiredLengthBits = OtS_Util.Numeric.ceilToNearest(expectedLengthBits, 64);
         const startOffsetBits = requiredLengthBits - expectedLengthBits;
 
         const requiredLengthBytes = requiredLengthBits / 8;

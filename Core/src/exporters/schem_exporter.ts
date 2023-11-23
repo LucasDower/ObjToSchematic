@@ -1,13 +1,10 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
-import { AppConstants } from '../constants';
-import { AppUtil } from '../util';
-import { LOG } from '../util/log_util';
-import { MathUtil } from '../util/math_util';
-import { saveNBT } from '../util/nbt_util';
-import { Vector3 } from '../vector';
+import { AppConstants } from '../util/constants';
+import { Vector3 } from '../util/vector';
 import { IExporter, TStructureExport } from './base_exporter';
 import { OtS_BlockMesh } from '../ots_block_mesh';
+import { OtS_Util } from '../util/util';
 
 export class SchemExporter extends IExporter {
     private static SCHEMA_VERSION = 2;
@@ -31,19 +28,17 @@ export class SchemExporter extends IExporter {
 
         let blockIndex = 1;
         for (const blockName of blockMesh.calcBlocksUsed()) {
-            const namespacedBlockName = AppUtil.Text.namespaceBlock(blockName);
+            const namespacedBlockName = OtS_Util.Text.namespaceBlock(blockName);
 
             blockMapping[namespacedBlockName] = { type: TagType.Int, value: blockIndex };
             ++blockIndex;
         }
-        LOG(blockMapping);
 
-        // const paletteObject = SchemExporter._createBlockStatePalette(blockMapping);
         const blockData = new Array<number>(sizeVector.x * sizeVector.y * sizeVector.z).fill(0);
         for (const { position, name } of blockMesh.getBlocks()) {
             const indexVector = Vector3.sub(position, bounds.min);
             const bufferIndex = SchemExporter._getBufferIndex(sizeVector, indexVector);
-            const namespacedBlockName = AppUtil.Text.namespaceBlock(name);
+            const namespacedBlockName = OtS_Util.Text.namespaceBlock(name);
             blockData[bufferIndex] = blockMapping[namespacedBlockName].value;
         }
 
@@ -59,7 +54,7 @@ export class SchemExporter extends IExporter {
         }
 
         for (let i = 0; i < blockEncoding.length; ++i) {
-            blockEncoding[i] = MathUtil.int8(blockEncoding[i]);
+            blockEncoding[i] = OtS_Util.Numeric.int8(blockEncoding[i]);
         }
 
         const nbt: NBT = {
@@ -77,7 +72,7 @@ export class SchemExporter extends IExporter {
             },
         };
 
-        return { type: 'single', extension: '.schem', content: saveNBT(nbt) };
+        return { type: 'single', extension: '.schem', content: OtS_Util.NBT.saveNBT(nbt) };
     }
 
     private static _getBufferIndex(dimensions: Vector3, vec: Vector3) {

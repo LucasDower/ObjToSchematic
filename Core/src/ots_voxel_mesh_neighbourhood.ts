@@ -1,5 +1,5 @@
 import { OtS_VoxelMesh } from "./ots_voxel_mesh";
-import { Vector3 } from "./vector";
+import { Vector3 } from "./util/vector";
 
 export type OtS_Offset = -1 | 0 | 1;
 export type OtS_NeighbourhoodMode = 'cardinal' | 'non-cardinal';

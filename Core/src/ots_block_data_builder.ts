@@ -1,4 +1,4 @@
-import { OtS_ColourAverager, OtS_Colours, RGBA } from "./colour";
+import { OtS_ColourAverager, RGBA } from "./util/colour";
 import { OtS_BlockData_PerBlock, OtS_BlockData_PerFace, OtS_FaceData } from "./ots_block_mesh_converter";
 
 export class OtS_BlockDataBuilder {

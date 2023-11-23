@@ -22,3 +22,7 @@ export type BlockPalette = Set<string>;
 export type Result<T, E = Error> =
   | { ok: true, value: T }
   | { ok: false, error: { code: E, message?: string } };
+
+export type UV = { u: number, v: number };
+
+export type TOptional<T> = T | undefined;

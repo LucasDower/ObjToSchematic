@@ -1,6 +1,6 @@
-import { RGBA, RGBAUtil } from "./colour";
-import { clamp } from "./math";
-import { TTexelExtension, TTexelInterpolation } from "./util/type_util";
+import { RGBA, RGBAUtil } from "./util/colour";
+import { TTexelExtension, TTexelInterpolation } from "./util/types";
+import { OtS_Util } from "./util/util";
 
 export class OtS_Texture {
     private _data: Uint8ClampedArray;
@@ -100,8 +100,8 @@ export class OtS_Texture {
 
     // Expects `x` and `y` to be integers
     private _samplePixel(x: number, y: number): RGBA {
-        const cx = clamp(x, 0, this._width - 1);
-        const cy = clamp(y, 0, this._height - 1);
+        const cx = OtS_Util.Numeric.clamp(x, 0, this._width - 1);
+        const cy = OtS_Util.Numeric.clamp(y, 0, this._height - 1);
 
         const index = 4 * (this._width * cy + cx);
 
@@ -114,7 +114,7 @@ export class OtS_Texture {
     }
 
     private _clampValue(x: number) {
-        return clamp(x, 0.0, 1.0);
+        return OtS_Util.Numeric.clamp(x, 0.0, 1.0);
     }
 
     private _repeatValue(x: number) {

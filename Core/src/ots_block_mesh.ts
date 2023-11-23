@@ -1,7 +1,7 @@
 
-import { Bounds } from "./bounds";
-import { UV } from "./util";
-import { Vector3 } from "./vector"
+import { Bounds } from "./util/bounds";
+import { UV } from "./util/types";
+import { Vector3 } from "./util/vector"
 
 export interface TextureInfo {
     name: string,

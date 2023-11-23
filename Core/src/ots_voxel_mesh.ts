@@ -1,7 +1,7 @@
 
-import { Bounds } from "./bounds";
-import { RGBA, RGBAUtil } from './colour';
-import { Vector3 } from "./vector"
+import { Bounds } from "./util/bounds";
+import { RGBA, RGBAUtil } from './util/colour';
+import { Vector3 } from "./util/vector"
 
 export type OtS_Voxel = {
     position: Vector3,

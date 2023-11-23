@@ -1,5 +1,4 @@
-import { ASSERT } from './util/error_util';
-import { Vector3Hash } from './util/type_util';
+import { Vector3Hash } from './types';
 
 export class Vector3 {
     public x: number;
@@ -25,8 +24,7 @@ export class Vector3 {
     }
 
     static fromArray(arr: number[]) {
-        ASSERT(arr.length === 3);
-        return new Vector3(arr[0], arr[1], arr[2]);
+        return new Vector3(arr[0] ?? 0, arr[1] ?? 0, arr[2] ?? 0);
     }
 
     toArray() {

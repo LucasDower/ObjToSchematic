@@ -4,7 +4,7 @@
  * 1.20.2 blocks.
  */
 
-import { RGBA } from "./colour";
+import { RGBA } from "./util/colour";
 import { OtS_BlockData_PerBlock } from "./ots_block_mesh_converter";
 
 const PER_BLOCK: OtS_BlockData_PerBlock<RGBA> = [

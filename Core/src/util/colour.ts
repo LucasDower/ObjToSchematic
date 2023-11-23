@@ -1,4 +1,4 @@
-import { TBrand } from './util/type_util';
+import { TBrand } from './types';
 
 export type RGBA = {
     r: number,
