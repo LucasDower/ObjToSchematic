@@ -1,8 +1,6 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
 import { BLOCK_IDS } from '../../../Editor/res/block_ids';
-import { BlockMesh } from '../block_mesh';
-import { LOG_WARN } from '../util/log_util';
 import { saveNBT } from '../util/nbt_util';
 import { Vector3 } from '../vector';
 import { IExporter, TStructureExport } from './base_exporter';

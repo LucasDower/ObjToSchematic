@@ -1,4 +1,3 @@
-import { BlockMesh } from '../block_mesh';
 import { OtS_BlockMesh } from '../ots_block_mesh';
 import { IExporter, TStructureExport } from './base_exporter';
 

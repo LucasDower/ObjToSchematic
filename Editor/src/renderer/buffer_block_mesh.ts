@@ -1,10 +1,9 @@
 import { AppConfig } from "../config";
 import { ASSERT } from "../../../Core/src/util/error_util";
-import { AppUtil } from "../../../Core/src/util";
 import { AppConstants } from "../../../Core/src/constants";
-import { Block, BlockMesh } from "../../../Core/src/block_mesh";
 import { BufferGenerator_VoxelMesh, TVoxelMeshBuffer } from "./buffer_voxel_mesh";
 import { OtS_Block, OtS_BlockMesh } from "ots-core/src/ots_block_mesh";
+import { OtS_ArrayUtil } from "ots-core/src/util/array_util";
 
 export type TBlockMeshBuffer = {
     position: { numComponents: 3, data: Float32Array, },
@@ -108,7 +107,7 @@ export class BufferGenerator_BlockMesh {
             newBuffer.blockPosition.data[i * 72 + 0] = this._blocks[blockIndex].position.x;
             newBuffer.blockPosition.data[i * 72 + 1] = this._blocks[blockIndex].position.y;
             newBuffer.blockPosition.data[i * 72 + 2] = this._blocks[blockIndex].position.z;
-            AppUtil.Array.repeatedFill(newBuffer.blockPosition.data, i * 72, 3, 24);
+            OtS_ArrayUtil.repeatedFill(newBuffer.blockPosition.data, i * 72, 3, 24);
         }
 
         return {

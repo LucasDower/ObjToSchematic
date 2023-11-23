@@ -25,16 +25,8 @@ export namespace AppConstants {
     }
 
     export const DATA_VERSION = 3105; // 1.19
-}
 
-export class AppRuntimeConstants {
-    /* Singleton */
-    private static _instance: AppRuntimeConstants;
-    public static get Get() {
-        return this._instance || (this._instance = new this());
-    }
-
-    public readonly FALLABLE_BLOCKS = new Set([
+    export const FALLABLE_BLOCKS = new Set([
         'minecraft:anvil',
         'minecraft:lime_concrete_powder',
         'minecraft:orange_concrete_powder',
@@ -60,7 +52,7 @@ export class AppRuntimeConstants {
         'minecraft:scaffolding',
     ]);
 
-    public readonly TRANSPARENT_BLOCKS = new Set([
+    export const TRANSPARENT_BLOCKS = new Set([
         'minecraft:frosted_ice',
         'minecraft:glass',
         'minecraft:white_stained_glass',
@@ -93,7 +85,7 @@ export class AppRuntimeConstants {
         'minecraft:honey_block',
     ]);
 
-    public readonly GRASS_LIKE_BLOCKS = new Set([
+    export const GRASS_LIKE_BLOCKS = new Set([
         'minecraft:grass_block',
         'minecraft:grass_path',
         'minecraft:podzol',
@@ -103,7 +95,7 @@ export class AppRuntimeConstants {
         'minecraft:farmland',
     ]);
 
-    public readonly EMISSIVE_BLOCKS = new Set([
+    export const EMISSIVE_BLOCKS = new Set([
         'minecraft:respawn_anchor',
         'minecraft:magma_block',
         'minecraft:sculk_catalyst',
@@ -116,7 +108,4 @@ export class AppRuntimeConstants {
         'minecraft:verdant_froglight',
         'minecraft:ochre_froglight',
     ]);
-
-    private constructor() {
-    }
 }

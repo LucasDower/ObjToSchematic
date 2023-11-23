@@ -6,7 +6,7 @@ import { OtS_Colours, RGBA, RGBAUtil } from './colour';
 import { OtS_Mesh, OtS_Triangle } from './ots_mesh';
 import { UV } from './util';
 import { rayIntersectTriangleFastX, rayIntersectTriangleFastY, rayIntersectTriangleFastZ, RayIntersect } from './ray';
-import { findFirstTrueIndex } from './util/array_util';
+import { OtS_ArrayUtil } from './util/array_util';
 
 export type OtS_VoxelMesh_ConverterConfig = {
     constraintAxis: TAxis,
@@ -72,7 +72,7 @@ export class OtS_VoxelMesh_Converter {
                 rayOrigin[a1] = y;
                 let hasHit = false;
 
-                const start = findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
+                const start = OtS_ArrayUtil.findFirstTrueIndex(bounds.max[a2] - bounds.min[a2] + 1, (index: number) => {
                     rayOrigin[a2] = bounds.min[a2] + index;
                     return intersect(rayOrigin, triangle, edge1, edge2) !== undefined;
                 });

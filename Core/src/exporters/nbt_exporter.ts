@@ -1,6 +1,5 @@
 import { NBT, TagType } from 'prismarine-nbt';
 
-import { BlockMesh } from '../block_mesh';
 import { AppConstants } from '../constants';
 import { AppUtil } from '../util';
 import { saveNBT } from '../util/nbt_util';

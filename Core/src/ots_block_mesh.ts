@@ -1,7 +1,22 @@
 
-import { FaceInfo } from "./block_atlas";
 import { Bounds } from "./bounds";
+import { UV } from "./util";
 import { Vector3 } from "./vector"
+
+export interface TextureInfo {
+    name: string,
+    texcoord: UV,
+}
+
+export interface FaceInfo {
+    [face: string]: TextureInfo,
+    up: TextureInfo,
+    down: TextureInfo,
+    north: TextureInfo,
+    south: TextureInfo,
+    east: TextureInfo,
+    west: TextureInfo
+}
 
 export type OtS_Block = {
     position: Vector3,

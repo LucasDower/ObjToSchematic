@@ -20,26 +20,6 @@ export namespace AppUtil {
             return blockName.includes(':');
         }
     }
-
-    export namespace Array {
-
-        /**
-         * An optimised function for repeating a subarray contained within a buffer multiple times by
-         * repeatedly doubling the subarray's length.
-         */
-        export function repeatedFill(buffer: Float32Array, start: number, startLength: number, desiredCount: number) {
-            const pow = AppMath.largestPowerOfTwoLessThanN(desiredCount);
-
-            let len = startLength;
-            for (let i = 0; i < pow; ++i) {
-                buffer.copyWithin(start + len, start, start + len);
-                len *= 2;
-            }
-
-            const finalLength = desiredCount * startLength;
-            buffer.copyWithin(start + len, start, start + finalLength - len);
-        }
-    }
 }
 
 /* eslint-disable */
