@@ -12,5 +12,5 @@
 
       "outDir": "lib"
     },
-    "include": ["src/**/*", "index.ts"]
+    "include": ["src/**/*", "scripts/**/*", "index.ts"]
   }

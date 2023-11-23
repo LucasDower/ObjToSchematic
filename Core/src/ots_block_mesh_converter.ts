@@ -35,10 +35,10 @@ export type OtS_FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'pl
 
 export type OtS_BlockMesh_ConverterConfig = {
     mode: OtS_BlockMesh_DataMode<RGBA>,
-    dithering?: { mode: 'random' | 'ordered', magnitude: number },
-    fallable?: OtS_FallableBehaviour,
-    smoothness?: OtS_BlockMesh_DataMode<number> & { weight: number },
-    resolution?: number, // [1, 255]
+    dithering: { mode: 'random' | 'ordered', magnitude: number } | null,
+    fallable: OtS_FallableBehaviour | null,
+    smoothness: (OtS_BlockMesh_DataMode<number> & { weight: number }) | null,
+    resolution: number, // [1, 255]
 }
 
 export class OtS_BlockMesh_Converter {
@@ -47,6 +47,10 @@ export class OtS_BlockMesh_Converter {
     public constructor() {
         this._config = {
             mode: { type: 'per-block', data: BLOCK_DATA_DEFAULT.PER_BLOCK },
+            resolution: 255,
+            smoothness: null,
+            dithering: null,
+            fallable: 'replace-falling',
         };
     }
 

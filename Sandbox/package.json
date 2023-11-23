@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"No tests\" && exit 0"
+    "test": "echo \"No tests\" && exit 0",
+    "benchmark": "ts-node ./scripts/benchmark.ts"
   },
   "keywords": [],
   "author": "",
