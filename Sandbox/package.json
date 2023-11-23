@@ -12,9 +12,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "commander": "^11.1.0",
     "jpeg-js": "^0.4.4",
     "ots-core": "file:../Core",
     "pngjs": "^7.0.0",
+    "sharp": "^0.32.6",
     "ts-node": "^10.9.1"
   }
 }

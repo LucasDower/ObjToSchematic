@@ -4,19 +4,22 @@ import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from './ots_voxel_mes
 import { ASSERT } from './util/error_util';
 import { Vector3 } from './vector';
 import { RGBA, OtS_Colours, RGBAUtil } from './colour';
+import { BLOCK_DATA_DEFAULT } from './ots_block_data_default';
+
+export type OtS_FaceData<T> = {
+    up: T,
+    down: T,
+    north: T,
+    south: T,
+    east: T,
+    west: T,
+}
 
 export type OtS_BlockData_PerBlock<T> = { name: string, colour: T }[];
 
 export type OtS_BlockTextureData_Block = {
     name: string,
-    textures: {
-        up: string,
-        down: string,
-        north: string,
-        south: string,
-        east: string,
-        west: string,
-    }
+    textures: OtS_FaceData<string>,
 }
 
 export type OtS_BlockData_PerFace<T> = {
@@ -24,7 +27,7 @@ export type OtS_BlockData_PerFace<T> = {
     textures: { [name: string]: T },
 }
 
-type OtS_BlockMesh_DataMode<T> = 
+export type OtS_BlockMesh_DataMode<T> = 
     | { type: 'per-block', data: OtS_BlockData_PerBlock<T> }
     | { type: 'per-face', data: OtS_BlockData_PerFace<T> }
 
@@ -43,11 +46,7 @@ export class OtS_BlockMesh_Converter {
 
     public constructor() {
         this._config = {
-            mode: {
-                type: 'per-block', data: [
-                    { name: 'minecraft:stone', colour: OtS_Colours.WHITE }
-                ]
-            }
+            mode: { type: 'per-block', data: BLOCK_DATA_DEFAULT.PER_BLOCK },
         };
     }
 
