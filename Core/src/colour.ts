@@ -221,6 +221,10 @@ export namespace RGBAUtil {
 }
 
 export class OtS_Colours {
+    public static get NONE(): RGBA {
+        return { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+    }
+    
     public static get BLACK(): RGBA {
         return { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
     }
@@ -251,5 +255,70 @@ export class OtS_Colours {
 
     public static get MAGENTA(): RGBA {
         return { r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
+    }
+}
+
+export class OtS_ColourAverager {
+    private _colour: RGBA;
+    private _weight: number;
+    private _count: number;
+
+    public static Create(): OtS_ColourAverager {
+        return new this();
+    }
+
+    public static From(data: Uint8ClampedArray): RGBA {
+        if (data.length % 4 !== 0) {
+            throw 'Expected data length to be a multiple of 4';
+        }
+
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let a = 0;
+        let weight = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const w = data[i + 3];
+            r += data[i + 0] * w;
+            g += data[i + 1] * w;
+            b += data[i + 2] * w;
+            a += data[i + 3];
+            weight += w;
+        }
+
+        return {
+            r: r / (weight * 255),
+            g: g / (weight * 255),
+            b: b / (weight * 255),
+            a: a / (data.length * 255 / 4),
+        };
+    }
+
+    private constructor() {
+        this._colour = OtS_Colours.NONE;
+        this._weight = 0.0;
+        this._count = 0;
+    }
+
+    public add(colour: RGBA) {
+        const w = colour.a;
+
+        this._colour.r += colour.r * w;
+        this._colour.g += colour.g * w;
+        this._colour.b += colour.b * w;
+        this._colour.a += colour.a;
+        
+        this._weight += w;
+        ++this._count;
+    }
+
+    public compute(): RGBA {
+        return {
+            r: this._colour.r / this._weight,
+            g: this._colour.g / this._weight,
+            b: this._colour.b / this._weight,
+            a: this._colour.a / this._count,
+        };
     }
 }
