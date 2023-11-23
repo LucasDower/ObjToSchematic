@@ -5,6 +5,7 @@
 /Core/node_modules
 /Core/tests/out
 /Core/lib
+/Core/docs
 
 # Editor
 /Editor/node_modules
