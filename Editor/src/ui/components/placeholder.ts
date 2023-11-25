@@ -1,4 +1,4 @@
-import { TTranslationMap } from '../../../loc/base';
+import { TTranslationMap } from '../../loc/base';
 import { DeepLeafKeys, LOC, TLocalisedString } from '../../localiser';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';

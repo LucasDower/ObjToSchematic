@@ -1,5 +1,4 @@
 import { TLocalisedString } from '../localiser';
-import { LOG, LOG_ERROR, LOG_WARN } from '../../../Core/src/util/log_util';
 import { UIUtil } from '../util/ui_util';
 import { HTMLBuilder } from './misc';
 
@@ -79,25 +78,25 @@ export class AppConsole {
     }
 
     public static success(message: TLocalisedString) {
-        LOG(message);
+        console.log(message);
         this.Get._messages.push({ text: message, type: 'success' });
         this.Get.addLast();
     }
 
     public static info(message: TLocalisedString) {
-        LOG(message);
+        console.log(message);
         this.Get._messages.push({ text: message, type: 'info' });
         this.Get.addLast();
     }
 
     public static warning(message: TLocalisedString) {
-        LOG_WARN(message);
+        console.warn(message);
         this.Get._messages.push({ text: message, type: 'warning' });
         this.Get.addLast();
     }
 
     public static error(message: TLocalisedString) {
-        LOG_ERROR(message);
+        console.error(message);
         this.Get._messages.push({ text: message, type: 'error' });
         this.Get.addLast();
     }

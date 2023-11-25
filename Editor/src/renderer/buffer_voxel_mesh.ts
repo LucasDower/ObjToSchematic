@@ -1,13 +1,13 @@
 import { AppConfig } from "../config";
-import { ASSERT } from "../../../Core/src/util/error_util";
-import { Vector3 } from "../../../Core/src/vector";
 import { GeometryTemplates } from "./geometry";
 import { AttributeData } from "./render_buffer";
-import { AppUtil, TOptional } from "../../../Core/src/util";
-import { AppConstants } from "../../../Core/src/constants";
 import { OtSE_AmbientOcclusion } from "./ambient_occlusion";
 import { OtS_Voxel, OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
 import { OtS_VoxelMesh_Neighbourhood } from '../../../Core/src/ots_voxel_mesh_neighbourhood';
+import { TOptional } from "ots-core/src/util/types";
+import { ASSERT, OtS_Util } from "ots-core/src/util/util";
+import { Vector3 } from "ots-core/src/util/vector";
+import { AppConstants } from "ots-core/src/util/constants";
 
 export type TVoxelMeshBuffer = {
     position: { numComponents: 3, data: Float32Array, },
@@ -91,19 +91,19 @@ export class BufferGenerator_VoxelMesh {
             newBuffer.colour.data[i * 96 + 2] = voxel.colour.b;
             newBuffer.colour.data[i * 96 + 3] = voxel.colour.a;
 
-            AppUtil.Array.repeatedFill(newBuffer.colour.data, i * 96, 4, 24);
+            OtS_Util.Array.repeatedFill(newBuffer.colour.data, i * 96, 4, 24);
         }
 
         // Build normal buffer
         {
             newBuffer.normal.data.set(cube.custom.normal, 0);
-            AppUtil.Array.repeatedFill(newBuffer.normal.data, 0, 72, numBufferVoxels);
+            OtS_Util.Array.repeatedFill(newBuffer.normal.data, 0, 72, numBufferVoxels);
         }
 
         // Build texcoord buffer
         {
             newBuffer.texcoord.data.set(cube.custom.texcoord, 0);
-            AppUtil.Array.repeatedFill(newBuffer.texcoord.data, 0, 48, numBufferVoxels);
+            OtS_Util.Array.repeatedFill(newBuffer.texcoord.data, 0, 48, numBufferVoxels);
         }
 
 

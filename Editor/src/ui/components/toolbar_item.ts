@@ -1,7 +1,7 @@
-import { ASSERT } from '../../../../Core/src/util/error_util';
+import { LOC, TLocalisedKey } from '../../localiser';
 import { UIUtil } from '../../util/ui_util';
 import { BaseComponent } from './base';
-import { LOC, TLocalisedKey } from '../../localiser';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export type TToolbarBooleanProperty = 'enabled' | 'active';
 

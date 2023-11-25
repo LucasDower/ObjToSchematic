@@ -1,6 +1,5 @@
+import { ASSERT, OtS_Util } from 'ots-core/src/util/util';
 import { LOC } from '../../localiser';
-import { getRandomID } from '../../../../Core/src/util';
-import { ASSERT } from '../../../../Core/src/util/error_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppIcons } from '../icons';
 import { ConfigComponent } from './config';
@@ -25,7 +24,7 @@ export class ImageComponent extends ConfigComponent<Promise<TImageRawWrap>, HTML
                 inputElement.click();
             });
 
-        this._imageId = getRandomID();
+        this._imageId = OtS_Util.Numeric.getRandomID();
     }
 
     public override _generateInnerHTML() {

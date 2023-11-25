@@ -2,23 +2,21 @@ import ATLAS_VANILLA from '../../res/atlases/vanilla.atlas';
 import * as twgl from 'twgl.js';
 
 import VANILLA_TEXTURE from '../../res/atlases/vanilla.png';
-import { Bounds } from '../../../Core/src/bounds';
 import { ArcballCamera } from './camera';
-import { RGBA, RGBAUtil } from '../../../Core/src/colour';
 import { AppConfig } from '../config';
 import { DebugGeometryTemplates } from './geometry';
 import { RenderBuffer } from './render_buffer';
 import { ShaderManager } from './shaders';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { Vector3 } from '../../../Core/src/vector';
-import { RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
+import { RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams } from '../worker/worker_types';
 import { UIUtil } from '../util/ui_util';
-import { TAxis } from '../../../Core/src/util/type_util';
 import { Atlas } from '../atlas';
-import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
-import { OtS_MeshSection } from 'ots-core/src/ots_materials';
 import { OtS_MeshBuffer } from './buffer_mesh';
 import { OtS_Texture } from 'ots-core/src/ots_texture';
+import { RGBA, RGBAUtil } from 'ots-core/src/util/colour';
+import { Vector3 } from 'ots-core/src/util/vector';
+import { Bounds } from 'ots-core/src/util/bounds';
+import { ASSERT } from 'ots-core/src/util/util';
+import { TAxis } from 'ots-core/src/util/types';
 
 /* eslint-disable */
 export enum MeshType {

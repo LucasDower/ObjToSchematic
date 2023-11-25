@@ -1,7 +1,6 @@
+import { ASSERT } from 'ots-core/src/util/util';
 import { AppContext } from './app_context';
 import { UI } from './ui/layout';
-import { ASSERT } from '../../Core/src/util/error_util';
-import { LOG } from '../../Core/src/util/log_util';
 
 /* eslint-disable */
 export enum EAppEvent {
@@ -68,7 +67,7 @@ export class EventManager {
 
     public broadcast(event: EAppEvent, ...payload: any) {
         if (event !== EAppEvent.onTaskProgress) {
-            LOG('[BROADCAST]', EAppEvent[event], payload);
+            console.log('[BROADCAST]', EAppEvent[event], payload);
         }
 
         const listeners = this._eventsToListeners.get(event);

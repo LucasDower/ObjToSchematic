@@ -1,16 +1,15 @@
-import { BlockMeshParams } from '../../../Core/src/block_mesh';
-import { Bounds } from '../../../Core/src/bounds';
 import { OtS_MeshBuffer } from '../renderer/buffer_mesh';
 import { TStructureExport } from '../../../Core/src/exporters/base_exporter';
 import { TExporters } from '../../../Core/src/exporters/exporters';
 import { TMessage } from '../ui/console';
-import { TAxis } from '../../../Core/src/util/type_util';
-import { Vector3 } from '../../../Core/src/vector';
 import { AppError } from '../util/editor_util';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
 import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
 import { TVoxelMeshBufferDescription } from 'src/renderer/buffer_voxel_mesh';
 import { TBlockMeshBufferDescription } from 'src/renderer/buffer_block_mesh';
+import { Vector3 } from 'ots-core/src/util/vector';
+import { TAxis } from 'ots-core/src/util/types';
+import { Bounds } from 'ots-core/src/util/bounds';
 
 export namespace InitParams {
     export type Input = {
@@ -96,7 +95,9 @@ export type TAtlasId = string;
 export type TPaletteId = string;
 
 export namespace AssignParams {
-    export type Input = BlockMeshParams;
+    export type Input = {
+
+    };
 
     export type Output = {
 

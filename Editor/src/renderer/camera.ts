@@ -1,11 +1,11 @@
 import { m4, v3 } from 'twgl.js';
 
 import { AppConfig } from '../config';
-import { AppMath, between, clamp, degreesToRadians, roundToNearest, SmoothVariable, SmoothVectorVariable } from '../../../Core/src/math';
 import { MouseManager } from '../mouse';
 import { Renderer } from './renderer';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { Vector3 } from '../../../Core/src/vector';
+import { SmoothVariable, SmoothVectorVariable } from '../util/camera_util';
+import { ASSERT, OtS_Util } from 'ots-core/src/util/util';
+import { Vector3 } from 'ots-core/src/util/vector';
 
 export class ArcballCamera {
     public isUserRotating = false;
@@ -41,7 +41,7 @@ export class ArcballCamera {
         this._gl = Renderer.Get._gl;
 
         this._isPerspective = true;
-        this._fov = AppConfig.Get.CAMERA_FOV_DEGREES * degreesToRadians;
+        this._fov = OtS_Util.Numeric.degreesToRadians(AppConfig.Get.CAMERA_FOV_DEGREES);
         this._zNear = 0.5;
         this._zFar = 100.0;
         this._aspect = this._gl.canvas.width / this._gl.canvas.height;
@@ -85,11 +85,11 @@ export class ArcballCamera {
 
         switch (axis) {
             case 'x':
-                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_0) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_180);
+                return OtS_Util.Numeric.nearlyEqual(azimuth, OtS_Util.Numeric.RADIANS_0) || OtS_Util.Numeric.nearlyEqual(azimuth, OtS_Util.Numeric.RADIANS_180);
             case 'y':
-                return AppMath.nearlyEqual(elevation, AppMath.RADIANS_0, 0.002) || AppMath.nearlyEqual(elevation, AppMath.RADIANS_180, 0.002);
+                return OtS_Util.Numeric.nearlyEqual(elevation, OtS_Util.Numeric.RADIANS_0, 0.002) || OtS_Util.Numeric.nearlyEqual(elevation, OtS_Util.Numeric.RADIANS_180, 0.002);
             case 'z':
-                return AppMath.nearlyEqual(azimuth, AppMath.RADIANS_90) || AppMath.nearlyEqual(azimuth, AppMath.RADIANS_270);
+                return OtS_Util.Numeric.nearlyEqual(azimuth, OtS_Util.Numeric.RADIANS_90) || OtS_Util.Numeric.nearlyEqual(azimuth, OtS_Util.Numeric.RADIANS_270);
         }
     }
 
@@ -141,7 +141,7 @@ export class ArcballCamera {
             this._target.addToTarget(new Vector3(dx * mx, 0.0, dz * mx));
         }
 
-        const axisSnapRadius = clamp(AppConfig.Get.ANGLE_SNAP_RADIUS_DEGREES, 0.0, 90.0) * degreesToRadians;
+        const axisSnapRadius = OtS_Util.Numeric.degreesToRadians(OtS_Util.Numeric.clamp(AppConfig.Get.ANGLE_SNAP_RADIUS_DEGREES, 0.0, 90.0));
 
         if (this._shouldSnapCameraAngle()) {
             let shouldSnapToAzimuth = false;
@@ -152,14 +152,14 @@ export class ArcballCamera {
             const azimuth = this._azimuth.getTarget();
             const elevation = this._elevation.getTarget();
 
-            const modAzimuth = Math.abs(azimuth % (90 * degreesToRadians));
+            const modAzimuth = Math.abs(azimuth % (OtS_Util.Numeric.RADIANS_90));
 
-            if (modAzimuth < axisSnapRadius || modAzimuth > (90 * degreesToRadians - axisSnapRadius)) {
+            if (modAzimuth < axisSnapRadius || modAzimuth > (OtS_Util.Numeric.RADIANS_90 - axisSnapRadius)) {
                 shouldSnapToAzimuth = true;
-                snapAngleAzimuth = roundToNearest(azimuth, 90 * degreesToRadians);
+                snapAngleAzimuth = OtS_Util.Numeric.roundToNearest(azimuth, OtS_Util.Numeric.RADIANS_90);
             }
 
-            const elevationSnapPoints = [0, 90, 180].map((x) => x * degreesToRadians);
+            const elevationSnapPoints = [0, 90, 180].map((x) => OtS_Util.Numeric.degreesToRadians(x));
             for (const elevationSnapPoint of elevationSnapPoints) {
                 if (elevationSnapPoint - axisSnapRadius <= elevation && elevation <= elevationSnapPoint + axisSnapRadius) {
                     shouldSnapToElevation = true;
@@ -212,7 +212,7 @@ export class ArcballCamera {
             this._azimuthRelief += mouseDelta.dx;
             this._elevationRelief += mouseDelta.dy;
 
-            if (!between(this._azimuthRelief, -axisSnapRadius, axisSnapRadius) || !between(this._elevationRelief, -axisSnapRadius, axisSnapRadius)) {
+            if (!OtS_Util.Numeric.between(this._azimuthRelief, -axisSnapRadius, axisSnapRadius) || !OtS_Util.Numeric.between(this._elevationRelief, -axisSnapRadius, axisSnapRadius)) {
                 this._azimuth.setTarget(this._azimuth.getTarget() + this._azimuthRelief * 2);
                 this._elevation.setTarget(this._elevation.getTarget() + this._elevationRelief * 2);
                 this._isAngleSnapped = false;

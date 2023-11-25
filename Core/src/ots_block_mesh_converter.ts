@@ -31,7 +31,7 @@ export type OtS_BlockMesh_DataMode<T> =
     | { type: 'per-block', data: OtS_BlockData_PerBlock<T> }
     | { type: 'per-face', data: OtS_BlockData_PerFace<T> }
 
-export type OtS_FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string';
+export type OtS_FallableBehaviour = 'replace-falling' | 'replace-fallable' | 'place-string' | 'do-nothing';
 
 export type OtS_BlockMesh_ConverterConfig = {
     mode: OtS_BlockMesh_DataMode<RGBA>,

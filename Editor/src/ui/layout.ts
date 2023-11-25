@@ -1,17 +1,12 @@
 import Split from 'split.js';
 
-import { locales } from '../../loc/base';
+import { locales } from '../loc/base';
 import { AppContext } from '../app_context';
-import { FallableBehaviour } from '../../../Core/src/block_mesh';
 import { ArcballCamera } from '../renderer/camera';
 import { EAppEvent, EventManager } from '../event';
 import { TExporters } from '../../../Core/src/exporters/exporters';
 import { LOC, Localiser, TLocalisedString } from '../localiser';
 import { MeshType, Renderer } from '../renderer/renderer';
-import { EAction } from '../../../Core/src/util';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { TAxis } from '../../../Core/src/util/type_util';
-import { TDithering } from '../../../Core/src/util/type_util';
 import { UIUtil } from '../util/ui_util';
 import { ButtonComponent } from './components/button';
 import { CheckboxComponent } from './components/checkbox';
@@ -31,7 +26,10 @@ import { AppConfig } from '../config';
 import { OtS_ReplaceMode } from '../../../Core/src/ots_voxel_mesh';
 import { MaterialComponent } from './components/material';
 import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
-import { OtS_MeshSection } from '../../../Core/src/ots_materials';
+import { TAxis, TDithering } from 'ots-core/src/util/types';
+import { ASSERT } from 'ots-core/src/util/util';
+import { OtS_FallableBehaviour } from 'ots-core/src/ots_block_mesh_converter';
+import { OtSE_Action } from '../action';
 
 export type Group = {
     id: string,
@@ -120,7 +118,7 @@ export class UI {
             componentOrder: ['input', 'rotation'],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext?.do(EAction.Import);
+                    this._appContext?.do(OtSE_Action.Import);
                 })
                 .setLabel(LOC('import.button')),
         },
@@ -132,7 +130,7 @@ export class UI {
             componentOrder: [],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext?.do(EAction.Materials);
+                    this._appContext?.do(OtSE_Action.Materials);
                 })
                 .setLabel(LOC('materials.button')),
         },
@@ -212,7 +210,7 @@ export class UI {
             ],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext?.do(EAction.Voxelise);
+                    this._appContext?.do(OtSE_Action.Voxelise);
                 })
                 .setLabel(LOC('voxelise.button')),
         },
@@ -254,7 +252,7 @@ export class UI {
                     .setStep(1)
                     .setLabel('assign.components.dithering_magnitude')
                     .setShouldObeyGroupEnables(false),
-                'fallable': new ComboboxComponent<FallableBehaviour>()
+                'fallable': new ComboboxComponent<OtS_FallableBehaviour>()
                     .addItems([{
                         displayLocKey: 'assign.components.replace_falling',
                         payload: 'replace-falling',
@@ -326,7 +324,7 @@ export class UI {
             ],
             execButton: new ButtonComponent()
                 .setOnClick(() => {
-                    this._appContext?.do(EAction.Assign);
+                    this._appContext?.do(OtSE_Action.Assign);
                 })
                 .setLabel(LOC('assign.button')),
         },
@@ -373,7 +371,7 @@ export class UI {
             execButton: new ButtonComponent()
                 .setLabel(LOC('export.button'))
                 .setOnClick(() => {
-                    this._appContext?.do(EAction.Export);
+                    this._appContext?.do(OtSE_Action.Export);
                 }),
         },
     };
@@ -646,7 +644,7 @@ export class UI {
         });
     }
 
-    private _forEachComponent(action: EAction, functor: (component: ConfigComponent<unknown, unknown>) => void) {
+    private _forEachComponent(action: OtSE_Action, functor: (component: ConfigComponent<unknown, unknown>) => void) {
         const group = this._getGroup(action);
 
         for (const elementName of group.componentOrder) {
@@ -655,35 +653,35 @@ export class UI {
         }
     }
 
-    private _getGroupHeadingLabel(action: EAction): TLocalisedString {
+    private _getGroupHeadingLabel(action: OtSE_Action): TLocalisedString {
         switch (action) {
-            case EAction.Settings:
+            case OtSE_Action.Settings:
                 return LOC('settings.heading');
-            case EAction.Import:
+            case OtSE_Action.Import:
                 return LOC('import.heading');
-            case EAction.Materials:
+            case OtSE_Action.Materials:
                 return LOC('materials.heading');
-            case EAction.Voxelise:
+            case OtSE_Action.Voxelise:
                 return LOC('voxelise.heading');
-            case EAction.Assign:
+            case OtSE_Action.Assign:
                 return LOC('assign.heading');
-            case EAction.Export:
+            case OtSE_Action.Export:
                 return LOC('export.heading');
         }
         ASSERT(false);
     }
 
-    private _getGroupButtonLabel(action: EAction): TLocalisedString {
+    private _getGroupButtonLabel(action: OtSE_Action): TLocalisedString {
         switch (action) {
-            case EAction.Import:
+            case OtSE_Action.Import:
                 return LOC('import.button');
-            case EAction.Materials:
+            case OtSE_Action.Materials:
                 return LOC('materials.button');
-            case EAction.Voxelise:
+            case OtSE_Action.Voxelise:
                 return LOC('voxelise.button');
-            case EAction.Assign:
+            case OtSE_Action.Assign:
                 return LOC('assign.button');
-            case EAction.Export:
+            case OtSE_Action.Export:
                 return LOC('export.button');
         }
         ASSERT(false, `Cannot get label of '${action}'`);
@@ -706,7 +704,7 @@ export class UI {
         });
 
 
-        for (let i = 0; i < EAction.MAX; ++i) {
+        for (let i = 0; i < OtSE_Action.MAX; ++i) {
             const group = this._getGroup(i);
             const header = UIUtil.getElementById(`component_header_${group.id}`);
 
@@ -729,7 +727,7 @@ export class UI {
     /**
      * Rebuilds the HTML for all components in an action group.
      */
-    public refreshComponents(action: EAction) {
+    public refreshComponents(action: OtSE_Action) {
         const group = this._getGroup(action);
 
         const element = document.getElementById(`subcomponents_${group.id}`);
@@ -765,7 +763,7 @@ export class UI {
         `;
     }
 
-    public getActionButton(action: EAction) {
+    public getActionButton(action: OtSE_Action) {
         const group = this._getGroup(action);
         return group.execButton;
     }
@@ -774,7 +772,7 @@ export class UI {
         HeaderComponent.Get.registerEvents();
         HeaderComponent.Get.finalise();
 
-        for (let action = 0; action < EAction.MAX; ++action) {
+        for (let action = 0; action < OtSE_Action.MAX; ++action) {
             this._forEachComponent(action, (component) => {
                 component.registerEvents();
                 component.finalise();
@@ -816,8 +814,8 @@ export class UI {
     /**
      * Enable a specific action.
      */
-    public enable(action: EAction) {
-        if (action < EAction.MAX) {
+    public enable(action: OtSE_Action) {
+        if (action < OtSE_Action.MAX) {
             this._forEachComponent(action, (component) => {
                 component.setEnabled(true);
             });
@@ -828,7 +826,7 @@ export class UI {
     /**
      * Enable all actions up to and including a specific action.
      */
-    public enableTo(action: EAction) {
+    public enableTo(action: OtSE_Action) {
         for (let i = 0; i <= action; ++i) {
             this.enable(i);
         }
@@ -837,8 +835,8 @@ export class UI {
     /**
      * Disable a specific action and its dependent actions.
      */
-    public disable(action: EAction) {
-        for (let i = action; i < EAction.MAX; ++i) {
+    public disable(action: OtSE_Action) {
+        for (let i = action; i < OtSE_Action.MAX; ++i) {
             this._forEachComponent(i, (component) => {
                 component.setEnabled(false);
             });
@@ -851,13 +849,13 @@ export class UI {
      * Disables all the actions.
      */
     public disableAll() {
-        this.disable(EAction.Settings);
+        this.disable(OtSE_Action.Settings);
     }
 
     /**
-     * Util function to get the `Group` associated with an `EAction`.
+     * Util function to get the `Group` associated with an `OtSE_Action`.
      */
-    private _getGroup(action: EAction): Group {
+    private _getGroup(action: OtSE_Action): Group {
         const key = this.uiOrder[action];
         return this._uiDull[key];
     }
@@ -897,6 +895,6 @@ export class UI {
             });
         }
 
-        this.refreshComponents(EAction.Materials);
+        this.refreshComponents(OtSE_Action.Materials);
     }
 }

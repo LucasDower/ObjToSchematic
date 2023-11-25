@@ -1,6 +1,6 @@
 import { OtS_Mesh } from 'ots-core/src/ots_mesh';
-import { RGBA } from 'ots-core/src/colour';
 import { OtS_Texture } from 'ots-core/src/ots_texture';
+import { RGBA } from 'ots-core/src/util/colour';
 
 export type OtS_MeshBuffer = {
     name: string,

@@ -1,4 +1,4 @@
-import { getRandomID } from '../../../../Core/src/util';
+import { OtS_Util } from 'ots-core/src/util/util';
 import { UIUtil } from '../../util/ui_util';
 
 export interface IInterfaceItem {
@@ -18,7 +18,7 @@ export abstract class BaseComponent<T> implements IInterfaceItem {
     private _obeyGroupEnables: boolean;
 
     public constructor() {
-        this._id = getRandomID();
+        this._id = OtS_Util.Numeric.getRandomID();
         this._isEnabled = true;
         this._isHovered = false;
         this._obeyGroupEnables = true;

@@ -1,14 +1,11 @@
 import * as twgl from 'twgl.js';
 
-import { Bounds } from '../../../Core/src/bounds';
-import { RGBA } from '../../../Core/src/colour';
 import { AttributeData, MergeAttributeData, RenderBuffer } from './render_buffer';
-import { Triangle } from '../../../Core/src/triangle';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { Vector3 } from '../../../Core/src/vector';
 import { OtS_VoxelMesh } from '../../../Core/src/ots_voxel_mesh';
-import { OtS_Triangle } from 'ots-core/src/ots_mesh';
-import { OtS_Texture } from 'ots-core/src/ots_texture';
+import { Vector3 } from 'ots-core/src/util/vector';
+import { RGBA } from 'ots-core/src/util/colour';
+import { Bounds } from 'ots-core/src/util/bounds';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export class GeometryTemplates {
     private static readonly _default_cube = twgl.primitives.createCubeVertices(1.0);

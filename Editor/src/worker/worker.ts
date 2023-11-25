@@ -1,6 +1,5 @@
 import { ProgressManager } from '../progress';
 import { StatusHandler } from '../status';
-import { LOG_ERROR } from '../../../Core/src/util/log_util';
 import { WorkerClient } from './worker_client';
 import { TFromWorkerMessage, TToWorkerMessage } from './worker_types';
 import { AppError } from '../util/editor_util';
@@ -97,7 +96,7 @@ export async function doWork(message: TToWorkerMessage): Promise<TFromWorkerMess
                 });
         }
     } catch (e: any) {
-        LOG_ERROR(e);
+        console.error(e);
         return { action: e instanceof AppError ? 'KnownError' : 'UnknownError', error: e as Error };
     }
 }

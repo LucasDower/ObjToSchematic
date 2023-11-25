@@ -2,7 +2,7 @@ import { decode as jpegDecode } from 'jpeg-js';
 import { PNG } from 'pngjs';
 
 import { OtS_Texture } from "../../Core/src/ots_texture";
-import { TTexelExtension, TTexelInterpolation } from "../../Core/src/util/type_util";
+import { TTexelExtension, TTexelInterpolation } from 'ots-core/src/util/types';
 
 export type OtSE_TextureFormat = 'png' | 'jpg';
 

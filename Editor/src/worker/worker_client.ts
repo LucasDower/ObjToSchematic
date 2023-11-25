@@ -1,4 +1,3 @@
-import { BlockMesh } from '../../../Core/src/block_mesh';
 import { BufferGenerator } from '../renderer/buffer_mesh';
 import { EAppEvent, EventManager } from '../event';
 import { IExporter } from '../../../Core/src/exporters/base_exporter';
@@ -6,7 +5,6 @@ import { ExporterFactory } from '../../../Core/src/exporters/exporters';
 import { OtS_ImporterFactory } from '../../../Core/src/importers/importers';
 import { LOC, Localiser } from '../localiser';
 import { ProgressManager, TTaskHandle } from '../progress';
-import { ASSERT } from '../../../Core/src/util/error_util';
 import { AssignParams, ExportParams, ImportParams, InitParams, RenderMeshParams, RenderNextBlockMeshChunkParams, RenderNextVoxelMeshChunkParams, SetMaterialsParams, SettingsParams, TFromWorkerMessage, VoxeliseParams } from './worker_types';
 import { StatusHandler } from '../status';
 import { BufferGenerator_VoxelMesh } from '../renderer/buffer_voxel_mesh';
@@ -17,6 +15,7 @@ import { OtS_Mesh } from '../../../Core/src/ots_mesh';
 import { OtS_Texture } from '../../../Core/src/ots_texture';
 import { OtS_BlockMesh } from 'ots-core/src/ots_block_mesh';
 import { OtS_BlockMesh_Converter } from '../../../Core/src/ots_block_mesh_converter';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export class WorkerClient {
     private static _instance: WorkerClient;

@@ -1,6 +1,6 @@
+import { Vector3 } from 'ots-core/src/util/vector';
 import { OtS_Offset, OtS_VoxelMesh_Neighbourhood } from '../../../Core/src/ots_voxel_mesh_neighbourhood';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { Vector3 } from '../../../Core/src/vector';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export class OtSE_AmbientOcclusion {
     private _occlusionNeighboursIndices!: number[]; // Ew

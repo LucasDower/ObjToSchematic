@@ -1,4 +1,3 @@
-import { TTexelExtension, TTexelInterpolation } from '../../../../Core/src/util/type_util';
 import { HTMLBuilder } from '../misc';
 import { ComboboxComponent } from './combobox';
 import { ConfigComponent } from './config';
@@ -6,7 +5,8 @@ import { ImageComponent } from './image';
 import { OtSE_TextureReader } from '../../texture_reader';
 import { OtS_Texture } from '../../../../Core/src/ots_texture';
 import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
-import { ASSERT } from 'ots-core/src/util/error_util';
+import { TTexelExtension, TTexelInterpolation } from 'ots-core/src/util/types';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export class TexturedMaterialComponent extends ConfigComponent<Promise<OtS_MeshSectionMetadata>, HTMLDivElement> {
     private _interpolation: TTexelInterpolation;

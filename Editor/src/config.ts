@@ -1,5 +1,4 @@
-import { RGBA } from '../../Core/src/colour';
-import { LOG } from '../../Core/src/util/log_util';
+import { RGBA } from "ots-core/src/util/colour";
 
 export class AppConfig {
     /* Singleton */
@@ -49,7 +48,7 @@ export class AppConfig {
     }
 
     public dumpConfig() {
-        LOG(this);
+        console.log(this);
     }
 
     public getVersionString() {

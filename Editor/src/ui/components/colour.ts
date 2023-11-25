@@ -1,4 +1,4 @@
-import { RGBA, RGBAUtil } from '../../../../Core/src/colour';
+import { RGBA, RGBAUtil } from 'ots-core/src/util/colour';
 import { ConfigComponent } from './config';
 
 export class ColourComponent extends ConfigComponent<RGBA, HTMLInputElement> {

@@ -2,8 +2,8 @@ import { OtS_MeshSectionMetadata } from 'ots-core/src/ots_mesh';
 import { ColourComponent } from './colour';
 import { ConfigComponent } from './config';
 import { SliderComponent } from './slider';
-import { ASSERT } from 'ots-core/src/util/error_util';
-import { RGBAUtil } from 'ots-core/src/colour';
+import { RGBAUtil } from 'ots-core/src/util/colour';
+import { ASSERT } from 'ots-core/src/util/util';
 
 export class SolidMaterialComponent extends ConfigComponent<OtS_MeshSectionMetadata, HTMLDivElement> {
     private _colourComponent: ColourComponent;

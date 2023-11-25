@@ -1,6 +1,6 @@
-import { RGBA } from '../../Core/src/colour';
-import { AppTypes, AppUtil, UV } from '../../Core/src/util';
-import { ASSERT } from '../../Core/src/util/error_util';
+import { RGBA } from "ots-core/src/util/colour";
+import { UV } from "ots-core/src/util/types";
+import { ASSERT, OtS_Util } from "ots-core/src/util/util";
 
 export type TAtlasBlockFace = {
     name: string,
@@ -30,11 +30,11 @@ export type TAtlasBlock = {
 export class Atlas {
     public static ATLAS_NAME_REGEX: RegExp = /^[a-zA-Z\-]+$/;
 
-    private _blocks: Map<AppTypes.TNamespacedBlockName, TAtlasBlock>;
+    private _blocks: Map<string, TAtlasBlock>;
     private _atlasSize: number;
 
     private constructor() {
-        this._blocks = new Map<AppTypes.TNamespacedBlockName, TAtlasBlock>();
+        this._blocks = new Map<string, TAtlasBlock>();
         this._atlasSize = 0;
     }
 
@@ -46,7 +46,7 @@ export class Atlas {
         return this._atlasSize;
     }
 
-    public hasBlock(blockName: AppTypes.TNamespacedBlockName): boolean {
+    public hasBlock(blockName: string): boolean {
         return this._blocks.has(blockName);
     }
 
@@ -67,7 +67,7 @@ export class Atlas {
         };
 
         for (const block of atlasData.blocks) {
-            ASSERT(AppUtil.Text.isNamespacedBlock(block.name), 'Atlas block not namespaced');
+            ASSERT(OtS_Util.Text.isNamespacedBlock(block.name), 'Atlas block not namespaced');
 
             const atlasBlock: TAtlasBlock = {
                 name: block.name,

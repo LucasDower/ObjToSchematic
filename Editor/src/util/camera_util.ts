@@ -1,5 +1,5 @@
-import { clamp } from "ots-core/src/math";
-import { Vector3 } from "ots-core/src/vector";
+import { OtS_Util } from "ots-core/src/util/util";
+import { Vector3 } from "ots-core/src/util/vector";
 
 export class SmoothVariable {
     private _actual: number;
@@ -22,11 +22,11 @@ export class SmoothVariable {
     }
 
     public addToTarget(delta: number) {
-        this._target = clamp(this._target + delta, this._min, this._max);
+        this._target = OtS_Util.Numeric.clamp(this._target + delta, this._min, this._max);
     }
 
     public setTarget(target: number) {
-        this._target = clamp(target, this._min, this._max);
+        this._target = OtS_Util.Numeric.clamp(target, this._min, this._max);
     }
 
     public setActual(actual: number) {

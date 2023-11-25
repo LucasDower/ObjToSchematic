@@ -1,5 +1,4 @@
-import { clamp, mapRange, wayThrough } from '../../../../Core/src/math';
-import { ASSERT } from '../../../../Core/src/util/error_util';
+import { ASSERT, OtS_Util } from 'ots-core/src/util/util';
 import { UIUtil } from '../../util/ui_util';
 import { ConfigComponent } from './config';
 
@@ -159,7 +158,7 @@ export class SliderComponent extends ConfigComponent<number, HTMLDivElement> {
     }
 
     protected override _onValueChanged(): void {
-        const percentage = wayThrough(this.getValue(), this._min, this._max);
+        const percentage = OtS_Util.Numeric.wayThrough(this.getValue(), this._min, this._max);
         ASSERT(percentage >= 0.0 && percentage <= 1.0);
 
         UIUtil.getElementById(this._getSliderBarId()).style.width = `${percentage * 100}%`;
@@ -172,7 +171,7 @@ export class SliderComponent extends ConfigComponent<number, HTMLDivElement> {
         }
 
         this._internalValue -= (e.deltaY / 150) * this._step;
-        this._internalValue = clamp(this._internalValue, this._min, this._max);
+        this._internalValue = OtS_Util.Numeric.clamp(this._internalValue, this._min, this._max);
 
         this._onInternalValueUpdated();
     }
@@ -186,8 +185,8 @@ export class SliderComponent extends ConfigComponent<number, HTMLDivElement> {
         const left = box.x;
         const right = box.x + box.width;
 
-        this._internalValue = mapRange(e.clientX, left, right, this._min, this._max);
-        this._internalValue = clamp(this._internalValue, this._min, this._max);
+        this._internalValue = OtS_Util.Numeric.mapRange(e.clientX, left, right, this._min, this._max);
+        this._internalValue = OtS_Util.Numeric.clamp(this._internalValue, this._min, this._max);
 
         this._onInternalValueUpdated();
     }
@@ -197,7 +196,7 @@ export class SliderComponent extends ConfigComponent<number, HTMLDivElement> {
 
         const typedNumber = parseFloat(elementValue.value);
         if (!isNaN(typedNumber)) {
-            this._internalValue = clamp(typedNumber, this._min, this._max);
+            this._internalValue = OtS_Util.Numeric.clamp(typedNumber, this._min, this._max);
         }
         this._onInternalValueUpdated();
     }

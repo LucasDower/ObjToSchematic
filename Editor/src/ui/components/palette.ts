@@ -1,7 +1,4 @@
-import { PALETTE_ALL_RELEASE } from '../../../res/palettes/all';
 import { LOC } from '../../localiser';
-import { AppUtil } from '../../../../Core/src/util';
-import { ASSERT } from '../../../../Core/src/util/error_util';
 import { download } from '../../util/file_util';
 import { UIUtil } from '../../util/ui_util';
 import { AppConsole } from '../console';
@@ -9,7 +6,10 @@ import { AppIcons } from '../icons';
 import { CheckboxComponent } from './checkbox';
 import { ConfigComponent } from './config';
 import { ToolbarItemComponent } from './toolbar_item';
-import { BlockPalette } from '../../../../Core/src/util/type_util';
+import { BLOCK_DATA_DEFAULT } from '../../../../Core/src/ots_block_data_default';
+import { ASSERT, OtS_Util } from 'ots-core/src/util/util';
+
+type BlockPalette = Set<string>;
 
 export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivElement> {
     private _checkboxes: { block: string, element: CheckboxComponent }[];
@@ -18,15 +18,22 @@ export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivEleme
     private _deselectAll: ToolbarItemComponent;
     private _importFrom: ToolbarItemComponent;
     private _exportTo: ToolbarItemComponent;
+    private _blocksAvailable: Set<string>;
 
     public constructor() {
         super();
 
-        this._palette = new Set(PALETTE_ALL_RELEASE);
+        const blocksAvailable = BLOCK_DATA_DEFAULT.PER_BLOCK.map((block) => {
+            return block.name;
+        });
+
+        this._blocksAvailable = new Set(blocksAvailable);
+
+        this._palette = new Set(blocksAvailable);
         this._setValue(this._palette);
 
         this._checkboxes = [];
-        PALETTE_ALL_RELEASE.forEach((block) => {
+        blocksAvailable.forEach((block) => {
             this._checkboxes.push({
                 block: block,
                 element: new CheckboxComponent()
@@ -87,7 +94,7 @@ export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivEleme
         const countSelected = this.getValue().size;
 
         this._deselectAll.setEnabled(this.enabled && countSelected > 0);
-        this._selectAll.setEnabled(this.enabled && countSelected < PALETTE_ALL_RELEASE.length);
+        this._selectAll.setEnabled(this.enabled && countSelected < this._blocksAvailable.size);
     }
 
     private _onReadPaletteFile(text: string) {
@@ -111,7 +118,7 @@ export class PaletteComponent extends ConfigComponent<BlockPalette, HTMLDivEleme
             }
             ++countFound;
 
-            if (!AppUtil.Text.isNamespacedBlock(blockName)) {
+            if (!OtS_Util.Text.isNamespacedBlock(blockName)) {
                 AppConsole.error(LOC('assign.block_not_namespaced', { block_name: blockName }));
             } else {
                 const checkboxIndex = this._checkboxes.findIndex((x) => x.block === blockName);

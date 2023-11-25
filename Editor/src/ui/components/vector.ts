@@ -1,7 +1,7 @@
-import { TAxis } from '../../../../Core/src/util/type_util';
+import { Vector3 } from 'ots-core/src/util/vector';
 import { UIUtil } from '../../util/ui_util';
-import { Vector3 } from '../../../../Core/src/vector';
 import { ConfigComponent } from './config';
+import { TAxis } from 'ots-core/src/util/types';
 
 export class VectorComponent extends ConfigComponent<Vector3, HTMLDivElement> {
     private _mouseover: TAxis | null;

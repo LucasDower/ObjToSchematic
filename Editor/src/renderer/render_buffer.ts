@@ -1,7 +1,6 @@
+import { ASSERT } from 'ots-core/src/util/util';
 import * as twgl from 'twgl.js';
-
 import { Renderer } from './renderer';
-import { ASSERT } from '../../../Core/src/util/error_util';
 
 export interface Attribute {
     name: string,

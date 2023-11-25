@@ -1,7 +1,6 @@
 import ATLAS_VANILLA from '../res/atlases/vanilla.atlas';
 
 import { AppAnalytics } from './analytics';
-import { FallableBehaviour } from '../../Core/src/block_mesh';
 import { ArcballCamera } from './renderer/camera';
 import { AppConfig } from './config';
 import { EAppEvent, EventManager } from './event';
@@ -10,13 +9,13 @@ import { MouseManager } from './mouse';
 import { MeshType, Renderer } from './renderer/renderer';
 import { AppConsole, TMessage } from './ui/console';
 import { UI } from './ui/layout';
-import { EAction } from '../../Core/src/util';
-import { ASSERT } from '../../Core/src/util/error_util';
 import { download, downloadAsZip } from './util/file_util';
-import { LOG_ERROR, Logger } from '../../Core/src/util/log_util';
-import { Vector3 } from '../../Core/src/vector';
 import { WorkerController } from './worker/worker_controller';
 import { TFromWorkerMessage } from './worker/worker_types';
+import { OtSE_Action } from './action';
+import { ASSERT } from 'ots-core/src/util/util';
+import { Vector3 } from 'ots-core/src/util/vector';
+import { OtS_FallableBehaviour } from 'ots-core/src/ots_block_mesh_converter';
 
 export class AppContext {
     /* Singleton */
@@ -26,7 +25,7 @@ export class AppContext {
     }
 
     private _workerController: WorkerController;
-    private _lastAction?: EAction;
+    private _lastAction?: OtSE_Action;
     public minConstraint?: { x: number, z: number };
     public maxConstraint?: { x: number, z: number };
     private _loadedFilename: string | null;
@@ -41,10 +40,6 @@ export class AppContext {
 
         await Localiser.Get.init();
         AppConsole.info(LOC('init.initialising'));
-
-        Logger.Get.enableLOG();
-        Logger.Get.enableLOGMAJOR();
-        Logger.Get.enableLOGWARN();
 
         AppConfig.Get.dumpConfig();
 
@@ -62,7 +57,7 @@ export class AppContext {
         window.addEventListener('contextmenu', (e) => e.preventDefault());
 
         this.Get._workerController.execute({ action: 'Init', params: {}}).then(() => {
-            UI.Get.enableTo(EAction.Import);
+            UI.Get.enableTo(OtSE_Action.Import);
             AppConsole.success(LOC('init.ready'));
         });
 
@@ -99,7 +94,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Import)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Import)?.resetLoading();
             if (this._handleErrors(resultImport)) {
                 return false;
             }
@@ -132,7 +127,7 @@ export class AppContext {
                 params: {},
             });
 
-            UI.Get.getActionButton(EAction.Import)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Import)?.resetLoading();
             if (this._handleErrors(resultRender)) {
                 return false;
             }
@@ -164,7 +159,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Materials)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Materials)?.resetLoading();
             if (this._handleErrors(resultMaterials)) {
                 return false;
             }
@@ -203,7 +198,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Voxelise)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Voxelise)?.resetLoading();
             if (this._handleErrors(resultVoxelise)) {
                 return false;
             }
@@ -226,7 +221,7 @@ export class AppContext {
                     },
                 });
 
-                UI.Get.getActionButton(EAction.Voxelise)?.resetLoading();
+                UI.Get.getActionButton(OtSE_Action.Voxelise)?.resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -263,7 +258,7 @@ export class AppContext {
                     blockPalette: components.blockPalette.getValue(),
                     dithering: components.dithering.getValue(),
                     ditheringMagnitude: components.ditheringMagnitude.getValue(),
-                    fallable: components.fallable.getValue() as FallableBehaviour,
+                    fallable: components.fallable.getValue(),
                     resolution: Math.pow(2, components.colourAccuracy.getValue()),
                     calculateLighting: components.calculateLighting.getValue(),
                     lightThreshold: components.lightThreshold.getValue(),
@@ -273,7 +268,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Assign)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Assign)?.resetLoading();
             if (this._handleErrors(resultAssign)) {
                 return false;
             }
@@ -297,7 +292,7 @@ export class AppContext {
                     },
                 });
 
-                UI.Get.getActionButton(EAction.Assign)?.resetLoading();
+                UI.Get.getActionButton(OtSE_Action.Assign)?.resetLoading();
                 if (this._handleErrors(resultRender)) {
                     return false;
                 }
@@ -314,7 +309,7 @@ export class AppContext {
         AppAnalytics.Event('assign', {
             dithering: components.dithering.getValue(),
             ditheringMagnitude: components.ditheringMagnitude.getValue(),
-            fallable: components.fallable.getValue() as FallableBehaviour,
+            fallable: components.fallable.getValue(),
             resolution: Math.pow(2, components.colourAccuracy.getValue()),
             calculateLighting: components.calculateLighting.getValue(),
             lightThreshold: components.lightThreshold.getValue(),
@@ -338,7 +333,7 @@ export class AppContext {
                 },
             });
 
-            UI.Get.getActionButton(EAction.Export)?.resetLoading();
+            UI.Get.getActionButton(OtSE_Action.Export)?.resetLoading();
             if (this._handleErrors(resultExport)) {
                 return false;
             }
@@ -377,22 +372,21 @@ export class AppContext {
             return true;
         } else if (result.action === 'UnknownError') {
             AppConsole.error(LOC('something_went_wrong'));
-            LOG_ERROR(result.error);
             return true;
         }
         return false;
     }
 
-    public async do(action: EAction) {
+    public async do(action: OtSE_Action) {
         // Disable the UI while the worker is working
         UI.Get.disableAll();
 
         this._lastAction = action;
 
-        const success = await this._executeAction(action);
+        const success = await this._executOtSE_Action(action);
         if (success) {
-            if (action === EAction.Import) {
-                UI.Get.enableTo(EAction.Voxelise);
+            if (action === OtSE_Action.Import) {
+                UI.Get.enableTo(OtSE_Action.Voxelise);
             } else {
                 UI.Get.enableTo(action + 1);
             }
@@ -407,17 +401,17 @@ export class AppContext {
         });
     }
 
-    private async _executeAction(action: EAction): Promise<boolean> {
+    private async _executOtSE_Action(action: OtSE_Action): Promise<boolean> {
         switch (action) {
-            case EAction.Import:
+            case OtSE_Action.Import:
                 return await this._import();
-            case EAction.Materials:
+            case OtSE_Action.Materials:
                 return await this._materials();
-            case EAction.Voxelise:
+            case OtSE_Action.Voxelise:
                 return await this._voxelise();
-            case EAction.Assign:
+            case OtSE_Action.Assign:
                 return await this._assign();
-            case EAction.Export:
+            case OtSE_Action.Export:
                 return await this._export();
         }
         ASSERT(false);

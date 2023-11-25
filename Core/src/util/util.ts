@@ -8,17 +8,6 @@ export function ASSERT(condition: any, errorMessage: string = 'Assertion Failed'
     }
 }
 
-// TODO: Move to Editor
-export enum EAction {
-    Settings = 0,
-    Import = 1,
-    Materials = 2,
-    Voxelise = 3,
-    Assign = 4,
-    Export = 5,
-    MAX = 6,
-}
-
 export namespace OtS_Util {
 
     export namespace Regex {

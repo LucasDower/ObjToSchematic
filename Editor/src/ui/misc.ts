@@ -1,4 +1,4 @@
-import { ASSERT } from '../../../Core/src/util/error_util';
+import { ASSERT } from "ots-core/src/util/util";
 
 export class HTMLBuilder {
     private _html: string;

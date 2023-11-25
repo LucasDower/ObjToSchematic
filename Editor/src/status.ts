@@ -1,6 +1,5 @@
 import { TLocalisedString } from './localiser';
 import { TMessage } from './ui/console';
-import { LOG, LOG_ERROR, LOG_WARN } from '../../Core/src/util/log_util';
 
 /**
  * `StatusHandler` is used to track success, info, warning, and error messages.
@@ -51,13 +50,13 @@ export class StatusHandler {
             switch (message.type) {
                 case 'info':
                 case 'success':
-                    LOG(message.text);
+                    console.log(message.text);
                     break;
                 case 'warning':
-                    LOG_WARN(message.text);
+                    console.warn(message.text);
                     break;
                 case 'error':
-                    LOG_ERROR(message.text);
+                    console.error(message.text);
                     break;
             }
         });

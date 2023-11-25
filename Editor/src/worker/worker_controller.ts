@@ -1,7 +1,6 @@
+import { ASSERT } from 'ots-core/src/util/util';
 import { AppConfig } from '../config';
 import { EAppEvent, EventManager } from '../event';
-import { ASSERT } from '../../../Core/src/util/error_util';
-import { LOG } from '../../../Core/src/util/log_util';
 import { doWork } from './worker';
 // @ts-ignore
 import AppWorker from './worker_interface.worker';
@@ -92,7 +91,7 @@ export class WorkerController {
 
         if (endTimer) {
             const deltaTime = Date.now() - this._jobStartTime;
-            LOG(`[WorkerController]: '${this._jobPending.id}' completed in ${deltaTime}ms`);
+            console.log(`[WorkerController]: '${this._jobPending.id}' completed in ${deltaTime}ms`);
             this._timerOn = false;
         }
 
@@ -115,7 +114,7 @@ export class WorkerController {
         }
 
         if (!this._timerOn) {
-            LOG(`[WorkerController]: Starting Job '${this._jobPending.id}'`);
+            console.log(`[WorkerController]: Starting Job '${this._jobPending.id}'`);
             //LOG(`[WorkerController]: ${JSON.stringify(this._jobPending.payload, null, 4)}`);
             this._jobStartTime = Date.now();
             this._timerOn = true;
