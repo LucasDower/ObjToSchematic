@@ -3,7 +3,7 @@ import { OtS_Colours, RGBAUtil } from '../src/colour';
 import { OtS_BlockMesh_Converter } from '../src/ots_block_mesh_converter';
 
 test('Per-block', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.RED);
     voxelMesh.addVoxel(1, 0, 0, OtS_Colours.GREEN);
     voxelMesh.addVoxel(2, 0, 0, OtS_Colours.BLUE);
@@ -32,7 +32,7 @@ test('Per-block', () => {
 });
 
 test('Per-face', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.RED);
     voxelMesh.addVoxel(0, -1, 0, OtS_Colours.BLUE);
     voxelMesh.addVoxel(1, 0, 0, OtS_Colours.BLUE);

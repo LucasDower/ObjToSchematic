@@ -3,7 +3,7 @@ import { OtS_VoxelMesh } from '../src/ots_voxel_mesh';
 import { OtS_FaceVisibility, OtS_VoxelMesh_Neighbourhood } from '../src/ots_voxel_mesh_neighbourhood';
 
 test('VoxelMesh Neighbourhood #1', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
 
     const neighbourhood = new OtS_VoxelMesh_Neighbourhood();
@@ -19,7 +19,7 @@ test('VoxelMesh Neighbourhood #2', () => {
 });
 
 test('VoxelMesh Neighbourhood #3', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(0, 1, 0, OtS_Colours.WHITE, 'replace');
 
@@ -34,7 +34,7 @@ test('VoxelMesh Neighbourhood #3', () => {
 });
 
 test('VoxelMesh Neighbourhood #4', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(1, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(0, 1, 0, OtS_Colours.WHITE, 'replace');
@@ -61,7 +61,7 @@ test('VoxelMesh Neighbourhood #5', () => {
 });
 
 test('VoxelMesh Neighbourhood #6', () => {
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(1, 1, 1, OtS_Colours.WHITE, 'replace');
 
@@ -74,7 +74,7 @@ test('VoxelMesh Neighbourhood #6', () => {
 
 test('VoxelMesh Neighbourhood #6', () => {
     // Checking a non-cardinal neighbour when processing using 'cardinal' mode
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(1, 1, 1, OtS_Colours.WHITE, 'replace');
 
@@ -92,7 +92,7 @@ test('VoxelMesh Neighbourhood #6', () => {
 
 test('VoxelMesh Neighbourhood #6', () => {
     // Checking a cardinal neighbour when processing using 'non-cardinal' mode
-    const voxelMesh = new OtS_VoxelMesh();
+    const voxelMesh = OtS_VoxelMesh.Create();
     voxelMesh.addVoxel(0, 0, 0, OtS_Colours.WHITE, 'replace');
     voxelMesh.addVoxel(1, 0, 0, OtS_Colours.WHITE, 'replace');
 

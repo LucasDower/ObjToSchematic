@@ -20,20 +20,38 @@ export class OtS_VoxelMesh {
     private _bounds: Bounds;
     private _replaceMode: OtS_ReplaceMode;
 
-    public constructor() {
+    /**
+     * Create a new voxel mesh
+     * @returns A new `OtS_VoxelMesh` instance
+     */
+    public static Create(): OtS_VoxelMesh {
+        return new OtS_VoxelMesh();
+    }
+
+    private constructor() {
         this._voxels = new Map();
         this._bounds = Bounds.getEmptyBounds();
         this._isBoundsDirty = false;
         this._replaceMode = 'average';
     }
 
+    /**
+     * Set the behaviour for what should happen when adding a voxel in a
+     * position where one already exists
+     * @param replaceMode The behaviour to set
+     */
     public setReplaceMode(replaceMode: OtS_ReplaceMode) {
         this._replaceMode = replaceMode;
     }
 
-    public addVoxel(x: number, y: number, z: number, colour: RGBA, replaceMode?: OtS_ReplaceMode) {
-        const useReplaceMode = replaceMode ?? this._replaceMode;
-
+    /**
+     * Add a voxel at a position with a particular colour
+     * @param x The x-coordinate (north/south)
+     * @param y The y-coordinate (up/down)
+     * @param z The z-coordinate (east/west)
+     * @param colour The colour of the voxel
+     */
+    public addVoxel(x: number, y: number, z: number, colour: RGBA) {
         const key = Vector3.Hash(x, y, z);
         let voxel: (OtS_Voxel_Internal | undefined) = this._voxels.get(key);
 
@@ -48,13 +66,13 @@ export class OtS_VoxelMesh {
             //this._bounds.extendByPoint(position);
             this._isBoundsDirty = true;
         } else {
-            if (useReplaceMode === 'average') {
+            if (this._replaceMode === 'average') {
                 voxel.colour.r = ((voxel.colour.r * voxel.collisions) + colour.r) / (voxel.collisions + 1);
                 voxel.colour.g = ((voxel.colour.g * voxel.collisions) + colour.g) / (voxel.collisions + 1);
                 voxel.colour.b = ((voxel.colour.b * voxel.collisions) + colour.b) / (voxel.collisions + 1);
                 voxel.colour.a = ((voxel.colour.a * voxel.collisions) + colour.a) / (voxel.collisions + 1);
                 ++voxel.collisions;
-            } else if (useReplaceMode === 'replace') {
+            } else if (this._replaceMode === 'replace') {
                 voxel.colour = RGBAUtil.copy(colour);
                 voxel.collisions = 1;
             }
@@ -62,7 +80,11 @@ export class OtS_VoxelMesh {
     }
 
     /**
-     * Remove a voxel from a given location.
+     * Remoave a voxel at a position
+     * @param x The x-coordinate (north/south)
+     * @param y The y-coordinate (up/down)
+     * @param z The z-coordinate (east/west)
+     * @returns Whether or not a voxel was found and removed
      */
     public removeVoxel(x: number, y: number, z: number): boolean {
         const key = Vector3.Hash(x, y, z);
@@ -72,9 +94,11 @@ export class OtS_VoxelMesh {
     }
 
     /**
-     * Returns the colour of a voxel at a location, if one exists.
-     * @note Modifying the returned colour will not update the voxel's colour.
-     * For that, use `addVoxel` with the replaceMode set to 'replace'
+     * Returns a copy of the voxel at a location, if one exists
+     * @param x The x-coordinate (north/south)
+     * @param y The y-coordinate (up/down)
+     * @param z The z-coordinate (east/west)
+     * @returns The copy of the voxel or null if one does not exist
      */
     public getVoxelAt(x: number, y: number, z: number): (OtS_Voxel | null) {
         const key = Vector3.Hash(x, y, z);
@@ -91,15 +115,23 @@ export class OtS_VoxelMesh {
     }
 
     /**
-     * Get whether or not there is a voxel at a given location.
+     * Get whether or not there is a voxel at a given location
+     * @param x The x-coordinate (north/south)
+     * @param y The y-coordinate (up/down)
+     * @param z The z-coordinate (east/west)
+     * @returns Whether or not a voxel is at this location
      */
-    public isVoxelAt(x: number, y: number, z: number) {
+    public isVoxelAt(x: number, y: number, z: number): boolean {
         const key = Vector3.Hash(x, y, z);
         return this._voxels.has(key);
     }
 
     /**
-     * Get whether or not there is a opaque voxel at a given location.
+     * Get whether or not there is a opaque voxel at a given location
+     * @param x The x-coordinate (north/south)
+     * @param y The y-coordinate (up/down)
+     * @param z The z-coordinate (east/west)
+     * @returns Whether or not an opaque voxel is at this location
      */
     public isOpaqueVoxelAt(x: number, y: number, z: number) {
         const voxel = this.getVoxelAt(x, y, z);
@@ -107,7 +139,8 @@ export class OtS_VoxelMesh {
     }
 
     /**
-     * Get the bounds/dimensions of the VoxelMesh.
+     * Get the bounds/dimensions of the voxel mesh
+     * @returns The bounds of the voxel mesh
      */
     public getBounds(): Bounds {
         if (this._isBoundsDirty) {
@@ -129,7 +162,8 @@ export class OtS_VoxelMesh {
 
     /**
      * Iterate over the voxels in this VoxelMesh, note that these are copies
-     * and editing each entry will not modify the underlying voxel.
+     * and editing each entry will not modify the underlying voxel
+     * @returns An iterator to the voxels
      */
     public getVoxels(): IterableIterator<OtS_Voxel> {
         const voxelsCopy: OtS_Voxel[] = Array.from(this._voxels.values()).map((voxel) => {

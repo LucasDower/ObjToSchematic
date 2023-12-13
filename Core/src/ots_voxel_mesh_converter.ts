@@ -40,7 +40,8 @@ export class OtS_VoxelMesh_Converter {
     }
 
     public process(mesh: OtS_Mesh): OtS_VoxelMesh {
-        const voxelMesh = new OtS_VoxelMesh();
+        const voxelMesh = OtS_VoxelMesh.Create();
+        voxelMesh.setReplaceMode('average');
 
         const { scale, offset } = this._calcScaleOffset(mesh);
 
@@ -117,7 +118,7 @@ export class OtS_VoxelMesh_Converter {
             );
         }
 
-        voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour, this._config.replaceMode);
+        voxelMesh.addVoxel(voxelPosition.x, voxelPosition.y, voxelPosition.z, voxelColour);
     }
 
     private _getVoxelColour(triangle: OtS_Triangle, location: Vector3): RGBA {
