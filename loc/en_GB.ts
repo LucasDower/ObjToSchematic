@@ -182,6 +182,7 @@ export const en_GB = {
             open_github_repo: 'Open GitHub repo',
             open_github_issues: 'Open GitHub issues',
             join_discord: 'Join Discord server',
+            kofi_donate: 'Donate via Ko-fi',
         }
     },
 };

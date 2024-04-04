@@ -15,6 +15,7 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
     private _githubButton: ToolbarItemComponent;
     private _bugButton: ToolbarItemComponent;
     private _discordButton: ToolbarItemComponent;
+    private _kofiButton: ToolbarItemComponent;
 
     private constructor() {
         super();
@@ -36,6 +37,12 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                 window.open('https://discord.gg/McS2VrBZPD');
             })
             .setTooltip('toolbar.join_discord');
+
+        this._kofiButton = new ToolbarItemComponent({ id: 'kofi', iconSVG: AppIcons.KOFI })
+            .onClick(() => {
+                window.open('https://ko-fi.com/lucasdower');
+            })
+            .setTooltip('toolbar.kofi_donate');
     }
 
     // Header element shouldn't be
@@ -45,6 +52,9 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
 
     public override generateHTML(): string {
         return `
+            <div class="col-container announcement">
+                The next release of ObjToSchematic will be a major overhaul with new features coming later in 2024. Join the Discord for updates.
+            </div>
             <div class="col-container header-cols">
                 <div class="col-container">
                     <div class="col-item">
@@ -65,6 +75,7 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
                     ${this._githubButton.generateHTML()}
                     ${this._bugButton.generateHTML()}
                     ${this._discordButton.generateHTML()}
+                    ${this._kofiButton.generateHTML()}
                 </div>
             </div>
             <div class="row-container header-cols">
@@ -84,18 +95,21 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
         this._githubButton.updateTranslation();
         this._bugButton.updateTranslation();
         this._discordButton.updateTranslation();
+        this._kofiButton.updateTranslation();
     }
 
     public override registerEvents(): void {
         this._githubButton.registerEvents();
         this._bugButton.registerEvents();
         this._discordButton.registerEvents();
+        this._kofiButton.registerEvents();
     }
 
     public override finalise(): void {
         this._githubButton.finalise();
         this._bugButton.finalise();
         this._discordButton.finalise();
+        this._kofiButton.finalise();
         // const updateElement = UIUtil.getElementById('update-checker') as HTMLDivElement;
         // updateElement.style.animation = 'pulse-opacity 1.5s infinite';
         // updateElement.innerHTML = '<i style="animation: pulse-opacity 1.5s infinite;">Checking for updates...</i>';

@@ -750,3 +750,13 @@ a {
   font-size: var(--font-size-small);
   color: var(--text-dim);
 }
+
+.announcement {
+  border: 1px solid var(--blue-600);
+  background: var(--blue-500);
+  margin-bottom: 30px;
+  padding: 10px;
+  color: var(--text-bright);
+  border-radius: 3px;
+  font-size: smaller;
+}
