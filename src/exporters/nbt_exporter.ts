@@ -19,18 +19,25 @@ export class NBTExporter extends IExporter {
         };
     }
 
-    private _processChunk(blockMesh: BlockMesh, min: Vector3, blockNameToIndex: Map<string, number>, palette: any): Buffer {
+    private _processChunk(blockMesh: BlockMesh, minOr: Vector3 | "doNotConstrain", blockNameToIndex: Map<string, number>, palette: any) : Buffer {
+        const constrainToChunkSize = minOr !== "doNotConstrain";
+        const totalBounds = blockMesh.getVoxelMesh().getBounds();
+        const min = constrainToChunkSize ? minOr as Vector3 : totalBounds.min;
+       
         const blocks: any[] = [];
         for (const block of blockMesh.getBlocks()) {
             const pos = block.voxel.position;
             const blockIndex = blockNameToIndex.get(block.blockInfo.name);
 
             if (blockIndex !== undefined) {
-                if (pos.x >= min.x && pos.x < min.x + 48 && pos.y >= min.y && pos.y < min.y + 48 && pos.z >= min.z && pos.z < min.z + 48) {
+                if (!constrainToChunkSize || pos.x >= min.x && pos.x < min.x + 48 && pos.y >= min.y && pos.y < min.y + 48 && pos.z >= min.z && pos.z < min.z + 48) {
                     const translatedPos = Vector3.sub(block.voxel.position, min);
-                    ASSERT(translatedPos.x >= 0 && translatedPos.x < 48);
-                    ASSERT(translatedPos.y >= 0 && translatedPos.y < 48);
-                    ASSERT(translatedPos.z >= 0 && translatedPos.z < 48);
+
+                    if (constrainToChunkSize) {
+                        ASSERT(translatedPos.x >= 0 && translatedPos.x < 48);
+                        ASSERT(translatedPos.y >= 0 && translatedPos.y < 48);
+                        ASSERT(translatedPos.z >= 0 && translatedPos.z < 48);
+                    }
 
                     blocks.push({
                         pos: {
@@ -48,7 +55,7 @@ export class NBTExporter extends IExporter {
                 }
             }
         }
-        ASSERT(blocks.length < 48 * 48 * 48);
+        ASSERT(!constrainToChunkSize || blocks.length < 48 * 48 * 48);
 
         const nbt: NBT = {
             type: TagType.Compound,
@@ -62,7 +69,7 @@ export class NBTExporter extends IExporter {
                     type: TagType.List,
                     value: {
                         type: TagType.Int,
-                        value: [48, 48, 48],
+                        value: constrainToChunkSize ? [48, 48, 48] : totalBounds.getDimensions().add(1).toArray(),
                     },
                 },
                 palette: {
@@ -118,6 +125,10 @@ export class NBTExporter extends IExporter {
                 }
             }
         }
+
+        const full_region_buffer = this._processChunk(blockMesh, "doNotConstrain", blockNameToIndex, palette);
+        regions.push({ content: full_region_buffer, name: `full` });
+        
 
         const out: TStructureExport = {
             type: 'multiple',
