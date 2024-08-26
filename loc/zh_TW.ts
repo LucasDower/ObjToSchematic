@@ -117,7 +117,7 @@ export const zh_TW: TLocaleDefinition = {
             blocks_missing_textures: '{{count, number}} 種色板中的方塊遺失紋理，將不會被使用',
             falling_blocks: '{{count, number}} 個方塊將在結構放置時因重力而下落',
             components: {
-                texture_atlas: '紋理包',
+                texture_atlas: '資源包',
                 block_palette: '方塊色板',
                 dithering: '混色抖動',
                 dithering_magnitude: '抖動程度',
