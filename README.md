@@ -1,7 +1,12 @@
+> [!IMPORTANT]  
+> **ObjToSchematic 2.0 is out now at [objtoschematic.com](objtoschematic.com)!**
+> 
+> This repo contains the source code for ObjToSchematic 1.0. This is the legacy version of the editor. It will no longer receive any updates or bug fixes. Well-justified pull requests may be considered for merging. ObjToSchematic 1.0 can still be accessed at [objtoschematic.com/legacy](objtoschematic.com/legacy).
+
 <h1>
   <p align="center">
     <img src="res/static/icon.png" alt="Logo" width="64" height="64"><br>
-    ObjToSchematic<br>
+    ObjToSchematic 1.0<br>
   </p>
 </h1>
 <p align="center">
