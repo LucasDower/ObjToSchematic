@@ -53,7 +53,8 @@ export class HeaderComponent extends BaseComponent<HTMLDivElement> {
     public override generateHTML(): string {
         return `
             <div class="col-container announcement">
-                The next release of ObjToSchematic will be a major overhaul with new features coming later in 2024. Join the Discord for updates.
+                This is the legacy version of ObjToSchematic. <br>
+                It will not receive any more updates, bug fixes, or community support. Pull requests will be considered for merging.
             </div>
             <div class="col-container header-cols">
                 <div class="col-container">

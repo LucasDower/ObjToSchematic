@@ -18,6 +18,9 @@
   --blue-500: hsl(190, 85%, 27%);
   --blue-600: hsl(190, 75%, 35%);
   --blue-700: hsl(190, 58%, 48%);
+  
+  --amber-500: rgb(127, 88, 10);
+  --amber-600: rgb(156, 112, 22);
 
   --text-bright: white;
   --text-light: hsl(0, 0%, 85%);
@@ -752,8 +755,8 @@ a {
 }
 
 .announcement {
-  border: 1px solid var(--blue-600);
-  background: var(--blue-500);
+  border: 1px solid var(--amber-600);
+  background: var(--amber-500);
   margin-bottom: 30px;
   padding: 10px;
   color: var(--text-bright);
